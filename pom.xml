@@ -1,0 +1,102 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>eu.scasefp7.eclipse</groupId>
+	<artifactId>serviceComposition</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
+	<packaging>pom</packaging>
+	
+	
+	<modules>
+		<module>eu.scasefp7.eclipse.serviceComposition</module>
+	</modules>
+
+	<parent>
+		<groupId>eu.scasefp7</groupId>
+		<artifactId>scase-parent</artifactId>
+		<version>1.0.19</version>
+	</parent>
+
+	<repositories>
+		<repository>
+			<id>luna</id>
+			<layout>p2</layout>
+			<url>http://download.eclipse.org/releases/luna</url>
+		</repository>
+		<repository>
+			<id>OSSRH snapshots</id>
+			<url>https://oss.sonatype.org/content/repositories/snapshots</url>
+			<snapshots>
+				<enabled>true</enabled>
+				<updatePolicy>always</updatePolicy>
+			</snapshots>
+		</repository>
+		<repository>
+			<id>OSSRH releases</id>
+			<url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+			<releases>
+				<enabled>true</enabled>
+				<updatePolicy>never</updatePolicy>
+			</releases>
+		</repository>
+		<repository>
+			<id>s-case-dev</id>
+			<layout>p2</layout>
+			<url>http://s-case.github.io/s-case_dev_site/</url>
+		</repository>
+	</repositories>
+
+	
+	<properties>
+		<tycho.version>0.23.0</tycho.version>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+	</properties>
+	
+	<build>
+		<plugins>
+
+			<plugin>
+				<groupId>org.eclipse.tycho</groupId>
+				<artifactId>tycho-maven-plugin</artifactId>
+				<version>${tycho.version}</version>
+				<extensions>true</extensions>
+			</plugin>
+
+			<plugin>
+				<groupId>org.eclipse.tycho</groupId>
+				<artifactId>target-platform-configuration</artifactId>
+				<version>${tycho.version}</version>
+				<configuration>
+					<environments>
+						<environment>
+							<os>linux</os>
+							<ws>gtk</ws>
+							<arch>x86</arch>
+						</environment>
+						<environment>
+							<os>linux</os>
+							<ws>gtk</ws>
+							<arch>x86_64</arch>
+						</environment>
+						<environment>
+							<os>win32</os>
+							<ws>win32</ws>
+							<arch>x86</arch>
+						</environment>
+						<environment>
+							<os>win32</os>
+							<ws>win32</ws>
+							<arch>x86_64</arch>
+						</environment>
+						<environment>
+							<os>macosx</os>
+							<ws>cocoa</ws>
+							<arch>x86_64</arch>
+						</environment>
+					</environments>
+				</configuration>
+			</plugin>
+
+		</plugins>
+	</build>
+</project>
