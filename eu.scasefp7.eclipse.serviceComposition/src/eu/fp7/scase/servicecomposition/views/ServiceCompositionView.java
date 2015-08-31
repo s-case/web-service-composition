@@ -926,7 +926,10 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 
 						Algorithm.init();
 						final ArrayList<Operation> operations = Algorithm
-								.importServices("data/WS.owl", "data/scripts/");
+								.importServices(ResourcesPlugin.getWorkspace().getRoot().getLocation().toString()
+										+"/"+"WS.owl");
+//						final ArrayList<Operation> operations = Algorithm
+//								.importServices("data/WS.owl", "data/scripts/");
 						// final ArrayList<Operation> operations = Algorithm
 						// .importServices(ResourcesPlugin.getWorkspace().getRoot().getLocation().toString()
 						// +"/"+"WS.owl", "data/scripts/");
