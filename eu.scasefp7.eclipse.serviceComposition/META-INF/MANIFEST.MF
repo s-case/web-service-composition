@@ -1,7 +1,7 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: web-service-composition
-Bundle-SymbolicName: eu.scasefp7.eclipse.serviceComposition;singleton:=true
+Bundle-SymbolicName: eu.fp7.scase.serviceComposition;singleton:=true
 Bundle-Version: 1.0.0.qualifier
 Bundle-Activator: eu.fp7.scase.servicecomposition.Activator
 Bundle-Vendor: CERTH
