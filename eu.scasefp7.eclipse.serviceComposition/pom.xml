@@ -8,12 +8,9 @@
 		<version>1.0.0-SNAPSHOT</version>
 	</parent>
 
-	<artifactId>eu.scasefp7.eclipse.serviceComposition</artifactId>
+	<artifactId>eu.fp7.scase.serviceComposition</artifactId>
 	<packaging>eclipse-plugin</packaging>
 	
-	
-	
-
 <!-- 	 <build> -->
 <!--         <plugins> -->
 <!--             <plugin> -->
@@ -64,6 +61,7 @@
 <!--                     </execution> -->
 <!--                 </executions> -->
 <!--             </plugin> -->
+
 
 <!--         </plugins> -->
 <!--         <pluginManagement> -->

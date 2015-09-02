@@ -58,11 +58,13 @@ Export-Package: eu.fp7.scase.handlers,
  eu.fp7.scase.servicecomposition.ui
 Bundle-ClassPath: .
 Import-Package: com.hp.hpl.jena.ontology;version="[2.13.0,3.0.0)",
+ com.hp.hpl.jena.query;version="[2.13.0,3.0.0)",
  com.hp.hpl.jena.rdf.model;version="[2.13.0,3.0.0)",
+ com.hp.hpl.jena.rdf.model.impl;version="2.13.0",
+ com.hp.hpl.jena.util;version="[2.13.0,3.0.0)",
  com.hp.hpl.jena.util.iterator;version="[2.13.0,3.0.0)",
- com.jcraft.jsch,
- edu.uci.ics.jung.graph,
- edu.uci.ics.jung.graph.util,
- gr.iti.wsdl.wsdlToolkit,
- gr.iti.wsdl.wsdlToolkit.invocation,
+ edu.uci.ics.jung.graph;version="2.0.1.2",
+ edu.uci.ics.jung.graph.util;version="2.0.1.2",
+ gr.iti.wsdl.wsdlToolkit;version="1.0.0",
+ gr.iti.wsdl.wsdlToolkit.invocation;version="1.0.0",
  org.apache.jena.riot;version="[2.13.0,3.0.0)"

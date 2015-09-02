@@ -47,6 +47,11 @@
 			<layout>p2</layout>
 			<url>http://s-case.github.io/s-case_dev_site/</url>
 		</repository>
+		<repository>
+		   <id>local-p2</id>
+		   <layout>p2</layout>
+		   <url>file:///D:/WebServiceComposition/web-service-composition/service-composition-dependency-bridge/target/repository</url>
+		 </repository>
 	</repositories>
 
 	<scm>
