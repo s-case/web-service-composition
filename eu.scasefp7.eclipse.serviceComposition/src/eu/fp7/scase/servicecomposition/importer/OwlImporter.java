@@ -8,7 +8,7 @@ import org.apache.jena.riot.RDFDataMgr;
 import com.hp.hpl.jena.ontology.OntClass;
 import com.hp.hpl.jena.ontology.OntModelSpec;
 import com.hp.hpl.jena.ontology.OntResource;
-import com.hp.hpl.jena.ontology.impl.IndividualImpl;
+import com.hp.hpl.jena.ontology.Individual;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.ModelFactory;
 
@@ -49,7 +49,7 @@ public class OwlImporter extends Importer{
 		OntClass cl = ontologyModel.getOntClass(prefix + "ApplicationDomains");
 		List<? extends OntResource> domainListing = cl.listInstances().toList();
 		for(int i = 0; i < domainListing.size(); i++) {
-			IndividualImpl ind = (IndividualImpl) domainListing.get(i);
+			Individual ind = (Individual) domainListing.get(i);
 			ApplicationDomain domain = new ApplicationDomain(ind);
 			domainList.put(domain.getURI(), domain);
 		}
@@ -58,7 +58,7 @@ public class OwlImporter extends Importer{
 		OntClass className = ontologyModel.getOntClass(prefix + "operation");
 		List<? extends OntResource> list = className.listInstances().toList();
 		for(int i = 0; i < list.size(); i++){
-			IndividualImpl ind = (IndividualImpl) list.get(i);
+			Individual ind = (Individual) list.get(i);
 			if((ind.getPropertyValue(isPrototype) == null || ind.getPropertyValue(isPrototype).asLiteral().getString().equals("true"))) {
 				if(!importWSDLOnly || (ind.getPropertyValue(belongsToUser)!=null && ind.getPropertyValue(belongsToWSDL) != null && !ind.getPropertyValue(belongsToWSDL).asLiteral().getString().isEmpty())){
 					Operation operation = new Operation(ind);
@@ -72,7 +72,7 @@ public class OwlImporter extends Importer{
 		
 		//load implementations
 		for(int i = 0; i < list.size(); i++){
-			IndividualImpl ind = (IndividualImpl) list.get(i);
+			Individual ind = (Individual) list.get(i);
 			if (ind.getPropertyValue(hasName)==null){
 				int o=0;
 			}

@@ -15,7 +15,7 @@ import com.hp.hpl.jena.ontology.DatatypeProperty;
 import com.hp.hpl.jena.ontology.ObjectProperty;
 import com.hp.hpl.jena.ontology.OntClass;
 import com.hp.hpl.jena.ontology.OntModel;
-import com.hp.hpl.jena.ontology.impl.IndividualImpl;
+import com.hp.hpl.jena.ontology.Individual;
 import com.hp.hpl.jena.rdf.model.Literal;
 import com.hp.hpl.jena.rdf.model.NodeIterator;
 import com.hp.hpl.jena.rdf.model.Resource;
@@ -64,7 +64,7 @@ public abstract class Importer {
 		private String name;
 		private boolean local;
 
-		ApplicationDomain(IndividualImpl ind) {
+		ApplicationDomain(Individual ind) {
 			this(ind.getURI());
 		}
 
@@ -250,7 +250,7 @@ public abstract class Importer {
 		}
 
 		/**
-		 * Generates an operation from its Jena IndividualImpl (does NOT load
+		 * Generates an operation from its Jena Individual (does NOT load
 		 * real operations)
 		 * 
 		 * @param ind
@@ -259,13 +259,13 @@ public abstract class Importer {
 		 * @throws Exception
 		 *             if a domain name does not exist in the domainList
 		 */
-		Operation(IndividualImpl ind) throws Exception {
+		Operation(Individual ind) throws Exception {
 			// load basic properties
 			name = new ComparableName(ind.getPropertyValue(hasName).asLiteral().getString());
 //			if (ind.getPropertyValue(hasServiceDomain) != null) {
 //				Resource r1 = ind.getPropertyResourceValue(hasServiceDomain);
 //
-//				IndividualImpl hasServiceDomainInd = (IndividualImpl) ontologyModel.getIndividual(r1.getURI());
+//				Individual hasServiceDomainInd = (Individual) ontologyModel.getIndividual(r1.getURI());
 //				domain=new ApplicationDomain(hasServiceDomainInd);
 //			}else{
 //				domain = null;
@@ -293,7 +293,7 @@ public abstract class Importer {
 			// load implementations
 		}
 
-		private void loadIPR(IndividualImpl ind,int indicator) {
+		private void loadIPR(Individual ind,int indicator) {
 
 			// get Solution individual
 			try {
@@ -333,7 +333,7 @@ public abstract class Importer {
 				if (ind.getPropertyResourceValue(hasServiceAccessInfo) != null) {
 					Resource r1 = ind.getPropertyResourceValue(hasServiceAccessInfo);
 
-					IndividualImpl hasServiceAccessInfoInd = (IndividualImpl) ontologyModel.getIndividual(r1.getURI());
+					Individual hasServiceAccessInfoInd = (Individual) ontologyModel.getIndividual(r1.getURI());
 
 					if (hasServiceAccessInfoInd.getPropertyValue(isValidForCountries) != null) {
 						
@@ -379,7 +379,7 @@ public abstract class Importer {
 
 					if (hasServiceAccessInfoInd.getPropertyResourceValue(hasLicense) != null) {
 						Resource r2 = hasServiceAccessInfoInd.getPropertyResourceValue(hasLicense);
-						IndividualImpl licenseInd = (IndividualImpl) ontologyModel.getIndividual(r2.getURI());
+						Individual licenseInd = (Individual) ontologyModel.getIndividual(r2.getURI());
 						ServiceLicense license = new ServiceLicense();
 
 						if (licenseInd.getPropertyValue(hasLicenseDescription) != null) {
@@ -401,7 +401,7 @@ public abstract class Importer {
 					// load commercial cost schema
 					if (hasServiceAccessInfoInd.getPropertyResourceValue(hasCommercialCostSchema) != null) {
 						Resource r2 = hasServiceAccessInfoInd.getPropertyResourceValue(hasCommercialCostSchema);
-						IndividualImpl commercialCostSchemaInd = (IndividualImpl) ontologyModel.getIndividual(r2
+						Individual commercialCostSchemaInd = (Individual) ontologyModel.getIndividual(r2
 								.getURI());
 						CommercialCostSchema commercialCostSchema = new CommercialCostSchema();
 
@@ -423,7 +423,7 @@ public abstract class Importer {
 
 						if (commercialCostSchemaInd.getPropertyResourceValue(hasTrialSchema) != null) {
 							Resource r3 = commercialCostSchemaInd.getPropertyResourceValue(hasTrialSchema);
-							IndividualImpl trialSchemaInd = (IndividualImpl) ontologyModel.getIndividual(r3.getURI());
+							Individual trialSchemaInd = (Individual) ontologyModel.getIndividual(r3.getURI());
 							ServiceTrialSchema trialSchema = new ServiceTrialSchema();
 
 							if (trialSchemaInd.getPropertyValue(hasDurationInDays) != null) {
@@ -472,7 +472,7 @@ public abstract class Importer {
 							while (it2.hasNext()) {
 								Resource r = it2.next().asResource();
 								// System.out.println(r.getURI());
-								IndividualImpl discountSchemasInd = (IndividualImpl) ontologyModel.getIndividual(r
+								Individual discountSchemasInd = (Individual) ontologyModel.getIndividual(r
 										.getURI());
 								DiscountSchema discountSchema = new DiscountSchema();
 
@@ -491,7 +491,7 @@ public abstract class Importer {
 
 									Resource r3 = it3.next().asResource();
 									
-									IndividualImpl PairedServiceSchemasInd = (IndividualImpl) ontologyModel
+									Individual PairedServiceSchemasInd = (Individual) ontologyModel
 											.getIndividual(r3.getURI());
 									Operation pairedServiceSchema = new Operation();
 									WSOperation test=new WSOperation();
@@ -510,7 +510,7 @@ public abstract class Importer {
 									if (PairedServiceSchemasInd.getPropertyValue(hasServiceDomain) != null) {
 										Resource r4 = PairedServiceSchemasInd.getPropertyResourceValue(hasServiceDomain);
 
-										IndividualImpl hasServiceDomainInd = (IndividualImpl) ontologyModel.getIndividual(r4.getURI());
+										Individual hasServiceDomainInd = (Individual) ontologyModel.getIndividual(r4.getURI());
 										pairedServiceSchema.domain=new ApplicationDomain(hasServiceDomainInd);
 									}else{
 										pairedServiceSchema.domain = null;
@@ -608,16 +608,16 @@ public abstract class Importer {
 		 * @param vec
 		 *            : the ArrayList to add the loaded arguments
 		 */
-		private void loadWSIO(IndividualImpl operInd, ObjectProperty prop, ArrayList<Argument> vec) {
+		private void loadWSIO(Individual operInd, ObjectProperty prop, ArrayList<Argument> vec) {
 			// List<String> primitiveDataTypes=getAllPrimitiveDataTypes();
 			if (operInd.getPropertyResourceValue(prop) != null) {
 				NodeIterator it = operInd.listPropertyValues(prop);
 				while (it.hasNext()) {
 					Resource r = it.next().asResource();
-					IndividualImpl ioInd = (IndividualImpl) ontologyModel.getIndividual(r.getURI());
+					Individual ioInd = (Individual) ontologyModel.getIndividual(r.getURI());
 					// check if ioInd is primitive
 					if (ioInd.getPropertyResourceValue(hasType) != null) {
-						IndividualImpl typeInd = (IndividualImpl) ontologyModel.getIndividual(ioInd
+						Individual typeInd = (Individual) ontologyModel.getIndividual(ioInd
 								.getPropertyResourceValue(hasType).getURI());
 						vec.add(new Argument(this, typeInd, ioInd));
 					}
@@ -813,7 +813,7 @@ public abstract class Importer {
 		 * @param typeInd
 		 * @param ioInd
 		 */
-		Argument(Operation operation, IndividualImpl typeInd, IndividualImpl ioInd) {
+		Argument(Operation operation, Individual typeInd, Individual ioInd) {
 			if (typeInd.getPropertyResourceValue(hasType) == null) {
 				// Native Object
 				if (ioInd.getPropertyValue(hasName) != null)

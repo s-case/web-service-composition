@@ -21,7 +21,7 @@ import org.osgi.framework.Bundle;
 
 import com.hp.hpl.jena.ontology.DatatypeProperty;
 import com.hp.hpl.jena.ontology.OntModel;
-import com.hp.hpl.jena.ontology.impl.IndividualImpl;
+import com.hp.hpl.jena.ontology.Individual;
 
 import eu.fp7.scase.servicecomposition.importer.JungXMIImporter.Service;
 import eu.fp7.scase.servicecomposition.transformer.Similarity;
@@ -74,7 +74,7 @@ public class OwlMetadata {
 	 * Generates metadata for an OWL service.
 	 * @param ind
 	 */
-	public OwlMetadata(IndividualImpl ind){
+	public OwlMetadata(Individual ind){
 		if(ind.getPropertyValue(hasDescription)!=null)
 			description = new ComparableName(ind.getPropertyValue(hasDescription).asLiteral().getString());
 		else
