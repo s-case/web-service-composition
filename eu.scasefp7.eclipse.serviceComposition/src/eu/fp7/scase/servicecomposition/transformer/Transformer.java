@@ -171,7 +171,7 @@ public class Transformer {
 	public static void loadProperties() {
 		Properties prop = new Properties();
 		String propFileName = "matcher.properties";
-		Bundle bundle = Platform.getBundle("eu.fp7.scase.serviceComposition");
+		Bundle bundle = Platform.getBundle("eu.scasefp7.eclipse.serviceComposition");
 		try {
 			URL fileURL = bundle.getEntry(propFileName);
 			InputStream inputStream = new FileInputStream(new File(FileLocator.resolve(fileURL).toURI()));

@@ -2468,7 +2468,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 					});
 					Properties prop = new Properties();
 					String propFileName = "matcher.properties";
-					Bundle bundle = Platform.getBundle("eu.fp7.scase.serviceComposition");
+					Bundle bundle = Platform.getBundle("eu.scasefp7.eclipse.serviceComposition");
 					URL fileURL = bundle.getEntry(propFileName);
 
 					try {

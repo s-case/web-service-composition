@@ -78,7 +78,7 @@ public abstract class Importer {
 				name = uri.substring(uri.lastIndexOf("/") + 1,uri.lastIndexOf("."));
 			//name = uri.substring(uri.lastIndexOf("#") + 1);
 			}
-			Bundle bundle = Platform.getBundle("eu.fp7.scase.serviceComposition");
+			Bundle bundle = Platform.getBundle("eu.scasefp7.eclipse.serviceComposition");
 			URL fileURL = bundle.getEntry(uri);
 			File file;
 			try {

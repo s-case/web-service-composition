@@ -10,7 +10,7 @@ import org.osgi.framework.BundleContext;
 public class Activator extends AbstractUIPlugin {
 
 	// The plug-in ID
-	public static final String PLUGIN_ID = "eu.fp7.scase.serviceComposition"; //$NON-NLS-1$
+	public static final String PLUGIN_ID = "eu.scasefp7.eclipse.serviceComposition"; //$NON-NLS-1$
 
 	// The shared instance
 	private static Activator plugin;

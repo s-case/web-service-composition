@@ -55,9 +55,9 @@ public class ResourceFileSelectionDialog extends ElementTreeSelectionDialog {
 	};
 
 	private static final IStatus OK = new Status(IStatus.OK,
-			"eu.scase.fp7.servicecomposition", 0, "", null);
+			"eu.scasefp7.eclipse.serviceComposition", 0, "", null);
 	private static final IStatus ERROR = new Status(IStatus.ERROR,
-			"eu.scase.fp7.servicecomposition", 0, "", null);
+			"eu.scasefp7.eclipse.serviceComposition", 0, "", null);
 
 	/*
 	 * Validator
