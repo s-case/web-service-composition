@@ -72,7 +72,7 @@ public abstract class Importer {
 			this.uri = uri;
 			if (uri.contains("script")){
 				name = uri.substring(uri.lastIndexOf("/") + 1,uri.lastIndexOf("."));
-			}else if(uri.contains("localhost")||uri.contains("160.40.50.176")){
+			}else if(uri.contains("localhost")||uri.contains("160.40.50.176")|| (uri.lastIndexOf("/") + 1 > uri.lastIndexOf("."))){
 				name="";
 			}else{
 				name = uri.substring(uri.lastIndexOf("/") + 1,uri.lastIndexOf("."));
