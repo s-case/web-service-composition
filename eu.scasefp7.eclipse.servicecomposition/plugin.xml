@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+
+   <extension
+         point="org.eclipse.ui.views">
+      <category
+            name="S-CASE"
+            id="eu.scasefp7.eclipse.category">
+      </category>
+      <view
+            name="Service Composition View"
+            icon="icons/Workflow.png"
+            category="eu.scasefp7.eclipse.category"
+            class="eu.scasefp7.eclipse.servicecomposition.views.ServiceCompositionView"
+            id="eu.fp7.scase.servicecomposition.views.ServiceCompositionView">
+      </view>
+   </extension>
+ 
+   <extension
+         point="org.eclipse.help.contexts">
+      <contexts
+            file="contexts.xml">
+      </contexts>
+   </extension>
+   <extension
+         point="org.eclipse.ui.commands">
+      <category
+            name="S-CASE"
+            id="eu.fp7.scase.mainmenu">
+      </category>
+      <command
+            name="Import StoryBoard creator file"
+            categoryId="eu.fp7.scase.mainmenu"
+            id="eu.fp7.scase.mainmenu.importSBD">
+      </command>
+   </extension>
+   <extension
+         point="org.eclipse.ui.handlers">
+      <handler
+            commandId="eu.fp7.scase.mainmenu.importSBD"
+            class="eu.scasefp7.eclipse.servicecomposition.handlers.ImportHandler">
+      </handler>
+   </extension>
+   <extension
+         point="org.eclipse.ui.bindings">
+      <key
+            commandId="eu.fp7.scase.mainmenu.importSBD"
+            contextId="org.eclipse.ui.contexts.window"
+            sequence="M1+6"
+            schemeId="org.eclipse.ui.defaultAcceleratorConfiguration">
+      </key>
+   </extension>
+   <extension
+         point="org.eclipse.ui.menus">
+      <menuContribution
+            locationURI="menu:org.eclipse.ui.main.menu?after=additions">
+         <menu
+               label="S-CASE"
+               mnemonic="S"
+               id="menu.menus.sampleMenu">
+            <command
+                  commandId="eu.fp7.scase.mainmenu.importSBD"
+                  mnemonic="D"
+                  id="menu.menus.sampleCommand">
+            </command>
+         </menu>
+      </menuContribution>     
+   </extension>
+  
+  
+
+</plugin>
