@@ -8,16 +8,16 @@
 	
 	
 	<modules>
-		<module>eu.scasefp7.eclipse.serviceComposition</module>
-		<module>eu.scasefp7.eclipse.serviceComposition.feature</module>
-		<module>eu.scasefp7.eclipse.serviceComposition.dependencies.feature</module>
-		<module>eu.scasefp7.eclipse.serviceComposition.update-site</module>
+		<module>eu.scasefp7.eclipse.servicecomposition</module>
+		<module>eu.scasefp7.eclipse.servicecomposition.feature</module>
+		<module>eu.scasefp7.eclipse.servicecomposition.dependencies.feature</module>
+		<module>eu.scasefp7.eclipse.servicecomposition.update-site</module>
 	</modules>
 
 	<parent>
 		<groupId>eu.scasefp7</groupId>
 		<artifactId>scase-parent</artifactId>
-		<version>1.0.19</version>
+		<version>1.0.21</version>
 	</parent>
 
 	<repositories>
