@@ -49,7 +49,12 @@ public class PythonImporter extends Importer{
 					String args = line.substring(line.indexOf("(")+1, line.lastIndexOf(")"));
 					for(String arg : args.split(",")){
 						if(!arg.trim().isEmpty())
-							inputs.add(new Argument(arg.trim(), "", false, false, null));
+							try {
+								inputs.add(new Argument(arg.trim(), "", false, false, null));
+							} catch (Exception e) {
+								// TODO Auto-generated catch block
+								e.printStackTrace();
+							}
 					}
 				}
 				int retIndex = line.indexOf("return ");
@@ -154,9 +159,19 @@ public class PythonImporter extends Importer{
 				
 			}
 			for(String var : retVariable.split(","))
-				outputs.add(new Argument(var.trim(), "", false, false, null));
+				try {
+					outputs.add(new Argument(var.trim(), "", false, false,null));
+				} catch (Exception e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 			if(outputs.isEmpty())
-				outputs.add(new Argument(name+"Result", "", false, false, null));
+				try {
+					outputs.add(new Argument(name+"Result", "", false, false,null));
+				} catch (Exception e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 		}
 	}
 	

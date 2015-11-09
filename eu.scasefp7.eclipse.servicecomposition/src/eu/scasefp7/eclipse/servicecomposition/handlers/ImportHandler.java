@@ -58,7 +58,7 @@ public class ImportHandler extends AbstractHandler {
 								.importServices(ResourcesPlugin.getWorkspace().getRoot().getLocation().toString()
 										+"/"+"WS.owl");
 //						final ArrayList<Operation> operations = Algorithm
-//							.importServices("data/WS.owl", "data/scripts/");
+//							.importServices("D:/WebServiceComposition/web-service-composition/eu.scasefp7.eclipse.serviceComposition/data/WS.owl", "data/scripts/");
 						//final ArrayList<Operation> operations = Algorithm.importServices("", "data/testing_scripts/");
 						final String pathToSBDFile = ResourcesPlugin.getWorkspace().getRoot().getLocation().toString()
 								+ file.getFullPath().toOSString();
@@ -89,7 +89,7 @@ public class ImportHandler extends AbstractHandler {
 				report.updateWeight();
 				System.out.println(report.toString());
 			}
-			System.out.println(Algorithm.getFinalReport(-1).toString());
+			//System.out.println(Algorithm.getFinalReport(-1).toString());
 			
 			
 			

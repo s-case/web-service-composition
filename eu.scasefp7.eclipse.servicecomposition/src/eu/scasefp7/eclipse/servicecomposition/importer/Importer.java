@@ -21,6 +21,7 @@ import com.hp.hpl.jena.rdf.model.NodeIterator;
 import com.hp.hpl.jena.rdf.model.Resource;
 
 import eu.scasefp7.eclipse.servicecomposition.Activator;
+import eu.scasefp7.eclipse.servicecomposition.codeInterpreter.Value;
 import eu.scasefp7.eclipse.servicecomposition.operation.ipr.CommercialCostSchema;
 import eu.scasefp7.eclipse.servicecomposition.operation.ipr.Country;
 import eu.scasefp7.eclipse.servicecomposition.operation.ipr.Description;
@@ -28,6 +29,7 @@ import eu.scasefp7.eclipse.servicecomposition.operation.ipr.DiscountSchema;
 import eu.scasefp7.eclipse.servicecomposition.operation.ipr.ServiceAccessInfoForUsers;
 import eu.scasefp7.eclipse.servicecomposition.operation.ipr.ServiceLicense;
 import eu.scasefp7.eclipse.servicecomposition.operation.ipr.ServiceTrialSchema;
+import eu.scasefp7.eclipse.servicecomposition.transformer.JungXMItoOwlTransform.OwlService;
 import eu.scasefp7.eclipse.servicecomposition.transformer.Similarity.ComparableName;
 import gr.iti.wsdl.wsdlToolkit.WSOperation;
 
@@ -43,15 +45,20 @@ public abstract class Importer {
 	public static String classPrefix = "http://www.scasefp7.eu/wsOntology.owl#";
 
 	protected static ObjectProperty belongsToPrototype;
-	protected static DatatypeProperty belongsToWSDL;
+	protected static DatatypeProperty belongsToURL;
+	protected static DatatypeProperty belongsToWSType;
 	protected static ObjectProperty hasServiceDomain;
 	protected static DatatypeProperty belongsToUser;
+	protected static DatatypeProperty isRequired;
 	protected static DatatypeProperty hasName;
 	protected static ObjectProperty hasInput;
 	protected static ObjectProperty hasOutput;
+	protected static DatatypeProperty hasURIParameters;
+	protected static DatatypeProperty hasCRUDVerb;
 	protected static ObjectProperty hasType;
 	protected static DatatypeProperty isPrototype;
 	protected static DatatypeProperty isArray;
+	protected static DatatypeProperty hasResourcePath;
 	protected static OntModel ontologyModel;
 
 	protected static HashMap<String, ApplicationDomain> domainList = new HashMap<String, ApplicationDomain>();
@@ -64,6 +71,8 @@ public abstract class Importer {
 		private String uri;
 		private String name;
 		private boolean local;
+		private String resourcePath;
+		private String crudVerb;
 
 		ApplicationDomain(Individual ind) {
 			this(ind.getURI());
@@ -71,13 +80,13 @@ public abstract class Importer {
 
 		public ApplicationDomain(String uri) {
 			this.uri = uri;
-			if (uri.contains("script")){
-				name = uri.substring(uri.lastIndexOf("/") + 1,uri.lastIndexOf("."));
-			}else if(uri.contains("localhost")||uri.contains("160.40.50.176")|| (uri.lastIndexOf("/") + 1 > uri.lastIndexOf("."))){
-				name="";
-			}else{
-				name = uri.substring(uri.lastIndexOf("/") + 1,uri.lastIndexOf("."));
-			//name = uri.substring(uri.lastIndexOf("#") + 1);
+			if (uri.contains("script")) {
+				name = uri.substring(uri.lastIndexOf("/") + 1, uri.lastIndexOf("."));
+			} else if (uri.contains("localhost") || uri.contains("160.40.50.176")) {
+				name = "";
+			} else {
+				name = uri.substring(uri.lastIndexOf("/") + 1, uri.lastIndexOf("."));
+				// name = uri.substring(uri.lastIndexOf("#") + 1);
 			}
 			Bundle bundle = Platform.getBundle(Activator.PLUGIN_ID);
 			URL fileURL = bundle.getEntry(uri);
@@ -91,8 +100,44 @@ public abstract class Importer {
 			}
 		}
 
+		public ApplicationDomain(String uri,String resourcePath, String crudVerb, String type) {
+			this.uri = uri;
+			if (!resourcePath.isEmpty()){
+				this.resourcePath=resourcePath;
+			}
+			if (!crudVerb.isEmpty()){
+				this.crudVerb=crudVerb;
+			}
+			if (uri.contains("script")) {
+				name = uri.substring(uri.lastIndexOf("/") + 1, uri.lastIndexOf("."));
+			} else if (uri.contains("localhost") || uri.contains("160.40.50.176") || type.equalsIgnoreCase("RESTful") || (uri.lastIndexOf("/") + 1<uri.lastIndexOf("."))) {
+				name = "";
+			} else {
+				name = uri.substring(uri.lastIndexOf("/") + 1, uri.lastIndexOf("."));
+				// name = uri.substring(uri.lastIndexOf("#") + 1);
+			}
+			Bundle bundle = Platform.getBundle(Activator.PLUGIN_ID);
+			URL fileURL = bundle.getEntry(uri);
+			File file;
+			try {
+				file = new File(FileLocator.resolve(fileURL).toURI());
+				local = file.exists();
+			} catch (Exception e) {
+				local = false;
+				// e.printStackTrace();
+			}
+		}
+
+		public String getCrudVerb() {
+			return crudVerb;
+		}
+		
 		public String getURI() {
 			return uri;
+		}
+		
+		public String getResourcePath() {
+			return resourcePath;
 		}
 
 		public String getName() {
@@ -239,10 +284,12 @@ public abstract class Importer {
 		protected ApplicationDomain domain = null;
 		protected ArrayList<Argument> outputs = new ArrayList<Argument>();
 		protected ArrayList<Argument> inputs = new ArrayList<Argument>();
+		protected ArrayList<Argument> uriParameters = new ArrayList<Argument>();
 		protected ArrayList<Operation> realOperations = new ArrayList<Operation>();
 		protected ServiceAccessInfoForUsers accessInfo = new ServiceAccessInfoForUsers();
 		protected OwlMetadata metadata = null;
 		protected boolean isPrototype = false;
+		protected String type = "";
 
 		/**
 		 * An empty constructor that may be used by derived classes.
@@ -271,13 +318,27 @@ public abstract class Importer {
 //			}else{
 //				domain = null;
 //			}
-			if (ind.getPropertyValue(belongsToWSDL) != null) {
-				String domainName = ind.getPropertyValue(belongsToWSDL).asLiteral().getString();
+			// SOAP or RESTful
+			if (ind.getPropertyValue(belongsToWSType) != null) {
+				type = ind.getPropertyValue(belongsToWSType).asLiteral().getString();
+			}
+			String resourcePath="";
+			if (ind.getPropertyValue(hasResourcePath) != null) {
+				resourcePath = ind.getPropertyValue(hasResourcePath).asLiteral().getString();
+			}
+			
+			String crudVerb="";
+			if (ind.getPropertyValue(hasCRUDVerb) != null) {
+				crudVerb = ind.getPropertyValue(hasCRUDVerb).asLiteral().getString();
+			}
+			
+			if (ind.getPropertyValue(belongsToURL) != null) {
+				String domainName = ind.getPropertyValue(belongsToURL).asLiteral().getString();
 				domain = domainList.get(domainName);
 				if (!domainName.isEmpty() && domain == null) {
 					// throw new
 					// Exception("Domain "+domainName+" has not been declared");
-					domainList.put(domainName, domain = new ApplicationDomain(domainName));
+					domainList.put(domainName, domain = new ApplicationDomain(domainName,resourcePath,crudVerb, type));
 				}
 			} else
 				domain = null;
@@ -290,6 +351,8 @@ public abstract class Importer {
 			loadWSIO(ind, hasInput, inputs);
 			// load outputs
 			loadWSIO(ind, hasOutput, outputs);
+			//load uri Parameters
+			loadWSURI(ind, hasURIParameters, uriParameters);
 			loadIPR(ind,1);
 			// load implementations
 		}
@@ -505,6 +568,9 @@ public abstract class Importer {
 									if (PairedServiceSchemasInd.getPropertyValue(hasInput) != null) {
 										pairedServiceSchema.loadWSIO(PairedServiceSchemasInd, hasInput, pairedServiceSchema.inputs);
 									}
+									if (PairedServiceSchemasInd.getPropertyValue(hasURIParameters) != null) {
+										pairedServiceSchema.loadWSURI(PairedServiceSchemasInd, hasURIParameters, pairedServiceSchema.uriParameters);
+									}
 									if (PairedServiceSchemasInd.getPropertyValue(hasOutput) != null) {
 										pairedServiceSchema.loadWSIO(PairedServiceSchemasInd, hasOutput, pairedServiceSchema.outputs);
 									}
@@ -567,6 +633,18 @@ public abstract class Importer {
 			this.domain = domain;
 		}
 
+		public Operation(Operation op) {
+			this.accessInfo = op.getAccessInfo();
+			this.domain = op.getDomain();
+			// this.inputs=op.getInputs();
+			this.isPrototype = op.isPrototype();
+			this.metadata = op.getMetadata();
+			this.name = op.getName();
+			// this.outputs=op.getOutputs();
+			this.realOperations = op.getRealOperations();
+			this.type = op.getType();
+		}
+
 		/**
 		 * <h1>clear</h1> Clears domain and all inputs, outputs and real
 		 * operations.
@@ -575,6 +653,7 @@ public abstract class Importer {
 			domain = null;
 			outputs.clear();
 			inputs.clear();
+			uriParameters.clear();
 			realOperations.clear();
 		}
 
@@ -596,6 +675,7 @@ public abstract class Importer {
 			isPrototype = prototype.isPrototype;
 			outputs.addAll(prototype.outputs);
 			inputs.addAll(prototype.inputs);
+			uriParameters.addAll(prototype.uriParameters);
 			realOperations.addAll(prototype.realOperations);
 		}
 
@@ -625,6 +705,20 @@ public abstract class Importer {
 				}
 			}
 		}
+		
+		private void loadWSURI(Individual operInd, DatatypeProperty prop, ArrayList<Argument> vec) {
+			// List<String> primitiveDataTypes=getAllPrimitiveDataTypes();
+			if (operInd.getPropertyResourceValue(prop) != null) {
+				NodeIterator it = operInd.listPropertyValues(prop);
+				while (it.hasNext()) {
+					Literal l=it.next().asLiteral();
+					String name= l.getValue().toString();
+					String type= "String";
+					vec.add(new Argument(name, type, false, false, null));
+					}
+				}
+			}
+		
 
 		/**
 		 * <h1>getName</h1>
@@ -633,6 +727,15 @@ public abstract class Importer {
 		 */
 		public ComparableName getName() {
 			return name;
+		}
+
+		/**
+		 * <h1>getType()</h1>
+		 * 
+		 * @return the operation's type (SOAP or RESTful)
+		 */
+		public String getType() {
+			return type;
 		}
 
 		/**
@@ -660,6 +763,10 @@ public abstract class Importer {
 		 */
 		public ArrayList<Argument> getOutputs() {
 			return outputs;
+		}
+		
+		public ArrayList<Argument> getUriParameters() {
+			return uriParameters;
 		}
 
 		/**
@@ -692,6 +799,8 @@ public abstract class Importer {
 				op.domain = domain;
 			if (op.inputs.isEmpty())
 				op.inputs.addAll(inputs);
+			if (op.uriParameters.isEmpty())
+				op.uriParameters.addAll(uriParameters);
 			if (op.outputs.isEmpty())
 				op.outputs.addAll(outputs);
 		}
@@ -725,6 +834,12 @@ public abstract class Importer {
 					ins += ", ";
 				ins += arg.toString();
 			}
+			String uris = "";
+			for (Argument arg : uriParameters) {
+				if (!uris.isEmpty())
+					uris += ", ";
+				uris += arg.toString();
+			}
 			String outs = "";
 			for (Argument arg : outputs) {
 				if (!outs.isEmpty())
@@ -741,10 +856,10 @@ public abstract class Importer {
 			if (isPrototype)
 				ret += "prototype: ";
 			ret += outs + " " + name + "(" + ins + ")"+ "'";
-			if (!accessInfo.toString().isEmpty())
-				ret += " description: " + accessInfo.toString();
-			if (getMetadata() != null && !getMetadata().toString().isEmpty())
-				ret += "\n" + getMetadata().toString();
+			if (!accessInfo.getDescription().isEmpty())
+				ret += " description: " + accessInfo.getDescription().get(0).getDescription();
+//			if (getMetadata() != null && !getMetadata().toString().isEmpty())
+//				ret += "\n" + getMetadata().toString();
 			for (Operation op : realOperations)
 				ret += "\n   - " + op.toString();
 			return ret;
@@ -784,7 +899,12 @@ public abstract class Importer {
 		private boolean isArray = false;
 		private boolean isNative = true;
 		private ArrayList<Argument> subtypes = new ArrayList<Argument>();
+		// if Argument isArray it has elements which are filled when the
+		// operation is called
+		private ArrayList<Value> elements = new ArrayList<Value>();
 		private ArrayList<Object> parent = new ArrayList<Object>();
+		private OwlService belongsToOwlService=null;
+		private boolean isRequired=true;
 
 		/**
 		 * Generates an argument by its attribute.
@@ -838,6 +958,9 @@ public abstract class Importer {
 				isNative = false;
 				operation.loadWSIO(ioInd, hasType, subtypes);
 			}
+//			if (ioInd.getPropertyValue(Importer.isRequired) != null) {
+//				this.isRequired = ioInd.getPropertyValue(Importer.isRequired).asLiteral().getBoolean();
+//			}
 			if (ioInd.getPropertyValue(Importer.isArray) != null)
 				this.isArray = !ioInd.getPropertyValue(Importer.isArray).asLiteral().getString().equals("false");
 			for (Argument sub : this.subtypes)
@@ -857,8 +980,14 @@ public abstract class Importer {
 			isArray = prototype.isArray;
 			isNative = prototype.isNative;
 			isArray = prototype.isArray;
-			subtypes = prototype.subtypes;
+			isRequired = prototype.isRequired;
+			for (Argument sub:prototype.getSubtypes()){
+				Argument arg=new Argument(sub);
+				subtypes.add(arg);
+			}
+			//subtypes = prototype.subtypes;
 			parent.addAll(prototype.parent);
+			belongsToOwlService = prototype.belongsToOwlService;
 		}
 
 		/**
@@ -894,6 +1023,14 @@ public abstract class Importer {
 		public boolean isArray() {
 			return isArray;
 		}
+		/**
+		 * <h1>isRequired</h1>
+		 * 
+		 * @return true if the argument is required for the call
+		 */
+		public boolean isRequired() {
+			return isRequired;
+		}
 
 		/**
 		 * <h1>isNative</h1>
@@ -911,6 +1048,18 @@ public abstract class Importer {
 		 */
 		public ArrayList<Argument> getSubtypes() {
 			return subtypes;
+		}
+
+		public ArrayList<Value> getElements() {
+			return elements;
+		}
+		
+		public OwlService getOwlService() {
+			return belongsToOwlService;
+		}
+		
+		public void setOwlService(OwlService service) {
+			this.belongsToOwlService = service;
 		}
 
 		/**

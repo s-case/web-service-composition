@@ -46,7 +46,7 @@ public class FunctionCodeNode extends CodeNode {
 			return super.generateOperationCode(operation, allVariables);
 		// similar to interpreter implementation
 		String ret = "";
-		ret += "ParsedWSDLDefinition parsedWS = parsedWSMap.get(\"" + operation.getDomain().getURI() + "\");\n";
+		ret += "ParsedWSDLDefinition parsedWS = service.parsedWSMap.get(\"" + operation.getDomain().getURI() + "\");\n";
 		ret += "InvocationResult result = Axis2WebServiceInvoker.invokeWebService(\n";
 		ret += TAB + TAB + "parsedWS.getWsdlURL(),\n";
 		ret += TAB + TAB + "new QName(parsedWS.getTargetNamespaceURI(), wsOperation.getOperationName()),\n";
@@ -63,8 +63,8 @@ public class FunctionCodeNode extends CodeNode {
 		// return a dummy Python call
 		if (operation.getDomain().isLocal())
 			return super.generateInputSynchronizationCode(operation, allVariables);
-		String ret = "";
-		ret += "WSOperation wsOperation = domainOperation(\"" + operation.getName().toString() + "\", \""
+		String ret = "CallWSDLService service =new CallWSDLService();";
+		ret += "WSOperation wsOperation = service.domainOperation(\"" + operation.getName().toString() + "\", \""
 				+ operation.getDomain().getURI() + "\");\n";
 		for (Argument arg : operation.getInputs())
 			for (OwlService var : allVariables) {
@@ -107,30 +107,35 @@ public class FunctionCodeNode extends CodeNode {
 							// if (sub.getType().equalsIgnoreCase("int")) {
 							// ret += var.getName().getContent().toString()
 							// +
-							// ".value = Integer.parseInt(((NativeObject)((ComplexObject)obj).getHasNativeObjects().get("
+							// ".value =
+							// Integer.parseInt(((NativeObject)((ComplexObject)obj).getHasNativeObjects().get("
 							// + i + ")).getHasValue());\n";
 							// } else if
 							// (sub.getType().equalsIgnoreCase("double")) {
 							// ret += var.getName().getContent().toString()
 							// +
-							// ".value = Double.parseDouble(((NativeObject)((ComplexObject)obj).getHasNativeObjects().get("
+							// ".value =
+							// Double.parseDouble(((NativeObject)((ComplexObject)obj).getHasNativeObjects().get("
 							// + i + ")).getHasValue());\n";
 							// } else if
 							// (sub.getType().equalsIgnoreCase("boolean")) {
 							// ret += var.getName().getContent().toString()
 							// +
-							// ".value = Boolean.parseBoolean(((NativeObject)((ComplexObject)obj).getHasNativeObjects().get("
+							// ".value =
+							// Boolean.parseBoolean(((NativeObject)((ComplexObject)obj).getHasNativeObjects().get("
 							// + i + ")).getHasValue());\n";
 							// } else if
 							// (sub.getType().equalsIgnoreCase("float")) {
 							// ret += var.getName().getContent().toString()
 							// +
-							// ".value = Float.parseFloat(((NativeObject)((ComplexObject)obj).getHasNativeObjects().get("
+							// ".value =
+							// Float.parseFloat(((NativeObject)((ComplexObject)obj).getHasNativeObjects().get("
 							// + i + ")).getHasValue());\n";
 							// } else {
 							// ret += var.getName().getContent().toString()
 							// +
-							// ".value = ((NativeObject)((ComplexObject)obj).getHasNativeObjects().get("
+							// ".value =
+							// ((NativeObject)((ComplexObject)obj).getHasNativeObjects().get("
 							// + i
 							// + ")).getHasValue();\n";
 							// }
@@ -175,7 +180,7 @@ public class FunctionCodeNode extends CodeNode {
 		ret += "if (result.getResponseHasNativeOrComplexObjects().get(0) instanceof NativeObject && operationOutputs.size() > 1) {\n";
 		ret += TAB
 				+ "String xmlString = ((NativeObject) ((InvocationResult) result).getResponseHasNativeOrComplexObjects().get(0)).getHasValue();\n"
-				+ TAB + "Document doc = loadXMLFromString(xmlString);\n" + TAB
+				+ TAB + "Document doc = CallWSDLService.loadXMLFromString(xmlString);\n" + TAB
 				+ "Element element = doc.getDocumentElement();\n" + TAB + "NodeList nodes = element.getChildNodes();\n"
 				+ TAB + "for (int i = 0; i < nodes.getLength(); i++) {\n";
 		ret += TAB + TAB + "if (nodes.item(i).getNodeName() != null) {\n";
@@ -186,18 +191,16 @@ public class FunctionCodeNode extends CodeNode {
 		ret += "} else {\n";
 		ret += TAB + "for (Object obj : result.getResponseHasNativeOrComplexObjects()) {\n";
 		ret += TAB + TAB + "if (obj instanceof ComplexObject) {\n";
-		ret += TAB + TAB + TAB +"for (int i = 0; i < ((ComplexObject) obj).getHasNativeObjects().size(); i++) {\n";
-		ret += TAB + TAB + TAB + TAB +"for (Variable var : operationOutputs) {\n";
-		ret += TAB
-				+ TAB
-				+ TAB
-				+ TAB
-				+ TAB +"if (((NativeObject) ((ComplexObject) obj).getHasNativeObjects().get(i)).getObjectName().getLocalPart().equalsIgnoreCase(var.name)) {\n";
+		ret += TAB + TAB + TAB + "for (int i = 0; i < ((ComplexObject) obj).getHasNativeObjects().size(); i++) {\n";
+		ret += TAB + TAB + TAB + TAB + "for (Variable var : operationOutputs) {\n";
 		ret += TAB + TAB + TAB + TAB + TAB
-				+ TAB +"var.value = ((NativeObject) ((ComplexObject) obj).getHasNativeObjects().get(i)).getHasValue();\n";
-		ret += TAB + TAB + TAB + TAB + TAB +"}\n" + TAB + TAB + TAB + TAB +"}\n" + TAB + TAB + TAB +"}\n" + TAB +TAB + "}else if (obj instanceof NativeObject) {\n";
+				+ "if (((NativeObject) ((ComplexObject) obj).getHasNativeObjects().get(i)).getObjectName().getLocalPart().equalsIgnoreCase(var.name)) {\n";
+		ret += TAB + TAB + TAB + TAB + TAB + TAB
+				+ "var.value = ((NativeObject) ((ComplexObject) obj).getHasNativeObjects().get(i)).getHasValue();\n";
+		ret += TAB + TAB + TAB + TAB + TAB + "}\n" + TAB + TAB + TAB + TAB + "}\n" + TAB + TAB + TAB + "}\n" + TAB + TAB
+				+ "}else if (obj instanceof NativeObject) {\n";
 		ret += TAB + TAB + TAB + "operationOutputs.get(0).value = ((NativeObject) obj).getHasValue();\n";
-		ret += TAB + TAB + "}\n" + TAB + "}\n" +"}\n";
+		ret += TAB + TAB + "}\n" + TAB + "}\n" + "}\n";
 		return ret;
 	}
 
@@ -287,7 +290,7 @@ public class FunctionCodeNode extends CodeNode {
 												varName = "Double.parseDouble("
 														+ outputService.getName().getContent().toString() + ".value)";
 											} else {
-												varName = outputService.getName().getContent().toString()+ ".value";
+												varName = outputService.getName().getContent().toString() + ".value";
 
 											}
 										}
@@ -326,17 +329,27 @@ public class FunctionCodeNode extends CodeNode {
 		return code;
 	}
 
-	public static String generateImports() {
-		return "import gr.iti.wsdl.wsdlToolkit.ITIWSDLParser;\n" + "import gr.iti.wsdl.wsdlToolkit.InvocationResult;\n"
-				+ "import gr.iti.wsdl.wsdlToolkit.NativeObject;\n" + "import gr.iti.wsdl.wsdlToolkit.ComplexObject;\n"
-				+ "import gr.iti.wsdl.wsdlToolkit.ParsedWSDLDefinition;\n"
-				+ "import gr.iti.wsdl.wsdlToolkit.WSOperation;\n"
-				+ "import gr.iti.wsdl.wsdlToolkit.invocation.Axis2WebServiceInvoker;\n" + "import java.util.HashMap;\n"
-				+ "import javax.xml.namespace.QName;\n" + "import java.util.ArrayList;\n"
-				+ "import javax.xml.parsers.DocumentBuilder;\n" + "import javax.xml.parsers.DocumentBuilderFactory;\n"
-				+ "import javax.xml.bind.annotation.XmlElement;\n"
-				+"import javax.xml.bind.annotation.XmlRootElement;\n"
-				+ "import org.w3c.dom.Document;\n" + "import org.w3c.dom.Element;\n" + "import org.w3c.dom.NodeList;\n"
-				+ "import org.xml.sax.InputSource;\n" + "import java.io.StringReader;\n";
+	public static String generateImports(boolean restServiceExists, boolean wsdlServiceExists) {
+
+		String imports = "";
+		if (restServiceExists) {
+			imports +="import org.json.simple.JSONObject;\n"+
+			"import org.json.simple.JSONValue;\n"+
+			"import org.json.simple.parser.ParseException;\n";
+		}
+		if (wsdlServiceExists) {
+			imports += "import gr.iti.wsdl.wsdlToolkit.ITIWSDLParser;\n"
+					+ "import gr.iti.wsdl.wsdlToolkit.InvocationResult;\n"
+					+ "import gr.iti.wsdl.wsdlToolkit.NativeObject;\n"
+					+ "import gr.iti.wsdl.wsdlToolkit.ComplexObject;\n"
+					+ "import gr.iti.wsdl.wsdlToolkit.ParsedWSDLDefinition;\n"
+					+ "import gr.iti.wsdl.wsdlToolkit.WSOperation;\n"
+					+ "import gr.iti.wsdl.wsdlToolkit.invocation.Axis2WebServiceInvoker;\n"
+					+ "import javax.xml.namespace.QName;\n"
+					+ "import org.w3c.dom.Document;\n"
+					+ "import org.w3c.dom.Element;\n" + "import org.w3c.dom.NodeList;\n";
+		}
+		return imports +"import java.util.ArrayList;\n" + "import javax.xml.bind.annotation.XmlElement;\n"
+				+ "import javax.xml.bind.annotation.XmlRootElement;\n";
 	}
 }

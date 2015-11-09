@@ -78,6 +78,8 @@ public class OwlMetadata {
 	 * Generates metadata for an OWL service.
 	 * @param ind
 	 */
+	
+	//einai lathos
 	public OwlMetadata(Individual ind){
 		if(ind.getPropertyValue(hasDescription)!=null)
 			description = new ComparableName(ind.getPropertyValue(hasDescription).asLiteral().getString());

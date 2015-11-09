@@ -94,12 +94,12 @@ public class ZestLabelProvider extends LabelProvider implements ISelfStyleProvid
 			tooltip.add(new Label("End node of workflow"));
 			node.setTooltip(tooltip);
 		} else if (data.getType().equals("Property")) {
-			if (data.getisMatchedIO()){
+			if (data.getisMatchedIO()) {
 				node.setBackgroundColor(Display.getCurrent().getSystemColor(SWT.COLOR_DARK_BLUE));
-			}else{
-			node.setBackgroundColor(Display.getCurrent().getSystemColor(SWT.COLOR_RED));
+			} else {
+				node.setBackgroundColor(Display.getCurrent().getSystemColor(SWT.COLOR_DARK_MAGENTA));
 			}
-			
+
 			node.setForegroundColor(Display.getCurrent().getSystemColor(SWT.COLOR_WHITE));
 			node.setHighlightColor(Display.getCurrent().getSystemColor(SWT.COLOR_DARK_YELLOW));
 			// create tooltip
@@ -110,9 +110,9 @@ public class ZestLabelProvider extends LabelProvider implements ISelfStyleProvid
 			layout.setMajorSpacing(3);
 			layout.setMinorAlignment(3);
 			tooltip.setLayoutManager(new FlowLayout(false));
-			if (((OwlService)(((MyNode) node.getData()).getObject())).getContent() instanceof Argument) {
+			if (((OwlService) (((MyNode) node.getData()).getObject())).getContent() instanceof Argument) {
 
-				Argument arg =(Argument)((OwlService)(((MyNode) node.getData()).getObject())).getContent();
+				Argument arg = (Argument) ((OwlService) (((MyNode) node.getData()).getObject())).getContent();
 
 				tooltip.add(new Label("I/O: " + arg.getName()));
 			}
