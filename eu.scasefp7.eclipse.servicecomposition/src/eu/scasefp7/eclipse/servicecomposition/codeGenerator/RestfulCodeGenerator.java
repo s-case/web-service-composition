@@ -28,6 +28,7 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
+import eu.scasefp7.eclipse.servicecomposition.importer.Importer.Argument;
 import eu.scasefp7.eclipse.servicecomposition.transformer.JungXMItoOwlTransform.OwlService;
 
 
@@ -35,21 +36,21 @@ import eu.scasefp7.eclipse.servicecomposition.transformer.JungXMItoOwlTransform.
 public class RestfulCodeGenerator {
 	
 	
-	public static String generateRestfulCode(String packageName, ArrayList<OwlService> inputs){
+	public static String generateRestfulCode(String packageName, ArrayList<OwlService> inputs, ArrayList<Argument> uriParameters){
 		String TAB="    ";
 		String code="package " +packageName+";\n"+"import "+ packageName +".WorkflowClass;\n"+"import "+ packageName+ ".WorkflowClass.Response;\n";
 
 		code+="import javax.ws.rs.GET;\nimport javax.ws.rs.Path;\nimport javax.ws.rs.Produces;\nimport javax.ws.rs.QueryParam;\nimport javax.ws.rs.core.MediaType;\n";
-		code+="@Path(\"/result\")\n public class RestCode {\n";
-		code+= TAB+"@GET\n" +TAB+"@Path(\"/query\")\n"+ TAB+"@Produces(MediaType.APPLICATION_XML)\n"+TAB+ "public Response testResponse(";
+		code+="@Path(\"/result\")\n public class WebService {\n";
+		code+= TAB+"@GET\n" +TAB+"@Path(\"/query\")\n"+ TAB+"@Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})\n"+TAB+ "public Response generateResponse(";
 		
-		for (OwlService input:inputs){
-			for (OwlService input2:inputs){
-				if (input.getName().getContent().equalsIgnoreCase(input2.getName().getContent())&& !input.equals(input2)){
-					input2.getName().setContent(input.getName().getContent().toString() + input2.getId());
-				}
-			}
-		}
+//		for (OwlService input:inputs){
+//			for (OwlService input2:inputs){
+//				if (input.getName().getContent().equalsIgnoreCase(input2.getName().getContent())&& !input.equals(input2)){
+//					input2.getName().setContent(input.getName().getContent().toString() + input2.getId());
+//				}
+//			}
+//		}
 		
 		String inputList="";
 		for (OwlService input:inputs){
@@ -59,14 +60,24 @@ public class RestfulCodeGenerator {
 			inputList += "@QueryParam(\""+input.getName().getContent()+"\") String "+ input.getName().getContent();
 			
 		}
+		for (Argument param : uriParameters){
+			if (!inputList.isEmpty())
+				inputList += ", ";
+			inputList += "@QueryParam(\""+param.getName().getContent()+"\") String "+ param.getName().getContent();
+		}
 		code+=inputList;
 		code+=") throws Exception {\n";
-		code+=TAB+TAB+"WorkflowClass newClass = new WorkflowClass();\n"+TAB+TAB+"Response response = newClass.xmlResponse(";
+		code+=TAB+TAB+"WorkflowClass newClass = new WorkflowClass();\n"+TAB+TAB+"Response response = newClass.parseResponse(";
 		inputList="";
 		for (OwlService input:inputs){
 			if (!inputList.isEmpty())
 				inputList += ", ";
 			inputList += input.getName().getContent().toString();
+		}
+		for (Argument param : uriParameters){
+			if (!inputList.isEmpty())
+				inputList += ", ";
+			inputList += param.getName().getContent().toString();
 		}
 		code+=inputList;
 		code+=");\n";
@@ -364,36 +375,36 @@ public class RestfulCodeGenerator {
 			dependency2.appendChild(version2);
 			
 			
-//			Element dependency3 = doc.createElement("dependency");
-//			dependencies.appendChild(dependency3);
-//			
-//			Element groupId3 = doc.createElement("groupId");
-//			groupId3.appendChild(doc.createTextNode("org.apache.axis2"));
-//			dependency3.appendChild(groupId3);
-//			
-//			Element artifactId3 = doc.createElement("artifactId");
-//			artifactId3.appendChild(doc.createTextNode("org.apache.axis2.osgi"));
-//			dependency3.appendChild(artifactId3);
-//			
-//			Element version3 = doc.createElement("version");
-//			version3.appendChild(doc.createTextNode("1.5.2"));
-//			dependency3.appendChild(version3);
-//			
-//			Element dependency4 = doc.createElement("dependency");
-//			dependencies.appendChild(dependency4);
-//			
-//			Element groupId4 = doc.createElement("groupId");
-//			groupId4.appendChild(doc.createTextNode("xerces"));
-//			dependency4.appendChild(groupId4);
-//			
-//			Element artifactId4 = doc.createElement("artifactId");
-//			artifactId4.appendChild(doc.createTextNode("xercesImpl"));
-//			dependency4.appendChild(artifactId4);
-//			
-//			Element version4 = doc.createElement("version");
-//			version4.appendChild(doc.createTextNode("2.10.0"));
-//			dependency4.appendChild(version4);
-//			
+			Element dependency3 = doc.createElement("dependency");
+			dependencies.appendChild(dependency3);
+			
+			Element groupId3 = doc.createElement("groupId");
+			groupId3.appendChild(doc.createTextNode("com.googlecode.json-simple"));
+			dependency3.appendChild(groupId3);
+			
+			Element artifactId3 = doc.createElement("artifactId");
+			artifactId3.appendChild(doc.createTextNode("json-simple"));
+			dependency3.appendChild(artifactId3);
+			
+			Element version3 = doc.createElement("version");
+			version3.appendChild(doc.createTextNode("1.1"));
+			dependency3.appendChild(version3);
+			
+			Element dependency4 = doc.createElement("dependency");
+			dependencies.appendChild(dependency4);
+			
+			Element groupId4 = doc.createElement("groupId");
+			groupId4.appendChild(doc.createTextNode("com.owlike"));
+			dependency4.appendChild(groupId4);
+			
+			Element artifactId4 = doc.createElement("artifactId");
+			artifactId4.appendChild(doc.createTextNode("genson"));
+			dependency4.appendChild(artifactId4);
+			
+			Element version4 = doc.createElement("version");
+			version4.appendChild(doc.createTextNode("1.3"));
+			dependency4.appendChild(version4);
+			
 //			Element dependency5 = doc.createElement("dependency");
 //			dependencies.appendChild(dependency5);
 //			

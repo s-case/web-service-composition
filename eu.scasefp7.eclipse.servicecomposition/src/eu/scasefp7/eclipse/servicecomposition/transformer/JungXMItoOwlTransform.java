@@ -1,5 +1,6 @@
 package eu.scasefp7.eclipse.servicecomposition.transformer;
 
+import eu.scasefp7.eclipse.servicecomposition.codeInterpreter.Value;
 import eu.scasefp7.eclipse.servicecomposition.importer.Importer.ApplicationDomain;
 import eu.scasefp7.eclipse.servicecomposition.importer.Importer.Argument;
 import eu.scasefp7.eclipse.servicecomposition.importer.Importer.Operation;
@@ -180,6 +181,10 @@ public class JungXMItoOwlTransform {
 				type = "Action";
 				name = ((Operation) content).getName();
 			} else if (content instanceof Argument) {
+				this.content = content;
+				type = "Property";
+				name = ((Argument) content).getName();
+			} else if (content instanceof Value) {
 				this.content = content;
 				type = "Property";
 				name = ((Argument) content).getName();

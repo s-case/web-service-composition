@@ -26,8 +26,9 @@ public class Value extends Argument{
 	 * this constructor, so that each variable corresponds to a single Value.<br/>
 	 * This constructor also takes into account sub-type structure for variables.
 	 * @param variable
+	 * @throws Exception 
 	 */
-	private Value(Argument variable){
+	public Value(Argument variable){
 		super(variable.getName().toString(), variable.getType(), variable.isArray(), variable.isNative(), null);
 		enumeration.put(variable, this);
 		if(variable instanceof Value)
@@ -35,18 +36,28 @@ public class Value extends Argument{
 		for(Argument arg : variable.getSubtypes()){
 			getSubtypes().add(getValue(arg));
 		}
+		for(Object arg : variable.getParent()){
+			getParent().add(arg);
+		}
+		setOwlService(variable.getOwlService());
 	}
 	/**
 	 * <h1>getValue</h1>
 	 * @param arg : a variable Argument
 	 * @return returns a Value that corresponds to the given variable
+	 * @throws Exception 
 	 */
 	public static Value getValue(Argument arg){
 		if(arg instanceof Value)
 			return (Value)arg;
 		Value val = enumeration.get(arg);
 		if(val==null)
-			val = new Value(arg);
+			try {
+				val = new Value(arg);
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		return val;
 	}
 	/**

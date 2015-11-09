@@ -33,12 +33,17 @@ public class OwlImporter extends Importer{
 		//load the model and set the various properties to be used
 		Model base = RDFDataMgr.loadModel(owlPath);
 		ontologyModel = ModelFactory.createOntologyModel(OntModelSpec.OWL_DL_MEM_RDFS_INF, base);	
-		belongsToWSDL = ontologyModel.getDatatypeProperty(prefix + "belongsToWSDL");
+		belongsToURL = ontologyModel.getDatatypeProperty(prefix + "belongsToURL");
+		hasResourcePath = ontologyModel.getDatatypeProperty(prefix + "hasResourcePath");
+		belongsToWSType = ontologyModel.getDatatypeProperty(prefix + "belongsToWSType");
 		hasServiceDomain=ontologyModel.getObjectProperty(prefix + "hasServiceDomain");
 		belongsToUser = ontologyModel.getDatatypeProperty(prefix + "belongsToUser");
 		hasName = ontologyModel.getDatatypeProperty(prefix + "hasName");
 		isPrototype = ontologyModel.getDatatypeProperty(prefix + "isPrototype");
 		hasInput = ontologyModel.getObjectProperty(prefix + "hasInput");
+		hasURIParameters = ontologyModel.getDatatypeProperty(prefix + "hasURIParameters");
+		hasCRUDVerb = ontologyModel.getDatatypeProperty(prefix + "hasCRUDVerb");
+		isRequired = ontologyModel.getDatatypeProperty(prefix + "isRequired");
 		hasOutput = ontologyModel.getObjectProperty(prefix + "hasOutput");
 		hasType = ontologyModel.getObjectProperty(prefix + "hasType");
 		isArray = ontologyModel.getDatatypeProperty(prefix + "isArray");
@@ -60,7 +65,7 @@ public class OwlImporter extends Importer{
 		for(int i = 0; i < list.size(); i++){
 			Individual ind = (Individual) list.get(i);
 			if((ind.getPropertyValue(isPrototype) == null || ind.getPropertyValue(isPrototype).asLiteral().getString().equals("true"))) {
-				if(!importWSDLOnly || (ind.getPropertyValue(belongsToUser)!=null && ind.getPropertyValue(belongsToWSDL) != null && !ind.getPropertyValue(belongsToWSDL).asLiteral().getString().isEmpty())){
+				if(!importWSDLOnly || (ind.getPropertyValue(belongsToUser)!=null && ind.getPropertyValue(belongsToURL) != null && !ind.getPropertyValue(belongsToURL).asLiteral().getString().isEmpty())){
 					Operation operation = new Operation(ind);
 					if(!singleOutputsOnly || operation.getOutputs().size()<=1){
 						operationsByName.put(operation.getName().toString(), operation);
@@ -73,13 +78,8 @@ public class OwlImporter extends Importer{
 		//load implementations
 		for(int i = 0; i < list.size(); i++){
 			Individual ind = (Individual) list.get(i);
-			if (ind.getPropertyValue(hasName)==null){
-				int o=0;
-			}
-			//test
-			if (ind.getPropertyValue(hasName).asLiteral().toString().contains("GetCurrencyByCountry")){
-				int a=1;
-			}
+			
+			
 			if(ind.getPropertyValue(isPrototype) != null && ind.getPropertyValue(isPrototype).asLiteral().getString().equals("false")) {
 				if(ind.getPropertyValue(belongsToPrototype) != null)
 				{
@@ -90,7 +90,7 @@ public class OwlImporter extends Importer{
 							baseOperation.addRealOperation(operation);
 					}
 				}
-				else if(!importWSDLOnly || (ind.getPropertyValue(belongsToUser)!=null && ind.getPropertyValue(belongsToWSDL) != null && !ind.getPropertyValue(belongsToWSDL).asLiteral().getString().isEmpty())){
+				else if(!importWSDLOnly || (ind.getPropertyValue(belongsToUser)!=null && ind.getPropertyValue(belongsToURL) != null && !ind.getPropertyValue(belongsToURL).asLiteral().getString().isEmpty())){
 					Operation operation = new Operation(ind);
 					if(!singleOutputsOnly || operation.getOutputs().size()<=1){
 						operationsByName.put(operation.getName().toString(), operation);

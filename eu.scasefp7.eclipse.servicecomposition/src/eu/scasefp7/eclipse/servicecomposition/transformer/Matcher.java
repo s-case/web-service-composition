@@ -5,6 +5,8 @@ import eu.scasefp7.eclipse.servicecomposition.importer.Importer;
 import eu.scasefp7.eclipse.servicecomposition.importer.Importer.Argument;
 import eu.scasefp7.eclipse.servicecomposition.importer.JungXMIImporter.Service;
 import eu.scasefp7.eclipse.servicecomposition.transformer.JungXMItoOwlTransform.OwlService;
+import eu.scasefp7.eclipse.servicecomposition.transformer.Similarity.ComparableName;
+import eu.scasefp7.eclipse.servicecomposition.operation.ipr.Description;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -25,7 +27,7 @@ import org.osgi.framework.Bundle;
  * @author Manios Krasanakis
  */
 public class Matcher {
-	private static double NAME_SIMILARITY_WEIGHT = 4; // weight according to
+	public static double NAME_SIMILARITY_WEIGHT = 4; // weight according to
 														// action and operation
 														// name similarity
 	private static double OUTPUT_TO_INPUT_WEIGHT = 1; // weight for outputs that
@@ -53,15 +55,19 @@ public class Matcher {
 									// negative values
 	private static double VARIABLE_SIMILARITY_THRESHOLD = 0.5;
 	public static double NAME_SIMILARITY_THRESHOLD = 0;
-	
-	
-	public static double getMaxWeight(double nameSimilarity){
-		return Math.max(NAME_SIMILARITY_WEIGHT*nameSimilarity, 0)
-			  +Math.max(OUTPUT_TO_INPUT_WEIGHT, 0)
-			  +Math.max(INPUT_TO_INPUT_WEIGHT, 0)
-			  +Math.max(POSSIBLE_INPUT_WEIGHT, 0)
-			  +Math.max(MANDATORY_INPUT_WEIGHT, 0)
-			  +BIAS;
+	private static double DESCRIPTION_WEIGHT=3;
+
+	public static double getMaxWeight(boolean isRestfulWithDescription) {
+		if (isRestfulWithDescription){
+			DESCRIPTION_WEIGHT=4.0;
+			NAME_SIMILARITY_WEIGHT=1.0;	
+		}else{
+			DESCRIPTION_WEIGHT=1.0;
+			NAME_SIMILARITY_WEIGHT=4.0;	
+		}
+		return Math.max(NAME_SIMILARITY_WEIGHT, 0) + Math.max(OUTPUT_TO_INPUT_WEIGHT, 0)
+				+ Math.max(POSSIBLE_INPUT_WEIGHT, 0)
+				+ Math.max(MANDATORY_INPUT_WEIGHT, 0)  + Math.max(DESCRIPTION_WEIGHT, 0);
 	}
 
 	/**
@@ -83,8 +89,9 @@ public class Matcher {
 			POSSIBLE_INPUT_WEIGHT = Double.parseDouble(prop.getProperty("matcher.POSSIBLE_INPUT_WEIGHT"));
 			MANDATORY_INPUT_WEIGHT = Double.parseDouble(prop.getProperty("matcher.MANDATORY_INPUT_WEIGHT"));
 			BIAS = Double.parseDouble(prop.getProperty("matcher.BIAS"));
-			VARIABLE_SIMILARITY_THRESHOLD = Double.parseDouble(prop
-					.getProperty("matcher.VARIABLE_SIMILARITY_THRESHOLD"));
+			VARIABLE_SIMILARITY_THRESHOLD = Double
+					.parseDouble(prop.getProperty("matcher.VARIABLE_SIMILARITY_THRESHOLD"));
+			DESCRIPTION_WEIGHT =Double.parseDouble(prop.getProperty("metadata.DESCRIPTION_WEIGHT"));
 		} catch (Exception e) {
 			System.err.println("Error occured while trying to load matcher settings from " + propFileName);
 		}
@@ -137,7 +144,19 @@ public class Matcher {
 			if (!found)
 				return 0;
 		}
+		
 		double nameSimilarity = Similarity.similarity(action.getName(), operation.getName());
+		double numberOfWords =action.getName().getComparableForm().split("\\s").length;
+		//double numberOfWords = operation.getName().getComparableForm().split("\\s").length;
+		nameSimilarity=nameSimilarity/numberOfWords;
+		double descriptionSimilarity =0;
+		if (!operation.getAccessInfo().getDescription().isEmpty()){
+		descriptionSimilarity = Similarity.similarity(
+				new ComparableName(((Description) operation.getAccessInfo().getDescription().get(0)).getDescription()),
+				action.getName());
+		//double DescnumberOfWords=((Description) operation.getAccessInfo().getDescription().get(0)).getDescription().split("\\s").length;
+		descriptionSimilarity=descriptionSimilarity/numberOfWords;
+		}
 
 		if (!action.getName().isEmpty() && nameSimilarity < NAME_SIMILARITY_THRESHOLD)
 			return 0;
@@ -175,8 +194,8 @@ public class Matcher {
 			}
 		}
 
-		int diff = (int) Math.round(inputSimilarity * operation.getInputs().size() - outputSimilarity
-				* operation.getOutputs().size());
+		int diff = (int) Math.round(
+				inputSimilarity * operation.getInputs().size() - outputSimilarity * operation.getOutputs().size());
 
 		if (minInputOutputDiff != Integer.MIN_VALUE) {
 			if (diff >= minInputOutputDiff)
@@ -186,15 +205,25 @@ public class Matcher {
 		}
 
 		double similarity = 0;
-		similarity = BIAS + (operation.getMetadata() != null ? operation.getMetadata().getSimilarity(action) : 0);
+		//similarity = BIAS + (operation.getMetadata() != null ? operation.getMetadata().getSimilarity(action) : 0);
+		if (operation.getType().equalsIgnoreCase("RESTful")&& !operation.getAccessInfo().getDescription().isEmpty()) {
+			DESCRIPTION_WEIGHT=4.0;
+			NAME_SIMILARITY_WEIGHT=1.0;				
+		}else{
+			NAME_SIMILARITY_WEIGHT=4.0;
+			DESCRIPTION_WEIGHT=1.0;
+		}
+		similarity += DESCRIPTION_WEIGHT * descriptionSimilarity;
 		similarity += POSSIBLE_INPUT_WEIGHT * inputSimilarity;
-		similarity += INPUT_TO_INPUT_WEIGHT * inputToInputSimilarity;
+		//similarity += INPUT_TO_INPUT_WEIGHT * inputToInputSimilarity;
 		similarity += MANDATORY_INPUT_WEIGHT * mandatoryInputSimilarity;
 		similarity += OUTPUT_TO_INPUT_WEIGHT * outputSimilarity;
 		similarity += NAME_SIMILARITY_WEIGHT * nameSimilarity;
 
-		// System.out.println("\""+action.toString()+"\" compared with \""+operation.toString()+"\" (Weight: "+similarity+")");
+		// System.out.println("\""+action.toString()+"\" compared with
+		// \""+operation.toString()+"\" (Weight: "+similarity+")");
 
+		similarity= similarity/(DESCRIPTION_WEIGHT+POSSIBLE_INPUT_WEIGHT+MANDATORY_INPUT_WEIGHT+OUTPUT_TO_INPUT_WEIGHT+NAME_SIMILARITY_WEIGHT);
 		return similarity;
 	}
 
@@ -207,10 +236,10 @@ public class Matcher {
 	 * @return true if the arguments are considered to be the same variable
 	 */
 	public static boolean sameVariable(Importer.Argument arg0, Importer.Argument arg1) {
-		return (arg0.getType().isEmpty() || arg1.getType().isEmpty() || (arg0.getType().equals(arg1.getType()) && arg0
-				.isArray() == arg1.isArray()))
-				&& (arg0.getName().isEmpty() || arg1.getName().isEmpty() || Similarity.similarity(arg0.getName(),
-						arg1.getName()) >= VARIABLE_SIMILARITY_THRESHOLD);
+		return (arg0.getType().isEmpty() || arg1.getType().isEmpty()
+				|| (arg0.getType().equals(arg1.getType()) && arg0.isArray() == arg1.isArray()))
+				&& (arg0.getName().isEmpty() || arg1.getName().isEmpty()
+						|| Similarity.similarity(arg0.getName(), arg1.getName()) >= VARIABLE_SIMILARITY_THRESHOLD);
 	}
 
 	/**
@@ -248,9 +277,11 @@ public class Matcher {
 	}
 
 	/**
-	 * <h1>getSameVariableInstances</h1> Returns the output which
-	 * has the highest similarity with an input (according to
-	 * <code>sameVariable</code>)and is above a similarity threshold.<br/> If outputs have the same similarity with the input it selects the first one on the list.<br/>
+	 * <h1>getSameVariableInstances</h1> Returns the output which has the
+	 * highest similarity with an input (according to <code>sameVariable</code>
+	 * )and is above a similarity threshold.<br/>
+	 * If outputs have the same similarity with the input it selects the first
+	 * one on the list.<br/>
 	 * The inputs and outputs are of type OwlService, in order to be easily
 	 * applied on data extracted from a graph.
 	 * 
@@ -261,59 +292,54 @@ public class Matcher {
 	 */
 	public static OwlService getSameVariableInstances(OwlService input, ArrayList<OwlService> allOutputs)
 			throws Exception {
-		
-		OwlService theLinkedVariable=null;
+
+		OwlService theLinkedVariable = null;
 		Object newParent = new Object();
 		ArrayList<Double> variableServiceSimilarities = new ArrayList<Double>();
-		//Content of input
+		// Content of input
 		Importer.Argument inputContent = input.getArgument();
-		
-		//If var=null throw exception
+
+		// If var=null throw exception
 		if (inputContent == null)
 			throw new Exception(input.toString() + " is not a property OwlService");
-		
-		
-		
-		//Put name similarities of this input and all the outputs in a list
-		for (int i=0; i< allOutputs.size(); i++) {
+
+		// Put name similarities of this input and all the outputs in a list
+		for (int i = 0; i < allOutputs.size(); i++) {
 
 			double nameSimilarity = Similarity.similarity(allOutputs.get(i).getName(), input.getName());
 			variableServiceSimilarities.add(i, nameSimilarity);
 		}
-		
+
 		// second pass: add detected to list (generate again instance list to
-		double maxWeight=variableServiceSimilarities.get(0);
-		OwlService outputMax=allOutputs.get(0);
-		for (int i=0; i< allOutputs.size(); i++) {
+		double maxWeight = variableServiceSimilarities.get(0);
+		OwlService outputMax = allOutputs.get(0);
+		for (int i = 0; i < allOutputs.size(); i++) {
 			Importer.Argument output = allOutputs.get(i).getArgument();
-			
-			
-			if (output != null
-					&& sameVariable(inputContent, output)
+
+			if (output != null && sameVariable(inputContent, output)
 					&& (common(inputContent.getParent(), output.getParent()).isEmpty())) {
-				
-				if (variableServiceSimilarities.get(i)>maxWeight){
-					maxWeight=variableServiceSimilarities.get(i);
+
+				if (variableServiceSimilarities.get(i) > maxWeight) {
+					maxWeight = variableServiceSimilarities.get(i);
 					outputMax = allOutputs.get(i);
-					newParent=allOutputs.get(i).getArgument().getParent();
-					
+					newParent = allOutputs.get(i).getArgument().getParent();
+
 				}
 
 			}
 		}
 
-		if (outputMax==allOutputs.get(0)){
+		if (outputMax == allOutputs.get(0)) {
 			if (sameVariable(inputContent, allOutputs.get(0).getArgument())
 					&& (common(inputContent.getParent(), allOutputs.get(0).getArgument().getParent()).isEmpty())) {
-				theLinkedVariable=outputMax;
-				newParent=allOutputs.get(0).getArgument().getParent();
+				theLinkedVariable = outputMax;
+				newParent = allOutputs.get(0).getArgument().getParent();
 				inputContent.addParent(newParent);
 			}
-		}else{
-			theLinkedVariable=outputMax;
+		} else {
+			theLinkedVariable = outputMax;
 			inputContent.addParent(newParent);
 		}
-		
 
 		return theLinkedVariable;
 	}
@@ -344,7 +370,8 @@ public class Matcher {
 					name = arg.getName().toString();
 				// else if(!name.equals(arg.getName()))
 				// throw new
-				// Exception("Cannot merge variables due to different non-empty variable names: "+name+", "+arg.getName());
+				// Exception("Cannot merge variables due to different non-empty
+				// variable names: "+name+", "+arg.getName());
 				if (type.isEmpty())
 					type = arg.getType();
 				else if (!arg.getType().isEmpty() && !type.equals(arg.getType()))

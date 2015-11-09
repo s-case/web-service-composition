@@ -1,6 +1,7 @@
 package eu.scasefp7.eclipse.servicecomposition.transformer;
 
 import eu.scasefp7.eclipse.servicecomposition.Activator;
+import eu.scasefp7.eclipse.servicecomposition.importer.Importer;
 import eu.scasefp7.eclipse.servicecomposition.importer.Importer.ApplicationDomain;
 import eu.scasefp7.eclipse.servicecomposition.importer.Importer.Argument;
 import eu.scasefp7.eclipse.servicecomposition.importer.Importer.Operation;
@@ -109,6 +110,9 @@ public class Transformer {
 		public Operation getOperationToReplace() {
 			return operation;
 		}
+		public Operation getOriginalServiceOperation() {
+			return originalServiceOperation;
+		}
 
 		/**
 		 * <h1>getWeight</h1>
@@ -177,8 +181,8 @@ public class Transformer {
 			URL fileURL = bundle.getEntry(propFileName);
 			InputStream inputStream = new FileInputStream(new File(FileLocator.resolve(fileURL).toURI()));
 			prop.load(inputStream);
-			REPLACE_NAME_SIMILARITY_THRESHOLD = Double.parseDouble(prop
-					.getProperty("transformer.REPLACE_NAME_SIMILARITY_THRESHOLD"));
+			REPLACE_NAME_SIMILARITY_THRESHOLD = Double
+					.parseDouble(prop.getProperty("transformer.REPLACE_NAME_SIMILARITY_THRESHOLD"));
 			IGNORE_ASSIGNED_POSSIBLE_OUTPUTS = !prop.getProperty("transformer.IGNORE_ASSIGNED_POSSIBLE_OUTPUTS").trim()
 					.equalsIgnoreCase("false");
 		} catch (Exception e) {
@@ -186,9 +190,7 @@ public class Transformer {
 		}
 	}
 
-	private Graph<OwlService, Connector> graph; 
-	
-	
+	private Graph<OwlService, Connector> graph;
 
 	/**
 	 * Generates an instance that allows transformations for the given graph.
@@ -323,6 +325,7 @@ public class Transformer {
 			for (Argument arg : op.getInputs()) {
 
 				OwlService argument = new OwlService(arg);
+				argument.getArgument().setOwlService(argument);
 				for (OwlService owlService : services) {
 					if (owlService.getName().getContent().equals(argument.getName().getContent())) {
 						if (owlService.getId() >= argument.getId()) {
@@ -357,43 +360,133 @@ public class Transformer {
 
 			}
 			for (Argument arg : op.getOutputs()) {
-				OwlService argument = new OwlService(arg);
+				addOutputs(arg, service, op);
+			}
+			// for (Argument arg : op.getOutputs()) {
+			// OwlService argument = new OwlService(arg);
+			//
+			// for (OwlService owlService : services) {
+			// if
+			// (owlService.getName().getContent().equals(argument.getName().getContent()))
+			// {
+			// if (owlService.getId() >= argument.getId()) {
+			// argument.setId(owlService.getId() + 1);
+			// }
+			// }
+			//
+			// }
+			//
+			// graph.addVertex(argument);
+			// graph.addEdge(new Connector(service, argument, ""), service,
+			// argument, EdgeType.DIRECTED);
+			// arg.getParent().remove(op);
+			// arg.getParent().add(op);
+			//
+			// for (Argument sub : arg.getSubtypes()) {
+			// OwlService subtype = new OwlService(sub);
+			//
+			// for (OwlService owlService : services) {
+			// if
+			// (owlService.getName().getContent().equals(subtype.getName().getContent()))
+			// {
+			// if (owlService.getId() >= subtype.getId()) {
+			// subtype.setId(owlService.getId() + 1);
+			// }
+			// }
+			//
+			// }
+			//
+			// graph.addVertex(subtype);
+			// graph.addEdge(new Connector(argument, subtype, ""), argument,
+			// subtype, EdgeType.DIRECTED);
+			// sub.getParent().remove(op);
+			// sub.getParent().add(op);
+			//
+			// }
+			// }
+		}
 
-				for (OwlService owlService : services) {
-					if (owlService.getName().getContent().equals(argument.getName().getContent())) {
-						if (owlService.getId() >= argument.getId()) {
-							argument.setId(owlService.getId() + 1);
-						}
-					}
+	}
 
+	/**
+	 * <h1>addOutputs</h1>
+	 * 
+	 * @param arg
+	 *            : node of level x
+	 * @param service
+	 *            : node of level x+1
+	 * @param services
+	 *            : all nodes of the graph
+	 * @param op
+	 *            : operation of node (applies only to services of type
+	 *            "Action")
+	 */
+	private void addOutputs(Argument arg, OwlService service, Operation op) {
+		OwlService argument = new OwlService(arg);
+		argument.getArgument().setOwlService(argument);
+		for (OwlService owlService : graph.getVertices()) {
+			if (owlService.getName().getContent().equals(argument.getName().getContent())) {
+				if (owlService.getId() >= argument.getId()) {
+					argument.setId(owlService.getId() + 1);
 				}
+			}
 
-				graph.addVertex(argument);
-				graph.addEdge(new Connector(service, argument, ""), service, argument, EdgeType.DIRECTED);
-				arg.getParent().remove(op);
-				arg.getParent().add(op);
+		}
 
-				for (Argument sub : arg.getSubtypes()) {
-					OwlService subtype = new OwlService(sub);
-
-					for (OwlService owlService : services) {
-						if (owlService.getName().getContent().equals(subtype.getName().getContent())) {
-							if (owlService.getId() >= subtype.getId()) {
-								subtype.setId(owlService.getId() + 1);
-							}
-						}
-
-					}
-
-					graph.addVertex(subtype);
-					graph.addEdge(new Connector(argument, subtype, ""), argument, subtype, EdgeType.DIRECTED);
-					sub.getParent().remove(op);
-					sub.getParent().add(op);
-
-				}
+		graph.addVertex(argument);
+		graph.addEdge(new Connector(service, argument, ""), service, argument, EdgeType.DIRECTED);
+		if (!arg.getParent().contains(op)) {
+			arg.getParent().add(op);
+		}
+		if (service.getArgument() != null) {
+			for (int i = 0; i < service.getArgument().getParent().size(); i++) {
+				if (!arg.getParent().contains(service.getArgument().getParent().get(i)))
+					arg.getParent().add(service.getArgument().getParent().get(i));
 			}
 		}
 
+		if (arg.getSubtypes().size() > 0) {
+			for (Argument sub : arg.getSubtypes()) {
+				addOutputs(sub, argument, op);
+			}
+		}
+	}
+
+	/**
+	 * <h1>addInputs</h1>
+	 * 
+	 * @param arg:
+	 *            node of level x
+	 * @param service
+	 *            : node of level x+1
+	 * @param services
+	 *            : all nodes of the graph
+	 * @param op
+	 *            : operation of node (applies only to services of type
+	 *            "Action")
+	 */
+	private void addInputs(Argument arg, OwlService service, Operation op) {
+		OwlService argument = new OwlService(arg);
+		argument.getArgument().setOwlService(argument);
+		for (OwlService owlService : graph.getVertices()) {
+			if (owlService.getName().getContent().equals(argument.getName().getContent())) {
+				if (owlService.getId() >= argument.getId()) {
+					argument.setId(owlService.getId() + 1);
+				}
+			}
+
+		}
+
+		graph.addVertex(argument);
+		graph.addEdge(new Connector(argument, service, ""), argument, service, EdgeType.DIRECTED);
+		arg.getParent().remove(op);
+		arg.getParent().add(op);
+
+		if (arg.getSubtypes().size() > 0) {
+			for (Argument sub : arg.getSubtypes()) {
+				addInputs(sub, argument, op);
+			}
+		}
 	}
 
 	/**
@@ -548,8 +641,9 @@ public class Transformer {
 	// }
 
 	/**
-	 * <h1>createLinkedVariableGraph</h1> This function generates a new graph
-	 * in which any input of an operation in the prototype is linked with an output of another operation if they are similar.<br/>
+	 * <h1>createLinkedVariableGraph</h1> This function generates a new graph in
+	 * which any input of an operation in the prototype is linked with an output
+	 * of another operation if they are similar.<br/>
 	 * The function <code>Matcher.getSameVariableInstances</code> that is used
 	 * should be careful to not link variables with the same parent.
 	 * 
@@ -560,7 +654,8 @@ public class Transformer {
 	public void createLinkedVariableGraph() throws Exception {
 		Graph<OwlService, Connector> prototype = this.graph;
 		Graph<OwlService, Connector> graph = new SparseMultigraph<OwlService, Connector>();
-		//HashMap<OwlService, OwlService> map = new HashMap<OwlService, OwlService>();
+		// HashMap<OwlService, OwlService> map = new HashMap<OwlService,
+		// OwlService>();
 		graph = prototype;
 		// detect variable
 		// ArrayList<OwlService> servicesToCheckForVariables = new
@@ -584,11 +679,11 @@ public class Transformer {
 		}
 
 		// For each input find only one output that can be linked to it.
-		
+
 		for (OwlService in : Inputs) {
 			OwlService sameVariable = Matcher.getSameVariableInstances(in, Outputs);
 
-			if (sameVariable!= null) {
+			if (sameVariable != null) {
 				OwlService source = sameVariable;
 				OwlService target = in;
 
@@ -911,15 +1006,26 @@ public class Transformer {
 				}
 			}
 		}
-		if (targetConnector != null) {
-			graph.removeEdge(targetConnector);
-			dummyService.setContent(targetOperation);
-			dummyService.lock();
-			graph.addEdge(new Connector((OwlService) targetConnector.getSource(), dummyService, ""),
-					(OwlService) targetConnector.getSource(), dummyService, EdgeType.DIRECTED);
-			graph.addEdge(new Connector(dummyService, (OwlService) targetConnector.getTarget(), ""), dummyService,
-					(OwlService) targetConnector.getTarget(), EdgeType.DIRECTED);
-			return dummyService;
+		if (targetOperation != null) {
+			int matched = 0;
+			for (Argument out : targetOperation.getOutputs()) {
+				for (Argument in : ((OwlService) targetConnector.getTarget()).getOperation().getInputs()) {
+					if (Matcher.hasSame(out, in)) {
+						matched++;
+					}
+				}
+			}
+			if (targetConnector != null && ((OwlService) targetConnector.getTarget()).getOperation().getInputs().size()
+					- matched > targetOperation.getInputs().size()) {
+				graph.removeEdge(targetConnector);
+				dummyService.setContent(targetOperation);
+				dummyService.lock();
+				graph.addEdge(new Connector((OwlService) targetConnector.getSource(), dummyService, ""),
+						(OwlService) targetConnector.getSource(), dummyService, EdgeType.DIRECTED);
+				graph.addEdge(new Connector(dummyService, (OwlService) targetConnector.getTarget(), ""), dummyService,
+						(OwlService) targetConnector.getTarget(), EdgeType.DIRECTED);
+				return dummyService;
+			}
 		}
 		return null;
 	}

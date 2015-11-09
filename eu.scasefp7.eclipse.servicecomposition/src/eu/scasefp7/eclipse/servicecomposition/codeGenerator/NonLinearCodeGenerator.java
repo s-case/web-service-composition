@@ -36,7 +36,16 @@ import edu.uci.ics.jung.graph.util.EdgeType;
  *            : an instance of <code>FunctionCodeName</code> to generate
  *            individual service calls
  */
-public class NonLinearCodeGenerator<FunctionCodeNodeType extends FunctionCodeNode> extends CodeGenerator {
+public class NonLinearCodeGenerator extends CodeGenerator {
+	
+	// initialize variable lists
+	public ArrayList<OwlService> inputVariables = new ArrayList<OwlService>();
+	public ArrayList<OwlService> outputVariables = new ArrayList<OwlService>();
+	public ArrayList<OwlService> subOutputVariables = new ArrayList<OwlService>();
+	public ArrayList<OwlService> matchedIO = new ArrayList<OwlService>();
+	public ArrayList<OwlService> matchedInputs = new ArrayList<OwlService>();
+	public ArrayList<OwlService> matchedOutputs = new ArrayList<OwlService>();
+	public ArrayList<Argument> uriParameters = new ArrayList<Argument>();
 
 	// Graph<OwlService, Connector> graph = new SparseMultigraph<OwlService,
 	// Connector>();
@@ -73,72 +82,14 @@ public class NonLinearCodeGenerator<FunctionCodeNodeType extends FunctionCodeNod
 		for (OwlService service : graph.getVertices()) {
 			for (OwlService service2 : graph.getVertices()) {
 				if (service.getName().getContent().toString()
-						.equalsIgnoreCase(service2.getName().getContent().toString())
-						&& !service.equals(service2) && service.getName().getContent().toString() != "") {
+						.equalsIgnoreCase(service2.getName().getContent().toString()) && !service.equals(service2)
+						&& service.getName().getContent().toString() != "") {
 					service2.getName().setContent(service.getName().getContent().toString() + service2.getId());
 				}
 			}
 		}
 
-		for (OwlService service : graph.getVertices()) {
-			Operation op = service.getOperation();
-			if (op != null) {
-
-				// for (Argument arg : op.getOutputs()) {
-				// outputs.add(arg);
-				// if (!allVariables.contains(arg))
-				// allVariables.add(arg);
-
-				// if ((!service.getOperation().getDomain().isLocal())) {
-				// if (!allWSDLVariables.contains(arg) &&
-				// !allPythonVariables.contains(arg)) {
-				// allWSDLVariables.add(arg);
-				// }
-				// } else {
-				// if (!allPythonVariables.contains(arg) &&
-				// !allWSDLVariables.contains(arg)) {
-				// allPythonVariables.add(arg);
-				// }
-				// }
-				// for (Argument sub : arg.getSubtypes()) {
-				// outputs.add(sub);
-				// if (!allVariables.contains(arg))
-				// allVariables.add(sub);
-
-				// if ((!service.getOperation().getDomain().isLocal())) {
-				// if (!allWSDLVariables.contains(sub) &&
-				// !allPythonVariables.contains(sub)) {
-				// allWSDLVariables.add(sub);
-				// }
-				// } else {
-				// if (!allPythonVariables.contains(sub) &&
-				// !allWSDLVariables.contains(sub)) {
-				// allPythonVariables.add(sub);
-				// }
-				// // }
-				// }
-				//
-				// }
-
-				// for (Argument arg : op.getInputs()) {
-				//
-				// if (!allVariables.contains(arg))
-				// allVariables.add(arg);
-
-				// if ((!service.getOperation().getDomain().isLocal())) {
-				// if (!allWSDLVariables.contains(arg) &&
-				// !allPythonVariables.contains(arg)) {
-				// allWSDLVariables.add(arg);
-				// }
-				// } else {
-				// if (!allPythonVariables.contains(arg) &&
-				// !allWSDLVariables.contains(arg)) {
-				// allPythonVariables.add(arg);
-				// }
-				// }
-				// }
-			}
-		}
+		
 		for (OwlService service : graph.getVertices()) {
 			if (service.getType().equalsIgnoreCase("Property")) {
 
@@ -187,16 +138,8 @@ public class NonLinearCodeGenerator<FunctionCodeNodeType extends FunctionCodeNod
 			}
 
 		}
-		// assert correct subtypes (for debugging purposes)
-		// for(Argument arg : allVariables)
-		// arg.assertCorrectSubtypes();
-		// initialize variable lists
-		ArrayList<OwlService> inputVariables = new ArrayList<OwlService>();
-		ArrayList<OwlService> outputVariables = new ArrayList<OwlService>();
-		ArrayList<OwlService> subOutputVariables = new ArrayList<OwlService>();
-		ArrayList<OwlService> matchedIO = new ArrayList<OwlService>();
-		ArrayList<OwlService> matchedInputs = new ArrayList<OwlService>();
-		ArrayList<OwlService> matchedOutputs = new ArrayList<OwlService>();
+		
+		
 		// detect all operations
 		ArrayList<OwlService> remainingOperations = new ArrayList<OwlService>();
 		for (OwlService service : graph.getVertices()) {
@@ -221,19 +164,8 @@ public class NonLinearCodeGenerator<FunctionCodeNodeType extends FunctionCodeNod
 				break;
 			}
 		}
-		// detect output variables
-		// for (OwlService service : graph.getVertices()) {
-		// if (service.getOperation() != null)
-		// for (Argument arg : service.getOperation().getOutputs()) {
-		// if (!outputVariables.contains(arg))
-		// outputVariables.add(arg);
-		// for (Argument sub : arg.getSubtypes()) {
-		// if (!subOutputVariables.contains(sub))
-		// subOutputVariables.add(sub);
-		// }
-		// }
-		// }
-
+		
+		//detect output variables
 		for (OwlService service : graph.getVertices()) {
 			if (service.getArgument() != null) {
 				if (graph.getOutEdges(service).size() == 0) {
@@ -280,11 +212,7 @@ public class NonLinearCodeGenerator<FunctionCodeNodeType extends FunctionCodeNod
 			}
 		}
 
-		// for (OwlService service : graph.getVertices()) {
-		// if (service.getOperation() != null)
-		// for (Argument arg : service.getOperation().getInputs())
-		// outputVariables.remove(arg);
-		// }
+		
 		// detect input variables
 		for (OwlService service : graph.getVertices()) {
 			if (service.getArgument() != null) {
@@ -295,40 +223,92 @@ public class NonLinearCodeGenerator<FunctionCodeNodeType extends FunctionCodeNod
 				}
 			}
 		}
+		
+		//detect uri parameters
+		for (OwlService service : graph.getVertices()) {
+			if (service.getOperation() != null) {
+				for (Argument param :service.getOperation().getUriParameters()){
+					uriParameters.add(param);
+				}
+			}
+		}
 		// generate function code for all services
 		String functionCode = "";
+		// create variable declarations
+		String declaredVariables = "";
+		boolean wsdlServiceExists = false;
+		boolean restServiceExists = false;
 		for (OwlService service : graph.getVertices()) {
 			if (service.getArgument() == null) {
-				CodeNode code = FunctionCodeNodeType.createInstance(service, this);
-				code.applyTab();
-				functionCode += code.createFunctionCode(graph, allVariables);
+				
+				if (service.getOperation() != null) {
+					if (service.getOperation().getType().equalsIgnoreCase("RESTful")) {
+						CodeNode code = RestFunctionCodeNode.createInstance(service, this);
+						code.applyTab();
+						functionCode += code.createFunctionCode(graph, allVariables);
+						for (Argument arg : service.getOperation().getUriParameters()) {
+							declaredVariables += TAB + "private Variable " + arg.getName().getContent().toString()
+									+ " = new Variable(\"" + arg.getName().getContent().replaceAll("[0123456789]", "")
+									+ "\",\"\", \""+arg.getType()+"\");\n";
+						}
+						restServiceExists = true;
+					} else if (service.getOperation().getType().equalsIgnoreCase("SOAP")|| service.getOperation().getDomain().isLocal()) {
+						CodeNode code = FunctionCodeNode.createInstance(service, this);
+						code.applyTab();
+						functionCode += code.createFunctionCode(graph, allVariables);
+						wsdlServiceExists = true;
+					}
+				} else {
+					CodeNode code = FunctionCodeNode.createInstance(service, this);
+					code.applyTab();
+					functionCode += code.createFunctionCode(graph, allVariables);
+				}
+
 			}
 		}
 		// create class name
 		String createdClassName = functionName.substring(0, 1).toUpperCase() + functionName.substring(1) + "Class";
-		// create variable declarations
-		String declaredVariables = "";
+		
 
-//		for (OwlService service : allWSDLVariables) {
-//			if (service.getArgument().getSubtypes().isEmpty()) {
-//				declaredVariables += TAB + "private " + service.getArgument().getType() + " "
-//						+ service.getName().getContent().toString() + ";\n";
-//			}
-			// else {
-			// declaredVariables += TAB + "private " + arg.getType() +
-			// arg.getName().toString() + " = new "
-			// + arg.getType() + "();\n";
-			// }
-//		}
+		// for (OwlService service : allWSDLVariables) {
+		// if (service.getArgument().getSubtypes().isEmpty()) {
+		// declaredVariables += TAB + "private " +
+		// service.getArgument().getType() + " "
+		// + service.getName().getContent().toString() + ";\n";
+		// }
+		// else {
+		// declaredVariables += TAB + "private " + arg.getType() +
+		// arg.getName().toString() + " = new "
+		// + arg.getType() + "();\n";
+		// }
+		// }
 
 		for (OwlService service : allVariables) {
 			// if(arg.isNative() || inputVariables.contains(arg))
+			if (service.getArgument().getSubtypes().isEmpty()&& !service.getArgument().isArray()){
 			declaredVariables += TAB + "private Variable " + service.getName().getContent().toString()
-					+ " = new Variable(\"" + service.getName().getContent().replaceAll("[0123456789]", "") + "\",\"\");\n";
+					+ " = new Variable(\"" + service.getName().getContent().replaceAll("[0123456789]", "")
+					+ "\",\"\", \""+service.getArgument().getType()+"\");\n";
+			}else if(service.getArgument().getSubtypes().isEmpty() && service.getArgument().isArray()){
+				declaredVariables += TAB + "private Variable " + service.getName().getContent().toString()
+						+ " = new Variable(\"" + service.getName().getContent().replaceAll("[0123456789]", "")
+						+ "\",\"\", \"array\");\n";
+			}else if(!service.getArgument().getSubtypes().isEmpty() && service.getArgument().isArray()){
+				declaredVariables += TAB + "private Variable " + service.getName().getContent().toString()
+						+ " = new Variable(\"" + service.getName().getContent().replaceAll("[0123456789]", "")
+						+ "\",\"\", \"arrayOfObjects\");\n";
+			}else{
+				declaredVariables += TAB + "private Variable " + service.getName().getContent().toString()
+						+ " = new Variable(\"" + service.getName().getContent().replaceAll("[0123456789]", "")
+						+ "\",\"\", \"object\");\n";
+			}
 			// else
 			// declaredVariables +=
 			// TAB+"private "+arg.toString()+" = new "+arg.getType()+"();\n";
 		}
+		
+		
+		
 		if (!declaredVariables.isEmpty())
 			declaredVariables = TAB + "//variables\n" + declaredVariables;
 		// create class constructor (assigns to variable declarations)
@@ -342,61 +322,84 @@ public class NonLinearCodeGenerator<FunctionCodeNodeType extends FunctionCodeNod
 				declaredInputs += input.getArgument().getType() + " " + input.getName().getContent();
 			}
 		}
+		for (Argument param: uriParameters){
+			if (!declaredInputs.isEmpty())
+				declaredInputs += ", ";
+			if (param.getType() == "") {
+				declaredInputs += "String " + param.getName().getContent();
+			} else {
+				declaredInputs += param.getType() + " " + param.getName().getContent();
+			}
+		}
 
 		// create result class instance
 		String resultClassName = "void";
 		String resultClassDeclaration = "";
 		String resultObjectDeclaration = "";
-		ArrayList<OwlService> resultVariables=new ArrayList<OwlService>();
+		ArrayList<OwlService> resultVariables = new ArrayList<OwlService>();
 		if (outputVariables.size() == 1 && subOutputVariables.size() == 0) {
 			resultClassName = outputVariables.get(0).getArgument().getType();
 			resultObjectDeclaration = TAB + TAB + "return " + outputVariables.get(0).getName().getContent() + ";";
 		} else if (!outputVariables.isEmpty()) {
-			//String resultObjectName = functionName.substring(0, 1).toLowerCase() + functionName.substring(1) + "Result";
-			String resultObjectName ="response";
-			//resultClassName = functionName.substring(0, 1).toUpperCase() + functionName.substring(1) + "Result";
-			resultClassName="Response";
-			//resultClassDeclaration = TAB + "public class " + resultClassName + "{\n";
-			resultClassDeclaration =TAB+"@XmlRootElement(name = \"Response\")\n"+ TAB+"public static class " + resultClassName + "{\n";
+			// String resultObjectName = functionName.substring(0,
+			// 1).toLowerCase() + functionName.substring(1) + "Result";
+			String resultObjectName = "response";
+			// resultClassName = functionName.substring(0, 1).toUpperCase() +
+			// functionName.substring(1) + "Result";
+			resultClassName = "Response";
+			// resultClassDeclaration = TAB + "public class " + resultClassName
+			// + "{\n";
+			resultClassDeclaration = TAB + "@XmlRootElement(name = \"Response\")\n" + TAB + "public static class "
+					+ resultClassName + "{\n";
 			for (OwlService arg : outputVariables) {
 				if (arg.getArgument().getSubtypes().isEmpty()) {
-					//if (arg.getArgument().getType() == "") {
-						resultClassDeclaration += TAB+TAB+"private String " + arg.getName().getContent().replaceAll("[0123456789]", "") + ";\n";
-						if (!resultVariables.contains(arg)){
+					// if (arg.getArgument().getType() == "") {
+					resultClassDeclaration += TAB + TAB + "private String "
+							+ arg.getName().getContent() + ";\n";
+					if (!resultVariables.contains(arg)) {
 						resultVariables.add(arg);
-						}
-//					} else {
-//						resultClassDeclaration += TAB + TAB + arg.getArgument().getType() + " "
-//								+ arg.getName().getContent().toString() + ";\n";
-//					}
+					}
+					// } else {
+					// resultClassDeclaration += TAB + TAB +
+					// arg.getArgument().getType() + " "
+					// + arg.getName().getContent().toString() + ";\n";
+					// }
 				}
 			}
 			for (OwlService arg : subOutputVariables) {
-				//if (arg.getArgument().getType().isEmpty()) {
-					resultClassDeclaration += TAB+TAB+"private String " + arg.getName().getContent().replaceAll("[0123456789]", "") + ";\n";
-					if (!resultVariables.contains(arg)){
-						resultVariables.add(arg);
-						}
-//				} else {
-//					resultClassDeclaration += TAB + TAB + arg.getArgument().getType() + " "
-//							+ arg.getName().getContent().toString() + ";\n";
-//				}
+				// if (arg.getArgument().getType().isEmpty()) {
+				resultClassDeclaration += TAB + TAB + "private String "
+						+ arg.getName().getContent() + ";\n";
+				if (!resultVariables.contains(arg)) {
+					resultVariables.add(arg);
+				}
+				// } else {
+				// resultClassDeclaration += TAB + TAB +
+				// arg.getArgument().getType() + " "
+				// + arg.getName().getContent().toString() + ";\n";
+				// }
 			}
-			resultClassDeclaration+="\n\n";
-			
-			resultClassDeclaration+=TAB+TAB+"public Response() {\n";
+			resultClassDeclaration += "\n\n";
+
+			resultClassDeclaration += TAB + TAB + "public Response() {\n";
 			for (OwlService arg : resultVariables) {
-				resultClassDeclaration+=TAB+TAB+TAB+"this."+arg.getName().getContent().replaceAll("[0123456789]", "")+" = \"\";\n";
+				resultClassDeclaration += TAB + TAB + TAB + "this."
+						+ arg.getName().getContent() + " = \"\";\n";
 			}
-			
-			resultClassDeclaration+=TAB+TAB+"}\n\n";
-			
-			
+
+			resultClassDeclaration += TAB + TAB + "}\n\n";
+
 			for (OwlService arg : resultVariables) {
-				resultClassDeclaration+=TAB+ TAB+ "public void set"+arg.getName().getContent().replaceAll("[0123456789]", "")+"(String "+arg.getName().getContent().replaceAll("[0123456789]", "")+") {\n"+TAB+TAB+TAB+"this."+arg.getName().getContent().replaceAll("[0123456789]", "")+" = "+arg.getName().getContent().replaceAll("[0123456789]", "")+";\n"+TAB+TAB+"}\n";
-				resultClassDeclaration+=TAB+TAB+"@XmlElement\n"+TAB+TAB+"public String get"+arg.getName().getContent().replaceAll("[0123456789]", "")+"() {\n"+TAB+TAB+TAB+"return "+arg.getName().getContent().replaceAll("[0123456789]", "")+";\n"+TAB+TAB+"}\n";
+				resultClassDeclaration += TAB + TAB + "public void set"
+						+ arg.getName().getContent() + "(String "
+						+ arg.getName().getContent().replaceAll("[0123456789]", "") + ") {\n" + TAB + TAB + TAB
+						+ "this." + arg.getName().getContent() + " = "
+						+ arg.getName().getContent().replaceAll("[0123456789]", "") + ";\n" + TAB + TAB + "}\n";
+				resultClassDeclaration += TAB + TAB + "@XmlElement\n" + TAB + TAB + "public String get"
+						+ arg.getName().getContent() + "() {\n" + TAB + TAB + TAB
+						+ "return " + arg.getName().getContent() + ";\n" + TAB + TAB
+						+ "}\n";
 			}
-		
 
 			resultClassDeclaration += TAB + "}\n\n";
 
@@ -404,8 +407,9 @@ public class NonLinearCodeGenerator<FunctionCodeNodeType extends FunctionCodeNod
 			resultObjectDeclaration += TAB + TAB + resultClassName + " " + resultObjectName + " = new "
 					+ resultClassName + "();\n";
 			for (OwlService arg : resultVariables) {
-				if (arg.getArgument().getSubtypes().isEmpty()){
-					resultObjectDeclaration += TAB + TAB + resultObjectName + ".set" + arg.getName().getContent().replaceAll("[0123456789]", "") + "("
+				if (arg.getArgument().getSubtypes().isEmpty()) {
+					resultObjectDeclaration += TAB + TAB + resultObjectName + ".set"
+							+ arg.getName().getContent().replaceAll("[0123456789]", "") + "("
 							+ arg.getName().getContent() + ".value);\n";
 				}
 			}
@@ -413,30 +417,34 @@ public class NonLinearCodeGenerator<FunctionCodeNodeType extends FunctionCodeNod
 			resultObjectDeclaration += TAB + TAB + "return " + resultObjectName + ";\n";
 		}
 		// create result class declaration
-		declaredInputs = TAB + "public " + resultClassName + " " + "xmlResponse" + "(" + declaredInputs
+		declaredInputs = TAB + "public " + resultClassName + " " + "parseResponse" + "(" + declaredInputs
 				+ ") throws Exception{\n";
 		declaredInputs += TAB + TAB + "//assign inputs to variables\n";
 		for (OwlService arg : inputVariables) {
-			
-				declaredInputs += TAB + TAB + "this." + arg.getName().getContent() + ".value" + " = "
-						+ arg.getName().getContent() + ";\n";		
+
+			declaredInputs += TAB + TAB + "this." + arg.getName().getContent() + ".value" + " = "
+					+ arg.getName().getContent() + ";\n";
 		}
-		
-		//Generate Response class of RESTful web service
-		String responseClass=TAB+"@XmlRootElement(name = \"Response\")\n"+ TAB+"public class Response {\n";
+		declaredInputs += TAB + TAB + "//assign uri parameters to variables\n";
+		for (Argument param:uriParameters){
+			declaredInputs += TAB + TAB + "this." + param.getName().getContent() + ".value" + " = "
+					+ param.getName().getContent() + ";\n";
+		}
+
+		// Generate Response class of RESTful web service
+		String responseClass = TAB + "@XmlRootElement(name = \"Response\")\n" + TAB + "public class Response {\n";
 		for (OwlService arg : resultVariables) {
-		responseClass+=TAB+TAB+"private String " + arg.getName().getContent().replaceAll("[0123456789]", "") + ";\n";
-			}
-		
-		responseClass+=TAB+"}\n";
-		
-		
-		
+			responseClass += TAB + TAB + "private String " + arg.getName().getContent().replaceAll("[0123456789]", "")
+					+ ";\n";
+		}
+
+		responseClass += TAB + "}\n";
+
 		// Variable class declaration
 		String variableClassDeclaration = TAB + "public class Variable{\n";
-		variableClassDeclaration += TAB + TAB + "public String name;\n" + TAB + TAB + "public String value;\n" + TAB
-				+ TAB + "Variable(String name,String value){\n";
-		variableClassDeclaration += TAB + TAB + TAB + "this.name = name;\n" + TAB + TAB + TAB + "this.value = value;\n";
+		variableClassDeclaration += TAB + TAB + "public String name;\n" + TAB + TAB + "public String value;\n"  + TAB + TAB + "public String type;\n" + TAB
+				+ TAB + "public ArrayList<Variable> subtypes=new ArrayList<Variable>();\n" + TAB +TAB + "Variable(String name, String value, String type){\n";
+		variableClassDeclaration += TAB + TAB + TAB + "this.name = name;\n" + TAB + TAB + TAB + "this.value = value;\n"+ TAB + TAB + TAB + "this.type = type;\n";
 		variableClassDeclaration += TAB + TAB + "}\n" + TAB + "}\n";
 
 		// call all services
@@ -457,10 +465,10 @@ public class NonLinearCodeGenerator<FunctionCodeNodeType extends FunctionCodeNod
 		// }
 		for (OwlService matchedOutput : matchedOutputs) {
 			for (OwlService matchedInput : graph.getSuccessors(matchedOutput)) {
-				
-					declaredInputs += TAB + TAB + TAB + matchedInput.getName().getContent().toString() + ".value = "
-							+ matchedOutput.getName().getContent().toString() + ".value;\n";
-				
+
+				declaredInputs += TAB + TAB + TAB + matchedInput.getName().getContent().toString() + ".value = "
+						+ matchedOutput.getName().getContent().toString() + ".value;\n";
+
 			}
 		}
 		declaredInputs += TAB + TAB + TAB + "}\n";
@@ -477,35 +485,49 @@ public class NonLinearCodeGenerator<FunctionCodeNodeType extends FunctionCodeNod
 			}
 		functionCode += TAB + TAB + "return null;\n" + TAB + "}\n";
 
-		String parsedWSDLMap = "private HashMap<String, ParsedWSDLDefinition> parsedWSMap = new HashMap<String, ParsedWSDLDefinition> ();\n\n";
-		parsedWSDLMap += TAB + "WSOperation domainOperation(String operationName, String operationURI){\n";
-		parsedWSDLMap += TAB + TAB + "//get domain\n";
-		parsedWSDLMap += TAB + TAB + "ParsedWSDLDefinition parsedWS = parsedWSMap.get(operationURI);\n";
-		parsedWSDLMap += TAB + TAB + "if(parsedWS==null){\n";
-		parsedWSDLMap += TAB + TAB + TAB + "parsedWS = ITIWSDLParser.parseWSDLwithAxis(operationURI, true, true);\n";
-		parsedWSDLMap += TAB + TAB + TAB + "parsedWSMap.put(operationURI, parsedWS);\n";
-		parsedWSDLMap += TAB + TAB + "}\n";
-		parsedWSDLMap += TAB + TAB + "//find WSOperation\n";
-		parsedWSDLMap += TAB + TAB + "WSOperation wsOperation = null;\n";
-		parsedWSDLMap += TAB + TAB + "for(Object op : parsedWS.getWsdlOperations())\n";
-		parsedWSDLMap += TAB + TAB + TAB
-				+ "if(((WSOperation) op).getOperationName().equalsIgnoreCase(operationName)){\n";
-		parsedWSDLMap += TAB + TAB + TAB + "wsOperation = (WSOperation) op;\n";
-		parsedWSDLMap += TAB + TAB + TAB + "break;\n";
-		parsedWSDLMap += TAB + TAB + "}\n";
-		parsedWSDLMap += TAB + TAB + "return wsOperation;\n";
-		parsedWSDLMap += TAB + "}\n";
+//		String parsedWSDLMap = "";
+//		if (wsdlServiceExists) {
+//			parsedWSDLMap = "private HashMap<String, ParsedWSDLDefinition> parsedWSMap = new HashMap<String, ParsedWSDLDefinition> ();\n\n";
+//			parsedWSDLMap += TAB + "WSOperation domainOperation(String operationName, String operationURI){\n";
+//			parsedWSDLMap += TAB + TAB + "//get domain\n";
+//			parsedWSDLMap += TAB + TAB + "ParsedWSDLDefinition parsedWS = parsedWSMap.get(operationURI);\n";
+//			parsedWSDLMap += TAB + TAB + "if(parsedWS==null){\n";
+//			parsedWSDLMap += TAB + TAB + TAB
+//					+ "parsedWS = ITIWSDLParser.parseWSDLwithAxis(operationURI, true, true);\n";
+//			parsedWSDLMap += TAB + TAB + TAB + "parsedWSMap.put(operationURI, parsedWS);\n";
+//			parsedWSDLMap += TAB + TAB + "}\n";
+//			parsedWSDLMap += TAB + TAB + "//find WSOperation\n";
+//			parsedWSDLMap += TAB + TAB + "WSOperation wsOperation = null;\n";
+//			parsedWSDLMap += TAB + TAB + "for(Object op : parsedWS.getWsdlOperations())\n";
+//			parsedWSDLMap += TAB + TAB + TAB
+//					+ "if(((WSOperation) op).getOperationName().equalsIgnoreCase(operationName)){\n";
+//			parsedWSDLMap += TAB + TAB + TAB + "wsOperation = (WSOperation) op;\n";
+//			parsedWSDLMap += TAB + TAB + TAB + "break;\n";
+//			parsedWSDLMap += TAB + TAB + "}\n";
+//			parsedWSDLMap += TAB + TAB + "return wsOperation;\n";
+//			parsedWSDLMap += TAB + "}\n";
+//		}
 
-		String xmlFromStringMethod = "public static Document loadXMLFromString(String xml) throws Exception{\n";
-		xmlFromStringMethod += TAB + "DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();\n" + TAB
-				+ "DocumentBuilder db = null;\n" + TAB + "db = dbf.newDocumentBuilder();\n" + TAB
-				+ "InputSource is = new InputSource();\n" + TAB + "is.setCharacterStream(new StringReader(xml));\n"
-				+ TAB + "Document doc = db.parse(is);\n" + TAB + "return doc;\n";
-		
-		xmlFromStringMethod += "}\n";
+//		String xmlFromStringMethod = "";
+//		if (wsdlServiceExists) {
+//			xmlFromStringMethod = "public static Document loadXMLFromString(String xml) throws Exception{\n";
+//			xmlFromStringMethod += TAB + "DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();\n" + TAB
+//					+ "DocumentBuilder db = null;\n" + TAB + "db = dbf.newDocumentBuilder();\n" + TAB
+//					+ "InputSource is = new InputSource();\n" + TAB + "is.setCharacterStream(new StringReader(xml));\n"
+//					+ TAB + "Document doc = db.parse(is);\n" + TAB + "return doc;\n";
+//
+//			xmlFromStringMethod += "}\n";
+//		}
 		// return code
-		return FunctionCodeNodeType.generateImports() + "\npublic class " + createdClassName + "{\n" + TAB
-				+ parsedWSDLMap +xmlFromStringMethod + "\n" + resultClassDeclaration + variableClassDeclaration + declaredVariables + "\n"
-				+ functionCode + declaredInputs + resultObjectDeclaration + TAB + "}\n}";
+		String returnCode = "";
+		returnCode = FunctionCodeNode.generateImports(restServiceExists, wsdlServiceExists) + "\npublic class "
+				+ createdClassName + "{\n" + TAB;
+//		if (wsdlServiceExists) {
+//			returnCode += parsedWSDLMap+xmlFromStringMethod+ "\n";
+//		}
+		returnCode += declaredVariables
+				+ "\n" +resultClassDeclaration + variableClassDeclaration +  functionCode + declaredInputs + resultObjectDeclaration + TAB + "}\n}";
+
+		return returnCode;
 	}
 }
