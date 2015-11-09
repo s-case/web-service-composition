@@ -11,6 +11,7 @@ import eu.scasefp7.eclipse.servicecomposition.operation.ipr.Description;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
+import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -81,7 +82,7 @@ public class Matcher {
 		Bundle bundle = Platform.getBundle(Activator.PLUGIN_ID);
 		try {
 			URL fileURL = bundle.getEntry("matcher.properties");
-			InputStream inputStream = new FileInputStream(new File(FileLocator.resolve(fileURL).toURI()));
+			InputStream inputStream = new FileInputStream(new File(new URI(FileLocator.resolve(fileURL).toString().replaceAll(" ", "%20"))));
 			prop.load(inputStream);
 			NAME_SIMILARITY_WEIGHT = Double.parseDouble(prop.getProperty("matcher.NAME_SIMILARITY_WEIGHT"));
 			OUTPUT_TO_INPUT_WEIGHT = Double.parseDouble(prop.getProperty("matcher.OUTPUT_TO_INPUT_WEIGHT"));
