@@ -14,6 +14,7 @@ import eu.scasefp7.eclipse.servicecomposition.transformer.JungXMItoOwlTransform.
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
+import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -179,7 +180,7 @@ public class Transformer {
 		Bundle bundle = Platform.getBundle(Activator.PLUGIN_ID);
 		try {
 			URL fileURL = bundle.getEntry(propFileName);
-			InputStream inputStream = new FileInputStream(new File(FileLocator.resolve(fileURL).toURI()));
+			InputStream inputStream = new FileInputStream(new File(new URI(FileLocator.resolve(fileURL).toString().replaceAll(" ", "%20"))));
 			prop.load(inputStream);
 			REPLACE_NAME_SIMILARITY_THRESHOLD = Double
 					.parseDouble(prop.getProperty("transformer.REPLACE_NAME_SIMILARITY_THRESHOLD"));
