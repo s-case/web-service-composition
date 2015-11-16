@@ -180,7 +180,9 @@ public class Transformer {
 		Bundle bundle = Platform.getBundle(Activator.PLUGIN_ID);
 		try {
 			URL fileURL = bundle.getEntry(propFileName);
-			InputStream inputStream = new FileInputStream(new File(new URI(FileLocator.resolve(fileURL).toString().replaceAll(" ", "%20"))));
+			//InputStream inputStream = new FileInputStream(new File(new URI(FileLocator.resolve(fileURL).toString().replaceAll(" ", "%20"))));
+			URL url = new URL("platform:/plugin/" +Activator.PLUGIN_ID+"/matcher.properties");
+			InputStream inputStream = url.openConnection().getInputStream();
 			prop.load(inputStream);
 			REPLACE_NAME_SIMILARITY_THRESHOLD = Double
 					.parseDouble(prop.getProperty("transformer.REPLACE_NAME_SIMILARITY_THRESHOLD"));
@@ -363,48 +365,7 @@ public class Transformer {
 			for (Argument arg : op.getOutputs()) {
 				addOutputs(arg, service, op);
 			}
-			// for (Argument arg : op.getOutputs()) {
-			// OwlService argument = new OwlService(arg);
-			//
-			// for (OwlService owlService : services) {
-			// if
-			// (owlService.getName().getContent().equals(argument.getName().getContent()))
-			// {
-			// if (owlService.getId() >= argument.getId()) {
-			// argument.setId(owlService.getId() + 1);
-			// }
-			// }
-			//
-			// }
-			//
-			// graph.addVertex(argument);
-			// graph.addEdge(new Connector(service, argument, ""), service,
-			// argument, EdgeType.DIRECTED);
-			// arg.getParent().remove(op);
-			// arg.getParent().add(op);
-			//
-			// for (Argument sub : arg.getSubtypes()) {
-			// OwlService subtype = new OwlService(sub);
-			//
-			// for (OwlService owlService : services) {
-			// if
-			// (owlService.getName().getContent().equals(subtype.getName().getContent()))
-			// {
-			// if (owlService.getId() >= subtype.getId()) {
-			// subtype.setId(owlService.getId() + 1);
-			// }
-			// }
-			//
-			// }
-			//
-			// graph.addVertex(subtype);
-			// graph.addEdge(new Connector(argument, subtype, ""), argument,
-			// subtype, EdgeType.DIRECTED);
-			// sub.getParent().remove(op);
-			// sub.getParent().add(op);
-			//
-			// }
-			// }
+			
 		}
 
 	}
@@ -1007,7 +968,7 @@ public class Transformer {
 				}
 			}
 		}
-		if (targetOperation != null) {
+		if (targetOperation != null && ((OwlService) targetConnector.getTarget()).getOperation()!=null) {
 			int matched = 0;
 			for (Argument out : targetOperation.getOutputs()) {
 				for (Argument in : ((OwlService) targetConnector.getTarget()).getOperation().getInputs()) {
