@@ -82,7 +82,9 @@ public class Matcher {
 		Bundle bundle = Platform.getBundle(Activator.PLUGIN_ID);
 		try {
 			URL fileURL = bundle.getEntry("matcher.properties");
-			InputStream inputStream = new FileInputStream(new File(new URI(FileLocator.resolve(fileURL).toString().replaceAll(" ", "%20"))));
+			//InputStream inputStream = new FileInputStream(new File(new URI(FileLocator.resolve(fileURL).toString().replaceAll(" ", "%20"))));
+			URL url = new URL("platform:/plugin/" +Activator.PLUGIN_ID+"/matcher.properties");
+			InputStream inputStream = url.openConnection().getInputStream();
 			prop.load(inputStream);
 			NAME_SIMILARITY_WEIGHT = Double.parseDouble(prop.getProperty("matcher.NAME_SIMILARITY_WEIGHT"));
 			OUTPUT_TO_INPUT_WEIGHT = Double.parseDouble(prop.getProperty("matcher.OUTPUT_TO_INPUT_WEIGHT"));
