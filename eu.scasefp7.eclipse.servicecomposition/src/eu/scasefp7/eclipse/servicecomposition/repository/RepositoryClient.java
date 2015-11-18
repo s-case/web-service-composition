@@ -30,7 +30,9 @@ import org.eclipse.core.resources.ResourcesPlugin;
 
 public class RepositoryClient {
 	private String apiKey = "1cfae05f-9e67-486f-820b-b393dec5764b";
-	private String url = "http://repo.scasefp7.com:8080";
+	private String url = "http://109.231.126.165:8080";
+//	private String apiKey = "1cfae05f-9e67-486f-820b-b393dec5764b";
+//	private String url = "http://repo.scasefp7.com:8080";
 
 //	public String sendGetRequest(String endpoint, String requestParameters) {
 //		String result = "";
@@ -118,6 +120,7 @@ public class RepositoryClient {
 					.Get(url + "/ontologies/" + text + "/download?apikey="
 							+ apiKey).connectTimeout(100000)
 					.socketTimeout(100000).execute().returnContent().asStream();
+			
 
 			OutputStream outputStream = null;
 			File file = new File(path + "/" + text + ".owl");
