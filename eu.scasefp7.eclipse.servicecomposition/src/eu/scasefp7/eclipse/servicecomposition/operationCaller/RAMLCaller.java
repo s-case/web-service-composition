@@ -79,11 +79,16 @@ public class RAMLCaller {
 			// inputList = "?";
 			Value val = null;
 			for (Argument input : inputs) {
-				if (!inputList.isEmpty())
-					inputList += "&";
-				val = (Value) input;
-				if (!(val.getValue().isEmpty() && !input.isRequired())) {
-					inputList += input.getName().toString() + "=" + val.getValue();
+				if (!inputList.isEmpty()) {
+					val = (Value) input;
+					if (!(val.getValue().isEmpty() && !input.isRequired())) {
+						inputList += "&"+ input.getName().toString() + "=" + val.getValue();
+					}
+				} else {
+					val = (Value) input;
+					if (!(val.getValue().isEmpty() && !input.isRequired())) {
+						inputList += input.getName().toString() + "=" + val.getValue();
+					}
 				}
 			}
 		}
@@ -103,9 +108,15 @@ public class RAMLCaller {
 				HttpURLConnection conn = (HttpURLConnection) url.openConnection();
 				conn.setRequestMethod(ramlOperation.getDomain().getCrudVerb());
 				conn.setRequestProperty("Accept", "application/json");
-//				Base64 b = new Base64();
-//				String encoding = b.encodeAsString(new String("scase:project").getBytes());
-//				conn.setRequestProperty("Authorization", "Basic " + encoding);
+				if (ramlOperation.getDomain().getSecurityScheme() != null){
+				if (ramlOperation.getDomain().getSecurityScheme().equalsIgnoreCase("Basic Authentication")) {
+					Base64 b = new Base64();
+					String username = ((Value) ramlOperation.getAuthenticationParameters().get(0)).getValue();
+					String password = ((Value) ramlOperation.getAuthenticationParameters().get(1)).getValue();
+					String encoding = b.encodeAsString(new String(username + ":" + password).getBytes());
+					conn.setRequestProperty("Authorization", "Basic " + encoding);
+				}
+				}
 
 				if (conn.getResponseCode() != 200) {
 					throw new RuntimeException("Failed : HTTP error code : " + conn.getResponseCode());

@@ -30,7 +30,7 @@ public abstract class CodeGenerator {
 	 *             if an error has occurred
 	 */
 	public abstract String generateCode(Graph<OwlService, Connector> graph, String functionName,
-			boolean addConnectionsToGraph) throws Exception;
+			boolean addConnectionsToGraph, String ProjectName) throws Exception;
 
 	// the tab character
 	protected static String TAB = "   ";

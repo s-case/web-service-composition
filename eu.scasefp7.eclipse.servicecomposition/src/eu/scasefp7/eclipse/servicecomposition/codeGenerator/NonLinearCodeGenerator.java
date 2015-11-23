@@ -4,6 +4,7 @@ import eu.scasefp7.eclipse.servicecomposition.importer.Importer.Argument;
 import eu.scasefp7.eclipse.servicecomposition.importer.Importer.Operation;
 import eu.scasefp7.eclipse.servicecomposition.importer.JungXMIImporter.Connector;
 import eu.scasefp7.eclipse.servicecomposition.importer.JungXMIImporter.Service;
+import eu.scasefp7.eclipse.servicecomposition.operationCaller.RAMLCaller;
 import eu.scasefp7.eclipse.servicecomposition.transformer.PathFinding;
 import eu.scasefp7.eclipse.servicecomposition.transformer.JungXMItoOwlTransform.OwlService;
 
@@ -39,20 +40,25 @@ import edu.uci.ics.jung.graph.util.EdgeType;
 public class NonLinearCodeGenerator extends CodeGenerator {
 	
 	// initialize variable lists
-	public ArrayList<OwlService> inputVariables = new ArrayList<OwlService>();
-	public ArrayList<OwlService> outputVariables = new ArrayList<OwlService>();
-	public ArrayList<OwlService> subOutputVariables = new ArrayList<OwlService>();
-	public ArrayList<OwlService> matchedIO = new ArrayList<OwlService>();
-	public ArrayList<OwlService> matchedInputs = new ArrayList<OwlService>();
-	public ArrayList<OwlService> matchedOutputs = new ArrayList<OwlService>();
-	public ArrayList<Argument> uriParameters = new ArrayList<Argument>();
+	protected ArrayList<OwlService> inputVariables = new ArrayList<OwlService>();
+	protected ArrayList<OwlService> outputVariables = new ArrayList<OwlService>();
+	protected ArrayList<OwlService> subOutputVariables = new ArrayList<OwlService>();
+	protected ArrayList<OwlService> matchedIO = new ArrayList<OwlService>();
+	protected ArrayList<OwlService> matchedInputs = new ArrayList<OwlService>();
+	protected ArrayList<OwlService> matchedOutputs = new ArrayList<OwlService>();
+	protected ArrayList<Argument> uriParameters = new ArrayList<Argument>();
+	
+	protected ConnectToMDEOntology instance= new ConnectToMDEOntology();
+	protected MDEOperation operation;
+	
+	String[] datatypes = new String[] { "string", "long", "int", "float", "double", "dateTime", "boolean" };
 
 	// Graph<OwlService, Connector> graph = new SparseMultigraph<OwlService,
 	// Connector>();
 	HashMap<OwlService, OwlService> map = new HashMap<OwlService, OwlService>();
 
 	public String generateCode(final Graph<OwlService, Connector> jungGraph, String functionName,
-			boolean addConnectionsToGraph) throws Exception {
+			boolean addConnectionsToGraph, String ProjectName) throws Exception {
 
 		Graph<OwlService, Connector> graph = new SparseMultigraph<OwlService, Connector>();
 
@@ -77,7 +83,7 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 		ArrayList<OwlService> allVariables = new ArrayList<OwlService>();
 		ArrayList<OwlService> allWSDLVariables = new ArrayList<OwlService>();
 		ArrayList<OwlService> allPythonVariables = new ArrayList<OwlService>();
-		ArrayList<Argument> outputs = new ArrayList<Argument>();
+		
 
 		for (OwlService service : graph.getVertices()) {
 			for (OwlService service2 : graph.getVertices()) {
@@ -270,18 +276,6 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 		String createdClassName = functionName.substring(0, 1).toUpperCase() + functionName.substring(1) + "Class";
 		
 
-		// for (OwlService service : allWSDLVariables) {
-		// if (service.getArgument().getSubtypes().isEmpty()) {
-		// declaredVariables += TAB + "private " +
-		// service.getArgument().getType() + " "
-		// + service.getName().getContent().toString() + ";\n";
-		// }
-		// else {
-		// declaredVariables += TAB + "private " + arg.getType() +
-		// arg.getName().toString() + " = new "
-		// + arg.getType() + "();\n";
-		// }
-		// }
 
 		for (OwlService service : allVariables) {
 			// if(arg.isNative() || inputVariables.contains(arg))
@@ -364,7 +358,20 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 					// arg.getArgument().getType() + " "
 					// + arg.getName().getContent().toString() + ";\n";
 					// }
+				}else if (arg.getArgument().isArray()&& RAMLCaller.stringContainsItemFromList(arg.getArgument().getType(), datatypes)){
+					resultClassDeclaration += TAB + TAB + "private ArrayList <String> "
+							+ arg.getName().getContent() + ";\n";
+					if (!resultVariables.contains(arg)) {
+						resultVariables.add(arg);
+					}
+				}else if (arg.getArgument().isArray()&& !RAMLCaller.stringContainsItemFromList(arg.getArgument().getType(), datatypes)){
+					resultClassDeclaration += TAB + TAB + "private ArrayList <" + arg.getArgument().getType() + "> "
+							+ arg.getName().getContent() + ";\n";
+					if (!resultVariables.contains(arg)) {
+						resultVariables.add(arg);
+					}
 				}
+					
 			}
 			for (OwlService arg : subOutputVariables) {
 				// if (arg.getArgument().getType().isEmpty()) {
@@ -485,39 +492,7 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 			}
 		functionCode += TAB + TAB + "return null;\n" + TAB + "}\n";
 
-//		String parsedWSDLMap = "";
-//		if (wsdlServiceExists) {
-//			parsedWSDLMap = "private HashMap<String, ParsedWSDLDefinition> parsedWSMap = new HashMap<String, ParsedWSDLDefinition> ();\n\n";
-//			parsedWSDLMap += TAB + "WSOperation domainOperation(String operationName, String operationURI){\n";
-//			parsedWSDLMap += TAB + TAB + "//get domain\n";
-//			parsedWSDLMap += TAB + TAB + "ParsedWSDLDefinition parsedWS = parsedWSMap.get(operationURI);\n";
-//			parsedWSDLMap += TAB + TAB + "if(parsedWS==null){\n";
-//			parsedWSDLMap += TAB + TAB + TAB
-//					+ "parsedWS = ITIWSDLParser.parseWSDLwithAxis(operationURI, true, true);\n";
-//			parsedWSDLMap += TAB + TAB + TAB + "parsedWSMap.put(operationURI, parsedWS);\n";
-//			parsedWSDLMap += TAB + TAB + "}\n";
-//			parsedWSDLMap += TAB + TAB + "//find WSOperation\n";
-//			parsedWSDLMap += TAB + TAB + "WSOperation wsOperation = null;\n";
-//			parsedWSDLMap += TAB + TAB + "for(Object op : parsedWS.getWsdlOperations())\n";
-//			parsedWSDLMap += TAB + TAB + TAB
-//					+ "if(((WSOperation) op).getOperationName().equalsIgnoreCase(operationName)){\n";
-//			parsedWSDLMap += TAB + TAB + TAB + "wsOperation = (WSOperation) op;\n";
-//			parsedWSDLMap += TAB + TAB + TAB + "break;\n";
-//			parsedWSDLMap += TAB + TAB + "}\n";
-//			parsedWSDLMap += TAB + TAB + "return wsOperation;\n";
-//			parsedWSDLMap += TAB + "}\n";
-//		}
 
-//		String xmlFromStringMethod = "";
-//		if (wsdlServiceExists) {
-//			xmlFromStringMethod = "public static Document loadXMLFromString(String xml) throws Exception{\n";
-//			xmlFromStringMethod += TAB + "DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();\n" + TAB
-//					+ "DocumentBuilder db = null;\n" + TAB + "db = dbf.newDocumentBuilder();\n" + TAB
-//					+ "InputSource is = new InputSource();\n" + TAB + "is.setCharacterStream(new StringReader(xml));\n"
-//					+ TAB + "Document doc = db.parse(is);\n" + TAB + "return doc;\n";
-//
-//			xmlFromStringMethod += "}\n";
-//		}
 		// return code
 		String returnCode = "";
 		returnCode = FunctionCodeNode.generateImports(restServiceExists, wsdlServiceExists) + "\npublic class "
@@ -528,6 +503,23 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 		returnCode += declaredVariables
 				+ "\n" +resultClassDeclaration + variableClassDeclaration +  functionCode + declaredInputs + resultObjectDeclaration + TAB + "}\n}";
 
+		
+		operation=instance.createObjects(ProjectName, inputVariables, uriParameters, resultVariables);
+		
 		return returnCode;
+	}
+	
+	public MDEOperation getOperation(){
+		return this.operation;
+	}
+	
+	public ArrayList<OwlService> getInputVariables(){
+		return this.inputVariables;
+	}
+	public ArrayList<OwlService> getOutputVariables(){
+		return this.outputVariables;
+	}
+	public ArrayList<Argument> geturiParameters(){
+		return this.uriParameters;
 	}
 }

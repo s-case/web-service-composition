@@ -339,7 +339,7 @@ public class Algorithm {
 		System.out.print("Importing operations... ");
 		ArrayList<Importer.Operation> operations = new ArrayList<Importer.Operation>();
 		if (!owlPath.isEmpty())
-			operations.addAll(OwlImporter.importOwl(owlPath, true, true));
+			operations.addAll(OwlImporter.importOwl(owlPath, true, false));
 		System.out.print("Done (" + operations.size() + " operations)\nImporting python operations... ");
 
 		return operations;

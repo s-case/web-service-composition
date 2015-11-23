@@ -55,6 +55,7 @@ public abstract class Importer {
 	protected static ObjectProperty hasOutput;
 	protected static DatatypeProperty hasURIParameters;
 	protected static DatatypeProperty hasCRUDVerb;
+	protected static DatatypeProperty hasSecurityScheme;
 	protected static ObjectProperty hasType;
 	protected static DatatypeProperty isPrototype;
 	protected static DatatypeProperty isArray;
@@ -73,6 +74,7 @@ public abstract class Importer {
 		private boolean local;
 		private String resourcePath;
 		private String crudVerb;
+		private String securityScheme;
 
 		ApplicationDomain(Individual ind) {
 			this(ind.getURI());
@@ -100,17 +102,21 @@ public abstract class Importer {
 			}
 		}
 
-		public ApplicationDomain(String uri,String resourcePath, String crudVerb, String type) {
+		public ApplicationDomain(String uri, String resourcePath, String crudVerb, String securityScheme, String type) {
 			this.uri = uri;
-			if (!resourcePath.isEmpty()){
-				this.resourcePath=resourcePath;
+			if (!resourcePath.isEmpty()) {
+				this.resourcePath = resourcePath;
 			}
-			if (!crudVerb.isEmpty()){
-				this.crudVerb=crudVerb;
+			if (!crudVerb.isEmpty()) {
+				this.crudVerb = crudVerb;
+			}
+			if (!securityScheme.isEmpty()) {
+				this.securityScheme = securityScheme;
 			}
 			if (uri.contains("script")) {
 				name = uri.substring(uri.lastIndexOf("/") + 1, uri.lastIndexOf("."));
-			} else if (uri.contains("localhost") || uri.contains("160.40.50.176") || type.equalsIgnoreCase("RESTful") || (uri.lastIndexOf("/") + 1<uri.lastIndexOf("."))) {
+			} else if (uri.contains("localhost") || uri.contains("160.40.50.176") || type.equalsIgnoreCase("RESTful")
+					|| (uri.lastIndexOf("/") + 1 < uri.lastIndexOf("."))) {
 				name = "";
 			} else {
 				name = uri.substring(uri.lastIndexOf("/") + 1, uri.lastIndexOf("."));
@@ -131,11 +137,15 @@ public abstract class Importer {
 		public String getCrudVerb() {
 			return crudVerb;
 		}
-		
+
+		public String getSecurityScheme() {
+			return securityScheme;
+		}
+
 		public String getURI() {
 			return uri;
 		}
-		
+
 		public String getResourcePath() {
 			return resourcePath;
 		}
@@ -285,6 +295,7 @@ public abstract class Importer {
 		protected ArrayList<Argument> outputs = new ArrayList<Argument>();
 		protected ArrayList<Argument> inputs = new ArrayList<Argument>();
 		protected ArrayList<Argument> uriParameters = new ArrayList<Argument>();
+		protected ArrayList<Argument> authenticationParameters = new ArrayList<Argument>();
 		protected ArrayList<Operation> realOperations = new ArrayList<Operation>();
 		protected ServiceAccessInfoForUsers accessInfo = new ServiceAccessInfoForUsers();
 		protected OwlMetadata metadata = null;
@@ -298,8 +309,8 @@ public abstract class Importer {
 		}
 
 		/**
-		 * Generates an operation from its Jena Individual (does NOT load
-		 * real operations)
+		 * Generates an operation from its Jena Individual (does NOT load real
+		 * operations)
 		 * 
 		 * @param ind
 		 * @param domainList
@@ -310,35 +321,34 @@ public abstract class Importer {
 		Operation(Individual ind) throws Exception {
 			// load basic properties
 			name = new ComparableName(ind.getPropertyValue(hasName).asLiteral().getString());
-//			if (ind.getPropertyValue(hasServiceDomain) != null) {
-//				Resource r1 = ind.getPropertyResourceValue(hasServiceDomain);
-//
-//				Individual hasServiceDomainInd = (Individual) ontologyModel.getIndividual(r1.getURI());
-//				domain=new ApplicationDomain(hasServiceDomainInd);
-//			}else{
-//				domain = null;
-//			}
+			
 			// SOAP or RESTful
 			if (ind.getPropertyValue(belongsToWSType) != null) {
 				type = ind.getPropertyValue(belongsToWSType).asLiteral().getString();
 			}
-			String resourcePath="";
+			String resourcePath = "";
 			if (ind.getPropertyValue(hasResourcePath) != null) {
 				resourcePath = ind.getPropertyValue(hasResourcePath).asLiteral().getString();
 			}
-			
-			String crudVerb="";
+
+			String crudVerb = "";
 			if (ind.getPropertyValue(hasCRUDVerb) != null) {
 				crudVerb = ind.getPropertyValue(hasCRUDVerb).asLiteral().getString();
 			}
-			
+
+			String securityScheme = "";
+			if (ind.getPropertyValue(hasSecurityScheme) != null) {
+				securityScheme = ind.getPropertyValue(hasSecurityScheme).asLiteral().getString();
+			}
+
 			if (ind.getPropertyValue(belongsToURL) != null) {
 				String domainName = ind.getPropertyValue(belongsToURL).asLiteral().getString();
 				domain = domainList.get(domainName);
 				if (!domainName.isEmpty() && domain == null) {
 					// throw new
 					// Exception("Domain "+domainName+" has not been declared");
-					domainList.put(domainName, domain = new ApplicationDomain(domainName,resourcePath,crudVerb, type));
+					domainList.put(domainName,
+							domain = new ApplicationDomain(domainName, resourcePath, crudVerb, securityScheme, type));
 				}
 			} else
 				domain = null;
@@ -351,13 +361,16 @@ public abstract class Importer {
 			loadWSIO(ind, hasInput, inputs);
 			// load outputs
 			loadWSIO(ind, hasOutput, outputs);
-			//load uri Parameters
+			// load uri Parameters
 			loadWSURI(ind, hasURIParameters, uriParameters);
-			loadIPR(ind,1);
+			// load authentication Parameters
+			loadWSAuth(ind, hasSecurityScheme, authenticationParameters);
+			// load Cost, License Parameters
+			loadIPR(ind, 1);
 			// load implementations
 		}
 
-		private void loadIPR(Individual ind,int indicator) {
+		private void loadIPR(Individual ind, int indicator) {
 
 			// get Solution individual
 			try {
@@ -375,24 +388,23 @@ public abstract class Importer {
 				ObjectProperty hasCommercialCostSchema = ontologyModel
 						.getObjectProperty(NS + "hasCommercialCostSchema");
 				DatatypeProperty hasCommercialCost = ontologyModel.getDatatypeProperty(NS + "hasCommecrialCost");
-				DatatypeProperty hasCommercialCostCurrency = ontologyModel.getDatatypeProperty(NS
-						+ "hasCommercialCostCurrency");
-				DatatypeProperty hasCostPaymentChargeType = ontologyModel.getDatatypeProperty(NS
-						+ "hasCostPaymentChargeType");
+				DatatypeProperty hasCommercialCostCurrency = ontologyModel
+						.getDatatypeProperty(NS + "hasCommercialCostCurrency");
+				DatatypeProperty hasCostPaymentChargeType = ontologyModel
+						.getDatatypeProperty(NS + "hasCostPaymentChargeType");
 				ObjectProperty hasTrialSchema = ontologyModel.getObjectProperty(NS + "hasTrialSchema");
 				DatatypeProperty hasDurationInDays = ontologyModel.getDatatypeProperty(NS + "hasDurationInDays");
-				DatatypeProperty hasLimitedFunctionalityDescription = ontologyModel.getDatatypeProperty(NS
-						+ "hasLimitedFunctionalityDescription");
+				DatatypeProperty hasLimitedFunctionalityDescription = ontologyModel
+						.getDatatypeProperty(NS + "hasLimitedFunctionalityDescription");
 				DatatypeProperty hasDurationInUsages = ontologyModel.getDatatypeProperty(NS + "hasDurationInUsages");
-				DatatypeProperty offersFullFunctionalityDuringTrial = ontologyModel.getDatatypeProperty(NS
-						+ "offersFullFunctionalityDuringTrial");
-				ObjectProperty hasDiscountIfUsedWithOtherSolution = ontologyModel.getObjectProperty(NS
-						+ "hasDiscountIfUsedWithOtherSolution");
+				DatatypeProperty offersFullFunctionalityDuringTrial = ontologyModel
+						.getDatatypeProperty(NS + "offersFullFunctionalityDuringTrial");
+				ObjectProperty hasDiscountIfUsedWithOtherSolution = ontologyModel
+						.getObjectProperty(NS + "hasDiscountIfUsedWithOtherSolution");
 				DatatypeProperty hasDiscount = ontologyModel.getDatatypeProperty(NS + "hasDiscount");
 				DatatypeProperty hasDiscountReason = ontologyModel.getDatatypeProperty(NS + "hasDiscountReason");
 				DatatypeProperty hasPairedService = ontologyModel.getDatatypeProperty(NS + "hasPairedService");
 				DatatypeProperty isValidForCountries = ontologyModel.getDatatypeProperty(NS + "isValidForCountries");
-				
 
 				if (ind.getPropertyResourceValue(hasServiceAccessInfo) != null) {
 					Resource r1 = ind.getPropertyResourceValue(hasServiceAccessInfo);
@@ -400,44 +412,38 @@ public abstract class Importer {
 					Individual hasServiceAccessInfoInd = (Individual) ontologyModel.getIndividual(r1.getURI());
 
 					if (hasServiceAccessInfoInd.getPropertyValue(isValidForCountries) != null) {
-						
-						NodeIterator it = hasServiceAccessInfoInd
-								.listPropertyValues(isValidForCountries);
+
+						NodeIterator it = hasServiceAccessInfoInd.listPropertyValues(isValidForCountries);
 
 						List<Country> isValidForCountriesList = new ArrayList<Country>();
-						
 
 						while (it.hasNext()) {
-							Literal l=it.next().asLiteral();
-							String lang=l.getLanguage();
+							Literal l = it.next().asLiteral();
+							String lang = l.getLanguage();
 							String country = l.getValue().toString();
-							Country isValidForCountriesSchema=new Country(country,lang);
+							Country isValidForCountriesSchema = new Country(country, lang);
 							isValidForCountriesList.add(isValidForCountriesSchema);
 						}
-						
+
 						accessInfo.setValidForCountries(isValidForCountriesList);
 					}
-					
+
 					if (hasServiceAccessInfoInd.getPropertyValue(hasDescription) != null) {
-						
-						NodeIterator it = hasServiceAccessInfoInd
-								.listPropertyValues(hasDescription);
+
+						NodeIterator it = hasServiceAccessInfoInd.listPropertyValues(hasDescription);
 
 						List<Description> isValidForCountriesList = new ArrayList<Description>();
-						
 
 						while (it.hasNext()) {
-							Literal l=it.next().asLiteral();
-							String lang=l.getLanguage();
+							Literal l = it.next().asLiteral();
+							String lang = l.getLanguage();
 							String description = l.getValue().toString();
-							Description isValidForCountriesSchema=new Description(description,lang);
+							Description isValidForCountriesSchema = new Description(description, lang);
 							isValidForCountriesList.add(isValidForCountriesSchema);
 						}
-						
+
 						accessInfo.setDescription(isValidForCountriesList);
 					}
-						
-						
 
 					// load license
 
@@ -447,8 +453,8 @@ public abstract class Importer {
 						ServiceLicense license = new ServiceLicense();
 
 						if (licenseInd.getPropertyValue(hasLicenseDescription) != null) {
-							license.setLicenseDescription(licenseInd.getPropertyValue(hasLicenseDescription)
-									.asLiteral().getString());
+							license.setLicenseDescription(
+									licenseInd.getPropertyValue(hasLicenseDescription).asLiteral().getString());
 						}
 
 						if (licenseInd.getPropertyValue(hasLicenseName) != null) {
@@ -465,13 +471,12 @@ public abstract class Importer {
 					// load commercial cost schema
 					if (hasServiceAccessInfoInd.getPropertyResourceValue(hasCommercialCostSchema) != null) {
 						Resource r2 = hasServiceAccessInfoInd.getPropertyResourceValue(hasCommercialCostSchema);
-						Individual commercialCostSchemaInd = (Individual) ontologyModel.getIndividual(r2
-								.getURI());
+						Individual commercialCostSchemaInd = (Individual) ontologyModel.getIndividual(r2.getURI());
 						CommercialCostSchema commercialCostSchema = new CommercialCostSchema();
 
 						if (commercialCostSchemaInd.getPropertyValue(hasCommercialCost) != null) {
-							commercialCostSchema.setCommercialCost(commercialCostSchemaInd
-									.getPropertyValue(hasCommercialCost).asLiteral().getFloat());
+							commercialCostSchema.setCommercialCost(
+									commercialCostSchemaInd.getPropertyValue(hasCommercialCost).asLiteral().getFloat());
 						}
 
 						if (commercialCostSchemaInd.getPropertyValue(hasCommercialCostCurrency) != null) {
@@ -491,8 +496,8 @@ public abstract class Importer {
 							ServiceTrialSchema trialSchema = new ServiceTrialSchema();
 
 							if (trialSchemaInd.getPropertyValue(hasDurationInDays) != null) {
-								trialSchema.setDurationInDays(trialSchemaInd.getPropertyValue(hasDurationInDays)
-										.asLiteral().getInt());
+								trialSchema.setDurationInDays(
+										trialSchemaInd.getPropertyValue(hasDurationInDays).asLiteral().getInt());
 							}
 
 							if (trialSchemaInd.getPropertyValue(hasLimitedFunctionalityDescription) != null) {
@@ -501,24 +506,24 @@ public abstract class Importer {
 							}
 
 							if (trialSchemaInd.getPropertyValue(hasDurationInUsages) != null) {
-								trialSchema.setDurationInUsages(trialSchemaInd.getPropertyValue(hasDurationInUsages)
-										.asLiteral().getInt());
+								trialSchema.setDurationInUsages(
+										trialSchemaInd.getPropertyValue(hasDurationInUsages).asLiteral().getInt());
 							}
 
 							if (trialSchemaInd.getPropertyValue(offersFullFunctionalityDuringTrial) != null) {
 								try {
 									// TODO does not return the right
 									// property value
-									trialSchema.setOffersFullFunctionalityDuringTrial(trialSchemaInd
-											.getPropertyValue(offersFullFunctionalityDuringTrial).asLiteral()
-											.getBoolean());
+									trialSchema.setOffersFullFunctionalityDuringTrial(
+											trialSchemaInd.getPropertyValue(offersFullFunctionalityDuringTrial)
+													.asLiteral().getBoolean());
 								} catch (Exception ex) {
 									// ex.printStackTrace();
 								}
 							}
 							commercialCostSchema.setTrialSchema(trialSchema);
-						}else{
-							//Set trial period unlimited
+						} else {
+							// Set trial period unlimited
 							ServiceTrialSchema trialSchema = new ServiceTrialSchema();
 							trialSchema.setDurationInDays(Integer.MAX_VALUE);
 							trialSchema.setDurationInUsages(Integer.MAX_VALUE);
@@ -526,7 +531,8 @@ public abstract class Importer {
 						}
 						// load discount solutions
 
-						if (commercialCostSchemaInd.getPropertyResourceValue(hasDiscountIfUsedWithOtherSolution) != null) {
+						if (commercialCostSchemaInd
+								.getPropertyResourceValue(hasDiscountIfUsedWithOtherSolution) != null) {
 
 							NodeIterator it2 = commercialCostSchemaInd
 									.listPropertyValues(hasDiscountIfUsedWithOtherSolution);
@@ -536,13 +542,12 @@ public abstract class Importer {
 							while (it2.hasNext()) {
 								Resource r = it2.next().asResource();
 								// System.out.println(r.getURI());
-								Individual discountSchemasInd = (Individual) ontologyModel.getIndividual(r
-										.getURI());
+								Individual discountSchemasInd = (Individual) ontologyModel.getIndividual(r.getURI());
 								DiscountSchema discountSchema = new DiscountSchema();
 
 								if (discountSchemasInd.getPropertyValue(hasDiscount) != null) {
-									discountSchema.setDiscount(discountSchemasInd.getPropertyValue(hasDiscount)
-											.asLiteral().getInt());
+									discountSchema.setDiscount(
+											discountSchemasInd.getPropertyValue(hasDiscount).asLiteral().getInt());
 								}
 
 								if (discountSchemasInd.getPropertyValue(hasDiscountReason) != null) {
@@ -554,57 +559,67 @@ public abstract class Importer {
 									NodeIterator it3 = discountSchemasInd.listPropertyValues(hasPairedService);
 
 									Resource r3 = it3.next().asResource();
-									
+
 									Individual PairedServiceSchemasInd = (Individual) ontologyModel
 											.getIndividual(r3.getURI());
 									Operation pairedServiceSchema = new Operation();
-									WSOperation test=new WSOperation();
+									WSOperation test = new WSOperation();
 
 									if (PairedServiceSchemasInd.getPropertyValue(hasName) != null) {
-										pairedServiceSchema.name=new ComparableName(PairedServiceSchemasInd
+										pairedServiceSchema.name = new ComparableName(PairedServiceSchemasInd
 												.getPropertyValue(hasName).asLiteral().getString());
 
 									}
 									if (PairedServiceSchemasInd.getPropertyValue(hasInput) != null) {
-										pairedServiceSchema.loadWSIO(PairedServiceSchemasInd, hasInput, pairedServiceSchema.inputs);
+										pairedServiceSchema.loadWSIO(PairedServiceSchemasInd, hasInput,
+												pairedServiceSchema.inputs);
 									}
 									if (PairedServiceSchemasInd.getPropertyValue(hasURIParameters) != null) {
-										pairedServiceSchema.loadWSURI(PairedServiceSchemasInd, hasURIParameters, pairedServiceSchema.uriParameters);
+										pairedServiceSchema.loadWSURI(PairedServiceSchemasInd, hasURIParameters,
+												pairedServiceSchema.uriParameters);
+									}
+									if (PairedServiceSchemasInd.getPropertyValue(hasSecurityScheme) != null) {
+										pairedServiceSchema.loadWSAuth(PairedServiceSchemasInd, hasSecurityScheme,
+												pairedServiceSchema.authenticationParameters);
 									}
 									if (PairedServiceSchemasInd.getPropertyValue(hasOutput) != null) {
-										pairedServiceSchema.loadWSIO(PairedServiceSchemasInd, hasOutput, pairedServiceSchema.outputs);
+										pairedServiceSchema.loadWSIO(PairedServiceSchemasInd, hasOutput,
+												pairedServiceSchema.outputs);
 									}
 									if (PairedServiceSchemasInd.getPropertyValue(hasServiceDomain) != null) {
-										Resource r4 = PairedServiceSchemasInd.getPropertyResourceValue(hasServiceDomain);
+										Resource r4 = PairedServiceSchemasInd
+												.getPropertyResourceValue(hasServiceDomain);
 
-										Individual hasServiceDomainInd = (Individual) ontologyModel.getIndividual(r4.getURI());
-										pairedServiceSchema.domain=new ApplicationDomain(hasServiceDomainInd);
-									}else{
+										Individual hasServiceDomainInd = (Individual) ontologyModel
+												.getIndividual(r4.getURI());
+										pairedServiceSchema.domain = new ApplicationDomain(hasServiceDomainInd);
+									} else {
 										pairedServiceSchema.domain = null;
 									}
-									
+
 									pairedServiceSchema.metadata = new OwlMetadata(PairedServiceSchemasInd);
-									
-									if (indicator<2){
-										pairedServiceSchema.loadIPR(PairedServiceSchemasInd,indicator+1);
-								}
-									
+
+									if (indicator < 2) {
+										pairedServiceSchema.loadIPR(PairedServiceSchemasInd, indicator + 1);
+									}
+
 									if (PairedServiceSchemasInd.getPropertyValue(Importer.isPrototype) != null)
-										pairedServiceSchema.isPrototype = !PairedServiceSchemasInd.getPropertyValue(Importer.isPrototype).asLiteral().getString().equals("false");
-									
+										pairedServiceSchema.isPrototype = !PairedServiceSchemasInd
+												.getPropertyValue(Importer.isPrototype).asLiteral().getString()
+												.equals("false");
+
 									discountSchema.setPairedService(pairedServiceSchema);
 
 								}
 								discountSchemaList.add(discountSchema);
-
 
 							}
 							commercialCostSchema.setDiscountIfUsedWithOtherService(discountSchemaList);
 						}
 
 						accessInfo.setCommercialCostSchema(commercialCostSchema);
-					}else{
-						//Set trial period unlimited
+					} else {
+						// Set trial period unlimited
 						ServiceTrialSchema trialSchema = new ServiceTrialSchema();
 						trialSchema.setDurationInDays(Integer.MAX_VALUE);
 						trialSchema.setDurationInUsages(Integer.MAX_VALUE);
@@ -654,6 +669,7 @@ public abstract class Importer {
 			outputs.clear();
 			inputs.clear();
 			uriParameters.clear();
+			authenticationParameters.clear();
 			realOperations.clear();
 		}
 
@@ -676,6 +692,7 @@ public abstract class Importer {
 			outputs.addAll(prototype.outputs);
 			inputs.addAll(prototype.inputs);
 			uriParameters.addAll(prototype.uriParameters);
+			authenticationParameters.addAll(prototype.authenticationParameters);
 			realOperations.addAll(prototype.realOperations);
 		}
 
@@ -698,27 +715,44 @@ public abstract class Importer {
 					Individual ioInd = (Individual) ontologyModel.getIndividual(r.getURI());
 					// check if ioInd is primitive
 					if (ioInd.getPropertyResourceValue(hasType) != null) {
-						Individual typeInd = (Individual) ontologyModel.getIndividual(ioInd
-								.getPropertyResourceValue(hasType).getURI());
+						Individual typeInd = (Individual) ontologyModel
+								.getIndividual(ioInd.getPropertyResourceValue(hasType).getURI());
 						vec.add(new Argument(this, typeInd, ioInd));
 					}
 				}
 			}
 		}
-		
+
 		private void loadWSURI(Individual operInd, DatatypeProperty prop, ArrayList<Argument> vec) {
 			// List<String> primitiveDataTypes=getAllPrimitiveDataTypes();
-			if (operInd.getPropertyResourceValue(prop) != null) {
+			if (operInd.getPropertyValue(prop) != null) {
 				NodeIterator it = operInd.listPropertyValues(prop);
 				while (it.hasNext()) {
-					Literal l=it.next().asLiteral();
-					String name= l.getValue().toString();
-					String type= "String";
-					vec.add(new Argument(name, type, false, false, null));
-					}
+					Literal l = it.next().asLiteral();
+					String name = l.getValue().toString();
+					String type = "String";
+					Argument arg = new Argument(name, type, false, false, null);
+					arg.setBelongsToOperation(this);
+					vec.add(arg);
 				}
 			}
-		
+		}
+
+		private void loadWSAuth(Individual operInd, DatatypeProperty prop, ArrayList<Argument> vec) {
+			String securityScheme = "";
+			if (operInd.getPropertyValue(prop) != null) {
+				securityScheme = operInd.getPropertyValue(prop).asLiteral().getString();
+				getDomain().securityScheme=securityScheme;
+			}
+			if (securityScheme.equalsIgnoreCase("Basic Authentication")) {
+				Argument username = new Argument("Username", "String", false, false, null);
+				username.setBelongsToOperation(this);
+				vec.add(username);
+				Argument password = new Argument("Password", "String", false, false, null);
+				password.setBelongsToOperation(this);
+				vec.add(password);
+			}
+		}
 
 		/**
 		 * <h1>getName</h1>
@@ -764,9 +798,13 @@ public abstract class Importer {
 		public ArrayList<Argument> getOutputs() {
 			return outputs;
 		}
-		
+
 		public ArrayList<Argument> getUriParameters() {
 			return uriParameters;
+		}
+
+		public ArrayList<Argument> getAuthenticationParameters() {
+			return authenticationParameters;
 		}
 
 		/**
@@ -801,6 +839,8 @@ public abstract class Importer {
 				op.inputs.addAll(inputs);
 			if (op.uriParameters.isEmpty())
 				op.uriParameters.addAll(uriParameters);
+			if (op.authenticationParameters.isEmpty())
+				op.authenticationParameters.addAll(authenticationParameters);
 			if (op.outputs.isEmpty())
 				op.outputs.addAll(outputs);
 		}
@@ -813,10 +853,12 @@ public abstract class Importer {
 		public ArrayList<Operation> getRealOperations() {
 			return realOperations;
 		}
-		
+
 		/**
 		 * <h1>getAccessInfo()</h1>
-		 * @return accessInfo : all the access information of the service (cost, license etc.)
+		 * 
+		 * @return accessInfo : all the access information of the service (cost,
+		 *         license etc.)
 		 */
 		public ServiceAccessInfoForUsers getAccessInfo() {
 			return accessInfo;
@@ -855,11 +897,11 @@ public abstract class Importer {
 				ret += domain + ": ";
 			if (isPrototype)
 				ret += "prototype: ";
-			ret += outs + " " + name + "(" + ins + ")"+ "'";
+			ret += outs + " " + name + "(" + ins + ")" + "'";
 			if (!accessInfo.getDescription().isEmpty())
 				ret += " description: " + accessInfo.getDescription().get(0).getDescription();
-//			if (getMetadata() != null && !getMetadata().toString().isEmpty())
-//				ret += "\n" + getMetadata().toString();
+			// if (getMetadata() != null && !getMetadata().toString().isEmpty())
+			// ret += "\n" + getMetadata().toString();
 			for (Operation op : realOperations)
 				ret += "\n   - " + op.toString();
 			return ret;
@@ -903,8 +945,9 @@ public abstract class Importer {
 		// operation is called
 		private ArrayList<Value> elements = new ArrayList<Value>();
 		private ArrayList<Object> parent = new ArrayList<Object>();
-		private OwlService belongsToOwlService=null;
-		private boolean isRequired=true;
+		private OwlService belongsToOwlService = null;
+		private Operation belongsToOperation;
+		private boolean isRequired = true;
 
 		/**
 		 * Generates an argument by its attribute.
@@ -956,13 +999,16 @@ public abstract class Importer {
 					type = ioInd.getPropertyValue(hasName).asLiteral().getString().trim();
 				}
 				isNative = false;
+				
 				operation.loadWSIO(ioInd, hasType, subtypes);
 			}
-//			if (ioInd.getPropertyValue(Importer.isRequired) != null) {
-//				this.isRequired = ioInd.getPropertyValue(Importer.isRequired).asLiteral().getBoolean();
-//			}
+			
+			belongsToOperation = operation;
+			
 			if (ioInd.getPropertyValue(Importer.isArray) != null)
 				this.isArray = !ioInd.getPropertyValue(Importer.isArray).asLiteral().getString().equals("false");
+			if (ioInd.getPropertyValue(Importer.isRequired) != null)
+				this.isRequired = ioInd.getPropertyValue(Importer.isRequired).asLiteral().getBoolean();
 			for (Argument sub : this.subtypes)
 				sub.parent.add(this);
 		}
@@ -981,13 +1027,14 @@ public abstract class Importer {
 			isNative = prototype.isNative;
 			isArray = prototype.isArray;
 			isRequired = prototype.isRequired;
-			for (Argument sub:prototype.getSubtypes()){
-				Argument arg=new Argument(sub);
+			for (Argument sub : prototype.getSubtypes()) {
+				Argument arg = new Argument(sub);
 				subtypes.add(arg);
 			}
-			//subtypes = prototype.subtypes;
+			// subtypes = prototype.subtypes;
 			parent.addAll(prototype.parent);
 			belongsToOwlService = prototype.belongsToOwlService;
+			belongsToOperation = prototype.belongsToOperation;
 		}
 
 		/**
@@ -1023,6 +1070,7 @@ public abstract class Importer {
 		public boolean isArray() {
 			return isArray;
 		}
+
 		/**
 		 * <h1>isRequired</h1>
 		 * 
@@ -1030,6 +1078,10 @@ public abstract class Importer {
 		 */
 		public boolean isRequired() {
 			return isRequired;
+		}
+		
+		public void setIsRequired(boolean isRequired){
+			this.isRequired = isRequired;
 		}
 
 		/**
@@ -1053,11 +1105,19 @@ public abstract class Importer {
 		public ArrayList<Value> getElements() {
 			return elements;
 		}
-		
+
 		public OwlService getOwlService() {
 			return belongsToOwlService;
 		}
 		
+		public Operation getBelongsToOperation(){
+			return belongsToOperation;
+		}
+		
+		public void setBelongsToOperation(Operation operation){
+			this.belongsToOperation= operation;
+		}
+
 		public void setOwlService(OwlService service) {
 			this.belongsToOwlService = service;
 		}
@@ -1122,9 +1182,8 @@ public abstract class Importer {
 		public void assertCorrectSubtypes() throws Exception {
 			/*
 			 * for(Argument sub : getSubtypes()){ if(sub.getParent()!=this)
-			 * throw new
-			 * Exception("Subtype "+getName()+"."+sub.getName()+" has parent "
-			 * +sub.getParent()); }
+			 * throw new Exception("Subtype "+getName()+"."+sub.getName()+
+			 * " has parent " +sub.getParent()); }
 			 */
 			for (int i = 0; i < subtypes.size(); i++) {
 				for (int j = 0; j < subtypes.size(); j++)
