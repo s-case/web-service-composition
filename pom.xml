@@ -45,7 +45,7 @@
 		<repository>
 			<id>s-case-dev</id>
 			<layout>p2</layout>
-			<url>http://s-case.github.io/s-case_dev_site/</url>
+			<url> http://s-case.github.io/s-case_dev_site_wo_core/</url>
 		</repository>
 	</repositories>
 
