@@ -26,7 +26,8 @@ Require-Bundle: org.eclipse.ui,
  com.jcraft.jsch;bundle-version="[0.1.50,0.2.0)",
  com.googlecode.json-simple;bundle-version="1.1.1",
  org.apache.httpcomponents.httpcore,
- org.apache.commons.lang3;bundle-version="3.3.2"
+ org.apache.commons.lang3;bundle-version="3.3.2",
+ eu.scasefp7.eclipse.core
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Bundle-ActivationPolicy: lazy
 Export-Package: eu.scasefp7.eclipse.servicecomposition,

@@ -192,6 +192,7 @@ import eu.scasefp7.eclipse.servicecomposition.operationCaller.RAMLCaller;
 import eu.scasefp7.eclipse.servicecomposition.Activator;
 import eu.scasefp7.eclipse.servicecomposition.codeGenerator.CallRestfulServiceCode;
 import eu.scasefp7.eclipse.servicecomposition.codeGenerator.CallWSDLServiceCode;
+import eu.scasefp7.eclipse.servicecomposition.codeGenerator.ConnectToMDEOntology;
 import eu.scasefp7.eclipse.servicecomposition.codeGenerator.FunctionCodeNode;
 import eu.scasefp7.eclipse.servicecomposition.codeGenerator.NonLinearCodeGenerator;
 import eu.scasefp7.eclipse.servicecomposition.codeGenerator.RestfulCodeGenerator;
@@ -252,12 +253,15 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 	private TreeViewerColumn column2;
 	private TreeViewer treeViewer;
 	private Composite uriParamsComposite;
+	private Composite authParamsComposite;
 	private static double VARIABLE_NAME_SIMILARITY_THRESHOLD = 0.5;
 	private static double MAX_DISTANCE_BETWEEN_SOLUTIONS = 0.1;
 	private static double VALUE_SIMILARITY_THRESHOLD = 0;
 	private OwlService currentService;
 	private GraphViewer viewer;
 	private String projectName = "";
+	IProject currentProject;
+	NonLinearCodeGenerator gGenerator = new NonLinearCodeGenerator();
 	private String pomPath = "";
 	public static MavenExecutionRequestPopulator populator;
 	public static DefaultPlexusContainer container;
@@ -969,7 +973,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 						 final ArrayList<Operation> operations = Algorithm
 						 .importServices(ResourcesPlugin.getWorkspace().getRoot().getLocation().toString()
 						 +"/"+"WS.owl");
-						 ArrayList<Operation> nonPrototypeOperations = new ArrayList<Operation>();
+						ArrayList<Operation> nonPrototypeOperations = new ArrayList<Operation>();
 						// final ArrayList<Operation> operations = Algorithm
 						// .importServices("data/WS.owl", "data/scripts/");
 						// final ArrayList<Operation> operations = Algorithm
@@ -978,11 +982,11 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 						final ArrayList<String> list = new ArrayList<String>();
 						// String option = "addnode";
 						for (Operation op : operations) {
-							
-							if (!op.isPrototype()){
-							String opName = op.getName().toString();
-							list.add(opName);
-							nonPrototypeOperations.add(op);
+
+							if (!op.isPrototype()) {
+								String opName = op.getName().toString();
+								list.add(opName);
+								nonPrototypeOperations.add(op);
 							}
 
 						}
@@ -2461,7 +2465,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 
 		urisLabelComposite.setLayout(new GridLayout());
 		Label label3 = new Label(urisLabelComposite, SWT.FILL);
-		label3.setText("Workflow Uri Parameters:");
+		label3.setText("Workflow URI Parameters:");
 		label3.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
 		label3.setFont(JFaceResources.getFontRegistry().getBold(""));
 		uriParamsComposite = new Composite(rightComposite, SWT.FILL);
@@ -2476,6 +2480,32 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 				if (!node.getOperation().getUriParameters().isEmpty()) {
 					for (Argument arg : node.getOperation().getUriParameters()) {
 						showUriParams(arg);
+					}
+				}
+			}
+		}
+		// create authentication Params composite
+
+		rightComposite.setLayout(new GridLayout());
+		Composite authenticationLabelComposite = new Composite(rightComposite, SWT.FILL);
+
+		authenticationLabelComposite.setLayout(new GridLayout());
+		Label label4 = new Label(authenticationLabelComposite, SWT.FILL);
+		label4.setText("Workflow Authentication Parameters:");
+		label4.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
+		label4.setFont(JFaceResources.getFontRegistry().getBold(""));
+		authParamsComposite = new Composite(rightComposite, SWT.FILL);
+		authParamsComposite.setLayout(new GridLayout(2, false));
+
+		// get all authParams
+
+		for (int i = 0; i < vertices.length; i++) {
+			final OwlService node = (OwlService) vertices[i];
+
+			if (node.getType().contains("Action")) {
+				if (node.getOperation().getDomain().getSecurityScheme() != null) {
+					if (node.getOperation().getDomain().getSecurityScheme().equalsIgnoreCase("Basic Authentication")) {
+						showBasicAuthenticationParams();
 					}
 				}
 			}
@@ -2566,32 +2596,6 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 				}
 			}
 		});
-
-		// outputsComposite.addListener(SWT.Selection, new Listener() {
-		// public void handleEvent(Event e) {
-		// String string = "";
-		// TreeItem[] selection = outputsComposite.getSelection();
-		// for (int i = 0; i < selection.length; i++)
-		// string += selection[i] + " ";
-		// System.out.println("Selection={" + string + "}");
-		// for (int i = 0; i < graph.getNodes().size(); i++) {
-		// GraphNode graphNode = (GraphNode) graph.getNodes().get(i);
-		// // System.out.println(graphNode);
-		// if (((OwlService) ((MyNode)
-		// graphNode.getData()).getObject()).getName().toString()
-		// .equals(selection[0].getText().split("\\[")[0].trim())) {
-		// // &&
-		// //
-		// ((MyNode)((MyConnection)graphNode.getTargetConnections().get(0)).getSource().getObject()).getName().toString().equals(selection[0].getParent().get
-		// System.out.println("Selection={"
-		// + ((OwlService) ((MyNode)
-		// graphNode.getData()).getObject()).getName().toString() + "}");
-		// graphNode.highlight();
-		// } else
-		// graphNode.unhighlight();
-		// }
-		// }
-		// });
 
 		graph.update();
 		graph.redraw();
@@ -2895,55 +2899,29 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 
 		}
 
-		// TreeItem firstLabel;
-		// if (tree instanceof Tree) {
-		// firstLabel = new TreeItem((Tree) tree, SWT.NONE);
-		// } else {
-		// firstLabel = new TreeItem((TreeItem) tree, SWT.NONE);
-		// }
-		//
-		// firstLabel.setText(arg.getName() + " [" + ((Argument)
-		// arg.getContent()).getType() + "]" + ":");
+	}
 
-		// firstLabel.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER,
-		// false, false));
+	public void showBasicAuthenticationParams() {
 
-		// Text firstText = new Text(outputsComposite, SWT.BORDER);
-		// firstText.setText("");
-		// firstText.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true,
-		// false));
-		// firstText.setEditable(false);
-		// firstLabel.setData(firstText);
-		// FocusListener focusListener = new FocusListener() {
-		// public void focusGained(FocusEvent e) {
-		// Text t = (Text) e.widget;
-		// t.selectAll();
-		//
-		// // highlight node in graph
-		// for (int i = 0; i < graph.getNodes().size(); i++) {
-		// GraphNode graphNode = (GraphNode) graph.getNodes().get(i);
-		// // System.out.println(graphNode);
-		// if (((OwlService) ((MyNode)
-		// graphNode.getData()).getObject()).equals(arg)) {
-		// graphNode.highlight();
-		// } else
-		// graphNode.unhighlight();
-		// }
-		// }
-		//
-		// public void focusLost(FocusEvent e) {
-		// for (int i = 0; i < graph.getNodes().size(); i++) {
-		// GraphNode graphNode = (GraphNode) graph.getNodes().get(i);
-		// // System.out.println(graphNode);
-		// if (((OwlService) ((MyNode)
-		// graphNode.getData()).getObject()).equals(arg)) {
-		// graphNode.unhighlight();
-		// break;
-		// }
-		// }
-		// }
-		// };
-		// firstText.addFocusListener(focusListener);
+		// username
+		Label firstLabel = new Label(authParamsComposite, SWT.NONE);
+		firstLabel.setText("Username*" + ":");
+		firstLabel.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
+
+		Text firstText = new Text(authParamsComposite, SWT.BORDER);
+		firstText.setText("");
+		firstText.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+		firstText.setEditable(true);
+
+		// password
+		Label secondLabel = new Label(authParamsComposite, SWT.NONE);
+		secondLabel.setText("Password*" + ":");
+		secondLabel.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
+
+		Text secondText = new Text(authParamsComposite, SWT.BORDER);
+		secondText.setText("");
+		secondText.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+		secondText.setEditable(true);
 
 	}
 
@@ -3069,6 +3047,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 					final ArrayList<Value> outputVariables = new ArrayList<Value>();
 					final ArrayList<Value> suboutputVariables = new ArrayList<Value>();
 					final ArrayList<Value> uriParamVariables = new ArrayList<Value>();
+					final ArrayList<Value> authParamVariables = new ArrayList<Value>();
 					Vector<Node> nodes = new Vector<Node>();
 					// ArrayList<Value> directAssignVariables = new
 					// ArrayList<Value>();
@@ -3107,6 +3086,11 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 							if (!op.getUriParameters().isEmpty()) {
 								for (Argument arg : op.getUriParameters()) {
 									uriParamVariables.add((Value) arg);
+								}
+							}
+							if (!op.getAuthenticationParameters().isEmpty()) {
+								for (Argument arg : op.getAuthenticationParameters()) {
+									authParamVariables.add((Value) arg);
 								}
 							}
 						}
@@ -3250,7 +3234,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 						@Override
 						public void run() {
 							if (currentService == startingService) {
-								// fill inputs from right panel
+								// fill URI params from right panel
 								for (int i = 0; i < uriParamVariables.size(); i++) {
 									Value var = uriParamVariables.get(i);
 
@@ -3262,6 +3246,23 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 												if (((Text) uriParamsComposite.getChildren()[j + 1]).isEnabled())
 													var.setValue(
 															((Text) uriParamsComposite.getChildren()[j + 1]).getText());
+											}
+										}
+									}
+								}
+
+								// fill Authentication params from right panel
+								for (int i = 0; i < authParamVariables.size(); i++) {
+									Value var = authParamVariables.get(i);
+
+									for (int j = 0; j < authParamsComposite.getChildren().length; j++) {
+										if (authParamsComposite.getChildren()[j] instanceof Label) {
+											Label label = (Label) authParamsComposite.getChildren()[j];
+											if (label.getText().split("\\*")[0].trim()
+													.equals(var.getName().toString())) {
+												if (((Text) authParamsComposite.getChildren()[j + 1]).isEnabled())
+													var.setValue(((Text) authParamsComposite.getChildren()[j + 1])
+															.getText());
 											}
 										}
 									}
@@ -3839,11 +3840,13 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 			// super(operation.getName().toString(), operation.getDomain());
 			super(operation);
 			for (Argument input : operation.getInputs())
-				getInputs().add(Value.getValue(input));
+				getInputs().add(new Value(input));
 			for (Argument output : operation.getOutputs())
-				getOutputs().add(Value.getValue(output));
+				getOutputs().add(new Value(output));
 			for (Argument uriParam : operation.getUriParameters())
-				getUriParameters().add(Value.getValue(uriParam));
+				getUriParameters().add(new Value(uriParam));
+			for (Argument authParam : operation.getAuthenticationParameters())
+				getAuthenticationParameters().add(new Value(authParam));
 		}
 	}
 
@@ -4192,6 +4195,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 			// IProject project =
 			// ResourcesPlugin.getWorkspace().getRoot().getProject("TestProject");
 			IProject project = getWebDataModel(projectName);
+			currentProject = project;
 			// if (!project.exists()) {
 			try {
 
@@ -4301,7 +4305,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 
 				// generate code of Workflow Class
 				NonLinearCodeGenerator generator = new NonLinearCodeGenerator();
-				String source = generator.generateCode(jungGraph, "workflow", false);
+				String source = generator.generateCode(jungGraph, "workflow", false, projectName);
 				StringBuffer buffer = new StringBuffer();
 				buffer.append("package " + pack.getElementName() + ";\n");
 				buffer.append("\n");
@@ -4327,7 +4331,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 					}
 				}
 				String restCode = RestfulCodeGenerator.generateRestfulCode(pack.getElementName(),
-						generator.inputVariables, generator.uriParameters);
+						generator.getInputVariables(), generator.geturiParameters());
 				StringBuffer restBuffer = new StringBuffer();
 				restBuffer.append(restCode);
 				ICompilationUnit restClass = pack.createCompilationUnit("WebService.java", restBuffer.toString(), false,
@@ -4346,6 +4350,8 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 						}
 					}
 				}
+
+				gGenerator = generator;
 
 				if (hasRest) {
 					String code = CallRestfulServiceCode.generateCode(pack.getElementName());
@@ -4542,69 +4548,6 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 
 	private void uploadOnServer() throws Exception {
 
-		// DeployManager deployManager=new DeployManager();
-		// deployManager.getCredsProvider().setCredentials(AuthScope.ANY,new
-		// UsernamePasswordCredentials("admin", "loubas"));
-		// String
-		// warPath=pomPath+"/target/"+projectName+"AdviceFromIP-0.0.1-SNAPSHOT.war";
-		// deployManager.deploy(warPath);
-
-		// String username="admin";
-		// String password="loubas";
-		// URL url = new
-		// URL("http://109.231.126.106:8080/manager/text/deploy?path=/myapp&update=true");
-		// HttpURLConnection con = (HttpURLConnection)url.openConnection();
-		// try {
-		// con.setDoOutput(true);
-		// con.setRequestMethod("PUT");
-		// // Authenticator.setDefault (new Authenticator() {
-		// // protected PasswordAuthentication getPasswordAuthentication() {
-		// // return new PasswordAuthentication ("admin",
-		// "loubas".toCharArray());
-		// // }
-		// // });
-		//
-		// con.addRequestProperty("Authorization",
-		// "Basic " + username + ":" + password);
-		// OutputStream out = con.getOutputStream();
-		// try {
-		// InputStream in = new
-		// FileInputStream(pomPath+"/target/"+projectName+"AdviceFromIP-0.0.1-SNAPSHOT.war");
-		// try {
-		// byte buffer[] = new byte[4096];
-		// for (int n = in.read(buffer); n > 0; n = in.read(buffer)) {
-		// out.write(buffer, 0, n);
-		// }
-		// } finally {
-		// in.close();
-		// }
-		// } finally {
-		// out.close();
-		// }
-		// int code = con.getResponseCode();
-		// if (code != HttpURLConnection.HTTP_OK) {
-		// String msg = con.getResponseMessage();
-		// throw new IOException("HTTP Error " + code + ": " + msg);
-		// }
-		// } finally {
-		// con.disconnect();
-		// }
-		//
-		// // URL url = new
-		// URL("http://109.231.126.74:8080/manager/text/deploy?path=/myapp&update=true");
-		// // HttpURLConnection httpCon = (HttpURLConnection)
-		// url.openConnection();
-		// // httpCon.setDoOutput(true);
-		// // httpCon.setRequestMethod("PUT");
-		// // OutputStreamWriter out = new OutputStreamWriter(
-		// // httpCon.getOutputStream());
-		// // out.write("Resource content");
-		// // out.close();
-		// // httpCon.getInputStream();
-		//
-		//
-		//
-
 		String SFTPHOST = "109.231.126.106";
 		int SFTPPORT = 22;
 		String SFTPUSER = "root";
@@ -4661,7 +4604,8 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 		createWarFileJob = new Job("Uploading..") {
 			@Override
 			protected IStatus run(IProgressMonitor monitor) {
-				monitor.beginTask("Creating war file and uploading to server...", IProgressMonitor.UNKNOWN);
+				monitor.beginTask("Creating WAR file, uploading on server and connecting to MDE Ontology...",
+						IProgressMonitor.UNKNOWN);
 
 				try {
 
@@ -4699,6 +4643,48 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 
 					} else {
 						uploadOnServer();
+					}
+					if (webServiceExistsOnServer()) {
+						disp.syncExec(new Runnable() {
+							public void run() {
+								boolean answer = MessageDialog.openConfirm(shell, "Upload is complete!",
+										"Would you like to connect the web service to the MDE ontology?");
+
+								if (answer) {
+									// OK Button selected
+									try {
+										ConnectToMDEOntology.writeToOntology(currentProject, gGenerator.getOperation());
+									} catch (Exception e) {
+										// TODO Auto-generated catch block
+										e.printStackTrace();
+									}
+									final IFile file = ResourcesPlugin.getWorkspace().getRoot()
+											.getFileForLocation(Path.fromOSString(
+													ResourcesPlugin.getWorkspace().getRoot().getLocation().toString()
+															+ "/" + currentProject.getName() + "/LinkedOntology.owl"));
+									if (file != null) {
+										disp.syncExec(new Runnable() {
+											@Override
+											public void run() {
+												MessageDialog.openInformation(disp.getActiveShell(), "Info",
+														"LinkedOntology.owl file is created under the project "
+																+ currentProject.getName());
+											}
+										});
+
+									}
+								}
+							}
+						});
+
+					} else {
+						disp.syncExec(new Runnable() {
+							@Override
+							public void run() {
+								MessageDialog.openInformation(disp.getActiveShell(), "Error occured",
+										"Web service could not be deployed on server. Please contact the server administrator.");
+							}
+						});
 					}
 
 					monitor.done();
@@ -4760,7 +4746,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 					response.append(inputLine);
 				}
 				System.out.println(response.toString());
-				if (response.toString().contains(projectName + "-0.0.1-SNAPSHOT")) {
+				if (response.toString().contains("/" + projectName + "-0.0.1-SNAPSHOT")) {
 					exists = true;
 				}
 			} finally {

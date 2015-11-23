@@ -30,6 +30,7 @@ public class Value extends Argument{
 	 */
 	public Value(Argument variable){
 		super(variable.getName().toString(), variable.getType(), variable.isArray(), variable.isNative(), null);
+		setIsRequired(variable.isRequired());
 		enumeration.put(variable, this);
 		if(variable instanceof Value)
 			value = ((Value)variable).value;

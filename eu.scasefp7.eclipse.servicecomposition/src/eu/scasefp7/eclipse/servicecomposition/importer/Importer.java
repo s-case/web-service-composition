@@ -55,7 +55,7 @@ public abstract class Importer {
 	protected static ObjectProperty hasOutput;
 	protected static DatatypeProperty hasURIParameters;
 	protected static DatatypeProperty hasCRUDVerb;
-	//protected static DatatypeProperty hasSecurityScheme;
+	protected static DatatypeProperty hasSecurityScheme;
 	protected static ObjectProperty hasType;
 	protected static DatatypeProperty isPrototype;
 	protected static DatatypeProperty isArray;
@@ -102,8 +102,7 @@ public abstract class Importer {
 			}
 		}
 
-		public ApplicationDomain(String uri, String resourcePath, String crudVerb, String type) {
-			//public ApplicationDomain(String uri, String resourcePath, String crudVerb, String securityScheme, String type) {
+		public ApplicationDomain(String uri, String resourcePath, String crudVerb, String securityScheme, String type) {
 			this.uri = uri;
 			if (!resourcePath.isEmpty()) {
 				this.resourcePath = resourcePath;
@@ -111,9 +110,9 @@ public abstract class Importer {
 			if (!crudVerb.isEmpty()) {
 				this.crudVerb = crudVerb;
 			}
-//			if (!securityScheme.isEmpty()) {
-//				this.securityScheme = securityScheme;
-//			}
+			if (!securityScheme.isEmpty()) {
+				this.securityScheme = securityScheme;
+			}
 			if (uri.contains("script")) {
 				name = uri.substring(uri.lastIndexOf("/") + 1, uri.lastIndexOf("."));
 			} else if (uri.contains("localhost") || uri.contains("160.40.50.176") || type.equalsIgnoreCase("RESTful")
@@ -337,10 +336,10 @@ public abstract class Importer {
 				crudVerb = ind.getPropertyValue(hasCRUDVerb).asLiteral().getString();
 			}
 
-//			String securityScheme = "";
-//			if (ind.getPropertyValue(hasSecurityScheme) != null) {
-//				securityScheme = ind.getPropertyValue(hasSecurityScheme).asLiteral().getString();
-//			}
+			String securityScheme = "";
+			if (ind.getPropertyValue(hasSecurityScheme) != null) {
+				securityScheme = ind.getPropertyValue(hasSecurityScheme).asLiteral().getString();
+			}
 
 			if (ind.getPropertyValue(belongsToURL) != null) {
 				String domainName = ind.getPropertyValue(belongsToURL).asLiteral().getString();
@@ -349,8 +348,7 @@ public abstract class Importer {
 					// throw new
 					// Exception("Domain "+domainName+" has not been declared");
 					domainList.put(domainName,
-							domain = new ApplicationDomain(domainName, resourcePath, crudVerb, type));
-							//domain = new ApplicationDomain(domainName, resourcePath, crudVerb, securityScheme, type));
+							domain = new ApplicationDomain(domainName, resourcePath, crudVerb, securityScheme, type));
 				}
 			} else
 				domain = null;
@@ -366,7 +364,7 @@ public abstract class Importer {
 			// load uri Parameters
 			loadWSURI(ind, hasURIParameters, uriParameters);
 			// load authentication Parameters
-			//loadWSAuth(ind, hasSecurityScheme, authenticationParameters);
+			loadWSAuth(ind, hasSecurityScheme, authenticationParameters);
 			// load Cost, License Parameters
 			loadIPR(ind, 1);
 			// load implementations
@@ -580,10 +578,10 @@ public abstract class Importer {
 										pairedServiceSchema.loadWSURI(PairedServiceSchemasInd, hasURIParameters,
 												pairedServiceSchema.uriParameters);
 									}
-//									if (PairedServiceSchemasInd.getPropertyValue(hasSecurityScheme) != null) {
-//										pairedServiceSchema.loadWSAuth(PairedServiceSchemasInd, hasSecurityScheme,
-//												pairedServiceSchema.authenticationParameters);
-//									}
+									if (PairedServiceSchemasInd.getPropertyValue(hasSecurityScheme) != null) {
+										pairedServiceSchema.loadWSAuth(PairedServiceSchemasInd, hasSecurityScheme,
+												pairedServiceSchema.authenticationParameters);
+									}
 									if (PairedServiceSchemasInd.getPropertyValue(hasOutput) != null) {
 										pairedServiceSchema.loadWSIO(PairedServiceSchemasInd, hasOutput,
 												pairedServiceSchema.outputs);
@@ -733,7 +731,9 @@ public abstract class Importer {
 					Literal l = it.next().asLiteral();
 					String name = l.getValue().toString();
 					String type = "String";
-					vec.add(new Argument(name, type, false, false, null));
+					Argument arg = new Argument(name, type, false, false, null);
+					arg.setBelongsToOperation(this);
+					vec.add(arg);
 				}
 			}
 		}
@@ -742,10 +742,15 @@ public abstract class Importer {
 			String securityScheme = "";
 			if (operInd.getPropertyValue(prop) != null) {
 				securityScheme = operInd.getPropertyValue(prop).asLiteral().getString();
+				getDomain().securityScheme=securityScheme;
 			}
 			if (securityScheme.equalsIgnoreCase("Basic Authentication")) {
-				vec.add(new Argument("Username", "String", false, false, null));
-				vec.add(new Argument("Password", "String", false, false, null));
+				Argument username = new Argument("Username", "String", false, false, null);
+				username.setBelongsToOperation(this);
+				vec.add(username);
+				Argument password = new Argument("Password", "String", false, false, null);
+				password.setBelongsToOperation(this);
+				vec.add(password);
 			}
 		}
 
@@ -994,8 +999,11 @@ public abstract class Importer {
 					type = ioInd.getPropertyValue(hasName).asLiteral().getString().trim();
 				}
 				isNative = false;
+				
 				operation.loadWSIO(ioInd, hasType, subtypes);
 			}
+			
+			belongsToOperation = operation;
 			
 			if (ioInd.getPropertyValue(Importer.isArray) != null)
 				this.isArray = !ioInd.getPropertyValue(Importer.isArray).asLiteral().getString().equals("false");
@@ -1026,6 +1034,7 @@ public abstract class Importer {
 			// subtypes = prototype.subtypes;
 			parent.addAll(prototype.parent);
 			belongsToOwlService = prototype.belongsToOwlService;
+			belongsToOperation = prototype.belongsToOperation;
 		}
 
 		/**

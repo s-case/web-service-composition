@@ -43,6 +43,7 @@ public class OwlImporter extends Importer{
 		hasInput = ontologyModel.getObjectProperty(prefix + "hasInput");
 		hasURIParameters = ontologyModel.getDatatypeProperty(prefix + "hasURIParameters");
 		hasCRUDVerb = ontologyModel.getDatatypeProperty(prefix + "hasCRUDVerb");
+		hasSecurityScheme = ontologyModel.getDatatypeProperty(prefix + "hasSecurityScheme");
 		isRequired = ontologyModel.getDatatypeProperty(prefix + "isRequired");
 		hasOutput = ontologyModel.getObjectProperty(prefix + "hasOutput");
 		hasType = ontologyModel.getObjectProperty(prefix + "hasType");
