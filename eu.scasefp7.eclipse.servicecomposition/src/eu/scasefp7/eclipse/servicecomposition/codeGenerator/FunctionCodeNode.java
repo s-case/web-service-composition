@@ -1,12 +1,14 @@
 package eu.scasefp7.eclipse.servicecomposition.codeGenerator;
 
 import eu.scasefp7.eclipse.servicecomposition.codeGenerator.CodeGenerator.CodeNode;
+import eu.scasefp7.eclipse.servicecomposition.codeInterpreter.Value;
 import eu.scasefp7.eclipse.servicecomposition.importer.Importer.Argument;
 import eu.scasefp7.eclipse.servicecomposition.importer.Importer.Operation;
 import eu.scasefp7.eclipse.servicecomposition.importer.JungXMIImporter.Connector;
 import eu.scasefp7.eclipse.servicecomposition.transformer.Similarity;
 import eu.scasefp7.eclipse.servicecomposition.transformer.JungXMItoOwlTransform.OwlService;
 import eu.scasefp7.eclipse.servicecomposition.transformer.Similarity.ComparableName;
+import eu.scasefp7.eclipse.servicecomposition.views.ServiceCompositionView;
 
 import java.util.ArrayList;
 
@@ -150,7 +152,7 @@ public class FunctionCodeNode extends CodeNode {
 	}
 
 	@Override
-	protected String generateOutputSynchronizationCode(Operation operation, ArrayList<OwlService> allVariables) {
+	protected String generateOutputSynchronizationCode(Operation operation,ArrayList<OwlService> allVariables) {
 		// return a dummy Python call
 		if (operation.getDomain().isLocal())
 			return super.generateInputSynchronizationCode(operation, allVariables);
@@ -205,7 +207,7 @@ public class FunctionCodeNode extends CodeNode {
 	}
 
 	@Override
-	public String createFunctionCode(Graph<OwlService, Connector> graph, ArrayList<OwlService> allVariables)
+	public String createFunctionCode(Graph<OwlService, Connector> graph,ArrayList<OwlService> allVariables)
 			throws Exception {
 		if (service == null || service.getArgument() != null)
 			return "";
@@ -225,7 +227,7 @@ public class FunctionCodeNode extends CodeNode {
 					if ((index = conditionName.indexOf("==")) != -1) {
 						conditionValue = conditionName.substring(index + 2).trim();
 						conditionName = conditionName.substring(0, index).trim();
-						symbol = "==";
+						symbol = "";
 					} else if ((index = conditionName.indexOf("!=")) != -1) {
 						conditionValue = conditionName.substring(index + 2).trim();
 						conditionName = conditionName.substring(0, index).trim();
@@ -233,7 +235,7 @@ public class FunctionCodeNode extends CodeNode {
 					} else if ((index = conditionName.indexOf("=")) != -1) {
 						conditionValue = conditionName.substring(index + 1).trim();
 						conditionName = conditionName.substring(0, index).trim();
-						symbol = "==";
+						symbol = "";
 						if ((index = conditionValue.indexOf("<")) != -1) {
 							conditionValue = conditionValue.substring(index + 1);
 							symbol = "=<";
@@ -269,28 +271,41 @@ public class FunctionCodeNode extends CodeNode {
 						conditionValue = graph.findEdge(service, next).toString();
 
 					}
-					for (OwlService before : graph.getPredecessors(service)) {
-						if (before.getOperation() != null) {
+					ArrayList<Argument> previousServiceOutVariables= new ArrayList<Argument>();
+					
+					for (OwlService previousOperation : graph.getPredecessors(service)) {
+						if (previousOperation.getOperation() != null) {
+							Operation op=previousOperation.getOperation();	
 							double bestMatch = 0;
-							ArrayList<Argument> outputs = new ArrayList<Argument>();
-							for (Argument output : before.getOperation().getOutputs()) {
-								outputs.add(output);
-								for (Argument sub : output.getSubtypes()) {
-									outputs.add(sub);
+							
+								for (Argument output : previousOperation.getOperation().getOutputs()) {
+									if (!output.isArray()) {
+										if (output.getSubtypes().isEmpty()) {
+											previousServiceOutVariables.add(output);
+										}
+										for (Argument sub : output.getSubtypes()) {
+											if (!sub.isArray()) {
+												getSubtypes(previousServiceOutVariables, sub, true);
+											}
+
+										}
+									}
 								}
-							}
-							for (Argument output : outputs) {
+							
+							for (Argument output : previousServiceOutVariables) {
 								double match = Similarity.similarity(new ComparableName(conditionName),
 										output.getName());
 								if (match >= bestMatch) {
 									for (OwlService outputService : allVariables) {
 										if (outputService.getArgument().equals(output)) {
+											String ret=".get"+outputService.getName().getContent().replaceAll("[0123456789]", "")+"()";
+											ret=roadToSub(outputService, graph, ret);
 											bestMatch = match;
 											if (type == "double") {
 												varName = "Double.parseDouble("
-														+ outputService.getName().getContent().toString() + ".value)";
+														+op.getName()+ "_response"+ret+")";
 											} else {
-												varName = outputService.getName().getContent().toString() + ".value";
+												varName = op.getName()+ "_response"+ret;
 
 											}
 										}
@@ -333,9 +348,7 @@ public class FunctionCodeNode extends CodeNode {
 
 		String imports = "";
 		if (restServiceExists) {
-			imports +="import org.json.simple.JSONObject;\n"+
-			"import org.json.simple.JSONValue;\n"+
-			"import org.json.simple.parser.ParseException;\n";
+			imports +="import com.google.gson.Gson;\n";
 		}
 		if (wsdlServiceExists) {
 			imports += "import gr.iti.wsdl.wsdlToolkit.ITIWSDLParser;\n"
@@ -351,5 +364,40 @@ public class FunctionCodeNode extends CodeNode {
 		}
 		return imports +"import java.util.ArrayList;\n" + "import javax.xml.bind.annotation.XmlElement;\n"
 				+ "import javax.xml.bind.annotation.XmlRootElement;\n";
+	}
+	private String roadToSub(OwlService sub,Graph<OwlService, Connector> graph, String ret){
+		for (OwlService service: graph.getPredecessors(sub)){
+			if (service.getArgument()!=null){
+				ret=".get"+service.getName().getContent().replaceAll("[0123456789]", "")+"()"+ret;
+				roadToSub(service, graph, ret);
+			}else{
+				return ret;
+			}
+		}
+		return ret;
+	}
+	
+	private ArrayList<Argument> getSubtypes(ArrayList<Argument> suboutputVariables, Argument sub, boolean noObjects) {
+		if (!suboutputVariables.contains(sub)) {
+			if (noObjects) {
+				if (sub.getSubtypes().isEmpty()) {
+					suboutputVariables.add( sub);
+				}
+			} else {
+				suboutputVariables.add(sub);
+			}
+		}
+		if (!sub.getSubtypes().isEmpty()) {
+			for (Argument subsub : sub.getSubtypes()) {
+				if (noObjects) {
+					if (!sub.isArray()) {
+						getSubtypes(suboutputVariables, subsub, true);
+					}
+				} else {
+					getSubtypes(suboutputVariables, subsub, true);
+				}
+			}
+		}
+		return suboutputVariables;
 	}
 }

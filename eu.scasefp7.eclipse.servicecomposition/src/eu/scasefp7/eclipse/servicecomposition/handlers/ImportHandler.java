@@ -58,7 +58,7 @@ public class ImportHandler extends AbstractHandler {
 								.importServices(ResourcesPlugin.getWorkspace().getRoot().getLocation().toString()
 										+"/"+"WS.owl");
 //						final ArrayList<Operation> operations = Algorithm
-//							.importServices("D:/WebServiceComposition/web-service-composition/eu.scasefp7.eclipse.serviceComposition/data/WS.owl", "data/scripts/");
+//							.importServices("D:/web-service-composition-Maven-plugin/web-service-composition/eu.scasefp7.eclipse.serviceComposition/data/WS.owl");
 						//final ArrayList<Operation> operations = Algorithm.importServices("", "data/testing_scripts/");
 						final String pathToSBDFile = ResourcesPlugin.getWorkspace().getRoot().getLocation().toString()
 								+ file.getFullPath().toOSString();

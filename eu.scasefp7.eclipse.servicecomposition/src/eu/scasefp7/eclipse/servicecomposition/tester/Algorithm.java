@@ -129,6 +129,7 @@ public class Algorithm {
 		public String toString() {
 			String ret = "REPLACEMENT REPORT\n";
 			ret += "\tAction     : " + description + "\n";
+			ret += "\tBase URI	: " + this.selection.getOperationToReplace().getDomain().getURI()+ "\n";
 			ret += "\tName Similarity     : " + this.nameSimilarity + "/"+ this.numberOfWords+ "\n";
 			ret += "\tProbability: " + Math.round(effectiveProbability * 1000) / 10.0 + "%\n";
 			//ret += "\tWorst Probability: " + Math.round(worstCaseProbability * 1000) / 10.0 + "%\n";

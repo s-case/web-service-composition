@@ -7,19 +7,23 @@ import org.eclipse.core.resources.IProject;
 
 import eu.scasefp7.eclipse.core.ontology.LinkedOntologyAPI;
 import eu.scasefp7.eclipse.servicecomposition.importer.Importer.Argument;
+import eu.scasefp7.eclipse.servicecomposition.importer.JungXMIImporter.Connector;
 import eu.scasefp7.eclipse.servicecomposition.transformer.JungXMItoOwlTransform.OwlService;
 import eu.scasefp7.eclipse.servicecomposition.importer.Importer.Operation;
+import eu.scasefp7.eclipse.servicecomposition.operationCaller.RAMLCaller;
+import edu.uci.ics.jung.graph.Graph;
 
 public class ConnectToMDEOntology {
 
 	MDEOperation operation;
+	String[] datatypes = new String[] { "string", "long", "int", "float", "double", "dateTime", "boolean" };
 
 	ConnectToMDEOntology() {
 
 	}
 
 	public MDEOperation createObjects(String projectName, ArrayList<OwlService> inputs,
-			ArrayList<Argument> uriParameters, ArrayList<OwlService> resultVariables) {
+			ArrayList<Argument> uriParameters, ArrayList<OwlService> outputs, final Graph<OwlService, Connector> graph) {
 		ArrayList<MDERepresentation> hasQueryParameters = new ArrayList<MDERepresentation>();
 		ArrayList<MDERepresentation> hasOutput = new ArrayList<MDERepresentation>();
 		// Query Parameters
@@ -31,12 +35,15 @@ public class ConnectToMDEOntology {
 			String type = "Primitive";
 			if (input.getArgument().isArray()) {
 				type = "Array";
+			}else if (!input.getArgument().isArray()&& !RAMLCaller.stringIsItemFromList(input.getArgument().getType(), datatypes)){
+				type = "Object";
 			}
+			
 			if (input.getArgument().getSubtypes().isEmpty()) {
 				ArrayList<String> subNames = new ArrayList<String>();
-				subNames.add("string");
+				subNames.add(input.getArgument().getType().toLowerCase());
 				MDERepresentation inputRepresentation = new MDERepresentation(false, !input.getArgument().isRequired(),
-						url, input.getName().toString(), type, subNames);
+						url, input.getName().getContent(), type, null, subNames);
 				hasQueryParameters.add(inputRepresentation);
 			}
 
@@ -46,7 +53,7 @@ public class ConnectToMDEOntology {
 					subNames.add(sub.getName().getContent().toString());
 				}
 				MDERepresentation inputRepresentation = new MDERepresentation(false, !input.getArgument().isRequired(),
-						url, input.getName().toString(), type, subNames);
+						url, input.getName().getContent(), type, null, subNames);
 				hasQueryParameters.add(inputRepresentation);
 			}
 		}
@@ -59,31 +66,36 @@ public class ConnectToMDEOntology {
 			ArrayList<String> subNames = new ArrayList<String>();
 			subNames.add("string");
 			MDERepresentation inputRepresentation = new MDERepresentation(false, !uriParameter.isRequired(), url,
-					uriParameter.getName().getContent().toString(), "Primitive", subNames);
+					uriParameter.getName().getContent().toString(), "Primitive", null, subNames);
 			hasQueryParameters.add(inputRepresentation);
 		}
 
 		// Outputs
-		for (OwlService output : resultVariables) {
+		for (OwlService output : outputs) {
 			String url = ((Operation) output.getArgument().getBelongsToOperation()).getDomain().getURI();
 			String type = "Primitive";
 			if (output.getArgument().isArray()) {
 				type = "Array";
+			}else if (!output.getArgument().isArray()&& !RAMLCaller.stringIsItemFromList(output.getArgument().getType(), datatypes)){
+				type = "Object";
 			}
 			if (output.getArgument().getSubtypes().isEmpty()) {
 				ArrayList<String> subNames = new ArrayList<String>();
-				subNames.add("string");
-				MDERepresentation inputRepresentation = new MDERepresentation(false, !output.getArgument().isRequired(),
-						url, output.getName().toString(), type, subNames);
-				hasOutput.add(inputRepresentation);
+				subNames.add(output.getArgument().getType().toLowerCase());
+				MDERepresentation outputRepresentation = new MDERepresentation(false, !output.getArgument().isRequired(),
+						url, output.getName().getContent(), type, null, subNames);
+				hasOutput.add(outputRepresentation);
 			} else {
 				ArrayList<String> subNames = new ArrayList<String>();
-				for (Argument sub : output.getArgument().getSubtypes()) {
+				ArrayList<MDERepresentation> hasSubs=new ArrayList<MDERepresentation>();
+				for (OwlService sub : graph.getSuccessors(output)) {
+					hasSubs.add(addSubtypes(sub, graph, hasSubs));
 					subNames.add(sub.getName().getContent().toString());
 				}
-				MDERepresentation inputRepresentation = new MDERepresentation(false, !output.getArgument().isRequired(),
-						url, output.getName().toString(), type, subNames);
-				hasOutput.add(inputRepresentation);
+				MDERepresentation outputRepresentation = new MDERepresentation(false, !output.getArgument().isRequired(),
+						url, output.getName().getContent(), type, hasSubs, subNames);
+				hasOutput.add(outputRepresentation);
+				
 			}
 		}
 
@@ -101,7 +113,7 @@ public class ConnectToMDEOntology {
 	public static void writeToOntology(IProject project, MDEOperation operation) {
 
 		// Create a new file for the linked ontology and instantiate it
-		LinkedOntologyAPI linkedOntology = new LinkedOntologyAPI(project);
+		LinkedOntologyAPI linkedOntology = new LinkedOntologyAPI(project,true);
 
 		// Add a new resource in the linked ontology
 
@@ -119,10 +131,20 @@ public class ConnectToMDEOntology {
 			ArrayList<MDERepresentation> queryParams = operation.getHasQueryParameters();
 			List<String> queryNames = new ArrayList<String>();
 			for (MDERepresentation queryParam : queryParams) {
+				if (queryParam.getHasElements()==null){
 				linkedOntology.addInputParameter(queryParam.getHasName(), queryParam.getIsType(),
 						queryParam.isAuthToken(), queryParam.getBelongsToURL(), queryParam.isOptional(),
-						queryParam.getHasElements());
+						queryParam.getHasPrimitiveElements());
 				queryNames.add(queryParam.getHasName());
+				}else{
+					List<String> subNames = new ArrayList<String>();
+					for (MDERepresentation sub : queryParam.getHasElements()){
+						subNames.add(sub.getHasName());
+					}
+					linkedOntology.addInputParameter(queryParam.getHasName(), queryParam.getIsType(),
+							queryParam.isAuthToken(), queryParam.getBelongsToURL(), queryParam.isOptional(),
+							subNames);
+				}
 			}
 			linkedOntology.addQueryParametersToOperation(operation.getHasName(), queryNames);
 		}
@@ -131,9 +153,10 @@ public class ConnectToMDEOntology {
 		if (operation.getHasOutput() != null) {
 			List<String> outputNames = new ArrayList<String>();
 			for (MDERepresentation output : operation.getHasOutput()) {
-
-				linkedOntology.addOutputParameter(output.getHasName(), output.getIsType(), output.getHasElements());
-				outputNames.add(output.getHasName());
+				
+					addOutputs(output,linkedOntology);
+					outputNames.add(output.getHasName());
+				
 			}
 			linkedOntology.addOutputParametersToOperation(operation.getHasName(), outputNames);
 		}
@@ -141,5 +164,56 @@ public class ConnectToMDEOntology {
 		// Close the linked ontology. The other two ontologies are not closed
 		// since they do not need to be saved.
 		linkedOntology.close();
+	}
+	
+	private MDERepresentation addSubtypes(OwlService sub, final Graph<OwlService, Connector> graph, ArrayList<MDERepresentation> hasSubs) {
+	
+		String type="Primitive";
+		if (sub.getArgument().isArray()) {
+			type = "Array";
+		}else if (!sub.getArgument().isArray()&& !RAMLCaller.stringIsItemFromList(sub.getArgument().getType(), datatypes)){
+			type = "Object";
+		}
+		MDERepresentation outputRepresentation= new MDERepresentation();
+		if (sub.getArgument().getSubtypes().isEmpty()) {
+			ArrayList<String> subNames = new ArrayList<String>();
+			subNames.add(sub.getArgument().getType().toLowerCase());
+			outputRepresentation = new MDERepresentation(false, !sub.getArgument().isRequired(),
+					"", sub.getName().getContent(), type, null, subNames);
+			//hasSubs.add(outputRepresentation);
+		}else{
+			ArrayList<String> subNames = new ArrayList<String>();
+			ArrayList<MDERepresentation> hasSubSubs = new ArrayList<MDERepresentation>();
+			for (OwlService subsub : graph.getSuccessors(sub)) {
+				
+				hasSubSubs.add(addSubtypes(subsub,graph, hasSubSubs));
+				
+				subNames.add(subsub.getName().getContent().toString());
+			}
+			
+			outputRepresentation = new MDERepresentation(false, !sub.getArgument().isRequired(),
+					"", sub.getName().getContent(), type, hasSubSubs, subNames);
+			//hasSubs.add(outputRepresentation);
+		}
+		return outputRepresentation;
+		
+		
+		
+	
+	
+	
+}
+	
+	private static void addOutputs(MDERepresentation output,  LinkedOntologyAPI linkedOntology){
+		if (output.getHasElements()==null){
+			linkedOntology.addOutputParameter(output.getHasName(), output.getIsType(), output.getHasPrimitiveElements());
+			
+		}else{
+		for(MDERepresentation sub: output.getHasElements()){
+			
+			addOutputs(sub,linkedOntology);
+		}
+		linkedOntology.addOutputParameter(output.getHasName(), output.getIsType(), output.getHasPrimitiveElements());
+		}
 	}
 }

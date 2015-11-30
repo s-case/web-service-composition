@@ -82,7 +82,7 @@ public class RAMLCaller {
 				if (!inputList.isEmpty()) {
 					val = (Value) input;
 					if (!(val.getValue().isEmpty() && !input.isRequired())) {
-						inputList += "&"+ input.getName().toString() + "=" + val.getValue();
+						inputList += "&" + input.getName().toString() + "=" + val.getValue();
 					}
 				} else {
 					val = (Value) input;
@@ -108,14 +108,14 @@ public class RAMLCaller {
 				HttpURLConnection conn = (HttpURLConnection) url.openConnection();
 				conn.setRequestMethod(ramlOperation.getDomain().getCrudVerb());
 				conn.setRequestProperty("Accept", "application/json");
-				if (ramlOperation.getDomain().getSecurityScheme() != null){
-				if (ramlOperation.getDomain().getSecurityScheme().equalsIgnoreCase("Basic Authentication")) {
-					Base64 b = new Base64();
-					String username = ((Value) ramlOperation.getAuthenticationParameters().get(0)).getValue();
-					String password = ((Value) ramlOperation.getAuthenticationParameters().get(1)).getValue();
-					String encoding = b.encodeAsString(new String(username + ":" + password).getBytes());
-					conn.setRequestProperty("Authorization", "Basic " + encoding);
-				}
+				if (ramlOperation.getDomain().getSecurityScheme() != null) {
+					if (ramlOperation.getDomain().getSecurityScheme().equalsIgnoreCase("Basic Authentication")) {
+						Base64 b = new Base64();
+						String username = ((Value) ramlOperation.getAuthenticationParameters().get(0)).getValue();
+						String password = ((Value) ramlOperation.getAuthenticationParameters().get(1)).getValue();
+						String encoding = b.encodeAsString(new String(username + ":" + password).getBytes());
+						conn.setRequestProperty("Authorization", "Basic " + encoding);
+					}
 				}
 
 				if (conn.getResponseCode() != 200) {
@@ -272,14 +272,7 @@ public class RAMLCaller {
 			for (Argument output : ramlOperation.getOutputs()) {
 				parseJson(output, json);
 			}
-			JSONArray origin_addresses = (JSONArray) json.get("origin_addresses");
-			JSONArray destination_addresses = (JSONArray) json.get("destination_addresses");
-			JSONArray rows = (JSONArray) json.get("rows");
-			// for (Argument sub : output.getSubtypes()) {
-			// if (sub.getName().toString().equalsIgnoreCase("currency")){
-			// ((Value) sub).setValue(currency);
-			// }
-			// }
+			
 
 		} catch (ParseException e) {
 			e.printStackTrace();
@@ -331,61 +324,79 @@ public class RAMLCaller {
 				// if it is an array of arrays or array of objects
 			} else if (output.isArray() && !stringIsItemFromList(output.getType(), datatypes)) {
 				JSONArray array = (JSONArray) ((JSONObject) json).get(output.getType());
-				boolean subisarray = false;
-				for (Argument sub : output.getSubtypes()) {
-					if (sub.isArray()) {
-						subisarray = true;
-					}
-				}
-				if (subisarray) {
-					for (int i = 0; i < array.size(); i++) {
-						for (Argument sub : output.getSubtypes()) {
+				for (int i = 0; i < array.size(); i++) {
+					//create and add site[0]element, device[0]
+					Argument out = new Argument(output);
+					out.setOwlService(output.getOwlService());
+					out.setName(output.getType() + "[" + i + "]");
+					Value value = new Value(out);
+					
+					for (Argument sub : output.getSubtypes()) {
+						if (sub.isArray()) {
 							JSONArray array2 = (JSONArray) ((JSONObject) array.get(i)).get(sub.getName().toString());
-							Argument out = new Argument(sub);
-							out.setOwlService(sub.getOwlService());
-							out.setName(output.getType() + "[" + i + "]");
-							Value value = new Value(out);
-							// Value value = Value.getValue(out);
-							parseJson(value, (JSONObject) array.get(i));
-							output.getElements().add(value);
-						}
-					}
-
-				} else {
-					if (array != null) {
-						for (int i = 0; i < array.size(); i++) {
-							Argument out = new Argument(output);
-							out.setOwlService(output.getOwlService());
-							out.setName(output.getType() + "[" + i + "]");
-							Value value = new Value(out);
-
+						//	if (output.getType().equals(sub.getType())){
+								//create device[], metrics[]
+								Argument out1 = new Argument(sub);
+								out1.setOwlService(sub.getOwlService());
+								out1.setName(sub.getName().toString());
+								Value value2 = new Value(out1);
+								parseJson(value2, (JSONObject) array.get(i));
+								
+								//add device[] metrics[]
+								value.getElements().add(value2);
+								
+//							}else{
+//							//create device,metrics
+//							Argument out1 = new Argument(sub);
+//							out1.setOwlService(sub.getOwlService());
+//							out1.setName(sub.getName().toString());
+//							Value value1 = new Value(out1);
+//							//add device, metrics
+//							value.getElements().add(value1);
+//							//create device[0],[1], metrics[0],[1]
+//							Argument out2 = new Argument(sub);
+//							out2.setOwlService(sub.getOwlService());
+//							out2.setName(sub.getName().toString());
+//							Value value2 = new Value(out2);
+//							
+//							
+//							parseJson(value2, (JSONObject) array.get(i));
+//							
+//							//add device[0],[1], metrics[0],[1]
+//							value1.getElements().add(value2);
+//							}
+						}else{
+							
+							//create device
+							Argument out1 = new Argument(sub);
+							out1.setOwlService(sub.getOwlService());
+							out1.setName(sub.getName().toString());
+							Value value1 = new Value(out1);
 							JSONObject object = (JSONObject) array.get(i);
-							for (Argument sub : value.getSubtypes()) {
-								parseJson(sub, object);
-							}
 
-							output.getElements().add(value);
+							parseJson(value1, (object));
+								
+							value.getElements().add(value1);
 						}
 					}
+					output.getElements().add(value);
 				}
+				
+				
 
 				// if it is an object but not an array
 			} else if (!output.isArray() && !stringIsItemFromList(output.getType(), datatypes)) {
+				if (((JSONObject) json).containsKey(output.getName().toString())) {
+					JSONObject object = (JSONObject) ((JSONObject) json).get(output.getName().toString());
 
-				JSONObject object = (JSONObject) ((JSONObject) json).get(output.getName().toString());
+					for (Argument sub : output.getSubtypes()) {
+						
+						if (object.containsKey(sub.getName().toString())) {
+							parseJson(sub, object);
+						}
+						
 
-				for (Argument sub : output.getSubtypes()) {
-					// if (!stringIsItemFromList(sub.getType(), datatypes)) {
-					// parseJson(sub, (JSONObject)
-					// object.get(sub.getName().toString()));
-					// } else if (sub.isArray()) {
-					// // to be filled
-					// } else {
-					if (object.containsKey(sub.getName().toString())) {
-						parseJson(sub, object);
 					}
-					// }
-
 				}
 
 			} else {

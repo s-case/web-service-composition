@@ -253,6 +253,10 @@ public abstract class CodeGenerator {
 			} else {
 				resultString = "false";
 			}
+			if (symbol.equals("!=")){
+				symbol="";
+				return "(!" + check + symbol + value + ")" + " == " + resultString;
+			}
 			return "(" + check + symbol + value + ")" + " == " + resultString;
 		}
 
@@ -264,7 +268,7 @@ public abstract class CodeGenerator {
 		 * @return generates
 		 * @throws Exception
 		 */
-		public String createFunctionCode(Graph<OwlService, Connector> graph, ArrayList<OwlService> allVariables)
+		public String createFunctionCode(Graph<OwlService, Connector> graph,ArrayList<OwlService> allVariables)
 				throws Exception {
 			throw new Exception("CodeNode cannot create function code.Use a FunctionCodeNode instance instead.");
 		}

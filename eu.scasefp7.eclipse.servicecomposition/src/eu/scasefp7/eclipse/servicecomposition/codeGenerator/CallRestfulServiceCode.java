@@ -10,11 +10,11 @@ public class CallRestfulServiceCode {
 		// package declaration and imports
 		String code = "package " + packageName + ";\n\n" + "import " + packageName + ".WorkflowClass.Variable;\n";
 
-		code += "import java.io.BufferedReader;\nimport java.io.IOException;\nimport java.io.InputStreamReader;\nimport java.net.HttpURLConnection;\nimport java.net.MalformedURLException;\nimport java.net.URL;\nimport java.util.ArrayList;\nimport java.util.List;\nimport org.apache.http.HttpResponse;\nimport org.apache.http.NameValuePair;\nimport org.apache.http.client.HttpClient;\nimport org.apache.http.client.entity.UrlEncodedFormEntity;\nimport org.apache.http.client.methods.HttpPost;\nimport org.apache.http.client.methods.HttpPut;\nimport org.apache.http.entity.StringEntity;\nimport org.apache.http.impl.client.HttpClientBuilder;\nimport org.apache.http.message.BasicHeader;\nimport org.apache.http.message.BasicNameValuePair;\nimport org.json.simple.JSONObject;\n";
+		code += "import java.io.BufferedReader;\nimport java.io.IOException;\nimport java.io.InputStreamReader;\nimport java.net.HttpURLConnection;\nimport java.net.MalformedURLException;\nimport java.net.URL;\nimport java.util.ArrayList;\nimport java.util.List;\nimport org.apache.commons.codec.binary.Base64;\nimport org.apache.http.HttpResponse;\nimport org.apache.http.NameValuePair;\nimport org.apache.http.client.HttpClient;\nimport org.apache.http.client.entity.UrlEncodedFormEntity;\nimport org.apache.http.client.methods.HttpPost;\nimport org.apache.http.client.methods.HttpPut;\nimport org.apache.http.entity.StringEntity;\nimport org.apache.http.impl.client.HttpClientBuilder;\nimport org.apache.http.message.BasicHeader;\nimport org.apache.http.message.BasicNameValuePair;\nimport org.json.simple.JSONArray;\nimport org.json.simple.JSONObject;\n";
 		// class declaration
 		code += "public class CallRESTfulService {\n";
 		// method
-		code += TAB + "public static String callService(String wsUrl, String crudVerb, ArrayList<Variable> inputs ){\n"
+		code += TAB + "public static String callService(String wsUrl, String crudVerb, ArrayList<Variable> inputs, boolean hasAuth, String auth){\n"
 				+ TAB + TAB + "String result = \"\";\n" + TAB + TAB + "String inputList = \"\";\n";
 		code += TAB + TAB + "if (!inputs.isEmpty()) {\n";
 		code += TAB + TAB + TAB + "for (Variable input : inputs) {\n";
@@ -34,6 +34,11 @@ public class CallRestfulServiceCode {
 				+ "HttpURLConnection conn = (HttpURLConnection) url.openConnection();\n" + TAB + TAB + TAB + TAB
 				+ "conn.setRequestMethod(\"GET\");\n" + TAB + TAB + TAB + TAB
 				+ "conn.setRequestProperty(\"Accept\", \"application/json\");\n";
+		code += TAB + TAB + TAB + TAB + "if (hasAuth) {\n";
+		code += TAB + TAB + TAB + TAB + TAB + "Base64 b = new Base64();\n";
+		code += TAB + TAB + TAB + TAB + TAB + "String encoding = b.encodeAsString(new String(auth).getBytes());\n";
+		code += TAB + TAB + TAB + TAB + TAB + "conn.setRequestProperty(\"Authorization\", \"Basic \" + encoding);\n";
+		code += TAB + TAB + TAB + TAB + "}\n";
 		code += TAB + TAB + TAB + TAB + "if (conn.getResponseCode() != 200) {\n";
 		code += TAB + TAB + TAB + TAB + TAB
 				+ "throw new RuntimeException(\"Failed : HTTP error code : \" + conn.getResponseCode());\n";
@@ -121,21 +126,62 @@ public class CallRestfulServiceCode {
 		code += TAB + TAB + "}\n";
 		code += TAB + TAB + "return result;\n";
 		code += TAB + "}\n";
-		code += TAB + "public static void assignResult(JSONObject json, Variable output){\n";
-		code += TAB + TAB + "if (output.type.equals(\"object\")) {\n";
-		code += TAB + TAB + TAB + "JSONObject object = (JSONObject) ((JSONObject) json).get(output.name);\n";
-		code += TAB + TAB + TAB + "for (Variable sub : output.subtypes) {\n";
-		code += TAB + TAB + TAB + TAB + "assignResult((JSONObject) object, sub);\n";
-		code += TAB + TAB + TAB + "}\n";
-		code += TAB + TAB + "} else {\n";
-		code += applyTab(3, assignPrimitive(TAB, "String"), TAB);
-		code += applyTab(3, assignPrimitive(TAB, "int"), TAB);
-		code += applyTab(3, assignPrimitive(TAB, "long"), TAB);
-		code += applyTab(3, assignPrimitive(TAB, "boolean"), TAB);
-		code += applyTab(3, assignPrimitive(TAB, "float"), TAB);
-		code += applyTab(3, assignPrimitive(TAB, "double"), TAB);
-		code += TAB + TAB + "}\n";
-		code += TAB + "}\n";
+//		code += TAB + "public static void assignResult(JSONObject json, Variable output){\n";
+//		code += TAB + TAB + "if (output.type.equals(\"object\")) {\n";
+//		code += TAB + TAB + TAB + "if (((JSONObject) json).containsKey(output.name)) {\n";
+//		code += TAB + TAB + TAB + TAB+ "JSONObject object = (JSONObject) ((JSONObject) json).get(output.name);\n";
+//		code += TAB + TAB + TAB + TAB+ "for (Variable sub : output.subtypes) {\n";
+//		code += TAB + TAB + TAB + TAB + TAB+ "assignResult((JSONObject) object, sub);\n";
+//		code += TAB + TAB + TAB + TAB+ "}\n"+ TAB + TAB + TAB +"}\n";
+//		code += TAB + TAB + "} else if (output.type.equals(\"arrayOfObjects\")) {\n";
+//		code += TAB + TAB + TAB + "JSONArray array = (JSONArray) ((JSONObject) json).get(output.name);\n";
+//		code += TAB + TAB + TAB + "boolean subisarray = false;\n";
+//		code += TAB + TAB + TAB + "for (Variable sub : output.subtypes) {\n";
+//		code += TAB + TAB + TAB + TAB + "if (sub.type.equals(\"arrayOfObjects\") || sub.type.equals(\"array\")) {\n";
+//		code += TAB + TAB + TAB + TAB + TAB + "subisarray = true;\n";
+//		code += TAB + TAB + TAB + TAB + "}\n" + TAB + TAB + TAB + "}\n";
+//		code += TAB + TAB + TAB + "if (subisarray) {\n";
+//		code += TAB + TAB + TAB + TAB + "for (int i = 0; i < array.size(); i++) {\n";
+//		code += TAB + TAB + TAB + TAB + TAB + "for (Variable sub : output.subtypes) {\n";
+//		code += TAB + TAB + TAB + TAB + TAB + TAB + "Variable out= new Variable(sub);\n";
+//		code += TAB + TAB + TAB + TAB + TAB + TAB + "assignResult((JSONObject) array.get(i), out);\n";
+//		code += TAB + TAB + TAB + TAB + TAB + TAB + "out.name=output.name + \"[\" + i + \"]\";\n";
+//		code += TAB + TAB + TAB + TAB + TAB + TAB + "output.arrayElements.add(out);\n";
+//		code += TAB + TAB + TAB + TAB + TAB + "}\n" + TAB + TAB + TAB + TAB + "}\n";
+//		code += TAB + TAB + TAB + "} else {\n";
+//		code += TAB + TAB + TAB + TAB + "if (array != null) {\n";
+//		code += TAB + TAB + TAB + TAB + TAB + "for (int i = 0; i < array.size(); i++) {\n";
+//		code += TAB + TAB + TAB + TAB + TAB + TAB + "Variable out = new Variable(output);\n";
+//		code += TAB + TAB + TAB + TAB + TAB + TAB + "out.name = output.name + \"[\" + i + \"]\";\n";
+//		code += TAB + TAB + TAB + TAB + TAB + TAB + "out.type= \"object\";\n";
+//		code += TAB + TAB + TAB + TAB + TAB + TAB + "JSONObject object = (JSONObject) array.get(i);\n";
+//		code += TAB + TAB + TAB + TAB + TAB + TAB + "for (Variable sub : out.subtypes) {\n";
+//		code += TAB + TAB + TAB + TAB + TAB + TAB + TAB + "assignResult(object, sub);\n";
+//		code += TAB + TAB + TAB + TAB + TAB + TAB + "}\n";
+//		code += TAB + TAB + TAB + TAB + TAB + TAB + "output.arrayElements.add(out);\n";
+//		code += TAB + TAB + TAB + TAB + TAB + "}\n" + TAB + TAB + TAB + TAB + "}\n" + TAB + TAB + TAB + "}\n";
+//		code += TAB + TAB + "} else if (output.type.equals(\"array\")) {\n";
+//		code += TAB + TAB + TAB + "JSONArray array = (JSONArray) ((JSONObject) json).get(output.name);\n";
+//		code += TAB + TAB + TAB + "for (int i = 0; i < array.size(); i++) {\n";
+//		code += TAB + TAB + TAB + TAB + "if (array.get(i) != null) {\n";
+//		code += TAB + TAB + TAB + TAB + TAB + "Variable out;\n";
+//		code += TAB + TAB + TAB + TAB + TAB + "try {\n";
+//		code += TAB + TAB + TAB + TAB + TAB + TAB + "out = new Variable(output.name + \"[\" + i + \"]\", \"\", \"String\");\n";
+//		code += TAB + TAB + TAB + TAB + TAB + TAB + "out.value = array.get(i).toString();\n";
+//		code += TAB + TAB + TAB + TAB + TAB + TAB + "output.arrayElements.add(out);\n";
+//		code += TAB + TAB + TAB + TAB + TAB + "} catch (Exception e) {\n";
+//		code += TAB + TAB + TAB + TAB + TAB + TAB + "// TODO Auto-generated catch block\n";
+//		code += TAB + TAB + TAB + TAB + TAB + TAB + "e.printStackTrace();\n";
+//		code += TAB + TAB + TAB + TAB + TAB + "}\n" + TAB + TAB + TAB + TAB + "}\n"+ TAB + TAB + TAB + "}\n";		
+//		code += TAB + TAB + "} else {\n";
+//		code += applyTab(3, assignPrimitive(TAB, "String"), TAB);
+//		code += applyTab(3, assignPrimitive(TAB, "int"), TAB);
+//		code += applyTab(3, assignPrimitive(TAB, "long"), TAB);
+//		code += applyTab(3, assignPrimitive(TAB, "boolean"), TAB);
+//		code += applyTab(3, assignPrimitive(TAB, "float"), TAB);
+//		code += applyTab(3, assignPrimitive(TAB, "double"), TAB);
+//		code += TAB + TAB + "}\n";
+//		code += TAB + "}\n";
 		code += "}\n";
 
 		return code;
