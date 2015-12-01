@@ -3324,8 +3324,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 											destGraph.setSelection(new GraphItem[] { graphNode });
 											graphNode.highlight();
 										}
-									} else if (((OwlService) ((MyNode) graphNode.getData()).getObject()).getName()
-											.getContent().equals(currentService.getName().getContent())) {
+									} else if (((OwlService) ((MyNode) graphNode.getData()).getObject()).equals(currentService)) {
 										destGraph.setSelection(new GraphItem[] { graphNode });
 										graphNode.highlight();
 									}
