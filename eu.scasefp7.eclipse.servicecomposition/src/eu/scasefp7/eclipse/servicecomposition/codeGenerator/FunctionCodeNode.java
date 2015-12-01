@@ -320,17 +320,20 @@ public class FunctionCodeNode extends CodeNode {
 					String[] TRUE_PREDICATES = { "true", "yes", "success", "OK" };
 					String[] FALSE_PREDICATES = { "false", "no", "invalid" };
 					boolean result = false;
+					boolean hasPredicate= false;
 					for (String predicate : FALSE_PREDICATES)
 						if (Similarity.comparePredicates(graph.findEdge(service, next).toString(), predicate)) {
+							hasPredicate =true;
 							result = false;
 							break;
 						}
 					for (String predicate : TRUE_PREDICATES)
 						if (Similarity.comparePredicates(graph.findEdge(service, next).toString(), predicate)) {
+							hasPredicate=true;
 							result = true;
 							break;
 						}
-					code += tabIndent + TAB + "if(" + generateCondition(varName, symbol, conditionValue, result)
+					code += tabIndent + TAB + "if(" + generateCondition(varName, symbol, conditionValue, result, hasPredicate)
 							+ ")\n";
 					code += tabIndent + TAB + TAB + "return \"" + codeGenerator.getFunctionName(next) + "\";\n";
 				} else {

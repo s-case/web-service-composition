@@ -246,18 +246,22 @@ public abstract class CodeGenerator {
 		 * @param result
 		 * @return the generated condition
 		 */
-		protected static String generateCondition(String check, String symbol, String value, boolean result) {
+		protected static String generateCondition(String check, String symbol, String value, boolean result, boolean hasPredicate) {
 			String resultString;
+			if (hasPredicate){
 			if (result) {
-				resultString = "true";
+				resultString = " == true";
 			} else {
-				resultString = "false";
+				resultString = " == false";
+			}
+			}else{
+				resultString="";
 			}
 			if (symbol.equals("!=")){
 				symbol="";
-				return "(!" + check + symbol + value + ")" + " == " + resultString;
+				return "(!" + check + symbol + value + ")"  + resultString;
 			}
-			return "(" + check + symbol + value + ")" + " == " + resultString;
+			return "(" + check + symbol + value + ")" + resultString;
 		}
 
 		/**
