@@ -2518,7 +2518,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 		for (int i = 0; i < vertices.length; i++) {
 			final OwlService node = (OwlService) vertices[i];
 
-			if (node.getType().contains("Action")) {
+			if (node.getType().contains("Action")&& node.getOperation().getDomain()!=null) {
 				if (node.getOperation().getDomain().getSecurityScheme() != null) {
 					if (node.getOperation().getDomain().getSecurityScheme().equalsIgnoreCase("Basic Authentication")) {
 						showBasicAuthenticationParams();
@@ -3336,9 +3336,18 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 						// call the service
 						if (currentService.getOperation() != null) {
 							try {
-								if (currentService.getOperation().getDomain() == null)
+								if (currentService.getOperation().getDomain() == null){
+									disp.syncExec(new Runnable() {
+										@Override
+										public void run() {
+											MessageDialog.openInformation(disp.getActiveShell(), "Error occured",
+													"Action \"" + currentService.getOperation().getName()
+													+ "\" was not replaced. Please replace it manually with one of the available operations or modify and re-import the storyboard diagram before executing the workflow.");
+										}
+									});
 									throw new Exception("Service " + currentService.getOperation().getName()
 											+ " is missing its domain");
+								}
 								else if (currentService.getOperation().getType().equalsIgnoreCase("SOAP"))
 									// else if
 									// (!currentService.getOperation().getDomain().isLocal())

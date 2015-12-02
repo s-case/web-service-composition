@@ -320,6 +320,8 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 				declaredInputs += ", ";
 			if (input.getArgument().getType() == "") {
 				declaredInputs += "String " + input.getName().getContent();
+			}else if(input.getArgument().getType().equals("int")){
+				declaredInputs += "Integer " + input.getName().getContent();
 			} else {
 				declaredInputs += input.getArgument().getType().substring(0, 1).toUpperCase()
 						+ input.getArgument().getType().substring(1) + " " + input.getName().getContent();
@@ -379,13 +381,13 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 				if (arg.getArgument().getSubtypes().isEmpty() && !arg.getArgument().isArray()) {
 					constractorVars += "String " + arg.getName().getContent().replaceAll("[0123456789]", "") ;
 					resultClassDeclaration += TAB + TAB + "private String " + arg.getName().getContent().replaceAll("[0123456789]", "") + " = \"\";\n";
-					resultClassConstractor1 += TAB + TAB + TAB + "this." + arg.getName().getContent() + " = \"\";\n";
+					resultClassConstractor1 += TAB + TAB + TAB + "this." + arg.getName().getContent().replaceAll("[0123456789]", "") + " = \"\";\n";
 				} else if (arg.getArgument().isArray()
 						&& RAMLCaller.stringIsItemFromList(arg.getArgument().getType(), datatypes)) {
 					constractorVars += "ArrayList <String> " + arg.getName().getContent().replaceAll("[0123456789]", "") ;
 					resultClassDeclaration += TAB + TAB + "private ArrayList <String> " + arg.getName().getContent().replaceAll("[0123456789]", "")
 							+ " = new ArrayList<String>();\n";
-					resultClassConstractor1 += TAB + TAB + TAB + "this." + arg.getName().getContent()
+					resultClassConstractor1 += TAB + TAB + TAB + "this." + arg.getName().getContent().replaceAll("[0123456789]", "")
 							+ " = new ArrayList<String>();\n";
 				} else if (arg.getArgument().isArray()
 						&& !RAMLCaller.stringIsItemFromList(arg.getArgument().getType(), datatypes)) {
@@ -394,7 +396,7 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 					resultClassDeclaration += TAB + TAB + "private ArrayList <" + type.substring(0, 1).toUpperCase()
 							+ type.substring(1) + "> " + arg.getName().getContent().replaceAll("[0123456789]", "") + " = new ArrayList<"
 							+ type.substring(0, 1).toUpperCase() + type.substring(1) + ">();\n";
-					resultClassConstractor1 += TAB + TAB + TAB + "this." + arg.getName().getContent()
+					resultClassConstractor1 += TAB + TAB + TAB + "this." + arg.getName().getContent().replaceAll("[0123456789]", "")
 							+ " = new ArrayList<" + type.substring(0, 1).toUpperCase() + type.substring(1) + ">();\n";
 
 				} else if (!arg.getArgument().isArray() && !arg.getArgument().getSubtypes().isEmpty()) {
@@ -403,7 +405,7 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 					resultClassDeclaration += TAB + TAB + "private " + type.substring(0, 1).toUpperCase()
 							+ type.substring(1) + " " + arg.getName().getContent().replaceAll("[0123456789]", "") + " = new "
 							+ type.substring(0, 1).toUpperCase() + type.substring(1) + "();\n";
-					resultClassConstractor1 += TAB + TAB + TAB + "this." + arg.getName().getContent() + " = new "
+					resultClassConstractor1 += TAB + TAB + TAB + "this." + arg.getName().getContent().replaceAll("[0123456789]", "") + " = new "
 							+ type.substring(0, 1).toUpperCase() + type.substring(1) + "();\n";
 				}
 
@@ -512,13 +514,17 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 			declaredInputs += TAB + TAB + "if (" + arg.getName().getContent() + " == null) {\n";
 			declaredInputs += TAB + TAB + TAB + "this." + arg.getName().getContent() + ".value" + " = \"\";\n";
 			declaredInputs += TAB + TAB + "} else {\n";
-			if (!type.equalsIgnoreCase("String")) {
+			if (type.equalsIgnoreCase("String")) {
 				declaredInputs += TAB + TAB + TAB + "this." + arg.getName().getContent() + ".value" + " = "
-						+ type.substring(0, 1).toUpperCase() + type.substring(1) + ".toString("
+						+ arg.getName().getContent() + ";\n";
+				
+			}else if(type.equalsIgnoreCase("int")){
+				declaredInputs += TAB + TAB + TAB + "this." + arg.getName().getContent() + ".value" + " = Integer.toString("
 						+ arg.getName().getContent() + ");\n";
 			} else {
 				declaredInputs += TAB + TAB + TAB + "this." + arg.getName().getContent() + ".value" + " = "
-						+ arg.getName().getContent() + ";\n";
+						+ type.substring(0, 1).toUpperCase() + type.substring(1) + ".toString("
+						+ arg.getName().getContent() + ");\n";
 			}
 			declaredInputs += TAB + TAB + "}\n";
 		}

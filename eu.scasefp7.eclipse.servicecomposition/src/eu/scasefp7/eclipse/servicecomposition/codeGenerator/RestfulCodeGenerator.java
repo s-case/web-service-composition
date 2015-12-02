@@ -51,6 +51,8 @@ public class RestfulCodeGenerator {
 			if (input.getArgument().getType().equals("String")) {
 				inputList += "@QueryParam(\"" + input.getName().getContent() + "\") " + input.getArgument().getType()
 						+ " " + input.getName().getContent();
+			}else if(input.getArgument().getType().equals("int")){
+				inputList += "@QueryParam(\"" + input.getName().getContent() + "\") Integer " + input.getName().getContent();
 			} else {
 				String type = input.getArgument().getType();
 				inputList += "@QueryParam(\"" + input.getName().getContent() + "\") "
