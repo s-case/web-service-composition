@@ -19,6 +19,7 @@ import org.eclipse.core.commands.ExecutionEvent;
 import org.eclipse.core.commands.ExecutionException;
 import org.eclipse.core.internal.resources.File;
 import org.eclipse.core.resources.IFile;
+import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.jface.dialogs.MessageDialog;
@@ -35,6 +36,7 @@ import edu.uci.ics.jung.graph.Graph;
 
 public class ImportHandler extends AbstractHandler {
 	Graph<OwlService, Connector> graph;
+	IProject existingProject; 
 
 	@Override
 	public Object execute(ExecutionEvent event) throws ExecutionException {
@@ -52,13 +54,13 @@ public class ImportHandler extends AbstractHandler {
 			Runnable myRunnable = new Runnable() {
 
 				public void run() {
-					try {
+					try {						
 						File file = (File) selections[0];
 						Algorithm.init();
 						final ArrayList<Operation> operations = Algorithm.importServices(
 								ResourcesPlugin.getWorkspace().getRoot().getLocation().toString() + "/" + "WS.owl");
-						// final ArrayList<Operation> operations = Algorithm
-						// .importServices("D:/web-service-composition-Maven-plugin/web-service-composition/eu.scasefp7.eclipse.serviceComposition/data/WS.owl");
+//						 final ArrayList<Operation> operations = Algorithm
+//						 .importServices("D:/web-service-composition-Maven-plugin/web-service-composition/eu.scasefp7.eclipse.serviceComposition/data/WS.owl");
 						// final ArrayList<Operation> operations =
 						// Algorithm.importServices("",
 						// "data/testing_scripts/");
@@ -93,6 +95,12 @@ public class ImportHandler extends AbstractHandler {
 			// view.updateGraph(graph);
 			// open file with storyboard creator
 			File file = (File) selections[0];
+			existingProject = file.getProject();
+			if (!existingProject.exists()) {
+				throw new Exception();
+			}else{
+				view.setScaseProject(existingProject);
+			}
 			final IFile inputFile = ResourcesPlugin.getWorkspace().getRoot().getFileForLocation(
 					Path.fromOSString(ResourcesPlugin.getWorkspace().getRoot().getLocation().toString()
 							+ file.getFullPath().toOSString()));

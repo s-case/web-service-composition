@@ -269,6 +269,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 	static public List<MavenProject> buildedProjects = new ArrayList<MavenProject>();
 	static public SettingsBuilder settingsBuilder;
 	private MavenExecutionResult installResult = null;
+	private IProject scaseProject;
 
 	// predicates for special types of branches
 	private static String[] TRUE_PREDICATES = { "true", "yes" };
@@ -4707,7 +4708,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 								if (answer) {
 									// OK Button selected
 									try {
-										ConnectToMDEOntology.writeToOntology(currentProject, gGenerator.getOperation());
+										ConnectToMDEOntology.writeToOntology(scaseProject, gGenerator.getOperation());
 									} catch (Exception e) {
 										// TODO Auto-generated catch block
 										e.printStackTrace();
@@ -4715,14 +4716,14 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 									final IFile file = ResourcesPlugin.getWorkspace().getRoot()
 											.getFileForLocation(Path.fromOSString(
 													ResourcesPlugin.getWorkspace().getRoot().getLocation().toString()
-															+ "/" + currentProject.getName() + "/LinkedOntology.owl"));
+															+ "/" + scaseProject.getName() + "/LinkedOntology.owl"));
 									if (file != null) {
 										disp.syncExec(new Runnable() {
 											@Override
 											public void run() {
 												MessageDialog.openInformation(disp.getActiveShell(), "Info",
 														"LinkedOntology.owl file is created under the project "
-																+ currentProject.getName());
+																+ scaseProject.getName());
 											}
 										});
 
@@ -4815,6 +4816,10 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 			con.disconnect();
 		}
 		return exists;
+	}
+	
+	public void setScaseProject(IProject project){
+		scaseProject=project;
 	}
 
 }
