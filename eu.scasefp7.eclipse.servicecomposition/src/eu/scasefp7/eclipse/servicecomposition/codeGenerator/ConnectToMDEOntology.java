@@ -113,7 +113,7 @@ public class ConnectToMDEOntology {
 	public static void writeToOntology(IProject project, MDEOperation operation) {
 
 		// Create a new file for the linked ontology and instantiate it
-		LinkedOntologyAPI linkedOntology = new LinkedOntologyAPI(project,true);
+		LinkedOntologyAPI linkedOntology = new LinkedOntologyAPI(project,false);
 
 		// Add a new resource in the linked ontology
 
