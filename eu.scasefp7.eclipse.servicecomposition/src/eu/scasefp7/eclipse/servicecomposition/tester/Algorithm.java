@@ -390,9 +390,9 @@ public class Algorithm {
 			// select best operation to replace
 			ArrayList<Transformer.ReplaceInformation> replaceInformations = transformer
 					.getReplaceInformation(operations, 10);
-			if (replaceInformations.isEmpty()) {
-				noReplacements = true;
-			}
+//			if (replaceInformations.isEmpty()) {
+//				noReplacements = true;
+//			}
 			double maxWeight = Double.NEGATIVE_INFINITY;
 			Transformer.ReplaceInformation selection = null;
 			for (Transformer.ReplaceInformation replace : replaceInformations)
@@ -458,6 +458,13 @@ public class Algorithm {
 			String licenseName = ((Operation) service.getContent()).getAccessInfo().getLicense().getLicenseName();
 			workflowLicense.setLicenseReport(licenseName);
 
+		}
+		for (OwlService service: transformer.getGraph().getVertices()){
+			if (service.getOperation() != null) {
+				if (service.getOperation().getDomain() == null) {
+					noReplacements = true;
+				}
+			}
 		}
 		if (!noReplacements) {
 			transformer.createLinkedVariableGraph();

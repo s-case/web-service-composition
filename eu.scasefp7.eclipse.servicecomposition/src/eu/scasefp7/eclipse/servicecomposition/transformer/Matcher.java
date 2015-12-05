@@ -56,19 +56,20 @@ public class Matcher {
 									// negative values
 	private static double VARIABLE_SIMILARITY_THRESHOLD = 0.5;
 	public static double NAME_SIMILARITY_THRESHOLD = 0;
-	private static double DESCRIPTION_WEIGHT=3;
+	private static double DESCRIPTION_WEIGHT = 3;
+	private static double VARIABLE_MATCHING_THRESHOLD = 0.5;
 
 	public static double getMaxWeight(boolean isRestfulWithDescription) {
-		if (isRestfulWithDescription){
-			DESCRIPTION_WEIGHT=4.0;
-			NAME_SIMILARITY_WEIGHT=1.0;	
-		}else{
-			DESCRIPTION_WEIGHT=1.0;
-			NAME_SIMILARITY_WEIGHT=4.0;	
+		if (isRestfulWithDescription) {
+			DESCRIPTION_WEIGHT = 4.0;
+			NAME_SIMILARITY_WEIGHT = 1.0;
+		} else {
+			DESCRIPTION_WEIGHT = 1.0;
+			NAME_SIMILARITY_WEIGHT = 4.0;
 		}
 		return Math.max(NAME_SIMILARITY_WEIGHT, 0) + Math.max(OUTPUT_TO_INPUT_WEIGHT, 0)
-				+ Math.max(POSSIBLE_INPUT_WEIGHT, 0)
-				+ Math.max(MANDATORY_INPUT_WEIGHT, 0)  + Math.max(DESCRIPTION_WEIGHT, 0);
+				+ Math.max(POSSIBLE_INPUT_WEIGHT, 0) + Math.max(MANDATORY_INPUT_WEIGHT, 0)
+				+ Math.max(DESCRIPTION_WEIGHT, 0);
 	}
 
 	/**
@@ -82,8 +83,10 @@ public class Matcher {
 		Bundle bundle = Platform.getBundle(Activator.PLUGIN_ID);
 		try {
 			URL fileURL = bundle.getEntry("matcher.properties");
-			//InputStream inputStream = new FileInputStream(new File(new URI(FileLocator.resolve(fileURL).toString().replaceAll(" ", "%20"))));
-			URL url = new URL("platform:/plugin/" +Activator.PLUGIN_ID+"/matcher.properties");
+			// InputStream inputStream = new FileInputStream(new File(new
+			// URI(FileLocator.resolve(fileURL).toString().replaceAll(" ",
+			// "%20"))));
+			URL url = new URL("platform:/plugin/" + Activator.PLUGIN_ID + "/matcher.properties");
 			InputStream inputStream = url.openConnection().getInputStream();
 			prop.load(inputStream);
 			NAME_SIMILARITY_WEIGHT = Double.parseDouble(prop.getProperty("matcher.NAME_SIMILARITY_WEIGHT"));
@@ -94,7 +97,7 @@ public class Matcher {
 			BIAS = Double.parseDouble(prop.getProperty("matcher.BIAS"));
 			VARIABLE_SIMILARITY_THRESHOLD = Double
 					.parseDouble(prop.getProperty("matcher.VARIABLE_SIMILARITY_THRESHOLD"));
-			DESCRIPTION_WEIGHT =Double.parseDouble(prop.getProperty("metadata.DESCRIPTION_WEIGHT"));
+			DESCRIPTION_WEIGHT = Double.parseDouble(prop.getProperty("metadata.DESCRIPTION_WEIGHT"));
 		} catch (Exception e) {
 			System.err.println("Error occured while trying to load matcher settings from " + propFileName);
 		}
@@ -147,18 +150,21 @@ public class Matcher {
 			if (!found)
 				return 0;
 		}
-		
+
 		double nameSimilarity = Similarity.similarity(action.getName(), operation.getName());
-		double numberOfWords =action.getName().getComparableForm().split("\\s").length;
-		//double numberOfWords = operation.getName().getComparableForm().split("\\s").length;
-		nameSimilarity=nameSimilarity/numberOfWords;
-		double descriptionSimilarity =0;
-		if (!operation.getAccessInfo().getDescription().isEmpty()){
-		descriptionSimilarity = Similarity.similarity(
-				new ComparableName(((Description) operation.getAccessInfo().getDescription().get(0)).getDescription()),
-				action.getName());
-		//double DescnumberOfWords=((Description) operation.getAccessInfo().getDescription().get(0)).getDescription().split("\\s").length;
-		descriptionSimilarity=descriptionSimilarity/numberOfWords;
+		double numberOfWords = action.getName().getComparableForm().split("\\s").length;
+		// double numberOfWords =
+		// operation.getName().getComparableForm().split("\\s").length;
+		nameSimilarity = nameSimilarity / numberOfWords;
+		double descriptionSimilarity = 0;
+		if (!operation.getAccessInfo().getDescription().isEmpty()) {
+			descriptionSimilarity = Similarity.similarity(
+					new ComparableName(
+							((Description) operation.getAccessInfo().getDescription().get(0)).getDescription()),
+					action.getName());
+			// double DescnumberOfWords=((Description)
+			// operation.getAccessInfo().getDescription().get(0)).getDescription().split("\\s").length;
+			descriptionSimilarity = descriptionSimilarity / numberOfWords;
 		}
 
 		if (!action.getName().isEmpty() && nameSimilarity < NAME_SIMILARITY_THRESHOLD)
@@ -180,20 +186,32 @@ public class Matcher {
 					break;
 				}
 			}
-			for (Importer.Argument possibleArgument : possibleOutputs) {
-				if (hasSame(arg, possibleArgument)) {
-					inputSimilarity += 1.0 / operation.getInputs().size();
-					break;
-				}
-			}
+//			for (Importer.Argument possibleArgument : possibleOutputs) {
+//				if (hasSame(arg, possibleArgument)) {
+//					inputSimilarity += 1.0 / operation.getInputs().size();
+//					break;
+//				}
+//			}
 		}
 		double outputSimilarity = 0;
 		for (Importer.Argument arg : operation.getOutputs()) {
 			for (Importer.Argument possibleArgument : possibleOutputs) {
-				if (hasSame(arg, possibleArgument)) {
-					outputSimilarity += 1.0 / operation.getOutputs().size();
-					break;
+
+				if (arg.getSubtypes().isEmpty()) {
+					if (hasSame(arg, possibleArgument)) {
+						outputSimilarity += 1.0 / operation.getOutputs().size();
+						break;
+					}
+				} else {
+					for (Importer.Argument sub : arg.getSubtypes()) {
+						if (hasSame(sub, possibleArgument)) {
+							outputSimilarity += 1.0 / arg.getSubtypes().size();
+							break;
+						}
+						
+					}
 				}
+
 			}
 		}
 
@@ -201,24 +219,26 @@ public class Matcher {
 				inputSimilarity * operation.getInputs().size() - outputSimilarity * operation.getOutputs().size());
 
 		if (minInputOutputDiff != Integer.MIN_VALUE) {
-			if (diff >= minInputOutputDiff)
-				return -diff + minInputOutputDiff + 1;
-			else
-				return 0;
+			// if (diff >= minInputOutputDiff)
+			// return -diff + minInputOutputDiff + 1;
+			// else
+			// return 0;
+			return inputSimilarity + outputSimilarity;
 		}
 
 		double similarity = 0;
-		//similarity = BIAS + (operation.getMetadata() != null ? operation.getMetadata().getSimilarity(action) : 0);
-		if (operation.getType().equalsIgnoreCase("RESTful")&& !operation.getAccessInfo().getDescription().isEmpty()) {
-			DESCRIPTION_WEIGHT=4.0;
-			NAME_SIMILARITY_WEIGHT=1.0;				
-		}else{
-			NAME_SIMILARITY_WEIGHT=4.0;
-			DESCRIPTION_WEIGHT=1.0;
+		// similarity = BIAS + (operation.getMetadata() != null ?
+		// operation.getMetadata().getSimilarity(action) : 0);
+		if (operation.getType().equalsIgnoreCase("RESTful") && !operation.getAccessInfo().getDescription().isEmpty()) {
+			DESCRIPTION_WEIGHT = 4.0;
+			NAME_SIMILARITY_WEIGHT = 1.0;
+		} else {
+			NAME_SIMILARITY_WEIGHT = 4.0;
+			DESCRIPTION_WEIGHT = 1.0;
 		}
 		similarity += DESCRIPTION_WEIGHT * descriptionSimilarity;
 		similarity += POSSIBLE_INPUT_WEIGHT * inputSimilarity;
-		//similarity += INPUT_TO_INPUT_WEIGHT * inputToInputSimilarity;
+		// similarity += INPUT_TO_INPUT_WEIGHT * inputToInputSimilarity;
 		similarity += MANDATORY_INPUT_WEIGHT * mandatoryInputSimilarity;
 		similarity += OUTPUT_TO_INPUT_WEIGHT * outputSimilarity;
 		similarity += NAME_SIMILARITY_WEIGHT * nameSimilarity;
@@ -226,7 +246,8 @@ public class Matcher {
 		// System.out.println("\""+action.toString()+"\" compared with
 		// \""+operation.toString()+"\" (Weight: "+similarity+")");
 
-		similarity= similarity/(DESCRIPTION_WEIGHT+POSSIBLE_INPUT_WEIGHT+MANDATORY_INPUT_WEIGHT+OUTPUT_TO_INPUT_WEIGHT+NAME_SIMILARITY_WEIGHT);
+		similarity = similarity / (DESCRIPTION_WEIGHT + POSSIBLE_INPUT_WEIGHT + MANDATORY_INPUT_WEIGHT
+				+ OUTPUT_TO_INPUT_WEIGHT + NAME_SIMILARITY_WEIGHT);
 		return similarity;
 	}
 
@@ -310,11 +331,12 @@ public class Matcher {
 		for (int i = 0; i < allOutputs.size(); i++) {
 
 			double nameSimilarity = Similarity.similarity(allOutputs.get(i).getName(), input.getName());
+			nameSimilarity=nameSimilarity/allOutputs.get(i).getName().getComparableForm().split("\\s").length;
 			variableServiceSimilarities.add(i, nameSimilarity);
 		}
 
 		// second pass: add detected to list (generate again instance list to
-		double maxWeight = variableServiceSimilarities.get(0);
+		double maxWeight = VARIABLE_MATCHING_THRESHOLD;
 		OwlService outputMax = allOutputs.get(0);
 		for (int i = 0; i < allOutputs.size(); i++) {
 			Importer.Argument output = allOutputs.get(i).getArgument();
@@ -334,7 +356,7 @@ public class Matcher {
 
 		if (outputMax == allOutputs.get(0)) {
 			if (sameVariable(inputContent, allOutputs.get(0).getArgument())
-					&& (common(inputContent.getParent(), allOutputs.get(0).getArgument().getParent()).isEmpty())) {
+					&& (common(inputContent.getParent(), allOutputs.get(0).getArgument().getParent()).isEmpty())&& variableServiceSimilarities.get(0) > maxWeight) {
 				theLinkedVariable = outputMax;
 				newParent = allOutputs.get(0).getArgument().getParent();
 				inputContent.addParent(newParent);

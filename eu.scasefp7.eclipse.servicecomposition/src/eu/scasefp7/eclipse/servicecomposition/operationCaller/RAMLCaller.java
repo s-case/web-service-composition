@@ -56,7 +56,10 @@ public class RAMLCaller {
 	// http://localhost:8080/AdviceFromIP/rest/result/query?ipAddress=160.40.50.176
 	public void callRESTfulOperation(Operation ramlOperation) {
 
-		String wsUrl = ramlOperation.getDomain().getURI() + ramlOperation.getDomain().getResourcePath();
+		String wsUrl = ramlOperation.getDomain().getURI();
+		if (ramlOperation.getDomain().getResourcePath()!= null){
+			wsUrl+= ramlOperation.getDomain().getResourcePath();
+		}
 		ArrayList<String> uriParams = new ArrayList<String>();
 		for (Argument arg : ramlOperation.getUriParameters()) {
 			uriParams.add(arg.getName().getContent().toString());

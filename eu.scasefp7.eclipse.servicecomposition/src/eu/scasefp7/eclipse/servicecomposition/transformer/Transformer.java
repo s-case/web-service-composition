@@ -111,6 +111,7 @@ public class Transformer {
 		public Operation getOperationToReplace() {
 			return operation;
 		}
+
 		public Operation getOriginalServiceOperation() {
 			return originalServiceOperation;
 		}
@@ -180,8 +181,10 @@ public class Transformer {
 		Bundle bundle = Platform.getBundle(Activator.PLUGIN_ID);
 		try {
 			URL fileURL = bundle.getEntry(propFileName);
-			//InputStream inputStream = new FileInputStream(new File(new URI(FileLocator.resolve(fileURL).toString().replaceAll(" ", "%20"))));
-			URL url = new URL("platform:/plugin/" +Activator.PLUGIN_ID+"/matcher.properties");
+			// InputStream inputStream = new FileInputStream(new File(new
+			// URI(FileLocator.resolve(fileURL).toString().replaceAll(" ",
+			// "%20"))));
+			URL url = new URL("platform:/plugin/" + Activator.PLUGIN_ID + "/matcher.properties");
 			InputStream inputStream = url.openConnection().getInputStream();
 			prop.load(inputStream);
 			REPLACE_NAME_SIMILARITY_THRESHOLD = Double
@@ -215,8 +218,6 @@ public class Transformer {
 	public Graph<OwlService, Connector> getGraph() {
 		return graph;
 	}
-
-	
 
 	/**
 	 * <h1>expandOperations</h1> Adds all operation inputs as nodes to the
@@ -273,7 +274,7 @@ public class Transformer {
 			for (Argument arg : op.getOutputs()) {
 				addOutputs(arg, service, op);
 			}
-			
+
 		}
 
 	}
@@ -408,107 +409,7 @@ public class Transformer {
 		}
 	}
 
-	/**
-	 * <h1>createLinkedVariableGraph</h1> This function generates a new graph
-	 * that merges all variables in the prototype that are the same into a
-	 * single variable. The main purpose of the function is to merge XMI
-	 * properties with operation inputs.<br/>
-	 * This function also replaces all Argument instances in operations so that
-	 * <code>==</code> between objects will denote the same variable. <br/>
-	 * The function <code>Matcher.getSameVariableInstances</code> that is used
-	 * should be careful to not merge members of the same class.
-	 * 
-	 * @param prototype
-	 *            : the prototype of the graph
-	 * @throws Exception
-	 */
-	// public void createLinkedVariableGraph() throws Exception {
-	// Graph<OwlService, Connector> prototype = this.graph;
-	// Graph<OwlService, Connector> graph = new SparseMultigraph<OwlService,
-	// Connector>();
-	// HashMap<OwlService, OwlService> map = new HashMap<OwlService,
-	// OwlService>();
-	// // detect variable
-	// ArrayList<OwlService> servicesToCheckForVariables = new
-	// ArrayList<OwlService>(prototype.getVertices());
-	// while (!servicesToCheckForVariables.isEmpty()) {
-	// if (servicesToCheckForVariables.get(0).getArgument() == null)
-	// servicesToCheckForVariables.remove(0);
-	// else {
-	// ArrayList<OwlService> sameVariable = Matcher.getSameVariableInstances(
-	// servicesToCheckForVariables.get(0), servicesToCheckForVariables);
-	// if (sameVariable.size() > 1) {
-	// OwlService commonVariable = Matcher.createCommonVariable(sameVariable);
-	// commonVariable.setisMatchedIO(true);
-	// servicesToCheckForVariables.remove(commonVariable);
-	// for (OwlService variableInstance : sameVariable) {
-	// map.put(variableInstance, commonVariable);
-	// servicesToCheckForVariables.remove(variableInstance);
-	// }
-	// } else
-	// servicesToCheckForVariables.remove(0);
-	// }
-	// }
-	// // add vertices to graph (add identity to map if already there, careful
-	// // to avoid multiple inserts from mappings)
-	// ArrayList<OwlService> servicesAdded = new ArrayList<OwlService>();
-	// for (OwlService service : prototype.getVertices()) {
-	// OwlService toAdd = map.get(service);
-	// // System.out.println("Candidate node: "+service.toString());
-	// if (toAdd == null)
-	// map.put(service, toAdd = service);
-	// if (servicesAdded.contains(toAdd))
-	// continue;
-	// // System.out.println("Added node: "+toAdd.toString());
-	// servicesAdded.add(toAdd);
-	// graph.addVertex(map.get(service));
-	// }
-	// // System.out.println("---------");
-	// // add edges to graph according to map
-	// for (Connector connector : prototype.getEdges(EdgeType.DIRECTED)) {
-	// OwlService source = map.get(connector.getSource());
-	// OwlService target = map.get(connector.getTarget());
-	// if (graph.findEdge(source, target) == null)
-	// graph.addEdge(new Connector(source, target, connector.getCondition()),
-	// source, target,
-	// EdgeType.DIRECTED);
-	// }
-	// for (Connector connector : prototype.getEdges(EdgeType.UNDIRECTED)) {
-	// OwlService source = map.get(connector.getSource());
-	// OwlService target = map.get(connector.getTarget());
-	// if (graph.findEdge(source, target) == null)
-	// graph.addEdge(new Connector(source, target, connector.getCondition()),
-	// source, target,
-	// EdgeType.UNDIRECTED);
-	// }
-	// // replace variable arguments in all operations (perform in loop to
-	// // cover strange cross-references)
-	// int changes = -1;
-	// while (changes != 0) {
-	// changes = 0;
-	// Iterator<Entry<OwlService, OwlService>> it = map.entrySet().iterator();
-	// while (it.hasNext()) {
-	// Map.Entry<OwlService, OwlService> pairs = (Map.Entry<OwlService,
-	// OwlService>) it.next();
-	// OwlService previous = pairs.getKey();
-	// OwlService next = pairs.getValue();
-	// if (previous != next && previous.getArgument() != next.getArgument())
-	// for (OwlService connectedService : graph.getNeighbors(next)) {
-	// Operation op = connectedService.getOperation();
-	// if (op != null)
-	// changes += op.replaceArgument(previous.getArgument(), next.getArgument())
-	// ? 1 : 0;
-	// Argument arg = connectedService.getArgument();
-	// if (arg != null)
-	// changes += arg.replaceSubtype(previous.getArgument(), next.getArgument())
-	// ? 1 : 0;
-	// }
-	// }
-	// // System.out.println("Changes: "+changes);
-	// }
-	// // System.out.println("Changes finished");
-	// this.graph = graph;
-	// }
+	
 
 	/**
 	 * <h1>createLinkedVariableGraph</h1> This function generates a new graph in
@@ -527,13 +428,7 @@ public class Transformer {
 		// HashMap<OwlService, OwlService> map = new HashMap<OwlService,
 		// OwlService>();
 		graph = prototype;
-		// detect variable
-		// ArrayList<OwlService> servicesToCheckForVariables = new
-		// ArrayList<OwlService>(prototype.getVertices());
-		// while (!servicesToCheckForVariables.isEmpty()) {
-		// if (servicesToCheckForVariables.get(0).getArgument() == null)
-		// servicesToCheckForVariables.remove(0);
-		// else {
+		
 		ArrayList<OwlService> allServices = new ArrayList<OwlService>(prototype.getVertices());
 		ArrayList<OwlService> Inputs = new ArrayList<OwlService>();
 		ArrayList<OwlService> Outputs = new ArrayList<OwlService>();
@@ -567,70 +462,7 @@ public class Transformer {
 			}
 		}
 
-		// else
-		// servicesToCheckForVariables.remove(0);
-		// }
-		// }
-		// // add vertices to graph (add identity to map if already there,
-		// careful
-		// // to avoid multiple inserts from mappings)
-		// ArrayList<OwlService> servicesAdded = new ArrayList<OwlService>();
-		// for (OwlService service : prototype.getVertices()) {
-		// OwlService toAdd = map.get(service);
-		// // System.out.println("Candidate node: "+service.toString());
-		// if (toAdd == null)
-		// map.put(service, toAdd = service);
-		// if (servicesAdded.contains(toAdd))
-		// continue;
-		// // System.out.println("Added node: "+toAdd.toString());
-		// servicesAdded.add(toAdd);
-		// graph.addVertex(map.get(service));
-		// }
-		// // System.out.println("---------");
-		// // add edges to graph according to map
-		// for (Connector connector : prototype.getEdges(EdgeType.DIRECTED)) {
-		// OwlService source = map.get(connector.getSource());
-		// OwlService target = map.get(connector.getTarget());
-		// if (graph.findEdge(source, target) == null)
-		// graph.addEdge(new Connector(source, target,
-		// connector.getCondition()), source, target,
-		// EdgeType.DIRECTED);
-		// }
-		// for (Connector connector : prototype.getEdges(EdgeType.UNDIRECTED)) {
-		// OwlService source = map.get(connector.getSource());
-		// OwlService target = map.get(connector.getTarget());
-		// if (graph.findEdge(source, target) == null)
-		// graph.addEdge(new Connector(source, target,
-		// connector.getCondition()), source, target,
-		// EdgeType.UNDIRECTED);
-		// }
-		// // replace variable arguments in all operations (perform in loop to
-		// // cover strange cross-references)
-		// int changes = -1;
-		// while (changes != 0) {
-		// changes = 0;
-		// Iterator<Entry<OwlService, OwlService>> it =
-		// map.entrySet().iterator();
-		// while (it.hasNext()) {
-		// Map.Entry<OwlService, OwlService> pairs = (Map.Entry<OwlService,
-		// OwlService>) it.next();
-		// OwlService previous = pairs.getKey();
-		// OwlService next = pairs.getValue();
-		// if (previous != next && previous.getArgument() != next.getArgument())
-		// for (OwlService connectedService : graph.getNeighbors(next)) {
-		// Operation op = connectedService.getOperation();
-		// if (op != null)
-		// changes += op.replaceArgument(previous.getArgument(),
-		// next.getArgument()) ? 1 : 0;
-		// Argument arg = connectedService.getArgument();
-		// if (arg != null)
-		// changes += arg.replaceSubtype(previous.getArgument(),
-		// next.getArgument()) ? 1 : 0;
-		// }
-		// }
-		// // System.out.println("Changes: "+changes);
-		// }
-		// System.out.println("Changes finished");
+		
 		this.graph = graph;
 	}
 
@@ -876,17 +708,19 @@ public class Transformer {
 				}
 			}
 		}
-		if (targetOperation != null && ((OwlService) targetConnector.getTarget()).getOperation()!=null) {
+		if (targetOperation != null && ((OwlService) targetConnector.getTarget()).getOperation() != null) {
 			int matched = 0;
-			for (Argument out : targetOperation.getOutputs()) {
-				for (Argument in : ((OwlService) targetConnector.getTarget()).getOperation().getInputs()) {
+			for (Argument in : ((OwlService) targetConnector.getTarget()).getOperation().getInputs()) {
+				for (Argument out : targetOperation.getOutputs()) {
+
 					if (Matcher.hasSame(out, in)) {
 						matched++;
+						break;
 					}
 				}
 			}
 			if (targetConnector != null && ((OwlService) targetConnector.getTarget()).getOperation().getInputs().size()
-					- matched > targetOperation.getInputs().size()) {
+					 > targetOperation.getInputs().size()- matched) {
 				graph.removeEdge(targetConnector);
 				dummyService.setContent(targetOperation);
 				dummyService.lock();
