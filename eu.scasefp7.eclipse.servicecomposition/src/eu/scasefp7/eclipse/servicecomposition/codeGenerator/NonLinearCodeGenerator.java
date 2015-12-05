@@ -243,10 +243,10 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 		}
 		String operationResponseObjects = "";
 		for (OwlService op : remainingOperations) {
-			if (op.getOperation().getType().equalsIgnoreCase("RESTful")) {
+			//if (op.getOperation().getType().equalsIgnoreCase("RESTful")) {
 				declaredVariables += TAB + op.getName().getContent() + "Response " + op.getName().getContent()
 						+ "_response = new " + op.getName().getContent() + "Response();\n";
-			}
+			//}
 			operationResponseObjects += TAB + TAB + "public static class " + op.getName().getContent() + "Response {\n";
 			String VarDeclaration = "";
 			String getSet = "\n\n";
@@ -590,15 +590,15 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 
 		for (OwlService matchedOutput : matchedOutputs) {
 			for (OwlService matchedInput : graph.getSuccessors(matchedOutput)) {
-				if (matchedInput.getArgument().getBelongsToOperation().getType().equalsIgnoreCase("SOAP")) {
-					declaredInputs += TAB + TAB + TAB + matchedInput.getName().getContent().toString() + ".value = "
-							+ matchedOutput.getName().getContent().toString() + ".value;\n";
-				} else {
+//				if (matchedInput.getArgument().getBelongsToOperation().getType().equalsIgnoreCase("SOAP")) {
+//					declaredInputs += TAB + TAB + TAB + matchedInput.getName().getContent().toString() + ".value = "
+//							+ matchedOutput.getName().getContent().toString() + ".value;\n";
+//				} else {
 					String ret=".get"+matchedOutput.getName().getContent().replaceAll("[0123456789]", "")+"()";
 					ret=roadToSub(matchedOutput, graph, ret);
 					declaredInputs += TAB + TAB + TAB + matchedInput.getName().getContent().toString() + ".value = "
 							+ matchedOutput.getArgument().getBelongsToOperation().getName()+ "_response"+ret+";\n";
-				}
+				//}
 
 			}
 		}

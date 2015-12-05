@@ -157,28 +157,37 @@ public class FunctionCodeNode extends CodeNode {
 		if (operation.getDomain().isLocal())
 			return super.generateInputSynchronizationCode(operation, allVariables);
 		String ret = "";
+		String varArguments="";
+		String varInstance ="";
+		String response="";
 		for (Argument arg : operation.getOutputs()) {
 			if (arg.getSubtypes().isEmpty()) {
 				for (OwlService var : allVariables) {
 					if (var.getArgument().equals(arg)) {
 						ret += "operationOutputs.add(" + var.getName().getContent().toString() + ");\n";
-						// ret += assignment(var, "",
-						// "result.getResponseHasNativeOrComplexObjects()",
-						// false, allVariables);
+						
 					}
 				}
+			}
+			else{
+				varInstance = TAB + TAB + arg.getName().toString().substring(0, 1).toUpperCase() + arg.getName().toString().substring(1)  + " " + arg.getName().getContent().toString()  + " = new "
+						+ arg.getName().toString().substring(0, 1).toUpperCase() + arg.getName().toString().substring(1) + "(";
+				response += arg.getBelongsToOperation().getName().getContent()
+						+ "_response.set" + arg.getName().toString().replaceAll("[0123456789]", "")  + "("+arg.getName().toString().replaceAll("[0123456789]", "")+");\n";
 			}
 			for (Argument sub : arg.getSubtypes()) {
 				for (OwlService var : allVariables) {
 					if (var.getArgument().equals(sub)) {
 						ret += "operationOutputs.add(" + var.getName().getContent().toString() + ");\n";
-						// ret += assignment(var, "",
-						// "result.getResponseHasNativeOrComplexObjects()",
-						// false, allVariables);
+						if (!varArguments.isEmpty()) {
+							varArguments += ", ";
+						}
+						varArguments += var.getName().getContent().toString()+ ".value";
 					}
 				}
 			}
 		}
+		varInstance+= varArguments+ ");\n";
 		ret += "if (result.getResponseHasNativeOrComplexObjects().get(0) instanceof NativeObject && operationOutputs.size() > 1) {\n";
 		ret += TAB
 				+ "String xmlString = ((NativeObject) ((InvocationResult) result).getResponseHasNativeOrComplexObjects().get(0)).getHasValue();\n"
@@ -203,6 +212,8 @@ public class FunctionCodeNode extends CodeNode {
 				+ "}else if (obj instanceof NativeObject) {\n";
 		ret += TAB + TAB + TAB + "operationOutputs.get(0).value = ((NativeObject) obj).getHasValue();\n";
 		ret += TAB + TAB + "}\n" + TAB + "}\n" + "}\n";
+		ret += varInstance;
+		ret += response;
 		return ret;
 	}
 

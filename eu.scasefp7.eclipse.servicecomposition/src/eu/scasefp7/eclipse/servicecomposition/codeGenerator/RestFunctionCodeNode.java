@@ -64,30 +64,34 @@ public class RestFunctionCodeNode extends CodeNode {
 	protected String generateOutputSynchronizationCode(Operation operation, ArrayList<OwlService> allVariables) {
 
 		String ret = "";
-		ret+= "Gson gson = new Gson();\n";
-		ret+= operation.getName().toString()+"_response = gson.fromJson(result, "+operation.getName().toString()+"Response.class);\n";
-//		ret += "ArrayList<Variable> outputs = new ArrayList<Variable>();\n";
-//		
-//			for (OwlService var : outputVariables) {
-//				
-//					if (!var.getArgument().getSubtypes().isEmpty()) {
-//						for (OwlService sub : graph.getSuccessors(var)) {
-//							if (sub.getArgument() != null && !sub.getisMatchedIO()) {
-//								ret += addSubtypes(sub, var, graph);
-//							}
-//						}
-//					}
-//					ret += "outputs.add(" + var.getName().getContent().toString() + ");\n";
-//				
-//			}
-//
-//		ret += "try {\n";
-//		ret += TAB + "JSONObject json = (JSONObject) JSONValue.parseWithException(result);\n";
-//		ret += TAB + "for (Variable output:outputs){\n";
-//		ret += TAB + TAB + "CallRESTfulService.assignResult(json, output);\n";
-//		ret += TAB + "}\n";
-//		ret += "} catch (ParseException e) {\n";
-//		ret += "}\n";
+		ret += "Gson gson = new Gson();\n";
+		ret += operation.getName().toString() + "_response = gson.fromJson(result, " + operation.getName().toString()
+				+ "Response.class);\n";
+		// ret += "ArrayList<Variable> outputs = new ArrayList<Variable>();\n";
+		//
+		// for (OwlService var : outputVariables) {
+		//
+		// if (!var.getArgument().getSubtypes().isEmpty()) {
+		// for (OwlService sub : graph.getSuccessors(var)) {
+		// if (sub.getArgument() != null && !sub.getisMatchedIO()) {
+		// ret += addSubtypes(sub, var, graph);
+		// }
+		// }
+		// }
+		// ret += "outputs.add(" + var.getName().getContent().toString() +
+		// ");\n";
+		//
+		// }
+		//
+		// ret += "try {\n";
+		// ret += TAB + "JSONObject json = (JSONObject)
+		// JSONValue.parseWithException(result);\n";
+		// ret += TAB + "for (Variable output:outputs){\n";
+		// ret += TAB + TAB + "CallRESTfulService.assignResult(json,
+		// output);\n";
+		// ret += TAB + "}\n";
+		// ret += "} catch (ParseException e) {\n";
+		// ret += "}\n";
 
 		return ret;
 	}
@@ -96,19 +100,24 @@ public class RestFunctionCodeNode extends CodeNode {
 	protected String generateOperationCode(Operation operation, ArrayList<OwlService> allVariables) throws Exception {
 
 		String ret = "";
-		ret += "String wsUrl =\"" + operation.getDomain().getURI() + operation.getDomain().getResourcePath() + "\";\n";
+		if (operation.getDomain().getResourcePath() != null) {
+			ret += "String wsUrl =\"" + operation.getDomain().getURI() + operation.getDomain().getResourcePath()
+					+ "\";\n";
+		} else {
+			ret += "String wsUrl =\"" + operation.getDomain().getURI() + "\";\n";
+		}
 		for (Argument arg : operation.getUriParameters()) {
 			ret += "wsUrl = wsUrl.replace(\"{" + arg.getName().toString() + "}\", " + arg.getName().toString()
 					+ ".value);\n";
 		}
 		ret += "String crudVerb=\"" + operation.getDomain().getCrudVerb() + "\";\n";
-		if (operation.getDomain().getSecurityScheme() != null){
-			if (operation.getDomain().getSecurityScheme().equalsIgnoreCase("Basic Authentication")){
-			ret +="boolean hasAuth= true;\n";
-			ret += "String auth= username.value+\":\"+password.value;\n";
+		if (operation.getDomain().getSecurityScheme() != null) {
+			if (operation.getDomain().getSecurityScheme().equalsIgnoreCase("Basic Authentication")) {
+				ret += "boolean hasAuth= true;\n";
+				ret += "String auth= username.value+\":\"+password.value;\n";
 			}
-		}else{
-			ret +="boolean hasAuth= false;\n";
+		} else {
+			ret += "boolean hasAuth= false;\n";
 			ret += "String auth=\"\";\n";
 		}
 
@@ -117,16 +126,18 @@ public class RestFunctionCodeNode extends CodeNode {
 		return ret;
 	}
 
-//	private String addSubtypes(OwlService sub, OwlService var, final Graph<OwlService, Connector> graph) {
-//		String ret="";
-//		ret += var.getName().getContent().toString() + ".subtypes.add(" + sub.getName().getContent().toString()
-//				+ ");\n";
-//		for (OwlService subsub : graph.getSuccessors(sub)) {
-//			if (subsub.getArgument() != null && !subsub.getisMatchedIO()) {
-//				ret += addSubtypes(subsub, sub, graph);
-//			}
-//		}
-//		return ret;
-//	}
+	// private String addSubtypes(OwlService sub, OwlService var, final
+	// Graph<OwlService, Connector> graph) {
+	// String ret="";
+	// ret += var.getName().getContent().toString() + ".subtypes.add(" +
+	// sub.getName().getContent().toString()
+	// + ");\n";
+	// for (OwlService subsub : graph.getSuccessors(sub)) {
+	// if (subsub.getArgument() != null && !subsub.getisMatchedIO()) {
+	// ret += addSubtypes(subsub, sub, graph);
+	// }
+	// }
+	// return ret;
+	// }
 
 }
