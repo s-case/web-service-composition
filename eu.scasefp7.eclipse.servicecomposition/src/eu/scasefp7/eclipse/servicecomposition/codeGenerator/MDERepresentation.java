@@ -9,16 +9,23 @@ public class MDERepresentation {
 	private String belongsToURL;
 	private String hasName;
 	private String isType;
-	private ArrayList<String> hasElements;
+	private ArrayList<MDERepresentation> hasElements;
+	private ArrayList<String> hasPrimitiveElements;
+	
+
+	MDERepresentation(){
+		
+	}
 
 	MDERepresentation(boolean isAuthToken, boolean isOptional, String belongsToURL, String hasName, String isType,
-			ArrayList<String> hasElements) {
+			ArrayList<MDERepresentation> hasElements, ArrayList<String> hasPrimitiveElements) {
 		this.isAuthToken= isAuthToken;
 		this.isOptional = isOptional;
 		this.belongsToURL = belongsToURL;
 		this.hasName = hasName;
 		this.isType = isType;
 		this.hasElements =hasElements;
+		this.hasPrimitiveElements = hasPrimitiveElements;
 
 	}
 	
@@ -37,7 +44,10 @@ public class MDERepresentation {
 	public String getIsType(){
 		return this.isType;
 	}
-	public ArrayList<String> getHasElements(){
+	public ArrayList<MDERepresentation> getHasElements(){
 		return this.hasElements;
+	}
+	public ArrayList<String> getHasPrimitiveElements(){
+		return this.hasPrimitiveElements;
 	}
 }

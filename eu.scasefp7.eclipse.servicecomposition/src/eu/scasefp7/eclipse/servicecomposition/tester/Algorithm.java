@@ -66,32 +66,37 @@ public class Algorithm {
 			if (selection == null)
 				return;
 			weight = selection.getWeight();
-			//double nameSimilarity = selection.getOperationToReplace().getName().getComparableForm().split("\\s").length;
+			// double nameSimilarity =
+			// selection.getOperationToReplace().getName().getComparableForm().split("\\s").length;
 			double descriptionSimilarity = 0;
-			boolean isRestfulWithDescription=false;
-			this.numberOfWords = selection.getOriginalServiceOperation().getName().getComparableForm().split("\\s").length;
+			boolean isRestfulWithDescription = false;
+			this.numberOfWords = selection.getOriginalServiceOperation().getName().getComparableForm()
+					.split("\\s").length;
 			this.nameSimilarity = Similarity.similarity(selection.getOperationToReplace().getName(),
 					selection.getOriginalServiceOperation().getName());
 			if (!selection.getOperationToReplace().getAccessInfo().getDescription().isEmpty()) {
-//				descriptionSimilarity = selection.getOperationToReplace().getAccessInfo().getDescription().get(0)
-//						.getDescription().split("\\s").length;
-				if (selection.getOperationToReplace().getType().equalsIgnoreCase("Restful")){
-					isRestfulWithDescription=true;
-//					this.numberOfWords=selection.getOperationToReplace().getAccessInfo().getDescription().get(0)
-//							.getDescription().split("\\s").length;
-					this.nameSimilarity = Similarity.similarity(new ComparableName(selection.getOperationToReplace().getAccessInfo().getDescription().get(0)
-							.getDescription()),
+				// descriptionSimilarity =
+				// selection.getOperationToReplace().getAccessInfo().getDescription().get(0)
+				// .getDescription().split("\\s").length;
+				if (selection.getOperationToReplace().getType().equalsIgnoreCase("Restful")) {
+					isRestfulWithDescription = true;
+					// this.numberOfWords=selection.getOperationToReplace().getAccessInfo().getDescription().get(0)
+					// .getDescription().split("\\s").length;
+					this.nameSimilarity = Similarity
+							.similarity(
+									new ComparableName(selection.getOperationToReplace().getAccessInfo()
+											.getDescription().get(0).getDescription()),
 							selection.getOriginalServiceOperation().getName());
 				}
-				
+
 			}
-			
+
 			effectiveProbability = selection.getWeight();
-			//nameSimilarity = Math.max(nameSimilarity,
-			//		selection.getTargetService().getOperation().getName().getComparableForm().split("\\s").length);
-			//worstCaseProbability = selection.getWeight() / Matcher.getMaxWeight(isRestfulWithDescription);
-			
-			
+			// nameSimilarity = Math.max(nameSimilarity,
+			// selection.getTargetService().getOperation().getName().getComparableForm().split("\\s").length);
+			// worstCaseProbability = selection.getWeight() /
+			// Matcher.getMaxWeight(isRestfulWithDescription);
+
 		}
 
 		public WeightReport(ArrayList<WeightReport> correctStepProbability) {
@@ -129,9 +134,11 @@ public class Algorithm {
 		public String toString() {
 			String ret = "REPLACEMENT REPORT\n";
 			ret += "\tAction     : " + description + "\n";
-			ret += "\tName Similarity     : " + this.nameSimilarity + "/"+ this.numberOfWords+ "\n";
+			ret += "\tBase URI	: " + this.selection.getOperationToReplace().getDomain().getURI() + "\n";
+			ret += "\tName Similarity     : " + this.nameSimilarity + "/" + this.numberOfWords + "\n";
 			ret += "\tProbability: " + Math.round(effectiveProbability * 1000) / 10.0 + "%\n";
-			//ret += "\tWorst Probability: " + Math.round(worstCaseProbability * 1000) / 10.0 + "%\n";
+			// ret += "\tWorst Probability: " + Math.round(worstCaseProbability
+			// * 1000) / 10.0 + "%\n";
 			return ret;
 		}
 	}
@@ -374,7 +381,7 @@ public class Algorithm {
 		// the graph
 		Transformer transformer = new Transformer(JungXMItoOwlTransform.createOwlGraph(xmiGraph, true));
 		correctStepProbability.clear();
-
+		boolean noReplacements = false;
 		// run the algorithm
 		while (true) {
 
@@ -383,6 +390,9 @@ public class Algorithm {
 			// select best operation to replace
 			ArrayList<Transformer.ReplaceInformation> replaceInformations = transformer
 					.getReplaceInformation(operations, 10);
+//			if (replaceInformations.isEmpty()) {
+//				noReplacements = true;
+//			}
 			double maxWeight = Double.NEGATIVE_INFINITY;
 			Transformer.ReplaceInformation selection = null;
 			for (Transformer.ReplaceInformation replace : replaceInformations)
@@ -449,127 +459,111 @@ public class Algorithm {
 			workflowLicense.setLicenseReport(licenseName);
 
 		}
-		transformer.createLinkedVariableGraph();
-		// Removed as unnecessary
-		// expand again
-		// transformer.expandOperations();
-		// merge common variables
-		// transformer.createLinkedVariableGraph();
-
-		// (new visualizer.Visualizer(graph, "")).setVisible(true);
-		// JungXMItoOwlTransform.removeSimpleVariables(graph);
-		while (true) {
-
-			OwlService replacedOperation = transformer.placeSingleLinkingOperation(candidateOperations);
-			if (replacedOperation == null)
-				break;
-
-			// Moved down in order to be executed only if op is not null.
-			transformer.expandOperations(replacedOperation);
-
-			// Calculate total cost
-
-			String currency = ((Operation) replacedOperation.getContent()).getAccessInfo().getCommercialCostSchema()
-					.getCommercialCostCurrency();
-			String chargeType = ((Operation) replacedOperation.getContent()).getAccessInfo().getCommercialCostSchema()
-					.getCostPaymentChargeType();
-			switch (chargeType) {
-			case "per usage":
-				costPerUsage.calculateCost(currency, replacedOperation);
-				break;
-			case "per month":
-				costPerMonth.calculateCost(currency, replacedOperation);
-				break;
-			case "per  year":
-				costPerYear.calculateCost(currency, replacedOperation);
-				break;
-			case "unlimited":
-				costUnlimited.calculateCost(currency, replacedOperation);
-				break;
-			default:
-				break;
+		for (OwlService service: transformer.getGraph().getVertices()){
+			if (service.getOperation() != null) {
+				if (service.getOperation().getDomain() == null) {
+					noReplacements = true;
+				}
 			}
+		}
+		if (!noReplacements) {
+			transformer.createLinkedVariableGraph();
 
-			// trial period
-			int durationInUsages = ((Operation) replacedOperation.getContent()).getAccessInfo()
-					.getCommercialCostSchema().getTrialSchema().getDurationInUsages();
-			int durationInDays = ((Operation) replacedOperation.getContent()).getAccessInfo().getCommercialCostSchema()
-					.getTrialSchema().getDurationInDays();
-			workflowTrialPeriod.setTrialReport(durationInDays, durationInUsages);
+			while (true) {
 
-			// License
-			String licenseName = ((Operation) replacedOperation.getContent()).getAccessInfo().getLicense()
-					.getLicenseName();
-			workflowLicense.setLicenseReport(licenseName);
+				OwlService replacedOperation = transformer.placeSingleLinkingOperation(candidateOperations);
+				if (replacedOperation == null)
+					break;
+
+				// Moved down in order to be executed only if op is not null.
+				transformer.expandOperations(replacedOperation);
+
+				// Calculate total cost
+
+				String currency = ((Operation) replacedOperation.getContent()).getAccessInfo().getCommercialCostSchema()
+						.getCommercialCostCurrency();
+				String chargeType = ((Operation) replacedOperation.getContent()).getAccessInfo()
+						.getCommercialCostSchema().getCostPaymentChargeType();
+				switch (chargeType) {
+				case "per usage":
+					costPerUsage.calculateCost(currency, replacedOperation);
+					break;
+				case "per month":
+					costPerMonth.calculateCost(currency, replacedOperation);
+					break;
+				case "per  year":
+					costPerYear.calculateCost(currency, replacedOperation);
+					break;
+				case "unlimited":
+					costUnlimited.calculateCost(currency, replacedOperation);
+					break;
+				default:
+					break;
+				}
+
+				// trial period
+				int durationInUsages = ((Operation) replacedOperation.getContent()).getAccessInfo()
+						.getCommercialCostSchema().getTrialSchema().getDurationInUsages();
+				int durationInDays = ((Operation) replacedOperation.getContent()).getAccessInfo()
+						.getCommercialCostSchema().getTrialSchema().getDurationInDays();
+				workflowTrialPeriod.setTrialReport(durationInDays, durationInUsages);
+
+				// License
+				String licenseName = ((Operation) replacedOperation.getContent()).getAccessInfo().getLicense()
+						.getLicenseName();
+				workflowLicense.setLicenseReport(licenseName);
+
+				transformer.createLinkedVariableGraph();
+				// candidateOperations.remove(replacedOperation.getOperation());
+			}
 
 			transformer.createLinkedVariableGraph();
-			// candidateOperations.remove(replacedOperation.getOperation());
-		}
 
-		transformer.createLinkedVariableGraph();
-		// Removed as unnecessary
-		// expand again
-		// transformer.expandOperations();
-		// merge common variables
-		// transformer.createLinkedVariableGraph();
-
-		// Calculate and print total cost
-		String perUsage = costPerUsage.calculateWorkflowCost(" per usage");
-		String perMonth = costPerMonth.calculateWorkflowCost(" per month");
-		if (perMonth != "") {
-			perMonth = " + " + perMonth;
-		}
-		String perYear = costPerYear.calculateWorkflowCost(" per year");
-		if (perYear != "") {
-			perYear = " + " + perYear;
-		}
-		String unlimited = costUnlimited.calculateWorkflowCost(" unlimited");
-		if (unlimited != "") {
-			unlimited = " + " + unlimited;
-		}
-		String ret = "Total workflow cost: " + perUsage + perMonth + perYear + unlimited;
-		System.out.println(ret);
-
-		// Calculate and print trial period
-		String ret2 = "Total trial period: ";
-		int minDays = workflowTrialPeriod.findDurationInDays();
-		int minUsages = workflowTrialPeriod.findDurationInUsages();
-		if (minDays != Integer.MAX_VALUE && minUsages != Integer.MAX_VALUE) {
-			ret2 = ret2 + minDays + " days or " + minUsages + " usages.";
-		} else if (minUsages != Integer.MAX_VALUE) {
-			ret2 = ret2 + minUsages + " usages.";
-		} else if (minDays != Integer.MAX_VALUE) {
-			ret2 = ret2 + minDays + " days";
-		} else {
-			ret2 = ret2 + " unlimited.";
-		}
-		ret = ret + "\n" + ret2;
-		System.out.println(ret2);
-
-		// Total Licenses
-		List<String> licenseNames = workflowLicense.getLicenseReport();
-		if (!licenseNames.isEmpty()) {
-			String ret3 = "Licenses: ";
-			for (String licenceName : licenseNames) {
-				ret3 = ret3 + licenceName + " ";
+			// Calculate and print total cost
+			String perUsage = costPerUsage.calculateWorkflowCost(" per usage");
+			String perMonth = costPerMonth.calculateWorkflowCost(" per month");
+			if (perMonth != "") {
+				perMonth = " + " + perMonth;
 			}
-			System.out.println(ret3);
-			ret = ret + "\n" + ret3;
-		}
+			String perYear = costPerYear.calculateWorkflowCost(" per year");
+			if (perYear != "") {
+				perYear = " + " + perYear;
+			}
+			String unlimited = costUnlimited.calculateWorkflowCost(" unlimited");
+			if (unlimited != "") {
+				unlimited = " + " + unlimited;
+			}
+			String ret = "Total workflow cost: " + perUsage + perMonth + perYear + unlimited;
+			System.out.println(ret);
 
-		// GENERATE CODE
-		// String code = (new
-		// NonLinearCodeGenerator<FunctionCodeNode>()).generateCode(transformer.getGraph(),
-		// "tester", false);
-		// File file=new
-		// File(ResourcesPlugin.getWorkspace().getRoot().getLocation().toString()
-		// +"/"+"TesterClass.java");
-		// FileWriter generatedFile = new FileWriter(file);
-		// String filePath=file.getAbsolutePath();
-		// System.out.println("Workflow code was successfully generated in
-		// "+filePath);
-		// generatedFile.write(code);
-		// generatedFile.close();
+			// Calculate and print trial period
+			String ret2 = "Total trial period: ";
+			int minDays = workflowTrialPeriod.findDurationInDays();
+			int minUsages = workflowTrialPeriod.findDurationInUsages();
+			if (minDays != Integer.MAX_VALUE && minUsages != Integer.MAX_VALUE) {
+				ret2 = ret2 + minDays + " days or " + minUsages + " usages.";
+			} else if (minUsages != Integer.MAX_VALUE) {
+				ret2 = ret2 + minUsages + " usages.";
+			} else if (minDays != Integer.MAX_VALUE) {
+				ret2 = ret2 + minDays + " days";
+			} else {
+				ret2 = ret2 + " unlimited.";
+			}
+			ret = ret + "\n" + ret2;
+			System.out.println(ret2);
+
+			// Total Licenses
+			List<String> licenseNames = workflowLicense.getLicenseReport();
+			if (!licenseNames.isEmpty()) {
+				String ret3 = "Licenses: ";
+				for (String licenceName : licenseNames) {
+					ret3 = ret3 + licenceName + " ";
+				}
+				System.out.println(ret3);
+				ret = ret + "\n" + ret3;
+			}
+
+		}
 
 		return transformer.getGraph();
 	}

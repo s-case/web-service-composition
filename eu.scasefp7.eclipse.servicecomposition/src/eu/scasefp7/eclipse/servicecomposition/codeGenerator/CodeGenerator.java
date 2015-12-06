@@ -246,14 +246,22 @@ public abstract class CodeGenerator {
 		 * @param result
 		 * @return the generated condition
 		 */
-		protected static String generateCondition(String check, String symbol, String value, boolean result) {
+		protected static String generateCondition(String check, String symbol, String value, boolean result, boolean hasPredicate) {
 			String resultString;
+			if (hasPredicate){
 			if (result) {
-				resultString = "true";
+				resultString = " == true";
 			} else {
-				resultString = "false";
+				resultString = " == false";
 			}
-			return "(" + check + symbol + value + ")" + " == " + resultString;
+			}else{
+				resultString="";
+			}
+			if (symbol.equals("!=")){
+				symbol="";
+				return "(!" + check + symbol + value + ")"  + resultString;
+			}
+			return "(" + check + symbol + value + ")" + resultString;
 		}
 
 		/**
@@ -264,7 +272,7 @@ public abstract class CodeGenerator {
 		 * @return generates
 		 * @throws Exception
 		 */
-		public String createFunctionCode(Graph<OwlService, Connector> graph, ArrayList<OwlService> allVariables)
+		public String createFunctionCode(Graph<OwlService, Connector> graph,ArrayList<OwlService> allVariables)
 				throws Exception {
 			throw new Exception("CodeNode cannot create function code.Use a FunctionCodeNode instance instead.");
 		}
