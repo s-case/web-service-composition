@@ -170,7 +170,7 @@ public class RepositoryClient {
 					+ boundary + "; type=application/json; start=json");
 			MultipartEntityBuilder builder = MultipartEntityBuilder.create();
 			builder.setBoundary(boundary);
-			TimeZone tz = TimeZone.getTimeZone("UTC");
+			TimeZone tz = TimeZone.getTimeZone(TimeZone.getDefault().getID());
 		    DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm'Z'");
 		    df.setTimeZone(tz);
 		    String nowAsISO = df.format(new Date());
