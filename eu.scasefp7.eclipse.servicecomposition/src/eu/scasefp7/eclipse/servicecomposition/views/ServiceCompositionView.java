@@ -4743,9 +4743,17 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 					}
 
 					monitor.done();
-					return Status.OK_STATUS;
+					return Status.CANCEL_STATUS;
 				} catch (Exception ex) {
-					return Status.OK_STATUS;
+					final Display disp = Display.getCurrent();
+					disp.syncExec(new Runnable() {
+						@Override
+						public void run() {
+							MessageDialog.openInformation(disp.getActiveShell(), "Info",		
+								 scaseProject.getName()+" could not be uploaded.\nNo connection to the  web server.\nPlease contact the system's administrator!");
+						}
+					});
+					return Status.CANCEL_STATUS;
 				}
 
 			}
@@ -4812,7 +4820,11 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 				String msg = con.getResponseMessage();
 				throw new IOException("HTTP Error " + code + ": " + msg);
 			}
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		} finally {
+
 			con.disconnect();
 		}
 		return exists;
