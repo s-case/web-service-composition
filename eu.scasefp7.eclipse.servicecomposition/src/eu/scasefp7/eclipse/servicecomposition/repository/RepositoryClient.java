@@ -1,6 +1,12 @@
 package eu.scasefp7.eclipse.servicecomposition.repository;
 
 import java.io.BufferedReader;
+import org.json.*;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.JSONValue;
+import org.json.simple.parser.JSONParser;
+
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -42,96 +48,101 @@ import org.eclipse.core.resources.ResourcesPlugin;
 public class RepositoryClient {
 	private String apiKey = "1cfae05f-9e67-486f-820b-b393dec5764b";
 	private String url = "http://109.231.126.165:8080";
-//	private String apiKey = "1cfae05f-9e67-486f-820b-b393dec5764b";
-//	private String url = "http://repo.scasefp7.com:8080";
+	// private String apiKey = "1cfae05f-9e67-486f-820b-b393dec5764b";
+	// private String url = "http://repo.scasefp7.com:8080";
 
-//	public String sendGetRequest(String endpoint, String requestParameters) {
-//		String result = "";
-//		if (endpoint.startsWith("http://")) {
-//			// Send a GET request to the servlet
-//			try {
-//
-//				// Construct data
-//				StringBuffer data = new StringBuffer();
-//				// Send data
-//				String urlStr = endpoint;
-//				if (requestParameters != null && requestParameters.length() > 0) {
-//					urlStr += "?" + requestParameters;
-//				}
-//				URL url = new URL(urlStr);
-//				URLConnection conn = url.openConnection();
-//				conn.setReadTimeout(10000);
-//				// Get the response
-//				BufferedReader rd = new BufferedReader(new InputStreamReader(
-//						conn.getInputStream()));
-//				// BufferedWriter out = new BufferedWriter(new
-//				// FileWriter(pathToSave));
-//				String line;
-//				while ((line = rd.readLine()) != null) {
-//					// out.write(line + "\n");
-//					result = result + line;
-//				}
-//				rd.close();
-//				// out.close();
-//
-//				// System.out.println("Total elapsed time for download ontology :"
-//				// + (endTime - startTime));
-//				// File fil = new File(pathToSave);
-//				// long size = fil.length() / 1024;
-//				// System.out.println(size + "KB");
-//				// System.out.println(pathToSave);
-//				return result;
-//			} catch (Exception e) {
-//				e.printStackTrace();
-//				return result;
-//			}
-//		}
-//		return result;
-//	}
+	// public String sendGetRequest(String endpoint, String requestParameters) {
+	// String result = "";
+	// if (endpoint.startsWith("http://")) {
+	// // Send a GET request to the servlet
+	// try {
+	//
+	// // Construct data
+	// StringBuffer data = new StringBuffer();
+	// // Send data
+	// String urlStr = endpoint;
+	// if (requestParameters != null && requestParameters.length() > 0) {
+	// urlStr += "?" + requestParameters;
+	// }
+	// URL url = new URL(urlStr);
+	// URLConnection conn = url.openConnection();
+	// conn.setReadTimeout(10000);
+	// // Get the response
+	// BufferedReader rd = new BufferedReader(new InputStreamReader(
+	// conn.getInputStream()));
+	// // BufferedWriter out = new BufferedWriter(new
+	// // FileWriter(pathToSave));
+	// String line;
+	// while ((line = rd.readLine()) != null) {
+	// // out.write(line + "\n");
+	// result = result + line;
+	// }
+	// rd.close();
+	// // out.close();
+	//
+	// // System.out.println("Total elapsed time for download ontology :"
+	// // + (endTime - startTime));
+	// // File fil = new File(pathToSave);
+	// // long size = fil.length() / 1024;
+	// // System.out.println(size + "KB");
+	// // System.out.println(pathToSave);
+	// return result;
+	// } catch (Exception e) {
+	// e.printStackTrace();
+	// return result;
+	// }
+	// }
+	// return result;
+	// }
 
-//	public String searchTerm(String term) {
-//		try {
-//			String response = Request
-//					.Get(url + "/search?q=" + term + "&apikey=" + apiKey)
-//					.connectTimeout(10000).socketTimeout(10000).execute()
-//					.returnContent().asString();
-//			System.out.println(response);
-//			return response;
-//			// return
-//			// sendGetRequest(url+"/search?q="+term+"&apikey="+apiKey,"");
-//		} catch (Exception ex) {
-//			ex.printStackTrace();
-//			return ex.getMessage();
-//		}
-//	}
+	// public String searchTerm(String term) {
+	// try {
+	// String response = Request
+	// .Get(url + "/search?q=" + term + "&apikey=" + apiKey)
+	// .connectTimeout(10000).socketTimeout(10000).execute()
+	// .returnContent().asString();
+	// System.out.println(response);
+	// return response;
+	// // return
+	// // sendGetRequest(url+"/search?q="+term+"&apikey="+apiKey,"");
+	// } catch (Exception ex) {
+	// ex.printStackTrace();
+	// return ex.getMessage();
+	// }
+	// }
 
-//	public String listAllOntologies() {
-//		try {
-//			String response = Request.Get(url + "/ontologies?apikey=" + apiKey)
-//					.connectTimeout(10000).socketTimeout(10000).execute()
-//					.returnContent().asString();
-//			System.out.println(response);
-//			return response;
-//			// return
-//			// sendGetRequest(url+"/search?q="+term+"&apikey="+apiKey,"");
-//		} catch (Exception ex) {
-//			ex.printStackTrace();
-//			return ex.getMessage();
-//		}
-//	}
+	// public String listAllOntologies() {
+	// try {
+	// String response = Request.Get(url + "/ontologies?apikey=" + apiKey)
+	// .connectTimeout(10000).socketTimeout(10000).execute()
+	// .returnContent().asString();
+	// System.out.println(response);
+	// return response;
+	// // return
+	// // sendGetRequest(url+"/search?q="+term+"&apikey="+apiKey,"");
+	// } catch (Exception ex) {
+	// ex.printStackTrace();
+	// return ex.getMessage();
+	// }
+	// }
 
 	public String downloadOntology(String text) {
 		try {
-		//	FacesContext context = FacesContext.getCurrentInstance();
+			// FacesContext context = FacesContext.getCurrentInstance();
 
-//			String path = ((ServletContext) context.getExternalContext()
-//					.getContext()).getRealPath("/");
-			String path=ResourcesPlugin.getWorkspace().getRoot().getLocation().toString();
-			InputStream inputStream = Request
-					.Get(url + "/ontologies/" + text + "/download?apikey="
-							+ apiKey).connectTimeout(100000)
-					.socketTimeout(100000).execute().returnContent().asStream();
+			// String path = ((ServletContext) context.getExternalContext()
+			// .getContext()).getRealPath("/");
+			String latestSubmission = getLatestSubmissionId();
 			
+			
+			String path = ResourcesPlugin.getWorkspace().getRoot().getLocation().toString();
+			String requestURL="";
+			if(latestSubmission.equals(""))
+				requestURL=url + "/ontologies/" + text + "/download?apikey=" + apiKey;
+				else
+					requestURL=url + "/ontologies/WS/submissions/"+latestSubmission + "/download?apikey=" + apiKey;
+			InputStream inputStream = Request.Get(requestURL)
+					.connectTimeout(100000).socketTimeout(100000).execute().returnContent().asStream();
 
 			OutputStream outputStream = null;
 			File file = new File(path + "/" + text + ".owl");
@@ -149,7 +160,7 @@ public class RepositoryClient {
 
 			// sendGetRequest(url + "/ontologies/"+text+"/download?apikey=" +
 			// apiKey,"",text + ".owl");
-			return path + "/"+ text + ".owl";
+			return path + "/" + text + ".owl";
 			// return
 			// sendGetRequest(url+"/search?q="+term+"&apikey="+apiKey,"");
 		} catch (Exception ex) {
@@ -162,26 +173,24 @@ public class RepositoryClient {
 		try {
 			String boundary = "-------------boundary";
 			CloseableHttpClient httpClient = HttpClients.createDefault();
-			HttpPost uploadFile = new HttpPost(
-					url+"/ontologies/WS/submissions");
-			uploadFile.addHeader("Authorization",
-					"apikey token="+apiKey);
-			uploadFile.addHeader("Content-Type", "multipart/mixed; boundary="
-					+ boundary + "; type=application/json; start=json");
+			HttpPost uploadFile = new HttpPost(url + "/ontologies/WS/submissions");
+			uploadFile.addHeader("Authorization", "apikey token=" + apiKey);
+			uploadFile.addHeader("Content-Type",
+					"multipart/mixed; boundary=" + boundary + "; type=application/json; start=json");
 			MultipartEntityBuilder builder = MultipartEntityBuilder.create();
 			builder.setBoundary(boundary);
 			TimeZone tz = TimeZone.getTimeZone(TimeZone.getDefault().getID());
-		    DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm'Z'");
-		    df.setTimeZone(tz);
-		    String nowAsISO = df.format(new Date());
-			String jsonStr = "{\"ontology\":\""+url+"/ontologies/WS\",\"description\":\"This is an ontology for the semantic annotation of web services\",\"hasOntologyLanguage\":\"OWL\",\"authorProperty\":\"\",\"obsoleteParent\":\"\",\"obsoleteProperty\":\"\",\"version\":\"\",\"status\":\"\",\"released\":\""+nowAsISO+"0\",\"isRemote\":\"0\",\"contact\":[{\"name\":\"Kostas Giannoutakis\",\"email\":\"kgiannou@iti.gr\"}],\"publication\":\"\"}";
+			DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm'Z'");
+			df.setTimeZone(tz);
+			String nowAsISO = df.format(new Date());
+			String jsonStr = "{\"ontology\":\"" + url
+					+ "/ontologies/WS\",\"description\":\"This is an ontology for the semantic annotation of web services\",\"hasOntologyLanguage\":\"OWL\",\"authorProperty\":\"\",\"obsoleteParent\":\"\",\"obsoleteProperty\":\"\",\"version\":\"\",\"status\":\"\",\"released\":\""
+					+ nowAsISO
+					+ "0\",\"isRemote\":\"0\",\"contact\":[{\"name\":\"Kostas Giannoutakis\",\"email\":\"kgiannou@iti.gr\"}],\"publication\":\"\"}";
 
 			builder.addTextBody("json", jsonStr, ContentType.APPLICATION_JSON);
-			String path=ResourcesPlugin.getWorkspace().getRoot().getLocation().toString();
-			builder.addBinaryBody("file", new File(
-					path+"/WS.owl"),
-					ContentType.TEXT_PLAIN,
-					"WS.owl");
+			String path = ResourcesPlugin.getWorkspace().getRoot().getLocation().toString();
+			builder.addBinaryBody("file", new File(path + "/WS.owl"), ContentType.TEXT_PLAIN, "WS.owl");
 
 			HttpEntity multipart = builder.build();
 			uploadFile.setEntity(multipart);
@@ -193,4 +202,27 @@ public class RepositoryClient {
 		}
 	}
 
+	private String convertStreamToString(java.io.InputStream is) {
+		java.util.Scanner s = new java.util.Scanner(is).useDelimiter("\\A");
+		return s.hasNext() ? s.next() : "";
+	}
+
+	private  String getLatestSubmissionId() {
+		String apiKey = "1cfae05f-9e67-486f-820b-b393dec5764b";
+		String url = "http://109.231.126.165:8080";
+		try {
+			// get latest submission
+			InputStream inputStream = Request.Get(url + "/ontologies/" + "WS" + "/submissions?apikey=" + apiKey)
+					.connectTimeout(100000).socketTimeout(100000).execute().returnContent().asStream();
+			Object obj = JSONValue.parse(convertStreamToString(inputStream));
+			JSONArray array = (JSONArray) obj;
+			JSONObject obj2 = (JSONObject) array.get(0);
+			return obj2.get("submissionId").toString();
+		} catch (Exception ex) {
+			ex.printStackTrace();
+			return "";
+		}
+	}
+
+	
 }
