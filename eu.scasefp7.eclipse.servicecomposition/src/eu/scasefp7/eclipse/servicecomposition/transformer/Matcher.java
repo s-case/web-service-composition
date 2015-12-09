@@ -176,41 +176,37 @@ public class Matcher {
 		for (Importer.Argument arg : operation.getInputs()) {
 			for (Importer.Argument possibleArgument : possibleArguments) {
 				if (hasSame(arg, possibleArgument)) {
-					inputToInputSimilarity += 1.0 / operation.getInputs().size();
+					inputSimilarity += 1.0 / possibleArguments.size();
 					break;
 				}
 			}
 			for (Importer.Argument possibleArgument : mandatoryArguments) {
 				if (hasSame(arg, possibleArgument)) {
-					mandatoryInputSimilarity += 1.0 / operation.getInputs().size();
+					mandatoryInputSimilarity += 1.0 / mandatoryArguments.size();
 					break;
 				}
 			}
 //			for (Importer.Argument possibleArgument : possibleOutputs) {
 //				if (hasSame(arg, possibleArgument)) {
-//					inputSimilarity += 1.0 / operation.getInputs().size();
+//					inputToInputSimilarity += 1.0 / operation.getInputs().size();
 //					break;
 //				}
 //			}
 		}
+		ArrayList<Argument> nativeOutputs = new ArrayList<Argument>();
+		for (Argument out : operation.getOutputs()) {
+			getNative(out, nativeOutputs);
+		}
 		double outputSimilarity = 0;
-		for (Importer.Argument arg : operation.getOutputs()) {
+		for (Importer.Argument arg : nativeOutputs) {
 			for (Importer.Argument possibleArgument : possibleOutputs) {
 
-				if (arg.getSubtypes().isEmpty()) {
+				
 					if (hasSame(arg, possibleArgument)) {
-						outputSimilarity += 1.0 / operation.getOutputs().size();
+						//outputSimilarity += 1.0 / operation.getOutputs().size();
+						outputSimilarity += 1.0 / possibleOutputs.size();
 						break;
 					}
-				} else {
-					for (Importer.Argument sub : arg.getSubtypes()) {
-						if (hasSame(sub, possibleArgument)) {
-							outputSimilarity += 1.0 / arg.getSubtypes().size();
-							break;
-						}
-						
-					}
-				}
 
 			}
 		}
@@ -337,7 +333,7 @@ public class Matcher {
 
 		// second pass: add detected to list (generate again instance list to
 		double maxWeight = VARIABLE_MATCHING_THRESHOLD;
-		OwlService outputMax = allOutputs.get(0);
+		OwlService outputMax = null;
 		for (int i = 0; i < allOutputs.size(); i++) {
 			Importer.Argument output = allOutputs.get(i).getArgument();
 
@@ -354,17 +350,10 @@ public class Matcher {
 			}
 		}
 
-		if (outputMax == allOutputs.get(0)) {
-			if (sameVariable(inputContent, allOutputs.get(0).getArgument())
-					&& (common(inputContent.getParent(), allOutputs.get(0).getArgument().getParent()).isEmpty())&& variableServiceSimilarities.get(0) > maxWeight) {
-				theLinkedVariable = outputMax;
-				newParent = allOutputs.get(0).getArgument().getParent();
-				inputContent.addParent(newParent);
-			}
-		} else {
+		
 			theLinkedVariable = outputMax;
 			inputContent.addParent(newParent);
-		}
+		
 
 		return theLinkedVariable;
 	}
@@ -449,5 +438,15 @@ public class Matcher {
 		variables.add(var0);
 		variables.add(var1);
 		return mergeVariables(variables);
+	}
+	private static void getNative(Argument output, ArrayList<Argument> nativeOutputs) {
+		if (output.isNative()&& !output.isArray()) {
+			nativeOutputs.add(output);
+		}
+		if (!output.isArray()){
+		for (Argument sub : output.getSubtypes()) {
+			getNative(sub, nativeOutputs);
+		}
+		}
 	}
 }

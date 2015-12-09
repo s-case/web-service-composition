@@ -409,8 +409,6 @@ public class Transformer {
 		}
 	}
 
-	
-
 	/**
 	 * <h1>createLinkedVariableGraph</h1> This function generates a new graph in
 	 * which any input of an operation in the prototype is linked with an output
@@ -428,7 +426,7 @@ public class Transformer {
 		// HashMap<OwlService, OwlService> map = new HashMap<OwlService,
 		// OwlService>();
 		graph = prototype;
-		
+
 		ArrayList<OwlService> allServices = new ArrayList<OwlService>(prototype.getVertices());
 		ArrayList<OwlService> Inputs = new ArrayList<OwlService>();
 		ArrayList<OwlService> Outputs = new ArrayList<OwlService>();
@@ -462,7 +460,6 @@ public class Transformer {
 			}
 		}
 
-		
 		this.graph = graph;
 	}
 
@@ -662,11 +659,12 @@ public class Transformer {
 		double bestMatch = 0;
 		Operation targetOperation = null;
 		Connector targetConnector = null;
+		boolean found=false;
 		for (Connector connector : connectors) {
 			Operation source = ((OwlService) connector.getSource()).getOperation();
 			Operation target = ((OwlService) connector.getTarget()).getOperation();
 			if ((source != null || ((OwlService) connector.getSource()).getArgument() == null)
-					&& (target != null || ((OwlService) connector.getTarget()).getArgument() == null)) {
+					&& (target != null)) {
 				// detect previous arguments (possibly adding items within
 				// loops)
 				ArrayList<OwlService> perviousServices = getSources((OwlService) connector.getSource(), graph);
@@ -674,8 +672,16 @@ public class Transformer {
 				ArrayList<Argument> possibleArguments = new ArrayList<Argument>();
 				for (OwlService perviousService : perviousServices) {
 					Operation previousOperation = perviousService.getOperation();
-					if (previousOperation != null)
-						possibleArguments.addAll(previousOperation.getOutputs());
+					if (previousOperation != null) {
+						// possibleArguments.addAll(previousOperation.getOutputs());
+						
+						
+								for (Argument out : previousOperation.getOutputs()) {
+									getNative(out, possibleArguments);
+								}
+							
+							
+					}
 				}
 				// detect next arguments (possibly adding items within loops)
 				ArrayList<OwlService> nextServices = getDerived((OwlService) connector.getTarget(), graph);
@@ -694,33 +700,102 @@ public class Transformer {
 						}
 				// detect mandatory arguments
 				ArrayList<Argument> mandatoryArguments = new ArrayList<Argument>();
+				
 				// detect matching operation
 				for (Operation operation : operations) {
+					//detect if all target inputs are matched
+					int matchedTargetInputs=0;
+					if (target != null){
+						
+						for (Argument in: target.getInputs()){
+							if (in.getOwlService().getisMatchedIO()){
+								matchedTargetInputs++;
+							}
+						}
+						if (target.getInputs().size()==matchedTargetInputs){
+							break;
+						}
+					}
+//					if (operation.getName().toString().equals("ResolveIP")){
+//						int a=1;
+//					}
 					double match = Matcher.match(dummyService, operation, mandatoryArguments, possibleArguments,
 							possibleOutputs, -1);
-					if (match > 0)
-						match += nextServices.size();
-					if (match > bestMatch) {
+//					if (match > 0)
+//						match += nextServices.size();
+					boolean contains=false;
+					for (OwlService pre :perviousServices){
+						if (pre.getOperation()!=null){
+							if (pre.getOperation().equals(operation)){
+								contains=true;
+							}
+						}
+					}
+					for (OwlService next :nextServices){
+						if (next.getOperation()!=null){
+							if (next.getOperation().equals(operation)){
+								contains=true;
+							}
+						}
+					}
+					if (match > bestMatch && !contains) {
 						bestMatch = match;
 						targetOperation = operation;
 						targetConnector = connector;
 					}
 				}
-			}
-		}
-		if (targetOperation != null && ((OwlService) targetConnector.getTarget()).getOperation() != null) {
-			int matched = 0;
-			for (Argument in : ((OwlService) targetConnector.getTarget()).getOperation().getInputs()) {
-				for (Argument out : targetOperation.getOutputs()) {
+				ArrayList<Argument> nativeOutputs = new ArrayList<Argument>();
+				ArrayList<Operation> previousOperations = new ArrayList<Operation>();
+//				for (OwlService service:perviousServices){
+//					if (service.getOperation()!=null){
+//						previousOperations.add(service.getOperation());
+//					}
+//				}
+//				if (previousOperations!=null){
+//				for (Operation op: previousOperations){
+//					for (Argument out : op.getOutputs()) {
+//						getNative(out, nativeOutputs);
+//					}
+//				}
+//				}
+				if (targetOperation != null){
+					for (Argument out : targetOperation.getOutputs()) {
+						getNative(out, nativeOutputs);
+					}
+				}
+				
+				if (targetOperation != null && ((OwlService) targetConnector.getTarget()).getOperation() != null) {
+					int matched = 0;
+					for (Argument in : ((OwlService) targetConnector.getTarget()).getOperation().getInputs()) {
+						for (Argument out : nativeOutputs) {
 
-					if (Matcher.hasSame(out, in)) {
-						matched++;
+							if (Matcher.hasSame(out, in)) {
+								matched++;
+								break;
+							}
+						}
+					}
+					if (targetConnector != null && (targetOperation.getInputs().size() <= matched)) {
+						found=true;
 						break;
 					}
 				}
 			}
-			if (targetConnector != null && ((OwlService) targetConnector.getTarget()).getOperation().getInputs().size()
-					 > targetOperation.getInputs().size()- matched) {
+		}
+		
+		
+		if (targetOperation != null && ((OwlService) targetConnector.getTarget()).getOperation() != null) {
+//			int matched = 0;
+//			for (Argument in : ((OwlService) targetConnector.getTarget()).getOperation().getInputs()) {
+//				for (Argument out : nativeOutputs) {
+//
+//					if (Matcher.hasSame(out, in)) {
+//						matched++;
+//						break;
+//					}
+//				}
+//			}
+			if (found) {
 				graph.removeEdge(targetConnector);
 				dummyService.setContent(targetOperation);
 				dummyService.lock();
@@ -731,6 +806,18 @@ public class Transformer {
 				return dummyService;
 			}
 		}
+		
 		return null;
+	}
+
+	private void getNative(Argument output, ArrayList<Argument> nativeOutputs) {
+		if (output.isNative() && !output.isArray()) {
+			nativeOutputs.add(output);
+		}
+		if (!output.isArray()) {
+			for (Argument sub : output.getSubtypes()) {
+				getNative(sub, nativeOutputs);
+			}
+		}
 	}
 }
