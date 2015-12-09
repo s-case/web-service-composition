@@ -8,12 +8,19 @@ import java.io.FileWriter;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 //import java.net.URL;
 //import java.net.URLConnection;
 //import java.text.DateFormat;
 //import java.text.SimpleDateFormat;
 //import java.util.Date;
 //import java.util.TimeZone;
+import java.util.TimeZone;
+
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
 
 //import javax.faces.context.FacesContext;
 //import javax.servlet.ServletContext;
@@ -22,6 +29,10 @@ import java.io.OutputStream;
 //import org.apache.http.HttpResponse;
 import org.apache.http.client.fluent.Request;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.ContentType;
+import org.apache.http.entity.mime.MultipartEntityBuilder;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
 //import org.apache.http.entity.mime.MultipartEntityBuilder;
 //import org.apache.http.impl.client.CloseableHttpClient;
 //import org.apache.http.impl.client.HttpClients;
@@ -147,86 +158,39 @@ public class RepositoryClient {
 		}
 	}
 
-//	public boolean sendGetRequest(String endpoint, String requestParameters,
-//			String pathToSave) {
-//		String result = null;
-//		if (endpoint.startsWith("http://")) {
-//			// Send a GET request to the servlet
-//			try {
-//
-//				// Construct data
-//				StringBuffer data = new StringBuffer();
-//				// Send data
-//				String urlStr = endpoint;
-//				if (requestParameters != null && requestParameters.length() > 0) {
-//					urlStr += "?" + requestParameters;
-//				}
-//				URL url = new URL(urlStr);
-//				URLConnection conn = url.openConnection();
-//				conn.setReadTimeout(10000);
-//				// Get the response
-//				BufferedReader rd = new BufferedReader(new InputStreamReader(
-//						conn.getInputStream()));
-//				BufferedWriter out = new BufferedWriter(new FileWriter(
-//						pathToSave));
-//				String line;
-//				while ((line = rd.readLine()) != null) {
-//					out.write(line + "\n");
-//				}
-//				rd.close();
-//				out.close();
-//				long endTime = System.currentTimeMillis();
-//				// System.out.println("Total elapsed time for download ontology :"
-//				// + (endTime - startTime));
-//				File fil = new File(pathToSave);
-//				long size = fil.length() / 1024;
-//
-//				System.out.println(size + "KB");
-//				// System.out.println(pathToSave);
-//				return true;
-//			} catch (Exception e) {
-//				e.printStackTrace();
-//				return false;
-//			}
-//		}
-//		return false;
-//	}
+	public boolean uploadOntology() {
+		try {
+			String boundary = "-------------boundary";
+			CloseableHttpClient httpClient = HttpClients.createDefault();
+			HttpPost uploadFile = new HttpPost(
+					url+"/ontologies/WS/submissions");
+			uploadFile.addHeader("Authorization",
+					"apikey token="+apiKey);
+			uploadFile.addHeader("Content-Type", "multipart/mixed; boundary="
+					+ boundary + "; type=application/json; start=json");
+			MultipartEntityBuilder builder = MultipartEntityBuilder.create();
+			builder.setBoundary(boundary);
+			TimeZone tz = TimeZone.getTimeZone("UTC");
+		    DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm'Z'");
+		    df.setTimeZone(tz);
+		    String nowAsISO = df.format(new Date());
+			String jsonStr = "{\"ontology\":\""+url+"/ontologies/WS\",\"description\":\"This is an ontology for the semantic annotation of web services\",\"hasOntologyLanguage\":\"OWL\",\"authorProperty\":\"\",\"obsoleteParent\":\"\",\"obsoleteProperty\":\"\",\"version\":\"\",\"status\":\"\",\"released\":\""+nowAsISO+"0\",\"isRemote\":\"0\",\"contact\":[{\"name\":\"Kostas Giannoutakis\",\"email\":\"kgiannou@iti.gr\"}],\"publication\":\"\"}";
 
-//	public boolean uploadOntology() {
-//		try {
-//			String boundary = "-------------boundary";
-//			CloseableHttpClient httpClient = HttpClients.createDefault();
-//			HttpPost uploadFile = new HttpPost(
-//					url+"/ontologies/WS/submissions");
-//			uploadFile.addHeader("Authorization",
-//					"apikey token="+apiKey);
-//			uploadFile.addHeader("Content-Type", "multipart/mixed; boundary="
-//					+ boundary + "; type=application/json; start=json");
-//			MultipartEntityBuilder builder = MultipartEntityBuilder.create();
-//			builder.setBoundary(boundary);
-//			TimeZone tz = TimeZone.getTimeZone("UTC");
-//		    DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm'Z'");
-//		    df.setTimeZone(tz);
-//		    String nowAsISO = df.format(new Date());
-//			String jsonStr = "{\"ontology\":\""+url+"/ontologies/WS\",\"description\":\"This is an ontology for the semantic annotation of web services\",\"hasOntologyLanguage\":\"OWL\",\"authorProperty\":\"\",\"obsoleteParent\":\"\",\"obsoleteProperty\":\"\",\"version\":\"\",\"status\":\"\",\"released\":\""+nowAsISO+"0\",\"isRemote\":\"0\",\"contact\":[{\"name\":\"Kostas Giannoutakis\",\"email\":\"kgiannou@iti.gr\"}],\"publication\":\"\"}";
-//
-//			builder.addTextBody("json", jsonStr, ContentType.APPLICATION_JSON);
-//			FacesContext context = FacesContext.getCurrentInstance();
-//			String path = ((PortletContext) context.getExternalContext()
-//					.getContext()).getRealPath("/");
-//			builder.addBinaryBody("file", new File(
-//					path+"WS.owl"),
-//					ContentType.TEXT_PLAIN,
-//					"WS.owl");
-//
-//			HttpEntity multipart = builder.build();
-//			uploadFile.setEntity(multipart);
-//			HttpResponse response = httpClient.execute(uploadFile);
-//			return true;
-//		} catch (Exception ex) {
-//			ex.printStackTrace();
-//			return false;
-//		}
-//	}
+			builder.addTextBody("json", jsonStr, ContentType.APPLICATION_JSON);
+			String path=ResourcesPlugin.getWorkspace().getRoot().getLocation().toString();
+			builder.addBinaryBody("file", new File(
+					path+"/WS.owl"),
+					ContentType.TEXT_PLAIN,
+					"WS.owl");
+
+			HttpEntity multipart = builder.build();
+			uploadFile.setEntity(multipart);
+			HttpResponse response = httpClient.execute(uploadFile);
+			return true;
+		} catch (Exception ex) {
+			ex.printStackTrace();
+			return false;
+		}
+	}
 
 }

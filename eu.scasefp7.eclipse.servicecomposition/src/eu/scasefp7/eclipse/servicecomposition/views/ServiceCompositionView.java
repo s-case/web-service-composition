@@ -205,6 +205,7 @@ import eu.scasefp7.eclipse.servicecomposition.importer.JungXMIImporter.Connector
 import eu.scasefp7.eclipse.servicecomposition.importer.JungXMIImporter.Service;
 import eu.scasefp7.eclipse.servicecomposition.operationCaller.WSDLCaller;
 import eu.scasefp7.eclipse.servicecomposition.repository.RepositoryClient;
+import eu.scasefp7.eclipse.servicecomposition.repository.WSOntology;
 import eu.scasefp7.eclipse.servicecomposition.tester.Algorithm;
 import eu.scasefp7.eclipse.servicecomposition.tester.Algorithm.costReport;
 import eu.scasefp7.eclipse.servicecomposition.tester.Algorithm.licenseReport;
@@ -284,6 +285,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 	private GraphConnection selectedGraphEdge;
 	private GraphNode selectedGraphNode;
 	private Point point;
+	private NonLinearCodeGenerator generator;
 
 	public void createPartControl(Composite parent) {
 
@@ -4356,7 +4358,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 						.createPackageFragment("eu.scasefp7.services.composite", false, null);
 
 				// generate code of Workflow Class
-				NonLinearCodeGenerator generator = new NonLinearCodeGenerator();
+				generator = new NonLinearCodeGenerator();
 				String source = generator.generateCode(jungGraph, "workflow", false, projectName);
 				StringBuffer buffer = new StringBuffer();
 				buffer.append("package " + pack.getElementName() + ";\n");
@@ -4697,6 +4699,17 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 						uploadOnServer();
 					}
 					if (webServiceExistsOnServer()) {
+						//upload to WS ontology
+						//get application domain
+						//TODO it should not be hardcoded!!!!!!!!
+						String applicationDomainURI="http://www.scasefp7.eu/wsOntology.owl#BusinessDomain";
+						
+						
+						WSOntology ws=new WSOntology();
+						ws.createNewWSOperation(generator.getOperation().getHasName(), generator.getInputVariables(), generator.getUriParameters(), generator.getOutputVariables(), generator.getOperation().getBelongsToURL(),applicationDomainURI);
+						ws.saveToOWL();
+						RepositoryClient cl=new RepositoryClient();
+						cl.uploadOntology();
 						disp.syncExec(new Runnable() {
 							public void run() {
 								boolean answer = MessageDialog.openConfirm(shell, "Upload is complete!",

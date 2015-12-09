@@ -5,6 +5,7 @@ import eu.scasefp7.eclipse.servicecomposition.importer.Importer.Operation;
 import eu.scasefp7.eclipse.servicecomposition.importer.JungXMIImporter.Connector;
 import eu.scasefp7.eclipse.servicecomposition.importer.JungXMIImporter.Service;
 import eu.scasefp7.eclipse.servicecomposition.operationCaller.RAMLCaller;
+import eu.scasefp7.eclipse.servicecomposition.repository.WSOntology;
 import eu.scasefp7.eclipse.servicecomposition.transformer.PathFinding;
 import eu.scasefp7.eclipse.servicecomposition.transformer.JungXMItoOwlTransform.OwlService;
 
@@ -50,7 +51,8 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 
 	protected ConnectToMDEOntology instance = new ConnectToMDEOntology();
 	protected MDEOperation operation;
-
+	
+	
 	String[] datatypes = new String[] { "string", "long", "int", "float", "double", "dateTime", "boolean" };
 
 	HashMap<OwlService, OwlService> map = new HashMap<OwlService, OwlService>();
@@ -746,6 +748,26 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 			}
 		}
 		return ret;
+	}
+
+	public void setInputVariables(ArrayList<OwlService> inputVariables) {
+		this.inputVariables = inputVariables;
+	}
+
+	public void setOutputVariables(ArrayList<OwlService> outputVariables) {
+		this.outputVariables = outputVariables;
+	}
+
+	public void setOperation(MDEOperation operation) {
+		this.operation = operation;
+	}
+
+	public ArrayList<Argument> getUriParameters() {
+		return uriParameters;
+	}
+
+	public void setUriParameters(ArrayList<Argument> uriParameters) {
+		this.uriParameters = uriParameters;
 	}
 
 }

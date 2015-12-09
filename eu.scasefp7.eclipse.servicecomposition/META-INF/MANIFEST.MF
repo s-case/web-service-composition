@@ -43,7 +43,9 @@ Export-Package: eu.scasefp7.eclipse.servicecomposition,
  eu.scasefp7.eclipse.servicecomposition.ui
 Bundle-ClassPath: .
 Import-Package: com.hp.hpl.jena.ontology;version="[2.13.0,3.0.0)",
+ com.hp.hpl.jena.ontology.impl;version="2.13.0",
  com.hp.hpl.jena.rdf.model;version="[2.13.0,3.0.0)",
+ com.hp.hpl.jena.rdf.model.impl;version="2.13.0",
  com.hp.hpl.jena.util.iterator;version="2.13.0",
  edu.uci.ics.jung.graph;version="2.0.1.2",
  edu.uci.ics.jung.graph.util;version="2.0.1.2",
