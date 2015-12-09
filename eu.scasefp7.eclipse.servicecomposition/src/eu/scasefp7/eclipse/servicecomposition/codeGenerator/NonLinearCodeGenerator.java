@@ -244,7 +244,7 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 		String operationResponseObjects = "";
 		for (OwlService op : remainingOperations) {
 			//if (op.getOperation().getType().equalsIgnoreCase("RESTful")) {
-				declaredVariables += TAB + op.getName().getContent() + "Response " + op.getName().getContent()
+				declaredVariables += TAB + "private " + op.getName().getContent() + "Response " + op.getName().getContent()
 						+ "_response = new " + op.getName().getContent() + "Response();\n";
 			//}
 			operationResponseObjects += TAB + TAB + "public static class " + op.getName().getContent() + "Response {\n";
@@ -349,10 +349,10 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 		}
 		resultClassDeclaration += operationResponseObjects;
 
-		if (outputVariables.size() == 1 && subOutputVariables.size() == 0) {
-			resultClassName = outputVariables.get(0).getArgument().getType();
-			resultObjectDeclaration = TAB + TAB + "return " + outputVariables.get(0).getName().getContent() + ";";
-		} else if (!outputVariables.isEmpty()) {
+//		if (outputVariables.size() == 1 && subOutputVariables.size() == 0) {
+//			resultClassName = outputVariables.get(0).getArgument().getType();
+//			resultObjectDeclaration = TAB + TAB + "return " + outputVariables.get(0).getName().getContent() + ";";
+		if (!outputVariables.isEmpty()) {
 
 			String resultObjectName = "response";
 
@@ -740,7 +740,7 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 		for (OwlService service: graph.getPredecessors(sub)){
 			if (service.getArgument()!=null){
 				ret=".get"+service.getName().getContent().replaceAll("[0123456789]", "")+"()"+ret;
-				roadToSub(service, graph, ret);
+				ret=roadToSub(service, graph, ret);
 			}else{
 				return ret;
 			}
