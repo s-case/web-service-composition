@@ -139,8 +139,10 @@ public class ZestLabelProvider extends LabelProvider implements ISelfStyleProvid
 			layout.setMajorSpacing(3);
 			layout.setMinorAlignment(3);
 			tooltip.setLayoutManager(new FlowLayout(false));
-
-			tooltip.add(new Label("Action: " + node.getText()));
+			if (((OwlService) ((MyNode) node.getData()).getObject()).getOperation().getDomain() != null) {
+				tooltip.add(new Label("Action: " + node.getText() + "\nBase URI: "
+						+ ((OwlService) ((MyNode) node.getData()).getObject()).getOperation().getDomain().getURI()));
+			}
 			node.setTooltip(tooltip);
 		}
 
