@@ -208,7 +208,6 @@ project S-CASE
 
    <url>
       <update label="S-CASE update site" url="http://s-case.github.io/s-case_update_site/"/>
-      <discovery label="Eclipse Luna release update site" url="http://download.eclipse.org/releases/luna/"/>
    </url>
 
    <plugin
