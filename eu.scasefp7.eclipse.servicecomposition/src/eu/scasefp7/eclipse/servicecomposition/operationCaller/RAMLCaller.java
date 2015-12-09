@@ -106,7 +106,7 @@ public class RAMLCaller {
 		if (ramlOperation.getDomain().getCrudVerb().equalsIgnoreCase("get")) {
 			try {
 
-				URL url = new URL(wsUrl + inputListGet);
+				URL url = new URL((wsUrl + inputListGet).replaceAll(" ","%20"));
 				System.out.println("Calling " + url.toString());
 				HttpURLConnection conn = (HttpURLConnection) url.openConnection();
 				conn.setRequestMethod(ramlOperation.getDomain().getCrudVerb());

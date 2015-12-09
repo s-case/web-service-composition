@@ -29,7 +29,7 @@ public class CallRestfulServiceCode {
 
 		code += TAB + TAB + "if (crudVerb.equalsIgnoreCase(\"get\")) {\n";
 		code += TAB + TAB + TAB + "try {\n";
-		code += TAB + TAB + TAB + TAB + "URL url = new URL(wsUrl + inputListGet);\n" + TAB + TAB + TAB + TAB
+		code += TAB + TAB + TAB + TAB + "URL url = new URL((wsUrl + inputListGet).replaceAll(\" \",\"%20\"));\n" + TAB + TAB + TAB + TAB
 				+ "System.out.println(\"Calling \" + url.toString());\n" + TAB + TAB + TAB + TAB
 				+ "HttpURLConnection conn = (HttpURLConnection) url.openConnection();\n" + TAB + TAB + TAB + TAB
 				+ "conn.setRequestMethod(\"GET\");\n" + TAB + TAB + TAB + TAB
