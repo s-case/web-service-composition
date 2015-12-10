@@ -965,6 +965,9 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 
 		} else {
 
+			RepositoryClient repo = new RepositoryClient();
+			String path = repo.downloadOntology("WS");
+			
 			final Shell shell = new Shell();
 			ILabelProvider labelProvider = new LabelProvider() {
 

@@ -2,6 +2,7 @@ package eu.scasefp7.eclipse.servicecomposition.handlers;
 
 import eu.scasefp7.eclipse.servicecomposition.importer.Importer.Operation;
 import eu.scasefp7.eclipse.servicecomposition.importer.JungXMIImporter.Connector;
+import eu.scasefp7.eclipse.servicecomposition.repository.RepositoryClient;
 import eu.scasefp7.eclipse.servicecomposition.tester.Algorithm;
 import eu.scasefp7.eclipse.servicecomposition.tester.Algorithm.WeightReport;
 import eu.scasefp7.eclipse.servicecomposition.transformer.JungXMItoOwlTransform.OwlService;
@@ -56,6 +57,8 @@ public class ImportHandler extends AbstractHandler {
 				public void run() {
 					try {						
 						File file = (File) selections[0];
+						RepositoryClient repo = new RepositoryClient();
+						String path = repo.downloadOntology("WS");
 						Algorithm.init();
 						final ArrayList<Operation> operations = Algorithm.importServices(
 								ResourcesPlugin.getWorkspace().getRoot().getLocation().toString() + "/" + "WS.owl");
