@@ -1004,11 +1004,15 @@ public abstract class Importer {
 			}
 			
 			belongsToOperation = operation;
-			
 			if (ioInd.getPropertyValue(Importer.isArray) != null)
 				this.isArray = !ioInd.getPropertyValue(Importer.isArray).asLiteral().getString().equals("false");
 			if (ioInd.getPropertyValue(Importer.isRequired) != null)
+				try{
 				this.isRequired = ioInd.getPropertyValue(Importer.isRequired).asLiteral().getBoolean();
+				}catch(Exception ex){
+					
+					this.isRequired = Boolean.parseBoolean(ioInd.getPropertyValue(Importer.isRequired).asLiteral().getString());
+				}
 			for (Argument sub : this.subtypes)
 				sub.parent.add(this);
 		}

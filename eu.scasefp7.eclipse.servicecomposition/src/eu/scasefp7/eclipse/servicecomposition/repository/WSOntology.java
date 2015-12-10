@@ -91,7 +91,7 @@ public class WSOntology {
 		operInd.addProperty(belongsToURL, serviceURL);
 		// add resource path
 		DatatypeProperty hasResourcePath = ontologyModel.getDatatypeProperty(NS + "hasResourcePath");
-		operInd.addProperty(hasResourcePath, "/rest/result/query");
+		operInd.addProperty(hasResourcePath, "rest/result/query");
 		// add crud operation
 		DatatypeProperty hasCRUDVerb = ontologyModel.getDatatypeProperty(NS + "hasCRUDVerb");
 		operInd.addProperty(hasCRUDVerb, "GET");
@@ -100,7 +100,7 @@ public class WSOntology {
 		DatatypeProperty hasResponseType = ontologyModel.getDatatypeProperty(NS + "hasResponseType");
 		operInd.addProperty(hasResponseType, "json");
 		operInd.addProperty(hasResponseType, "xml");
-		
+
 		// create isPrototype prop
 		DatatypeProperty isPrototype = ontologyModel.getDatatypeProperty(NS + "isPrototype");
 		operInd.addProperty(isPrototype, "false");
@@ -112,7 +112,7 @@ public class WSOntology {
 		ObjectProperty hasInput = ontologyModel.getObjectProperty(NS + "hasInput");
 		OntClass conceptClass = ontologyModel.getOntClass(NS + "Concept");
 		OntClass datatypeClass = ontologyModel.getOntClass(NS + "Datatype");
-		
+
 		DatatypeProperty isRequired = ontologyModel.getDatatypeProperty(NS + "isRequired");
 		DatatypeProperty isArray = ontologyModel.getDatatypeProperty(NS + "isArray");
 
@@ -196,7 +196,7 @@ public class WSOntology {
 				IndividualImpl noInd = (IndividualImpl) ontologyModel.createIndividual(NS + name, conceptClass);
 				uris.add(noInd.getURI().toLowerCase());
 				// create has name prop
-				noInd.addProperty(hasName, name);
+				noInd.addProperty(hasName, arg.getName().toString());
 				// create is Required prop
 				noInd.addProperty(isRequired, String.valueOf(arg.isRequired()));
 				// create has type prop
@@ -226,13 +226,20 @@ public class WSOntology {
 				uris.add(coInd.getURI().toLowerCase());
 				// create has name prop
 				coInd.addProperty(hasName, arg.getName().toString());
+				// create is required prop
+				if (arg.isRequired()) {
+				coInd.addProperty(isRequired, String.valueOf(arg.isRequired()));
+				}
 				// create is array prop
-				coInd.addProperty(isArray, String.valueOf(arg.isArray()));
+				if (arg.isArray()) {
+					coInd.addProperty(isArray, String.valueOf(arg.isArray()));
+				}
 				// add children
 				ObjectProperty hasType = ontologyModel.getObjectProperty(NS + "hasType");
 
 				createIOrecursively(hasType, coInd, arg.getSubtypes());
-
+				ObjectProperty hasOutput = ontologyModel.getObjectProperty(NS + "hasOutput");
+				operInd.addProperty(hasOutput, coInd);
 			}
 		}
 
@@ -256,7 +263,7 @@ public class WSOntology {
 				IndividualImpl noInd = (IndividualImpl) ontologyModel.createIndividual(NS + name, conceptClass);
 				uris.add(noInd.getURI().toLowerCase());
 				// create has name prop
-				noInd.addProperty(hasName, name);
+				noInd.addProperty(hasName, arg.getName().toString());
 				// create is Required prop
 				noInd.addProperty(isRequired, String.valueOf(arg.isRequired()));
 				// create has type prop
@@ -286,13 +293,19 @@ public class WSOntology {
 				uris.add(coInd.getURI().toLowerCase());
 				// create has name prop
 				coInd.addProperty(hasName, arg.getName().toString());
+				// create is required prop
+				if (arg.isRequired()) {
+					coInd.addProperty(isRequired, String.valueOf(arg.isRequired()));
+				}
 				// create is array prop
+				if (arg.isArray()) {
 				coInd.addProperty(isArray, String.valueOf(arg.isArray()));
+				}
 				// add children
 				ObjectProperty hasType = ontologyModel.getObjectProperty(NS + "hasType");
 
 				createIOrecursively(hasType, coInd, arg.getSubtypes());
-
+				operInd.addProperty(hasType, coInd);
 			}
 		}
 

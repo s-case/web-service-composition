@@ -425,7 +425,13 @@ public class RAMLCaller {
 					((Value) output).setValue(Float.toString(value));
 				}
 				if (output.getType().equalsIgnoreCase("double")) {
-					double value = (double) ((JSONObject) json).get(output.getName().toString());
+					double value;
+					try{
+					 value = (double) ((JSONObject) json).get(output.getName().toString());
+					}catch(Exception ex){
+						String str=(String)(((JSONObject) json).get(output.getName().toString()));
+						value=Double.parseDouble(str);
+					}
 					((Value) output).setValue(Double.toString(value));
 				}
 				// dateTime needs to be filled
