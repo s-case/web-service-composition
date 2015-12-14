@@ -13,12 +13,14 @@ import org.apache.jena.riot.RDFDataMgr;
 import org.eclipse.core.resources.ResourcesPlugin;
 
 import com.hp.hpl.jena.ontology.DatatypeProperty;
+import com.hp.hpl.jena.ontology.Individual;
 import com.hp.hpl.jena.ontology.ObjectProperty;
 import com.hp.hpl.jena.ontology.OntClass;
 import com.hp.hpl.jena.ontology.OntModel;
 import com.hp.hpl.jena.ontology.OntModelSpec;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.ModelFactory;
+import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.Statement;
 import com.hp.hpl.jena.rdf.model.StmtIterator;
 import com.hp.hpl.jena.ontology.impl.IndividualImpl;
@@ -100,7 +102,21 @@ public class WSOntology {
 		DatatypeProperty hasResponseType = ontologyModel.getDatatypeProperty(NS + "hasResponseType");
 		operInd.addProperty(hasResponseType, "json");
 		operInd.addProperty(hasResponseType, "xml");
-
+		//add service access info
+		ObjectProperty hasServiceAccessInfo = ontologyModel.getObjectProperty(NS + "hasServiceAccessInfo");
+		OntClass serviceAccessInfoClass = ontologyModel.getOntClass(NS + "ServiceAccessInfo");
+		String accessInfoname="ServiceAccessInfo";
+		accessInfoname = changeUri(accessInfoname);
+		IndividualImpl accessInd = (IndividualImpl) ontologyModel.createIndividual(NS + accessInfoname, serviceAccessInfoClass);
+		uris.add(accessInd.getURI().toLowerCase());
+		DatatypeProperty hasDescription = ontologyModel.getDatatypeProperty(NS + "hasDescription");
+		String description = "Get";
+		for (String s :projectName.split("(?<!(^|[A-Z]))(?=[A-Z])|(?<!^)(?=[A-Z][a-z])")){
+			description= description + " " +s;
+		}
+		accessInd.addProperty(hasDescription, description);
+		operInd.addProperty(hasServiceAccessInfo, accessInd);
+		
 		// create isPrototype prop
 		DatatypeProperty isPrototype = ontologyModel.getDatatypeProperty(NS + "isPrototype");
 		operInd.addProperty(isPrototype, "false");
