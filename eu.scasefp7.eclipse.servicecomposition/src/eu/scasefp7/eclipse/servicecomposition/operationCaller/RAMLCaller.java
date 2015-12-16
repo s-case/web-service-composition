@@ -57,8 +57,8 @@ public class RAMLCaller {
 	public void callRESTfulOperation(Operation ramlOperation) {
 
 		String wsUrl = ramlOperation.getDomain().getURI();
-		if (ramlOperation.getDomain().getResourcePath()!= null){
-			wsUrl+= ramlOperation.getDomain().getResourcePath();
+		if (ramlOperation.getDomain().getResourcePath() != null) {
+			wsUrl += ramlOperation.getDomain().getResourcePath();
 		}
 		ArrayList<String> uriParams = new ArrayList<String>();
 		for (Argument arg : ramlOperation.getUriParameters()) {
@@ -104,11 +104,12 @@ public class RAMLCaller {
 
 		String result = "";
 		if (ramlOperation.getDomain().getCrudVerb().equalsIgnoreCase("get")) {
+			HttpURLConnection conn = null;
 			try {
 
-				URL url = new URL((wsUrl + inputListGet).replaceAll(" ","%20"));
+				URL url = new URL((wsUrl + inputListGet).replaceAll(" ", "%20"));
 				System.out.println("Calling " + url.toString());
-				HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+				conn = (HttpURLConnection) url.openConnection();
 				conn.setRequestMethod(ramlOperation.getDomain().getCrudVerb());
 				conn.setRequestProperty("Accept", "application/json");
 				if (ramlOperation.getDomain().getSecurityScheme() != null) {
@@ -134,7 +135,7 @@ public class RAMLCaller {
 					System.out.println(output);
 				}
 
-				conn.disconnect();
+				// conn.disconnect();
 
 			} catch (MalformedURLException e) {
 
@@ -144,6 +145,18 @@ public class RAMLCaller {
 
 				e.printStackTrace();
 
+			} finally {
+				if (conn != null) {
+					try {
+						if (conn.getInputStream() != null) {
+								conn.getInputStream().close();
+						}
+						conn.disconnect();
+					} catch (Exception e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}	
+				}
 			}
 		} else if (ramlOperation.getDomain().getCrudVerb().equalsIgnoreCase("post")) {
 
@@ -275,7 +288,6 @@ public class RAMLCaller {
 			for (Argument output : ramlOperation.getOutputs()) {
 				parseJson(output, json);
 			}
-			
 
 		} catch (ParseException e) {
 			e.printStackTrace();
@@ -328,49 +340,49 @@ public class RAMLCaller {
 			} else if (output.isArray() && !stringIsItemFromList(output.getType(), datatypes)) {
 				JSONArray array = (JSONArray) ((JSONObject) json).get(output.getType());
 				for (int i = 0; i < array.size(); i++) {
-					//create and add site[0]element, device[0]
+					// create and add site[0]element, device[0]
 					Argument out = new Argument(output);
 					out.setOwlService(output.getOwlService());
 					out.setName(output.getType() + "[" + i + "]");
 					Value value = new Value(out);
-					
+
 					for (Argument sub : output.getSubtypes()) {
 						if (sub.isArray()) {
 							JSONArray array2 = (JSONArray) ((JSONObject) array.get(i)).get(sub.getName().toString());
-						//	if (output.getType().equals(sub.getType())){
-								//create device[], metrics[]
-								Argument out1 = new Argument(sub);
-								out1.setOwlService(sub.getOwlService());
-								out1.setName(sub.getName().toString());
-								Value value2 = new Value(out1);
-								parseJson(value2, (JSONObject) array.get(i));
-								
-								//add device[] metrics[]
-								value.getElements().add(value2);
-								
-//							}else{
-//							//create device,metrics
-//							Argument out1 = new Argument(sub);
-//							out1.setOwlService(sub.getOwlService());
-//							out1.setName(sub.getName().toString());
-//							Value value1 = new Value(out1);
-//							//add device, metrics
-//							value.getElements().add(value1);
-//							//create device[0],[1], metrics[0],[1]
-//							Argument out2 = new Argument(sub);
-//							out2.setOwlService(sub.getOwlService());
-//							out2.setName(sub.getName().toString());
-//							Value value2 = new Value(out2);
-//							
-//							
-//							parseJson(value2, (JSONObject) array.get(i));
-//							
-//							//add device[0],[1], metrics[0],[1]
-//							value1.getElements().add(value2);
-//							}
-						}else{
-							
-							//create device
+							// if (output.getType().equals(sub.getType())){
+							// create device[], metrics[]
+							Argument out1 = new Argument(sub);
+							out1.setOwlService(sub.getOwlService());
+							out1.setName(sub.getName().toString());
+							Value value2 = new Value(out1);
+							parseJson(value2, (JSONObject) array.get(i));
+
+							// add device[] metrics[]
+							value.getElements().add(value2);
+
+							// }else{
+							// //create device,metrics
+							// Argument out1 = new Argument(sub);
+							// out1.setOwlService(sub.getOwlService());
+							// out1.setName(sub.getName().toString());
+							// Value value1 = new Value(out1);
+							// //add device, metrics
+							// value.getElements().add(value1);
+							// //create device[0],[1], metrics[0],[1]
+							// Argument out2 = new Argument(sub);
+							// out2.setOwlService(sub.getOwlService());
+							// out2.setName(sub.getName().toString());
+							// Value value2 = new Value(out2);
+							//
+							//
+							// parseJson(value2, (JSONObject) array.get(i));
+							//
+							// //add device[0],[1], metrics[0],[1]
+							// value1.getElements().add(value2);
+							// }
+						} else {
+
+							// create device
 							Argument out1 = new Argument(sub);
 							out1.setOwlService(sub.getOwlService());
 							out1.setName(sub.getName().toString());
@@ -378,14 +390,12 @@ public class RAMLCaller {
 							JSONObject object = (JSONObject) array.get(i);
 
 							parseJson(value1, (object));
-								
+
 							value.getElements().add(value1);
 						}
 					}
 					output.getElements().add(value);
 				}
-				
-				
 
 				// if it is an object but not an array
 			} else if (!output.isArray() && !stringIsItemFromList(output.getType(), datatypes)) {
@@ -393,11 +403,10 @@ public class RAMLCaller {
 					JSONObject object = (JSONObject) ((JSONObject) json).get(output.getName().toString());
 
 					for (Argument sub : output.getSubtypes()) {
-						
+
 						if (object.containsKey(sub.getName().toString())) {
 							parseJson(sub, object);
 						}
-						
 
 					}
 				}
@@ -426,11 +435,11 @@ public class RAMLCaller {
 				}
 				if (output.getType().equalsIgnoreCase("double")) {
 					double value;
-					try{
-					 value = (double) ((JSONObject) json).get(output.getName().toString());
-					}catch(Exception ex){
-						String str=(String)(((JSONObject) json).get(output.getName().toString()));
-						value=Double.parseDouble(str);
+					try {
+						value = (double) ((JSONObject) json).get(output.getName().toString());
+					} catch (Exception ex) {
+						String str = (String) (((JSONObject) json).get(output.getName().toString()));
+						value = Double.parseDouble(str);
 					}
 					((Value) output).setValue(Double.toString(value));
 				}
