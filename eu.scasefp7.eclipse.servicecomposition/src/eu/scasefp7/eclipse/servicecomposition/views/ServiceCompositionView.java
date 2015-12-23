@@ -281,6 +281,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 	private Job runWorkflowJob;
 	private Job AddNewOperationJob;
 	private Job createWarFileJob;
+	private Job createProject;
 	private Job uploadToServerJob;
 	private GraphConnection selectedGraphEdge;
 	private GraphNode selectedGraphNode;
@@ -4231,6 +4232,8 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 	public void generate() throws Exception {
 
 		projectName = askProjectName();
+		
+		
 		if ((projectName != null) && (projectName.trim().length() > 0)) {
 
 			IProgressMonitor monitor = new NullProgressMonitor();
@@ -4249,196 +4252,210 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 				}
 
 			}
-			// IProject project =
-			// ResourcesPlugin.getWorkspace().getRoot().getProject("TestProject");
-			IProject project = getWebDataModel(projectName);
-			currentProject = project;
-			// if (!project.exists()) {
-			try {
+			
+			
+			createProject = new Job("Creating project..") {
+				@Override
+				protected IStatus run(IProgressMonitor monitor) {
+					monitor.beginTask("Creating the web service project of the workflow...",
+							IProgressMonitor.UNKNOWN);
+							// IProject project =
+							// ResourcesPlugin.getWorkspace().getRoot().getProject("TestProject");
 
-				// project.create(monitor);
-				project.open(monitor);
+					// if (!project.exists()) {
+					try {
 
-				// Configure the project to be a Java project and a maven
-				// project
-				IProjectDescription description = project.getDescription();
-				description.setNatureIds(new String[] { JavaCore.NATURE_ID, "org.eclipse.m2e.core.maven2Nature",
-						"org.eclipse.jem.workbench.JavaEMFNature", "org.eclipse.wst.jsdt.core.jsNature",
-						"org.eclipse.wst.common.modulecore.ModuleCoreNature",
-						"org.eclipse.wst.common.project.facet.core.nature" });
-				project.setDescription(description, monitor);
+						IProject project = getWebDataModel(projectName);
+						currentProject = project;
+						// project.create(monitor);
+						project.open(monitor);
 
-				IJavaProject javaProject = JavaCore.create(project);
+						// Configure the project to be a Java project and a
+						// maven
+						// project
+						IProjectDescription description = project.getDescription();
+						description.setNatureIds(new String[] { JavaCore.NATURE_ID, "org.eclipse.m2e.core.maven2Nature",
+								"org.eclipse.jem.workbench.JavaEMFNature", "org.eclipse.wst.jsdt.core.jsNature",
+								"org.eclipse.wst.common.modulecore.ModuleCoreNature",
+								"org.eclipse.wst.common.project.facet.core.nature" });
+						project.setDescription(description, monitor);
 
-				// src
+						IJavaProject javaProject = JavaCore.create(project);
 
-				IFolder src = project.getFolder("src");
-				if (!src.exists()) {
-					src.create(true, true, monitor);
-				}
-				// bin
-				IFolder binFolder = project.getFolder("bin");
-				if (!binFolder.exists()) {
-					binFolder.create(false, true, monitor);
-				}
-				javaProject.setOutputLocation(binFolder.getFullPath(), monitor);
-				System.out.println(binFolder.getFullPath());
+						// src
 
-				// Let's add JavaSE-1.6 to our classpath
-				List<IClasspathEntry> entries = new ArrayList<IClasspathEntry>();
-				IExecutionEnvironmentsManager executionEnvironmentsManager = JavaRuntime
-						.getExecutionEnvironmentsManager();
-				IExecutionEnvironment[] executionEnvironments = executionEnvironmentsManager.getExecutionEnvironments();
-				for (IExecutionEnvironment iExecutionEnvironment : executionEnvironments) {
-					// We will look for JavaSE-1.6 as the JRE container to add
-					// to our classpath
-					if ("JavaSE-1.7".equals(iExecutionEnvironment.getId())) {
-						entries.add(JavaCore.newContainerEntry(JavaRuntime.newJREContainerPath(iExecutionEnvironment)));
-						break;
-					}
-				}
-				// IVMInstall vmInstall = JavaRuntime.getDefaultVMInstall();
-				// LibraryLocation[] locations =
-				// JavaRuntime.getLibraryLocations(vmInstall);
-				// for (LibraryLocation element : locations) {
-				// entries.add(JavaCore.newLibraryEntry(element.getSystemLibraryPath(),
-				// null, null));
-				// }
+						IFolder src = project.getFolder("src");
+						if (!src.exists()) {
+							src.create(true, true, monitor);
+						}
+						// bin
+						IFolder binFolder = project.getFolder("bin");
+						if (!binFolder.exists()) {
+							binFolder.create(false, true, monitor);
+						}
+						javaProject.setOutputLocation(binFolder.getFullPath(), monitor);
+						System.out.println(binFolder.getFullPath());
 
-				// generate pom.xml
-				pomPath = ResourcesPlugin.getWorkspace().getRoot().getLocation().toString() + "/"
-						+ javaProject.getElementName();
-				RestfulCodeGenerator.writePom(pomPath, projectName);
-
-				// Let's add the maven container to our classpath to let the
-				// maven plug-in add the dependencies computed from a
-				// pom.xml file to our classpath
-				IClasspathEntry mavenEntry = JavaCore.newContainerEntry(
-						new Path("org.eclipse.m2e.MAVEN2_CLASSPATH_CONTAINER"), new IAccessRule[0],
-						new IClasspathAttribute[] { JavaCore
-								.newClasspathAttribute("org.eclipse.jst.component.dependency", "/WEB-INF/lib") },
-						false);
-				entries.add(mavenEntry);
-
-				// add libs to project class path
-				javaProject.setRawClasspath(entries.toArray(new IClasspathEntry[entries.size()]), null);
-
-				// Let's create our target/classes output folder
-
-				IFolder target = project.getFolder("target");
-				if (!target.exists()) {
-					target.create(true, true, monitor);
-				}
-
-				IFolder build = project.getFolder("build");
-				if (!build.exists()) {
-					build.create(true, true, monitor);
-				}
-
-				IFolder classes = target.getFolder("classes");
-				if (!classes.exists()) {
-					classes.create(true, true, monitor);
-				}
-
-				// Let's add target/classes as our output folder for
-				// compiled ".class"
-				javaProject.setOutputLocation(classes.getFullPath(), monitor);
-
-				// Now let's add our source folder and output folder to our
-				// classpath
-				IClasspathEntry[] oldEntries = javaProject.getRawClasspath();
-				// +1 for our src entry
-				IClasspathEntry[] newEntries = new IClasspathEntry[oldEntries.length + 1];
-				System.arraycopy(oldEntries, 0, newEntries, 0, oldEntries.length);
-
-				IPackageFragmentRoot packageRoot = javaProject.getPackageFragmentRoot(src);
-				newEntries[oldEntries.length] = JavaCore.newSourceEntry(packageRoot.getPath(), new Path[] {},
-						new Path[] {}, classes.getFullPath());
-
-				javaProject.setRawClasspath(newEntries, null);
-
-				IPackageFragment pack = javaProject.getPackageFragmentRoot(src)
-						.createPackageFragment("eu.scasefp7.services.composite", false, null);
-
-				// generate code of Workflow Class
-				generator = new NonLinearCodeGenerator();
-				String source = generator.generateCode(jungGraph, "workflow", false, projectName);
-				StringBuffer buffer = new StringBuffer();
-				buffer.append("package " + pack.getElementName() + ";\n");
-				buffer.append("\n");
-				// String source="public class TestClass{\n"+
-				// " private String name;"+ "\n" + "}";;
-				buffer.append(source);
-				ICompilationUnit testerClass = pack.createCompilationUnit("WorkflowClass.java", buffer.toString(),
-						false, null);
-						// IType type = testerClass.getType("TesterClass");
-
-				// type.createField("private String age;", null, true, null);
-
-				// generate code of REST
-				// detect input variables
-				ArrayList<OwlService> inputVariables = new ArrayList<OwlService>();
-				for (OwlService service : jungGraph.getVertices()) {
-					if (service.getArgument() != null) {
-						if (jungGraph.getInEdges(service).size() == 0) {
-							if (!service.getisMatchedIO() && !inputVariables.contains(service)) {
-								inputVariables.add(service);
+						// Let's add JavaSE-1.6 to our classpath
+						List<IClasspathEntry> entries = new ArrayList<IClasspathEntry>();
+						IExecutionEnvironmentsManager executionEnvironmentsManager = JavaRuntime
+								.getExecutionEnvironmentsManager();
+						IExecutionEnvironment[] executionEnvironments = executionEnvironmentsManager
+								.getExecutionEnvironments();
+						for (IExecutionEnvironment iExecutionEnvironment : executionEnvironments) {
+							// We will look for JavaSE-1.6 as the JRE container
+							// to add
+							// to our classpath
+							if ("JavaSE-1.7".equals(iExecutionEnvironment.getId())) {
+								entries.add(JavaCore
+										.newContainerEntry(JavaRuntime.newJREContainerPath(iExecutionEnvironment)));
+								break;
 							}
 						}
-					}
-				}
-				String restCode = RestfulCodeGenerator.generateRestfulCode(pack.getElementName(),
-						generator.getInputVariables(), generator.geturiParameters());
-				StringBuffer restBuffer = new StringBuffer();
-				restBuffer.append(restCode);
-				ICompilationUnit restClass = pack.createCompilationUnit("WebService.java", restBuffer.toString(), false,
-						null);
-				// IType type2 = restClass.getType("RestCode");
 
-				boolean hasRest = false;
-				boolean hasSoap = false;
-				for (OwlService service : jungGraph.getVertices()) {
-					if (service.getOperation() != null) {
-						if (service.getOperation().getType().equalsIgnoreCase("Restful")) {
-							hasRest = true;
+						// generate pom.xml
+						pomPath = ResourcesPlugin.getWorkspace().getRoot().getLocation().toString() + "/"
+								+ javaProject.getElementName();
+						RestfulCodeGenerator.writePom(pomPath, projectName);
+
+						// Let's add the maven container to our classpath to let
+						// the
+						// maven plug-in add the dependencies computed from a
+						// pom.xml file to our classpath
+						IClasspathEntry mavenEntry = JavaCore.newContainerEntry(
+								new Path("org.eclipse.m2e.MAVEN2_CLASSPATH_CONTAINER"), new IAccessRule[0],
+								new IClasspathAttribute[] { JavaCore.newClasspathAttribute(
+										"org.eclipse.jst.component.dependency", "/WEB-INF/lib") },
+								false);
+						entries.add(mavenEntry);
+
+						// add libs to project class path
+						javaProject.setRawClasspath(entries.toArray(new IClasspathEntry[entries.size()]), null);
+
+						// Let's create our target/classes output folder
+
+						IFolder target = project.getFolder("target");
+						if (!target.exists()) {
+							target.create(true, true, monitor);
 						}
-						if (service.getOperation().getType().equalsIgnoreCase("soap")) {
-							hasSoap = true;
+
+						IFolder build = project.getFolder("build");
+						if (!build.exists()) {
+							build.create(true, true, monitor);
 						}
+
+						IFolder classes = target.getFolder("classes");
+						if (!classes.exists()) {
+							classes.create(true, true, monitor);
+						}
+
+						// Let's add target/classes as our output folder for
+						// compiled ".class"
+						javaProject.setOutputLocation(classes.getFullPath(), monitor);
+
+						// Now let's add our source folder and output folder to
+						// our
+						// classpath
+						IClasspathEntry[] oldEntries = javaProject.getRawClasspath();
+						// +1 for our src entry
+						IClasspathEntry[] newEntries = new IClasspathEntry[oldEntries.length + 1];
+						System.arraycopy(oldEntries, 0, newEntries, 0, oldEntries.length);
+
+						IPackageFragmentRoot packageRoot = javaProject.getPackageFragmentRoot(src);
+						newEntries[oldEntries.length] = JavaCore.newSourceEntry(packageRoot.getPath(), new Path[] {},
+								new Path[] {}, classes.getFullPath());
+
+						javaProject.setRawClasspath(newEntries, null);
+
+						IPackageFragment pack = javaProject.getPackageFragmentRoot(src)
+								.createPackageFragment("eu.scasefp7.services.composite", false, null);
+
+						// generate code of Workflow Class
+						generator = new NonLinearCodeGenerator();
+						String source = generator.generateCode(jungGraph, "workflow", false, projectName);
+						StringBuffer buffer = new StringBuffer();
+						buffer.append("package " + pack.getElementName() + ";\n");
+						buffer.append("\n");
+						// String source="public class TestClass{\n"+
+						// " private String name;"+ "\n" + "}";;
+						buffer.append(source);
+						ICompilationUnit testerClass = pack.createCompilationUnit("WorkflowClass.java",
+								buffer.toString(), false, null);
+								// IType type =
+								// testerClass.getType("TesterClass");
+
+						// type.createField("private String age;", null, true,
+						// null);
+
+						// generate code of REST
+						// detect input variables
+						ArrayList<OwlService> inputVariables = new ArrayList<OwlService>();
+						for (OwlService service : jungGraph.getVertices()) {
+							if (service.getArgument() != null) {
+								if (jungGraph.getInEdges(service).size() == 0) {
+									if (!service.getisMatchedIO() && !inputVariables.contains(service)) {
+										inputVariables.add(service);
+									}
+								}
+							}
+						}
+						String restCode = RestfulCodeGenerator.generateRestfulCode(pack.getElementName(),
+								generator.getInputVariables(), generator.geturiParameters());
+						StringBuffer restBuffer = new StringBuffer();
+						restBuffer.append(restCode);
+						ICompilationUnit restClass = pack.createCompilationUnit("WebService.java",
+								restBuffer.toString(), false, null);
+						// IType type2 = restClass.getType("RestCode");
+
+						boolean hasRest = false;
+						boolean hasSoap = false;
+						for (OwlService service : jungGraph.getVertices()) {
+							if (service.getOperation() != null) {
+								if (service.getOperation().getType().equalsIgnoreCase("Restful")) {
+									hasRest = true;
+								}
+								if (service.getOperation().getType().equalsIgnoreCase("soap")) {
+									hasSoap = true;
+								}
+							}
+						}
+
+						gGenerator = generator;
+
+						if (hasRest) {
+							String code = CallRestfulServiceCode.generateCode(pack.getElementName());
+							StringBuffer codeBuffer = new StringBuffer();
+							codeBuffer.append(code);
+							ICompilationUnit callRestClass = pack.createCompilationUnit("CallRESTfulService.java",
+									codeBuffer.toString(), false, null);
+						}
+
+						if (hasSoap) {
+							String code = CallWSDLServiceCode.generateCode(pack.getElementName());
+							StringBuffer codeBuffer = new StringBuffer();
+							codeBuffer.append(code);
+							ICompilationUnit callWSDLClass = pack.createCompilationUnit("CallWSDLService.java",
+									codeBuffer.toString(), false, null);
+						}
+
+						// edit web.xml
+						String path = ResourcesPlugin.getWorkspace().getRoot().getLocation().toString() + "/"
+								+ javaProject.getElementName() + "/WebContent/WEB-INF/web.xml";
+						RestfulCodeGenerator.editWebXML(path, pack.getElementName());
+
+						// refresh project
+						IWorkspaceRoot root = ResourcesPlugin.getWorkspace().getRoot();
+						root.refreshLocal(IResource.DEPTH_INFINITE, monitor);
+
+					} catch (Exception e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
 					}
-				}
+					return Status.OK_STATUS;
 
-				gGenerator = generator;
-
-				if (hasRest) {
-					String code = CallRestfulServiceCode.generateCode(pack.getElementName());
-					StringBuffer codeBuffer = new StringBuffer();
-					codeBuffer.append(code);
-					ICompilationUnit callRestClass = pack.createCompilationUnit("CallRESTfulService.java",
-							codeBuffer.toString(), false, null);
-				}
-
-				if (hasSoap) {
-					String code = CallWSDLServiceCode.generateCode(pack.getElementName());
-					StringBuffer codeBuffer = new StringBuffer();
-					codeBuffer.append(code);
-					ICompilationUnit callWSDLClass = pack.createCompilationUnit("CallWSDLService.java",
-							codeBuffer.toString(), false, null);
-				}
-
-				// edit web.xml
-				String path = ResourcesPlugin.getWorkspace().getRoot().getLocation().toString() + "/"
-						+ javaProject.getElementName() + "/WebContent/WEB-INF/web.xml";
-				RestfulCodeGenerator.editWebXML(path, pack.getElementName());
-
-				// refresh project
-				IWorkspaceRoot root = ResourcesPlugin.getWorkspace().getRoot();
-				root.refreshLocal(IResource.DEPTH_INFINITE, monitor);
-
-			} catch (CoreException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+				}};
+				createProject.setUser(true);
+				createProject.schedule();
 
 		} else {
 			final Display disp = Display.getCurrent();
@@ -4455,18 +4472,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 	}
 
 	public static IProject getWebDataModel(String projName) throws ExecutionException {
-		// IDataModel dm = DataModelFactory.createDataModel(new
-		// SimpleWebFacetProjectCreationDataModelProvider());
-		// dm.setProperty(IFacetProjectCreationDataModelProperties.FACET_PROJECT_NAME,
-		// projName);
-		//
-		// FacetDataModelMap facetMap = (FacetDataModelMap) dm
-		// .getProperty(IFacetProjectCreationDataModelProperties.FACET_DM_MAP);
-		// IDataModel facetModel = (IDataModel)
-		// facetMap.get(IModuleConstants.WST_WEB_MODULE);
-		// facetModel.setProperty(IJ2EEModuleFacetInstallDataModelProperties.FACET_VERSION_STR,
-		// "2.4");
-		// facetModel.setBooleanProperty(IJ2EEFacetInstallDataModelProperties.GENERATE_DD,true);
+		
 
 		IDataModel model = DataModelFactory.createDataModel(new WebFacetProjectCreationDataModelProvider());
 		model.setProperty(IFacetDataModelProperties.FACET_PROJECT_NAME, projName);
@@ -4475,9 +4481,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 				.getProperty(IFacetProjectCreationDataModelProperties.FACET_DM_MAP);
 		IDataModel webModel = (IDataModel) map.get(IModuleConstants.JST_WEB_MODULE);
 		webModel.setProperty(IJ2EEModuleFacetInstallDataModelProperties.FACET_VERSION_STR, "2.4");
-		// webModel.setBooleanProperty(IJ2EEModuleFacetInstallDataModelProperties.ADD_TO_EAR,
-		// true);
-
+		
 		IStatus st = model.getDefaultOperation().execute(new NullProgressMonitor(), null);
 		return st.isOK() ? ResourcesPlugin.getWorkspace().getRoot().getProject(projName) : null;
 	}
@@ -4775,7 +4779,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 			}
 
 		};
-
+		createWarFileJob.setUser(true);
 		createWarFileJob.schedule();
 
 	}
