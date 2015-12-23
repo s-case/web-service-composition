@@ -22,7 +22,11 @@ import org.eclipse.core.internal.resources.File;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.ResourcesPlugin;
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Path;
+import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.swt.custom.BusyIndicator;
 import org.eclipse.swt.widgets.Display;
@@ -30,6 +34,7 @@ import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.IViewPart;
 import org.eclipse.ui.IViewReference;
 import org.eclipse.ui.IWorkbenchPage;
+import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.ide.IDE;
 
@@ -37,7 +42,7 @@ import edu.uci.ics.jung.graph.Graph;
 
 public class ImportHandler extends AbstractHandler {
 	Graph<OwlService, Connector> graph;
-	IProject existingProject; 
+	IProject existingProject;
 
 	@Override
 	public Object execute(ExecutionEvent event) throws ExecutionException {
@@ -50,20 +55,23 @@ public class ImportHandler extends AbstractHandler {
 
 		try {
 
-			graph = null;
+			final Display disp = Display.getCurrent();
+			// Runnable myRunnable = new Runnable() {
+			Job ImportSBD = new Job("Import StoryBoard Creator file") {
+				@Override
+				protected IStatus run(IProgressMonitor monitor) {
+					monitor.beginTask("Transorming storyboard creator diagram to workflow of web services...", IProgressMonitor.UNKNOWN);
 
-			Runnable myRunnable = new Runnable() {
-
-				public void run() {
-					try {						
+					try {
+						graph = null;
 						File file = (File) selections[0];
 						RepositoryClient repo = new RepositoryClient();
 						String path = repo.downloadOntology("WS");
 						Algorithm.init();
 						final ArrayList<Operation> operations = Algorithm.importServices(
 								ResourcesPlugin.getWorkspace().getRoot().getLocation().toString() + "/" + "WS.owl");
-//						 final ArrayList<Operation> operations = Algorithm
-//						 .importServices("D:/web-service-composition-Maven-plugin/web-service-composition/eu.scasefp7.eclipse.serviceComposition/data/WS.owl");
+						// final ArrayList<Operation> operations = Algorithm
+						// .importServices("D:/web-service-composition-Maven-plugin/web-service-composition/eu.scasefp7.eclipse.serviceComposition/data/WS.owl");
 						// final ArrayList<Operation> operations =
 						// Algorithm.importServices("",
 						// "data/testing_scripts/");
@@ -71,97 +79,116 @@ public class ImportHandler extends AbstractHandler {
 								+ file.getFullPath().toOSString();
 						graph = Algorithm.transformationAlgorithm(pathToSBDFile, operations);
 
-					} catch (Exception ex) {
-						ex.printStackTrace();
+						// SHOW REPLACEMENT REPORT
+						System.out.println();
+						for (WeightReport report : Algorithm.getStepReports()) {
+							report.getReplaceInformation().reEvaluateWeight(graph);
+							report.updateWeight();
+							System.out.println(report.toString());
+						}
+						
+						
+					
+						
+						// If the action was replaced with an operation remove
+						// any
+						// properties left from initial xmi.
+						Collection<OwlService> services = new ArrayList<OwlService>(graph.getVertices());
+						boolean propertyExists = false;
+						for (OwlService property : services) {
+							if (property.getArgument() != null) {
+								if (property.getArgument().getParent().isEmpty()) {
+									propertyExists = true;
+									for (OwlService operation : graph.getSuccessors(property)) {
+										if (operation.getOperation() != null) {
+											if (operation.getOperation().getDomain() != null)
+												graph.removeVertex(property);
+										}
+									}
+								}
 
-					}
-
-				}
-			};
-
-			Thread thread = new Thread(myRunnable);
-			thread.run();
-			BusyIndicator.showWhile(Display.getCurrent(), myRunnable);
-
-			// SHOW REPLACEMENT REPORT
-			System.out.println();
-			for (WeightReport report : Algorithm.getStepReports()) {
-				report.getReplaceInformation().reEvaluateWeight(graph);
-				report.updateWeight();
-				System.out.println(report.toString());
-			}
-			// System.out.println(Algorithm.getFinalReport(-1).toString());
-
-			// open view
-			PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage().showView(ServiceCompositionView.ID);
-			ServiceCompositionView view = (ServiceCompositionView) getView(ServiceCompositionView.ID);
-			// view.updateGraph(graph);
-			// open file with storyboard creator
-			File file = (File) selections[0];
-			existingProject = file.getProject();
-			if (!existingProject.exists()) {
-				throw new Exception();
-			}else{
-				view.setScaseProject(existingProject);
-			}
-			final IFile inputFile = ResourcesPlugin.getWorkspace().getRoot().getFileForLocation(
-					Path.fromOSString(ResourcesPlugin.getWorkspace().getRoot().getLocation().toString()
-							+ file.getFullPath().toOSString()));
-			if (inputFile != null) {
-				IWorkbenchPage page = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage();
-				IEditorPart openEditor = IDE.openEditor(page, inputFile);
-			}
-			// If the action was replaced with an operation remove any
-			// properties left from initial xmi.
-			Collection<OwlService> services = new ArrayList<OwlService>(graph.getVertices());
-			boolean propertyExists = false;
-			for (OwlService property : services) {
-				if (property.getArgument() != null) {
-					if (property.getArgument().getParent().isEmpty()) {
-						propertyExists = true;
-						for (OwlService operation : graph.getSuccessors(property)) {
-							if (operation.getOperation() != null) {
-								if (operation.getOperation().getDomain() != null)
-									graph.removeVertex(property);
 							}
 						}
-					}
-
-				}
-			}
-			view.setJungGraph(graph);
-			view.addGraphInZest(graph);
-			// Check if there are still unreplaced actions in the graph
-			final Display disp = Display.getCurrent();
-			boolean serviceHasOperations = false;
-			// view.getViewer().setInput(createGraphNodes(graph));
-			for (OwlService service : graph.getVertices()) {
-				if (service.getOperation() != null) {
-					if (service.getOperation().getDomain() != null) {
-						serviceHasOperations = true;
-					} else {
+						
 						disp.syncExec(new Runnable() {
 							@Override
 							public void run() {
-								MessageDialog.openInformation(disp.getActiveShell(), "Info",
-										"No matching operation was found for action \"" + service.getOperation().getName()
-												+ "\". Please modify the storyboard diagram or manually add an operation.");
+								
+								
+								try {
+									PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage().showView(ServiceCompositionView.ID);
+									ServiceCompositionView view = (ServiceCompositionView) getView(ServiceCompositionView.ID);
+									File file = (File) selections[0];
+									existingProject = file.getProject();
+									if (!existingProject.exists()) {
+									} else {
+										view.setScaseProject(existingProject);
+									}
+									final IFile inputFile = ResourcesPlugin.getWorkspace().getRoot().getFileForLocation(
+											Path.fromOSString(ResourcesPlugin.getWorkspace().getRoot().getLocation().toString()
+													+ file.getFullPath().toOSString()));
+									if (inputFile != null) {
+										IWorkbenchPage page = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage();
+										
+											IEditorPart openEditor = IDE.openEditor(page, inputFile);
+										
+									}
+									
+									view.setJungGraph(graph);
+									view.addGraphInZest(graph);
+									view.updateRightComposite(graph);
+									view.setFocus();
+									
+									} catch (Exception e) {
+										// TODO Auto-generated catch block
+										e.printStackTrace();
+									}
+								
+								
 							}
 						});
+						// Check if there are still unreplaced actions in the
+						// graph
+						boolean serviceHasOperations = false;
+						// view.getViewer().setInput(createGraphNodes(graph));
+						for (OwlService service : graph.getVertices()) {
+							if (service.getOperation() != null) {
+								if (service.getOperation().getDomain() != null) {
+									serviceHasOperations = true;
+								} else {
+									disp.syncExec(new Runnable() {
+										@Override
+										public void run() {
+											MessageDialog.openInformation(disp.getActiveShell(), "Info",
+													"No matching operation was found for action \""
+															+ service.getOperation().getName()
+															+ "\". Please modify the storyboard diagram or manually add an operation.");
+										}
+									});
+								}
+							}
+						}
+						
+
+						monitor.done();
+						return Status.OK_STATUS;
+					} catch (Exception ex) {
+						ex.printStackTrace();
+						return Status.CANCEL_STATUS;
+
 					}
 				}
-			}
-			if (serviceHasOperations) {
-				view.updateRightComposite(graph);
-			}
-			view.setFocus();
+
+			};
+			ImportSBD.setUser(true);
+			ImportSBD.schedule();
+
 		} catch (Exception e) {
-
+			// TODO Auto-generated catch block
 			e.printStackTrace();
-
 		}
-
 		return null;
+		
 	}
 
 	public List<MyNode> createGraphNodes(Graph<OwlService, Connector> graph) {
