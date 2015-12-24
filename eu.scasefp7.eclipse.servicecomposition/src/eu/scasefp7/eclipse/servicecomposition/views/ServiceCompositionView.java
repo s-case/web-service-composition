@@ -4206,7 +4206,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 
 		} 
 	
-
+	
 
 	/**
 	 * <h1>generate</h1> Creates a RESTful web service of the workflow, in a
@@ -4227,13 +4227,23 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 			return;
 		}
 
-		
-		
+		ArrayList<String> projectNames = new ArrayList<String>();
+		for (IProject project : ResourcesPlugin.getWorkspace().getRoot().getProjects()){
+			projectNames.add(project.getName());
+		}
+		boolean nameExists= false;
 		if ((projectName != null) && (projectName.trim().length() > 0)) {
 
+			
+			for (String name:projectNames){
+				if (name.trim().equalsIgnoreCase(projectName)){
+					nameExists= true;
+				}
+			}
+			
 			IProgressMonitor monitor = new NullProgressMonitor();
-			IProject existingProject = ResourcesPlugin.getWorkspace().getRoot().getProject(projectName);
-			if (existingProject.exists()) {
+			IProject existingProject = ResourcesPlugin.getWorkspace().getRoot().getProject(projectName.trim());
+			if (existingProject.exists()|| nameExists) {
 				shell = new Shell();
 				boolean result = MessageDialog.openConfirm(shell, "Project already exists",
 						"A project with this name already exists. Would you like to replace it?");
