@@ -97,7 +97,9 @@ import org.eclipse.jdt.launching.environments.IExecutionEnvironment;
 import org.eclipse.jdt.launching.environments.IExecutionEnvironmentsManager;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IToolBarManager;
+import org.eclipse.jface.dialogs.IMessageProvider;
 import org.eclipse.jface.dialogs.MessageDialog;
+import org.eclipse.jface.dialogs.TitleAreaDialog;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.jface.viewers.ColumnLabelProvider;
@@ -139,6 +141,7 @@ import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Dialog;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
@@ -4133,94 +4136,77 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 			graphNode.dispose();
 		}
 	}
+	
+	
+	public class MyTitleAreaDialog extends TitleAreaDialog {
 
-	public class ProjectNameDialog extends Dialog {
-		String value;
+		  private Text txtProjectName;
+		  private String projectName;
 
-		/**
-		 * @param parent
-		 */
-		public ProjectNameDialog(Shell parent) {
-			super(parent);
-		}
+		  public MyTitleAreaDialog(Shell parentShell) {
+		    super(parentShell);
+		  }
 
-		/**
-		 * Makes the dialog visible.
-		 * 
-		 * @return
-		 */
-		public String open() {
-			Shell parent = getParent();
-			final Shell shell = new Shell(parent, SWT.TITLE | SWT.BORDER | SWT.APPLICATION_MODAL);
-			shell.setText("Name of the project");
+		  @Override
+		  public void create() {
+		    super.create();
+		    setTitle("Name of the project");
+		    setMessage("Please enter a name for the web service project", IMessageProvider.INFORMATION);
+		  }
 
-			shell.setLayout(new GridLayout(2, true));
+		  @Override
+		  protected Control createDialogArea(Composite parent) {
+		    Composite area = (Composite) super.createDialogArea(parent);
+		    Composite container = new Composite(area, SWT.NONE);
+		    container.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+		    GridLayout layout = new GridLayout(2, false);
+		    container.setLayout(layout);
 
-			Label label = new Label(shell, SWT.NULL);
-			label.setText("Please enter a name for the project");
+		    createProjectName(container);
+		   
 
-			final Text text = new Text(shell, SWT.SINGLE | SWT.BORDER);
+		    return area;
+		  }
 
-			final Button buttonOK = new Button(shell, SWT.PUSH);
-			buttonOK.setText("Ok");
-			buttonOK.setLayoutData(new GridData(GridData.HORIZONTAL_ALIGN_END));
-			Button buttonCancel = new Button(shell, SWT.PUSH);
-			buttonCancel.setText("Cancel");
+		  private void createProjectName(Composite container) {
+		    Label lbtFirstName = new Label(container, SWT.NONE);
+		    lbtFirstName.setText("Project Name");
 
-			text.addListener(SWT.Modify, new Listener() {
-				public void handleEvent(Event event) {
-					try {
-						value = new String(text.getText());
-						buttonOK.setEnabled(true);
-					} catch (Exception e) {
-						buttonOK.setEnabled(false);
-					}
-				}
-			});
+		    GridData dataFirstName = new GridData();
+		    dataFirstName.grabExcessHorizontalSpace = true;
+		    dataFirstName.horizontalAlignment = GridData.FILL;
 
-			buttonOK.addListener(SWT.Selection, new Listener() {
-				public void handleEvent(Event event) {
-					shell.dispose();
-				}
-			});
+		    txtProjectName = new Text(container, SWT.BORDER);
+		    txtProjectName.setLayoutData(dataFirstName);
+		  }
+		  
 
-			buttonCancel.addListener(SWT.Selection, new Listener() {
-				public void handleEvent(Event event) {
-					value = null;
-					shell.dispose();
-				}
-			});
 
-			shell.addListener(SWT.Traverse, new Listener() {
-				public void handleEvent(Event event) {
-					if (event.detail == SWT.TRAVERSE_ESCAPE)
-						event.doit = false;
-				}
-			});
+		  @Override
+		  protected boolean isResizable() {
+		    return true;
+		  }
 
-			text.setText("");
-			shell.pack();
-			shell.open();
+		  // save content of the Text field because it gets disposed
+		  // as soon as the Dialog closes
+		  private void saveInput() {
+			  projectName = txtProjectName.getText();
+		    
+		  }
 
-			Display display = parent.getDisplay();
-			while (!shell.isDisposed()) {
-				if (!display.readAndDispatch())
-					display.sleep();
-			}
+		  @Override
+		  protected void okPressed() {
+		    saveInput();
+		    super.okPressed();
+		  }
 
-			return value;
-		}
-	}
+		  public String getProjectName() {
+		    return projectName;
+		  }
 
-	public String askProjectName() {
+		} 
+	
 
-		Shell shell = new Shell();
-		ProjectNameDialog dialog = new ProjectNameDialog(shell);
-
-		String s = dialog.open();
-		return s;
-
-	}
 
 	/**
 	 * <h1>generate</h1> Creates a RESTful web service of the workflow, in a
@@ -4231,7 +4217,16 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 	 */
 	public void generate() throws Exception {
 
-		projectName = askProjectName();
+		Shell shell = new Shell();
+		MyTitleAreaDialog dialog = new MyTitleAreaDialog(shell);
+		dialog.create();
+		if (dialog.open() == Window.OK) {
+		  System.out.println(dialog.getProjectName());
+		  projectName=dialog.getProjectName();
+		}else{
+			return;
+		}
+
 		
 		
 		if ((projectName != null) && (projectName.trim().length() > 0)) {
@@ -4239,7 +4234,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 			IProgressMonitor monitor = new NullProgressMonitor();
 			IProject existingProject = ResourcesPlugin.getWorkspace().getRoot().getProject(projectName);
 			if (existingProject.exists()) {
-				Shell shell = new Shell();
+				shell = new Shell();
 				boolean result = MessageDialog.openConfirm(shell, "Project already exists",
 						"A project with this name already exists. Would you like to replace it?");
 
@@ -4450,6 +4445,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 					} catch (Exception e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
+						return Status.CANCEL_STATUS;
 					}
 					return Status.OK_STATUS;
 
