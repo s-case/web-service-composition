@@ -4242,7 +4242,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 		dialog.setDialogLocation();
 		if (dialog.open() == Window.OK) {
 		  System.out.println(dialog.getProjectName());
-		  projectName=dialog.getProjectName();
+		  projectName=dialog.getProjectName().trim();
 		}else{
 			return;
 		}
