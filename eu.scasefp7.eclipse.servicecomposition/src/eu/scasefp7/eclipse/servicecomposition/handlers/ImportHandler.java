@@ -60,7 +60,7 @@ public class ImportHandler extends AbstractHandler {
 			Job ImportSBD = new Job("Import StoryBoard Creator file") {
 				@Override
 				protected IStatus run(IProgressMonitor monitor) {
-					monitor.beginTask("Transorming storyboard creator diagram to workflow of web services...", IProgressMonitor.UNKNOWN);
+					monitor.beginTask("Transforming storyboard creator diagram to workflow of web services...", IProgressMonitor.UNKNOWN);
 
 					try {
 						graph = null;

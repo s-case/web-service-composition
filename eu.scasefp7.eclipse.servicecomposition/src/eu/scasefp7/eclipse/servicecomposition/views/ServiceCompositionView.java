@@ -1,5 +1,6 @@
 package eu.scasefp7.eclipse.servicecomposition.views;
 
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -137,6 +138,7 @@ import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Point;
+import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
@@ -4150,8 +4152,8 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 		  @Override
 		  public void create() {
 		    super.create();
-		    setTitle("Name of the project");
-		    setMessage("Please enter a name for the web service project", IMessageProvider.INFORMATION);
+		    setTitle("Name of the composite web service");
+		    setMessage("Please enter a name for the new web service project", IMessageProvider.INFORMATION);
 		  }
 
 		  @Override
@@ -4167,6 +4169,14 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 
 		    return area;
 		  }
+		  
+		  @Override
+		  protected void configureShell(Shell newShell)
+		  {
+		    super.configureShell(newShell);
+
+		    newShell.setText("Web service project name");
+		  }
 
 		  private void createProjectName(Composite container) {
 		    Label lbtFirstName = new Label(container, SWT.NONE);
@@ -4181,6 +4191,14 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 		  }
 		  
 
+		  private void setDialogLocation()
+			{
+				Rectangle monitorArea = getShell().getDisplay().getPrimaryMonitor().getBounds();
+				Rectangle shellArea = getShell().getBounds();
+				int x = monitorArea.x + (monitorArea.width - shellArea.width)/2;
+				int y = monitorArea.y + (monitorArea.height - shellArea.height)/2;
+				getShell().setLocation(x,y);
+			}
 
 		  @Override
 		  protected boolean isResizable() {
@@ -4220,6 +4238,8 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 		Shell shell = new Shell();
 		MyTitleAreaDialog dialog = new MyTitleAreaDialog(shell);
 		dialog.create();
+		dialog.configureShell(shell);
+		dialog.setDialogLocation();
 		if (dialog.open() == Window.OK) {
 		  System.out.println(dialog.getProjectName());
 		  projectName=dialog.getProjectName();
