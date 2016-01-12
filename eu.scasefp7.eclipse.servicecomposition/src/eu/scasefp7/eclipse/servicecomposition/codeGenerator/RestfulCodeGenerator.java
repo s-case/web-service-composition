@@ -49,21 +49,21 @@ public class RestfulCodeGenerator {
 			if (!inputList.isEmpty())
 				inputList += ", ";
 			if (input.getArgument().getType().equals("String")) {
-				inputList += "@QueryParam(\"" + input.getName().getContent() + "\") " + input.getArgument().getType()
-						+ " " + input.getName().getContent();
+				inputList += "@QueryParam(\"" + input.getName().getContent().replaceAll("[0123456789]", "") + "\") " + input.getArgument().getType()
+						+ " " + input.getName().getContent().replaceAll("[0123456789]", "");
 			}else if(input.getArgument().getType().equals("int")){
-				inputList += "@QueryParam(\"" + input.getName().getContent() + "\") Integer " + input.getName().getContent();
+				inputList += "@QueryParam(\"" + input.getName().getContent().replaceAll("[0123456789]", "") + "\") Integer " + input.getName().getContent().replaceAll("[0123456789]", "");
 			} else {
 				String type = input.getArgument().getType();
-				inputList += "@QueryParam(\"" + input.getName().getContent() + "\") "
-						+ type.substring(0, 1).toUpperCase() + type.substring(1) + " " + input.getName().getContent();
+				inputList += "@QueryParam(\"" + input.getName().getContent().replaceAll("[0123456789]", "") + "\") "
+						+ type.substring(0, 1).toUpperCase() + type.substring(1) + " " + input.getName().getContent().replaceAll("[0123456789]", "");
 			}
 
 		}
 		for (Argument param : uriParameters) {
 			if (!inputList.isEmpty())
 				inputList += ", ";
-			inputList += "@QueryParam(\"" + param.getName().getContent() + "\") String " + param.getName().getContent();
+			inputList += "@QueryParam(\"" + param.getName().getContent().replaceAll("[0123456789]", "") + "\") String " + param.getName().getContent().replaceAll("[0123456789]", "");
 		}
 		code += inputList;
 		code += ") throws Exception {\n";
@@ -73,12 +73,12 @@ public class RestfulCodeGenerator {
 		for (OwlService input : inputs) {
 			if (!inputList.isEmpty())
 				inputList += ", ";
-			inputList += input.getName().getContent().toString();
+			inputList += input.getName().getContent().replaceAll("[0123456789]", "");
 		}
 		for (Argument param : uriParameters) {
 			if (!inputList.isEmpty())
 				inputList += ", ";
-			inputList += param.getName().getContent().toString();
+			inputList += param.getName().getContent().replaceAll("[0123456789]", "");
 		}
 		code += inputList;
 		code += ");\n";
