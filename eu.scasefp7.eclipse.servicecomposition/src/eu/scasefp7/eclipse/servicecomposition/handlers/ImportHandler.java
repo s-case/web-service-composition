@@ -66,7 +66,7 @@ public class ImportHandler extends AbstractHandler {
 						graph = null;
 						File file = (File) selections[0];
 						RepositoryClient repo = new RepositoryClient();
-						String path = repo.downloadOntology("WS");
+						String path = repo.downloadOntology("WS", disp);
 						Algorithm.init();
 						final ArrayList<Operation> operations = Algorithm.importServices(
 								ResourcesPlugin.getWorkspace().getRoot().getLocation().toString() + "/" + "WS.owl");
@@ -176,6 +176,8 @@ public class ImportHandler extends AbstractHandler {
 						ex.printStackTrace();
 						return Status.CANCEL_STATUS;
 
+					}finally{
+						monitor.done();
 					}
 				}
 

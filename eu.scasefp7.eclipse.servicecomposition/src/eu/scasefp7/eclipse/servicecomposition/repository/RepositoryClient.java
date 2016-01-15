@@ -44,6 +44,8 @@ import org.apache.http.impl.client.HttpClients;
 //import org.apache.http.impl.client.HttpClients;
 //import org.apache.http.entity.ContentType;
 import org.eclipse.core.resources.ResourcesPlugin;
+import org.eclipse.jface.dialogs.MessageDialog;
+import org.eclipse.swt.widgets.Display;
 
 public class RepositoryClient {
 	private String apiKey = "1cfae05f-9e67-486f-820b-b393dec5764b";
@@ -126,7 +128,7 @@ public class RepositoryClient {
 	// }
 	// }
 
-	public String downloadOntology(String text) {
+	public String downloadOntology(String text, Display disp) {
 		try {
 			// FacesContext context = FacesContext.getCurrentInstance();
 
@@ -142,7 +144,7 @@ public class RepositoryClient {
 				else
 					requestURL=url + "/ontologies/WS/submissions/"+latestSubmission + "/download?apikey=" + apiKey;
 			InputStream inputStream = Request.Get(requestURL)
-					.connectTimeout(100000).socketTimeout(100000).execute().returnContent().asStream();
+					.connectTimeout(20000).socketTimeout(20000).execute().returnContent().asStream();
 
 			OutputStream outputStream = null;
 			File file = new File(path + "/" + text + ".owl");
@@ -165,6 +167,14 @@ public class RepositoryClient {
 			// sendGetRequest(url+"/search?q="+term+"&apikey="+apiKey,"");
 		} catch (Exception ex) {
 			ex.printStackTrace();
+			
+			disp.syncExec(new Runnable() {
+				@Override
+				public void run() {
+					MessageDialog.openInformation(disp.getActiveShell(), "Error occured",
+							"Ontology could not be downloaded. Local ontology will be used instead!");
+				}
+			});
 			return "";
 		}
 	}
@@ -213,7 +223,7 @@ public class RepositoryClient {
 		try {
 			// get latest submission
 			InputStream inputStream = Request.Get(url + "/ontologies/" + "WS" + "/submissions?apikey=" + apiKey)
-					.connectTimeout(100000).socketTimeout(100000).execute().returnContent().asStream();
+					.connectTimeout(20000).socketTimeout(20000).execute().returnContent().asStream();
 			Object obj = JSONValue.parse(convertStreamToString(inputStream));
 			JSONArray array = (JSONArray) obj;
 			JSONObject obj2 = (JSONObject) array.get(0);

@@ -314,8 +314,8 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 
 		createNewWorkflow();
 
-		RepositoryClient repo = new RepositoryClient();
-		String path = repo.downloadOntology("WS");
+//		RepositoryClient repo = new RepositoryClient();
+//		String path = repo.downloadOntology("WS");
 
 		final Graph graph = viewer.getGraphControl();
 		graph.addSelectionListener(new SelectionAdapter() {
@@ -959,9 +959,8 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 	 * selection window to the user with all the repository operations.
 	 */
 	private void addNewOperation() {
-
+		final Display disp = Display.getCurrent();
 		if (jungGraph == null) {
-			final Display disp = Display.getCurrent();
 			disp.syncExec(new Runnable() {
 				@Override
 				public void run() {
@@ -971,8 +970,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 
 		} else {
 
-			RepositoryClient repo = new RepositoryClient();
-			String path = repo.downloadOntology("WS");
+			
 			
 			final Shell shell = new Shell();
 			ILabelProvider labelProvider = new LabelProvider() {
@@ -986,14 +984,15 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 			};
 			final ElementListSelectionDialog dialog = new ElementListSelectionDialog(shell, labelProvider);
 
-			final Display disp = Display.getCurrent();
+			
 			AddNewOperationJob = new Job("Add new operation") {
 				@Override
 				protected IStatus run(IProgressMonitor monitor) {
 					monitor.beginTask("Loading operations...", IProgressMonitor.UNKNOWN);
 
 					try {
-
+						RepositoryClient repo = new RepositoryClient();
+						String path = repo.downloadOntology("WS", disp);
 						Algorithm.init();
 						// final ArrayList<Operation> operations =
 						// Algorithm.importServices(
@@ -1030,7 +1029,9 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 						return Status.OK_STATUS;
 					} catch (Exception ex) {
 						ex.printStackTrace();
-						return Status.OK_STATUS;
+						return Status.CANCEL_STATUS;
+					}finally{
+						monitor.done();
 					}
 
 				}
@@ -2070,6 +2071,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 	private void fillToolBar() {
 		ZoomContributionViewItem toolbarZoomContributionViewItem = new ZoomContributionViewItem(this);
 		IActionBars bars = getViewSite().getActionBars();
+		final Display disp= Display.getCurrent();
 		bars.getMenuManager().add(toolbarZoomContributionViewItem);
 		runWorkflowAction = new Action("Run workflow") {
 			public void run() {
@@ -2100,6 +2102,32 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 			}
 		};
 		cancelWorkflowAction.setImageDescriptor(getImageDescriptor("icons/stop.png"));
+		
+		
+		Action DownloadOntologyAction = new Action("Update ontology") {
+			public void run() {
+				Job downloadOntologyJob = new Job("Update ontology") {
+					@Override
+					protected IStatus run(IProgressMonitor monitor) {
+						monitor.beginTask("Downloading ontology ...", IProgressMonitor.UNKNOWN);
+				try {
+					RepositoryClient repo = new RepositoryClient();
+					String path = repo.downloadOntology("WS", disp);
+					return Status.OK_STATUS;
+				} catch (Exception e) {
+					// TODO Auto-generated catch block
+					// e.printStackTrace();
+					return Status.CANCEL_STATUS;
+				}
+					}
+				};
+
+				downloadOntologyJob.schedule();
+
+			}
+		};
+		DownloadOntologyAction.setImageDescriptor(getImageDescriptor("icons/downloadOnt.jpg"));
+
 
 		newWorkflowAction = new Action("Create a new workflow") {
 			public void run() {
@@ -2182,6 +2210,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 		uploadOnServerAction.setImageDescriptor(getImageDescriptor("icons/database.png"));
 
 		IToolBarManager mgr = getViewSite().getActionBars().getToolBarManager();
+		mgr.add(DownloadOntologyAction);
 		mgr.add(uploadOnServerAction);
 		mgr.add(generateCodeAction);
 		mgr.add(displayCostAction);
@@ -3508,7 +3537,10 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 					return Status.OK_STATUS;
 				} catch (Exception ex) {
 					ex.printStackTrace();
-					return Status.OK_STATUS;
+					monitor.done();
+					return Status.CANCEL_STATUS;
+				}finally{
+					monitor.done();
 				}
 			}
 		};
