@@ -231,12 +231,7 @@ project S-CASE
          version="0.0.0"
          unpack="false"/>
 
-   <plugin
-         id="jcl.over.slf4j"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
+   
 
    <plugin
          id="net.sf.jung.api"
@@ -259,19 +254,8 @@ project S-CASE
          version="0.0.0"
          unpack="false"/>
 
-   <plugin
-         id="org.slf4j.api"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
+   
 
-   <plugin
-         id="slf4j.log4j12"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         fragment="true"
-         unpack="false"/>
+   
 
 </feature>
