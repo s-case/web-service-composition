@@ -203,6 +203,7 @@ import eu.scasefp7.eclipse.servicecomposition.codeGenerator.NonLinearCodeGenerat
 import eu.scasefp7.eclipse.servicecomposition.codeGenerator.RestfulCodeGenerator;
 import eu.scasefp7.eclipse.servicecomposition.codeInterpreter.UserInput;
 import eu.scasefp7.eclipse.servicecomposition.codeInterpreter.Value;
+import eu.scasefp7.eclipse.servicecomposition.handlers.ImportHandler;
 import eu.scasefp7.eclipse.servicecomposition.importer.JungXMIImporter;
 import eu.scasefp7.eclipse.servicecomposition.importer.Importer.Argument;
 import eu.scasefp7.eclipse.servicecomposition.importer.Importer.Operation;
@@ -991,15 +992,14 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 					monitor.beginTask("Loading operations...", IProgressMonitor.UNKNOWN);
 
 					try {
-						RepositoryClient repo = new RepositoryClient();
-						String path = repo.downloadOntology("WS", disp);
+						ImportHandler.ontologyCheck(shell, disp);
 						Algorithm.init();
 						// final ArrayList<Operation> operations =
 						// Algorithm.importServices(
 						// "D:/web-service-composition-Maven-plugin/web-service-composition/eu.scasefp7.eclipse.serviceComposition/data/WS.owl",
 						// "data/scripts/");
-						final ArrayList<Operation> operations = Algorithm.importServices(
-								ResourcesPlugin.getWorkspace().getRoot().getLocation().toString() + "/" + "WS.owl");
+						final ArrayList<Operation> operations = Algorithm.importServices(ResourcesPlugin.getWorkspace().getRoot().getLocation().toString()
+								+ "/.metadata/.plugins/eu.scasefp7.servicecomposition/ontology/WS.owl");
 						ArrayList<Operation> nonPrototypeOperations = new ArrayList<Operation>();
 						// final ArrayList<Operation> operations = Algorithm
 						// .importServices("data/WS.owl", "data/scripts/");
@@ -4764,28 +4764,32 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 						uploadOnServer();
 					}
 					if (webServiceExistsOnServer()) {
-						//upload to WS ontology
-						//get application domain
-						//TODO it should not be hardcoded!!!!!!!!
-						String applicationDomainURI="http://www.scasefp7.eu/wsOntology.owl#BusinessDomain";
 						
-						
-						WSOntology ws=new WSOntology();
-						ws.createNewWSOperation(generator.getOperation().getHasName(), generator.getInputVariables(), generator.getUriParameters(), generator.getOutputVariables(), generator.getOperation().getBelongsToURL(),applicationDomainURI);
-						ws.saveToOWL();
-						RepositoryClient cl=new RepositoryClient();
-						cl.uploadOntology();
 						disp.syncExec(new Runnable() {
 							public void run() {
 								boolean answer = MessageDialog.openConfirm(shell, "Upload is complete!",
-										"The web service was uploaded successfully!\n"
+										"The web service was uploaded successfully on server!\n"
 												+ "Base URI: http://109.231.126.106:8080/" + currentProject.getName()
 												+ "-0.0.1-SNAPSHOT/\n" + "Resource Path: rest/result/query\n\n"
-												+ "Would you like to also connect the web service to the MDE ontology?");
+												+ "Would you like to update YouREST platform and MDE ontology?");
 
 								if (answer) {
 									// OK Button selected
 									try {
+										
+										//upload to WS ontology
+										//get application domain
+										//TODO it should not be hardcoded!!!!!!!!
+										String applicationDomainURI="http://www.scasefp7.eu/wsOntology.owl#BusinessDomain";
+										
+										
+										WSOntology ws=new WSOntology();
+										ws.createNewWSOperation(generator.getOperation().getHasName(), generator.getInputVariables(), generator.getUriParameters(), generator.getOutputVariables(), generator.getOperation().getBelongsToURL(),applicationDomainURI);
+										ws.saveToOWL();
+										RepositoryClient cl=new RepositoryClient();
+										cl.uploadOntology();
+										
+										
 										ConnectToMDEOntology.writeToOntology(scaseProject, gGenerator.getOperation());
 									} catch (Exception e) {
 										// TODO Auto-generated catch block

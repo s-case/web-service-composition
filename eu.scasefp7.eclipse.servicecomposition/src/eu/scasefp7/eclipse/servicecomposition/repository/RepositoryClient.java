@@ -7,13 +7,19 @@ import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 import org.json.simple.parser.JSONParser;
 
+import eu.scasefp7.eclipse.servicecomposition.Activator;
+
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.io.RandomAccessFile;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -135,19 +141,37 @@ public class RepositoryClient {
 			// String path = ((ServletContext) context.getExternalContext()
 			// .getContext()).getRealPath("/");
 			String latestSubmission = getLatestSubmissionId();
-			
-			
-			String path = ResourcesPlugin.getWorkspace().getRoot().getLocation().toString();
-			String requestURL="";
-			if(latestSubmission.equals(""))
-				requestURL=url + "/ontologies/" + text + "/download?apikey=" + apiKey;
-				else
-					requestURL=url + "/ontologies/WS/submissions/"+latestSubmission + "/download?apikey=" + apiKey;
-			InputStream inputStream = Request.Get(requestURL)
-					.connectTimeout(20000).socketTimeout(20000).execute().returnContent().asStream();
+
+			String path = ResourcesPlugin.getWorkspace().getRoot().getLocation().toString()
+					+ "/.metadata/.plugins/eu.scasefp7.servicecomposition/ontology";
+			String requestURL = "";
+			if (latestSubmission.equals(""))
+				requestURL = url + "/ontologies/" + text + "/download?apikey=" + apiKey;
+			else
+				requestURL = url + "/ontologies/WS/submissions/" + latestSubmission + "/download?apikey=" + apiKey;
+			InputStream inputStream = Request.Get(requestURL).connectTimeout(30000).socketTimeout(30000).execute()
+					.returnContent().asStream();
 
 			OutputStream outputStream = null;
+			//write the version file
+			File versionFile = new File(path + "/version.txt");
+			if (!versionFile.exists()) {
+				versionFile.getParentFile().mkdirs();
+			}else{
+				versionFile.delete();
+			}
+			versionFile.createNewFile();
+			RandomAccessFile f = new RandomAccessFile(versionFile, "rw");
+			f.seek(0); // to the beginning
+			String version = "submissionId="+latestSubmission;
+			f.write(version.getBytes());
+			f.close();
+			//write the ontology file
 			File file = new File(path + "/" + text + ".owl");
+			if (!file.exists()) {
+				file.getParentFile().mkdirs();
+				file.createNewFile();
+			}
 			System.out.println(file.getAbsolutePath());
 			outputStream = new FileOutputStream(file);
 
@@ -167,11 +191,11 @@ public class RepositoryClient {
 			// sendGetRequest(url+"/search?q="+term+"&apikey="+apiKey,"");
 		} catch (Exception ex) {
 			ex.printStackTrace();
-			
+
 			disp.syncExec(new Runnable() {
 				@Override
 				public void run() {
-					MessageDialog.openInformation(disp.getActiveShell(), "Error occured",
+					MessageDialog.openInformation(disp.getActiveShell(), "Warning!",
 							"Ontology could not be downloaded. Local ontology will be used instead!");
 				}
 			});
@@ -199,7 +223,8 @@ public class RepositoryClient {
 					+ "0\",\"isRemote\":\"0\",\"contact\":[{\"name\":\"Kostas Giannoutakis\",\"email\":\"kgiannou@iti.gr\"}],\"publication\":\"\"}";
 
 			builder.addTextBody("json", jsonStr, ContentType.APPLICATION_JSON);
-			String path = ResourcesPlugin.getWorkspace().getRoot().getLocation().toString();
+			String path = ResourcesPlugin.getWorkspace().getRoot().getLocation().toString()
+					+ "/.metadata/.plugins/eu.scasefp7.servicecomposition/ontology";
 			builder.addBinaryBody("file", new File(path + "/WS.owl"), ContentType.TEXT_PLAIN, "WS.owl");
 
 			HttpEntity multipart = builder.build();
@@ -217,7 +242,7 @@ public class RepositoryClient {
 		return s.hasNext() ? s.next() : "";
 	}
 
-	private  String getLatestSubmissionId() {
+	public String getLatestSubmissionId() {
 		String apiKey = "1cfae05f-9e67-486f-820b-b393dec5764b";
 		String url = "http://109.231.126.165:8080";
 		try {
@@ -233,6 +258,64 @@ public class RepositoryClient {
 			return "";
 		}
 	}
-
 	
+	/**
+	 * Copy the WS.owl and the version.txt files from the plug -in to the workspace /.metadata/.plugins/eu.scasefp7.servicecomposition/ontology folder if they don't already exist
+	 */
+	public void copyOntologyToWorkspace(){
+		//copy the ontology file
+		URL owlFileurl;
+		try {
+			String path = ResourcesPlugin.getWorkspace().getRoot().getLocation().toString()
+					+ "/.metadata/.plugins/eu.scasefp7.servicecomposition/ontology";
+			File file = new File(path + "/WS.owl");
+			if (!file.exists()) {
+				file.getParentFile().mkdirs();
+				file.createNewFile();
+				
+				owlFileurl = new URL("platform:/plugin/" + Activator.PLUGIN_ID + "/ontology/WS.owl");
+				InputStream inputStream = owlFileurl.openConnection().getInputStream();
+				
+				System.out.println(file.getAbsolutePath());
+				OutputStream outputStream = new FileOutputStream(file);
+
+				int read = 0;
+				byte[] bytes = new byte[1024];
+
+				while ((read = inputStream.read(bytes)) != -1) {
+					outputStream.write(bytes, 0, read);
+				}
+				inputStream.close();
+				outputStream.close();
+			}
+			
+			
+			File versionfile = new File(path + "/version.txt");
+			if (!versionfile.exists()) {
+				URL versionFileurl = new URL(
+						"platform:/plugin/" + Activator.PLUGIN_ID + "/ontology/version.txt");
+				InputStream inputStream2 = versionFileurl.openConnection().getInputStream();
+				versionfile.createNewFile();
+				
+				System.out.println(versionfile.getAbsolutePath());
+				OutputStream outputStream2 = new FileOutputStream(versionfile);
+
+				int read2 = 0;
+				byte[] bytes2 = new byte[1024];
+
+				while ((read2 = inputStream2.read(bytes2)) != -1) {
+					outputStream2.write(bytes2, 0, read2);
+				}
+				inputStream2.close();
+				outputStream2.close();
+			}
+			
+			
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+	}
+
 }

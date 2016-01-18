@@ -9,7 +9,7 @@
     xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
     xmlns:owl="http://www.w3.org/2002/07/owl#"
     xmlns="http://www.scasefp7.eu/wsOntology.owl#"
-  xml:base="file:/D:/SCASEsvn/data/WS.owl">
+  xml:base="file:/D:/runtime-EclipseApplication(1)/.metadata/.plugins/eu.scasefp7.servicecomposition/ontology/WS.owl">
   <owl:Ontology rdf:about="http://www.scasefp7.eu/wsOntology.owl"/>
   <owl:Class rdf:about="http://www.scasefp7.eu/wsOntology.owl#Cost">
     <rdfs:subClassOf>
@@ -156,11 +156,11 @@
   <owl:Class rdf:about="http://www.scasefp7.eu/wsOntology.owl#Book">
     <rdfs:subClassOf rdf:resource="http://www.scasefp7.eu/wsOntology.owl#Concept"/>
   </owl:Class>
-  <owl:Class rdf:about="http://www.scasefp7.eu/wsOntology.owl#ServiceLicense">
-    <rdfs:subClassOf rdf:resource="http://www.scasefp7.eu/wsOntology.owl#IPR_ModelTaxonomy"/>
-  </owl:Class>
   <owl:Class rdf:about="http://www.scasefp7.eu/wsOntology.owl#Roaming">
     <rdfs:subClassOf rdf:resource="http://www.scasefp7.eu/wsOntology.owl#Concept"/>
+  </owl:Class>
+  <owl:Class rdf:about="http://www.scasefp7.eu/wsOntology.owl#ServiceLicense">
+    <rdfs:subClassOf rdf:resource="http://www.scasefp7.eu/wsOntology.owl#IPR_ModelTaxonomy"/>
   </owl:Class>
   <owl:Class rdf:about="http://www.scasefp7.eu/wsOntology.owl#InterestRate">
     <rdfs:subClassOf rdf:resource="http://www.scasefp7.eu/wsOntology.owl#Concept"/>
@@ -804,9 +804,9 @@
       <owl:DataRange>
         <owl:oneOf rdf:parseType="Resource">
           <rdf:rest rdf:parseType="Resource">
+            <rdf:rest rdf:resource="http://www.w3.org/1999/02/22-rdf-syntax-ns#nil"/>
             <rdf:first rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
             >json</rdf:first>
-            <rdf:rest rdf:resource="http://www.w3.org/1999/02/22-rdf-syntax-ns#nil"/>
           </rdf:rest>
           <rdf:first rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
           >xml</rdf:first>
@@ -836,17 +836,17 @@
     <rdfs:range>
       <owl:DataRange>
         <owl:oneOf rdf:parseType="Resource">
-          <rdf:first rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
-          >USD</rdf:first>
           <rdf:rest rdf:parseType="Resource">
             <rdf:rest rdf:parseType="Resource">
+              <rdf:rest rdf:resource="http://www.w3.org/1999/02/22-rdf-syntax-ns#nil"/>
               <rdf:first rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
               >GBP</rdf:first>
-              <rdf:rest rdf:resource="http://www.w3.org/1999/02/22-rdf-syntax-ns#nil"/>
             </rdf:rest>
             <rdf:first rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
             >EUR</rdf:first>
           </rdf:rest>
+          <rdf:first rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+          >USD</rdf:first>
         </owl:oneOf>
       </owl:DataRange>
     </rdfs:range>
@@ -862,13 +862,13 @@
           >per usage</rdf:first>
           <rdf:rest rdf:parseType="Resource">
             <rdf:rest rdf:parseType="Resource">
-              <rdf:first rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
-              >per year</rdf:first>
               <rdf:rest rdf:parseType="Resource">
                 <rdf:rest rdf:resource="http://www.w3.org/1999/02/22-rdf-syntax-ns#nil"/>
                 <rdf:first rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
                 >unlimited</rdf:first>
               </rdf:rest>
+              <rdf:first rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+              >per year</rdf:first>
             </rdf:rest>
             <rdf:first rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
             >per month</rdf:first>
@@ -883,13 +883,13 @@
     <rdfs:range>
       <owl:DataRange>
         <owl:oneOf rdf:parseType="Resource">
-          <rdf:first rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean"
-          >true</rdf:first>
           <rdf:rest rdf:parseType="Resource">
             <rdf:first rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean"
             >false</rdf:first>
             <rdf:rest rdf:resource="http://www.w3.org/1999/02/22-rdf-syntax-ns#nil"/>
           </rdf:rest>
+          <rdf:first rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean"
+          >true</rdf:first>
         </owl:oneOf>
       </owl:DataRange>
     </rdfs:range>
@@ -970,11 +970,13 @@
     <rdfs:range>
       <owl:DataRange>
         <owl:oneOf rdf:parseType="Resource">
-          <rdf:first rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
-          >OAuth 1.0</rdf:first>
           <rdf:rest rdf:parseType="Resource">
+            <rdf:first rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+            >OAuth 2.0</rdf:first>
             <rdf:rest rdf:parseType="Resource">
               <rdf:rest rdf:parseType="Resource">
+                <rdf:first rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+                >Digest Authentication</rdf:first>
                 <rdf:rest rdf:parseType="Resource">
                   <rdf:first rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
                   >Pass Through</rdf:first>
@@ -984,15 +986,13 @@
                     <rdf:rest rdf:resource="http://www.w3.org/1999/02/22-rdf-syntax-ns#nil"/>
                   </rdf:rest>
                 </rdf:rest>
-                <rdf:first rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
-                >Digest Authentication</rdf:first>
               </rdf:rest>
               <rdf:first rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
               >Basic Authentication</rdf:first>
             </rdf:rest>
-            <rdf:first rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
-            >OAuth 2.0</rdf:first>
           </rdf:rest>
+          <rdf:first rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+          >OAuth 1.0</rdf:first>
         </owl:oneOf>
       </owl:DataRange>
     </rdfs:range>
@@ -1005,21 +1005,21 @@
     <rdfs:range>
       <owl:DataRange>
         <owl:oneOf rdf:parseType="Resource">
+          <rdf:first rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+          >GET</rdf:first>
           <rdf:rest rdf:parseType="Resource">
-            <rdf:first rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
-            >POST</rdf:first>
             <rdf:rest rdf:parseType="Resource">
+              <rdf:first rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+              >DELETE</rdf:first>
               <rdf:rest rdf:parseType="Resource">
                 <rdf:first rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
                 >PUT</rdf:first>
                 <rdf:rest rdf:resource="http://www.w3.org/1999/02/22-rdf-syntax-ns#nil"/>
               </rdf:rest>
-              <rdf:first rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
-              >DELETE</rdf:first>
             </rdf:rest>
+            <rdf:first rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+            >POST</rdf:first>
           </rdf:rest>
-          <rdf:first rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
-          >GET</rdf:first>
         </owl:oneOf>
       </owl:DataRange>
     </rdfs:range>
@@ -2687,6 +2687,109 @@
     <hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
     >providerCode</hasName>
   </ProviderCode>
+  <Concept rdf:about="http://www.scasefp7.eu/wsOntology.owl#CityName_5805">
+    <hasType rdf:resource="http://www.scasefp7.eu/wsOntology.owl#string"/>
+    <isRequired rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+    >true</isRequired>
+    <hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+    >CityName</hasName>
+  </Concept>
+  <Concept rdf:about="http://www.scasefp7.eu/wsOntology.owl#getWeatherResult_2932">
+    <hasType>
+      <Concept rdf:about="http://www.scasefp7.eu/wsOntology.owl#time_2826">
+        <isRequired rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+        >true</isRequired>
+        <hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+        >time</hasName>
+        <hasType rdf:resource="http://www.scasefp7.eu/wsOntology.owl#string"/>
+      </Concept>
+    </hasType>
+    <hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+    >getWeatherResult</hasName>
+    <hasType>
+      <Concept rdf:about="http://www.scasefp7.eu/wsOntology.owl#visibility_8405">
+        <isRequired rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+        >true</isRequired>
+        <hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+        >visibility</hasName>
+        <hasType rdf:resource="http://www.scasefp7.eu/wsOntology.owl#string"/>
+      </Concept>
+    </hasType>
+    <hasType>
+      <Concept rdf:about="http://www.scasefp7.eu/wsOntology.owl#RelativeHumidity_7952">
+        <hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+        >RelativeHumidity</hasName>
+        <hasType rdf:resource="http://www.scasefp7.eu/wsOntology.owl#string"/>
+        <isRequired rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+        >true</isRequired>
+      </Concept>
+    </hasType>
+    <isRequired rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+    >true</isRequired>
+    <hasType>
+      <Concept rdf:about="http://www.scasefp7.eu/wsOntology.owl#pressure_6263">
+        <isRequired rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+        >true</isRequired>
+        <hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+        >pressure</hasName>
+        <hasType rdf:resource="http://www.scasefp7.eu/wsOntology.owl#string"/>
+      </Concept>
+    </hasType>
+    <hasType>
+      <Concept rdf:about="http://www.scasefp7.eu/wsOntology.owl#Temperature_682">
+        <isRequired rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+        >true</isRequired>
+        <hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+        >Temperature</hasName>
+        <hasType rdf:resource="http://www.scasefp7.eu/wsOntology.owl#string"/>
+      </Concept>
+    </hasType>
+    <hasType>
+      <Concept rdf:about="http://www.scasefp7.eu/wsOntology.owl#status_7079">
+        <hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+        >status</hasName>
+        <hasType rdf:resource="http://www.scasefp7.eu/wsOntology.owl#string"/>
+        <isRequired rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+        >true</isRequired>
+      </Concept>
+    </hasType>
+    <hasType>
+      <Concept rdf:about="http://www.scasefp7.eu/wsOntology.owl#wind_2978">
+        <hasType rdf:resource="http://www.scasefp7.eu/wsOntology.owl#string"/>
+        <hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+        >wind</hasName>
+        <isRequired rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+        >true</isRequired>
+      </Concept>
+    </hasType>
+    <hasType>
+      <Concept rdf:about="http://www.scasefp7.eu/wsOntology.owl#SkyConditions_2691">
+        <isRequired rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+        >true</isRequired>
+        <hasType rdf:resource="http://www.scasefp7.eu/wsOntology.owl#string"/>
+        <hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+        >SkyConditions</hasName>
+      </Concept>
+    </hasType>
+    <hasType>
+      <Concept rdf:about="http://www.scasefp7.eu/wsOntology.owl#DewPoint_6253">
+        <hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+        >DewPoint</hasName>
+        <isRequired rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+        >true</isRequired>
+        <hasType rdf:resource="http://www.scasefp7.eu/wsOntology.owl#string"/>
+      </Concept>
+    </hasType>
+    <hasType>
+      <Concept rdf:about="http://www.scasefp7.eu/wsOntology.owl#location_6663">
+        <hasType rdf:resource="http://www.scasefp7.eu/wsOntology.owl#string"/>
+        <hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+        >location</hasName>
+        <isRequired rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+        >true</isRequired>
+      </Concept>
+    </hasType>
+  </Concept>
   <PatientVariables rdf:about="http://www.scasefp7.eu/wsOntology.owl#bloodPressure">
     <isArray rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean"
     >false</isArray>
@@ -2858,6 +2961,65 @@
       </Ingredient>
     </hasType>
   </Ingredient>
+  <Concept rdf:about="http://www.scasefp7.eu/wsOntology.owl#saleInfo_4523">
+    <isRequired rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+    >true</isRequired>
+    <hasType>
+      <Concept rdf:about="http://www.scasefp7.eu/wsOntology.owl#country_5962">
+        <isRequired rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+        >true</isRequired>
+        <hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+        >country</hasName>
+        <hasType rdf:resource="http://www.scasefp7.eu/wsOntology.owl#string"/>
+      </Concept>
+    </hasType>
+    <hasType>
+      <Concept rdf:about="http://www.scasefp7.eu/wsOntology.owl#saleability_7762">
+        <isRequired rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+        >true</isRequired>
+        <hasType rdf:resource="http://www.scasefp7.eu/wsOntology.owl#string"/>
+        <hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+        >saleability</hasName>
+      </Concept>
+    </hasType>
+    <hasType>
+      <Concept rdf:about="http://www.scasefp7.eu/wsOntology.owl#isEbook_6637">
+        <hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+        >isEbook</hasName>
+        <isRequired rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+        >true</isRequired>
+        <hasType rdf:resource="http://www.scasefp7.eu/wsOntology.owl#string"/>
+      </Concept>
+    </hasType>
+    <hasType>
+      <Concept rdf:about="http://www.scasefp7.eu/wsOntology.owl#listPrice_7687">
+        <hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+        >listPrice</hasName>
+        <hasType>
+          <Concept rdf:about="http://www.scasefp7.eu/wsOntology.owl#amount_6741">
+            <isRequired rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+            >true</isRequired>
+            <hasType rdf:resource="http://www.scasefp7.eu/wsOntology.owl#double"/>
+            <hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+            >amount</hasName>
+          </Concept>
+        </hasType>
+        <hasType>
+          <Concept rdf:about="http://www.scasefp7.eu/wsOntology.owl#currencyCode_3994">
+            <isRequired rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+            >true</isRequired>
+            <hasType rdf:resource="http://www.scasefp7.eu/wsOntology.owl#string"/>
+            <hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+            >currencyCode</hasName>
+          </Concept>
+        </hasType>
+        <isRequired rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+        >true</isRequired>
+      </Concept>
+    </hasType>
+    <hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+    >saleInfo</hasName>
+  </Concept>
   <DateAndTime rdf:about="http://www.scasefp7.eu/wsOntology.owl#callBackDate">
     <isArray rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean"
     >false</isArray>
@@ -3231,6 +3393,13 @@
         <hasType rdf:resource="http://www.scasefp7.eu/wsOntology.owl#string"/>
       </Status>
     </hasType>
+  </Concept>
+  <Concept rdf:about="http://www.scasefp7.eu/wsOntology.owl#CountryName_1514">
+    <hasType rdf:resource="http://www.scasefp7.eu/wsOntology.owl#string"/>
+    <isRequired rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+    >true</isRequired>
+    <hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+    >CountryName</hasName>
   </Concept>
   <Concept rdf:about="http://www.scasefp7.eu/wsOntology.owl#rechargeAccountResult">
     <hasType>
@@ -3626,6 +3795,102 @@
     <hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
     >getNearestBusStopResult</hasName>
   </Concept>
+  <Concept rdf:about="http://www.scasefp7.eu/wsOntology.owl#getWeatherResult_2095">
+    <hasType>
+      <Concept rdf:about="http://www.scasefp7.eu/wsOntology.owl#Temperature_3481">
+        <hasType rdf:resource="http://www.scasefp7.eu/wsOntology.owl#string"/>
+        <isRequired rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+        >true</isRequired>
+        <hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+        >Temperature</hasName>
+      </Concept>
+    </hasType>
+    <hasType>
+      <Concept rdf:about="http://www.scasefp7.eu/wsOntology.owl#RelativeHumidity_7521">
+        <isRequired rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+        >true</isRequired>
+        <hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+        >RelativeHumidity</hasName>
+        <hasType rdf:resource="http://www.scasefp7.eu/wsOntology.owl#string"/>
+      </Concept>
+    </hasType>
+    <hasType>
+      <Concept rdf:about="http://www.scasefp7.eu/wsOntology.owl#time_2856">
+        <isRequired rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+        >true</isRequired>
+        <hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+        >time</hasName>
+        <hasType rdf:resource="http://www.scasefp7.eu/wsOntology.owl#string"/>
+      </Concept>
+    </hasType>
+    <hasType>
+      <Concept rdf:about="http://www.scasefp7.eu/wsOntology.owl#wind_3497">
+        <hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+        >wind</hasName>
+        <hasType rdf:resource="http://www.scasefp7.eu/wsOntology.owl#string"/>
+        <isRequired rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+        >true</isRequired>
+      </Concept>
+    </hasType>
+    <hasType>
+      <Concept rdf:about="http://www.scasefp7.eu/wsOntology.owl#location_9616">
+        <hasType rdf:resource="http://www.scasefp7.eu/wsOntology.owl#string"/>
+        <isRequired rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+        >true</isRequired>
+        <hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+        >location</hasName>
+      </Concept>
+    </hasType>
+    <hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+    >getWeatherResult</hasName>
+    <hasType>
+      <Concept rdf:about="http://www.scasefp7.eu/wsOntology.owl#visibility_2391">
+        <isRequired rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+        >true</isRequired>
+        <hasType rdf:resource="http://www.scasefp7.eu/wsOntology.owl#string"/>
+        <hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+        >visibility</hasName>
+      </Concept>
+    </hasType>
+    <hasType>
+      <Concept rdf:about="http://www.scasefp7.eu/wsOntology.owl#pressure_9642">
+        <hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+        >pressure</hasName>
+        <hasType rdf:resource="http://www.scasefp7.eu/wsOntology.owl#string"/>
+        <isRequired rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+        >true</isRequired>
+      </Concept>
+    </hasType>
+    <isRequired rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+    >true</isRequired>
+    <hasType>
+      <Concept rdf:about="http://www.scasefp7.eu/wsOntology.owl#SkyConditions_1538">
+        <hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+        >SkyConditions</hasName>
+        <hasType rdf:resource="http://www.scasefp7.eu/wsOntology.owl#string"/>
+        <isRequired rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+        >true</isRequired>
+      </Concept>
+    </hasType>
+    <hasType>
+      <Concept rdf:about="http://www.scasefp7.eu/wsOntology.owl#status_3028">
+        <hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+        >status</hasName>
+        <isRequired rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+        >true</isRequired>
+        <hasType rdf:resource="http://www.scasefp7.eu/wsOntology.owl#string"/>
+      </Concept>
+    </hasType>
+    <hasType>
+      <Concept rdf:about="http://www.scasefp7.eu/wsOntology.owl#DewPoint_8564">
+        <hasType rdf:resource="http://www.scasefp7.eu/wsOntology.owl#string"/>
+        <hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+        >DewPoint</hasName>
+        <isRequired rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+        >true</isRequired>
+      </Concept>
+    </hasType>
+  </Concept>
   <Concept rdf:about="http://www.scasefp7.eu/wsOntology.owl#sendLetterResult">
     <hasType>
       <Paper rdf:about="http://www.scasefp7.eu/wsOntology.owl#paper">
@@ -3830,6 +4095,13 @@
     <isRequired rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean"
     >true</isRequired>
   </Query>
+  <Concept rdf:about="http://www.scasefp7.eu/wsOntology.owl#isbn_5699">
+    <hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+    >isbn</hasName>
+    <hasType rdf:resource="http://www.scasefp7.eu/wsOntology.owl#string"/>
+    <isRequired rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+    >true</isRequired>
+  </Concept>
   <operation rdf:about="http://www.scasefp7.eu/wsOntology.owl#ProductPut">
     <hasResourcePath rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
     >/{number}/</hasResourcePath>
@@ -4522,6 +4794,194 @@
     <hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
     >getAirportInfoResult</hasName>
   </Concept>
+  <Concept rdf:about="http://www.scasefp7.eu/wsOntology.owl#title_5409">
+    <hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+    >title</hasName>
+    <isRequired rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+    >false</isRequired>
+    <hasType rdf:resource="http://www.scasefp7.eu/wsOntology.owl#string"/>
+  </Concept>
+  <operation rdf:about="http://www.scasefp7.eu/wsOntology.owl#GETBookDetails">
+    <hasOutput rdf:resource="http://www.scasefp7.eu/wsOntology.owl#id"/>
+    <hasMappings>
+      <OperationMappings rdf:about="http://www.scasefp7.eu/wsOntology.owl#GETBookDetailsMappings">
+        <hasScore rdf:datatype="http://www.w3.org/2001/XMLSchema#double"
+        >0.59</hasScore>
+        <hasIOMappings>
+          <IOMappings rdf:about="http://www.scasefp7.eu/wsOntology.owl#GET_BookDetailsisbnMapping">
+            <hasOntologyConcept>
+              <ISBN rdf:about="http://www.scasefp7.eu/wsOntology.owl#isbn">
+                <hasType rdf:resource="http://www.scasefp7.eu/wsOntology.owl#string"/>
+                <isArray rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean"
+                >false</isArray>
+                <isRequired rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean"
+                >true</isRequired>
+                <hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+                >isbn</hasName>
+              </ISBN>
+            </hasOntologyConcept>
+            <hasScore rdf:datatype="http://www.w3.org/2001/XMLSchema#double"
+            >1.0</hasScore>
+            <hasWebServiceConcept rdf:resource="http://www.scasefp7.eu/wsOntology.owl#isbn"/>
+          </IOMappings>
+        </hasIOMappings>
+        <hasIOMappings>
+          <IOMappings rdf:about="http://www.scasefp7.eu/wsOntology.owl#GET_BookDetailsidMapping">
+            <hasWebServiceConcept rdf:resource="http://www.scasefp7.eu/wsOntology.owl#id"/>
+            <hasScore rdf:datatype="http://www.w3.org/2001/XMLSchema#double"
+            >0.0</hasScore>
+            <hasOntologyConcept>
+              <Concept rdf:about="http://www.scasefp7.eu/wsOntology.owl#bookID">
+                <hasType rdf:resource="http://www.scasefp7.eu/wsOntology.owl#string"/>
+                <hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+                >bookID</hasName>
+              </Concept>
+            </hasOntologyConcept>
+          </IOMappings>
+        </hasIOMappings>
+        <hasIOMappings>
+          <IOMappings rdf:about="http://www.scasefp7.eu/wsOntology.owl#GET_BookDetailsauthorMapping">
+            <hasOntologyConcept rdf:resource="http://www.scasefp7.eu/wsOntology.owl#authors"/>
+            <hasWebServiceConcept>
+              <Author rdf:about="http://www.scasefp7.eu/wsOntology.owl#author">
+                <hasType rdf:resource="http://www.scasefp7.eu/wsOntology.owl#string"/>
+                <isArray rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean"
+                >false</isArray>
+                <hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+                >author</hasName>
+              </Author>
+            </hasWebServiceConcept>
+            <hasScore rdf:datatype="http://www.w3.org/2001/XMLSchema#double"
+            >0.89</hasScore>
+          </IOMappings>
+        </hasIOMappings>
+        <hasIOMappings>
+          <IOMappings rdf:about="http://www.scasefp7.eu/wsOntology.owl#GET_BookDetailstitleMapping">
+            <hasScore rdf:datatype="http://www.w3.org/2001/XMLSchema#double"
+            >1.0</hasScore>
+            <hasOntologyConcept rdf:resource="http://www.scasefp7.eu/wsOntology.owl#title"/>
+            <hasWebServiceConcept rdf:resource="http://www.scasefp7.eu/wsOntology.owl#Title_12"/>
+          </IOMappings>
+        </hasIOMappings>
+        <hasIOMappings>
+          <IOMappings rdf:about="http://www.scasefp7.eu/wsOntology.owl#GET_BookDetailspublisherMapping">
+            <hasOntologyConcept rdf:resource="http://www.scasefp7.eu/wsOntology.owl#publisher"/>
+            <hasScore rdf:datatype="http://www.w3.org/2001/XMLSchema#double"
+            >1.0</hasScore>
+            <hasWebServiceConcept rdf:resource="http://www.scasefp7.eu/wsOntology.owl#publisher"/>
+          </IOMappings>
+        </hasIOMappings>
+        <hasIdealOperationMapping>
+          <operation rdf:about="http://www.scasefp7.eu/wsOntology.owl#getBooks">
+            <hasServiceDomain rdf:resource="http://www.scasefp7.eu/wsOntology.owl#BusinessDomain"/>
+            <hasOutput rdf:resource="http://www.scasefp7.eu/wsOntology.owl#title"/>
+            <hasRealOperations>
+              <operation rdf:about="http://www.scasefp7.eu/wsOntology.owl#getBook">
+                <hasServiceDomain rdf:resource="http://www.scasefp7.eu/wsOntology.owl#BusinessDomain"/>
+                <hasInput rdf:resource="http://www.scasefp7.eu/wsOntology.owl#isbn"/>
+                <isPrototype rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean"
+                >false</isPrototype>
+                <hasOutput rdf:resource="http://www.scasefp7.eu/wsOntology.owl#author"/>
+                <hasOutput rdf:resource="http://www.scasefp7.eu/wsOntology.owl#publisher"/>
+                <belongsToPrototype rdf:resource="http://www.scasefp7.eu/wsOntology.owl#getBooks"/>
+                <hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+                >getBook</hasName>
+              </operation>
+            </hasRealOperations>
+            <hasOutput rdf:resource="http://www.scasefp7.eu/wsOntology.owl#authors"/>
+            <hasPreferredUIName rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+            >get Book details</hasPreferredUIName>
+            <hasOutput>
+              <Concept rdf:about="http://www.scasefp7.eu/wsOntology.owl#date_45">
+                <hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+                >date</hasName>
+                <isArray rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean"
+                >false</isArray>
+                <hasType rdf:resource="http://www.scasefp7.eu/wsOntology.owl#string"/>
+              </Concept>
+            </hasOutput>
+            <hasOutput rdf:resource="http://www.scasefp7.eu/wsOntology.owl#publisher"/>
+            <hasOutput rdf:resource="http://www.scasefp7.eu/wsOntology.owl#bookID"/>
+            <hasInput>
+              <Concept rdf:about="http://www.scasefp7.eu/wsOntology.owl#BarcodeDigits">
+                <hasType rdf:resource="http://www.scasefp7.eu/wsOntology.owl#string"/>
+                <hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+                >BarcodeDigits</hasName>
+              </Concept>
+            </hasInput>
+            <hasInput rdf:resource="http://www.scasefp7.eu/wsOntology.owl#isbn"/>
+            <isPrototype rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean"
+            >true</isPrototype>
+            <hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+            >getBooks</hasName>
+          </operation>
+        </hasIdealOperationMapping>
+        <hasApplicationDomainMapping rdf:resource="http://www.scasefp7.eu/wsOntology.owl#BusinessDomain"/>
+      </OperationMappings>
+    </hasMappings>
+    <belongsToUser rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+    >kgiannou@iti.gr</belongsToUser>
+    <hasResponseType rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+    >json</hasResponseType>
+    <isPrototype rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean"
+    >false</isPrototype>
+    <belongsToURL rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+    >http://109.231.126.106:8080/GET_BookDetails-0.0.1-SNAPSHOT</belongsToURL>
+    <hasResourcePath rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+    >/rest/BookDetails</hasResourcePath>
+    <hasOutput rdf:resource="http://www.scasefp7.eu/wsOntology.owl#Title_12"/>
+    <hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+    >GET_BookDetails</hasName>
+    <belongsToWSType rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+    >RESTful</belongsToWSType>
+    <hasOutput rdf:resource="http://www.scasefp7.eu/wsOntology.owl#author"/>
+    <hasOutput rdf:resource="http://www.scasefp7.eu/wsOntology.owl#publisher"/>
+    <hasCRUDVerb rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+    >GET</hasCRUDVerb>
+    <hasServiceDomain rdf:resource="http://www.scasefp7.eu/wsOntology.owl#BusinessDomain"/>
+    <hasServiceAccessInfo>
+      <ServiceAccessInfo rdf:about="http://www.scasefp7.eu/wsOntology.owl#GET_BookDetails_ServiceAccessInfo">
+        <hasCommecrialCostSchema>
+          <CommercialCostSchema rdf:about="http://www.scasefp7.eu/wsOntology.owl#GET_BookDetails_CommercialCostSchema">
+            <hasCommecrialCost rdf:datatype="http://www.w3.org/2001/XMLSchema#double"
+            >0.0</hasCommecrialCost>
+            <hasTrialSchema>
+              <ServiceTrialSchema rdf:about="http://www.scasefp7.eu/wsOntology.owl#GET_BookDetails_ServiceTrialSchema">
+                <hasDurationInUsages rdf:datatype="http://www.w3.org/2001/XMLSchema#long"
+                >0</hasDurationInUsages>
+                <offersFullFunctionalityDuringTrial rdf:datatype=
+                "http://www.w3.org/2001/XMLSchema#boolean">false</offersFullFunctionalityDuringTrial>
+                <hasLimitedFunctionalityDescription rdf:datatype=
+                "http://www.w3.org/2001/XMLSchema#string"></hasLimitedFunctionalityDescription>
+                <hasDurationInDays rdf:datatype="http://www.w3.org/2001/XMLSchema#long"
+                >0</hasDurationInDays>
+              </ServiceTrialSchema>
+            </hasTrialSchema>
+          </CommercialCostSchema>
+        </hasCommecrialCostSchema>
+        <hasLicense>
+          <ServiceLicense rdf:about="http://www.scasefp7.eu/wsOntology.owl#GET_BookDetails_ServiceLicense">
+            <hasLicenseName rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+            ></hasLicenseName>
+            <hasLicenseDescription rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+            ></hasLicenseDescription>
+            <isProprietary rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean"
+            >false</isProprietary>
+          </ServiceLicense>
+        </hasLicense>
+        <hasDescription rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+        ></hasDescription>
+      </ServiceAccessInfo>
+    </hasServiceAccessInfo>
+    <hasInput rdf:resource="http://www.scasefp7.eu/wsOntology.owl#isbn"/>
+  </operation>
+  <Concept rdf:about="http://www.scasefp7.eu/wsOntology.owl#publisher_5508">
+    <hasType rdf:resource="http://www.scasefp7.eu/wsOntology.owl#string"/>
+    <isRequired rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+    >true</isRequired>
+    <hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+    >publisher</hasName>
+  </Concept>
   <operation rdf:about="http://www.scasefp7.eu/wsOntology.owl#IP2Location">
     <belongsToURL rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
     >http://160.40.50.176:7770/ws/LocalWebServices?wsdl</belongsToURL>
@@ -5107,6 +5567,10 @@
     <hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
     >getGeoPlacesResult</hasName>
   </Concept>
+  <ServiceAccessInfo rdf:about="http://www.scasefp7.eu/wsOntology.owl#ServiceAccessInfo_7639">
+    <hasDescription rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+    >Get Test Weather</hasDescription>
+  </ServiceAccessInfo>
   <Concept rdf:about="http://www.scasefp7.eu/wsOntology.owl#getSocialEventListResult">
     <hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
     >getSocialEventListResult</hasName>
@@ -6734,17 +7198,17 @@
                   </Concept>
                 </hasType>
                 <hasType>
-                  <Concept rdf:about="http://www.scasefp7.eu/wsOntology.owl#Over18NativeOnly">
-                    <hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
-                    >Over18NativeOnly</hasName>
-                    <hasType rdf:resource="http://www.scasefp7.eu/wsOntology.owl#int"/>
-                  </Concept>
-                </hasType>
-                <hasType>
                   <Concept rdf:about="http://www.scasefp7.eu/wsOntology.owl#MaleUnder5">
                     <hasType rdf:resource="http://www.scasefp7.eu/wsOntology.owl#int"/>
                     <hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
                     >MaleUnder5</hasName>
+                  </Concept>
+                </hasType>
+                <hasType>
+                  <Concept rdf:about="http://www.scasefp7.eu/wsOntology.owl#Over18NativeOnly">
+                    <hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+                    >Over18NativeOnly</hasName>
+                    <hasType rdf:resource="http://www.scasefp7.eu/wsOntology.owl#int"/>
                   </Concept>
                 </hasType>
                 <hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
@@ -6955,6 +7419,10 @@
     >getABADetailsResult</hasName>
     <hasType rdf:resource="http://www.scasefp7.eu/wsOntology.owl#string"/>
   </Concept>
+  <ServiceAccessInfo rdf:about="http://www.scasefp7.eu/wsOntology.owl#ServiceAccessInfo_2473">
+    <hasDescription rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+    >Get Test Weather</hasDescription>
+  </ServiceAccessInfo>
   <Concept rdf:about="http://www.scasefp7.eu/wsOntology.owl#getGeoPhoneInfoResult">
     <hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
     >getGeoPhoneInfoResult</hasName>
@@ -7245,6 +7713,10 @@
     <belongsToWSType rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
     >RESTful</belongsToWSType>
   </operation>
+  <ServiceAccessInfo rdf:about="http://www.scasefp7.eu/wsOntology.owl#ServiceAccessInfo_7556">
+    <hasDescription rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+    >Get Test Weather</hasDescription>
+  </ServiceAccessInfo>
   <operation rdf:about="http://www.scasefp7.eu/wsOntology.owl#ValidateCardNumber">
     <hasInput>
       <Concept rdf:about="http://www.scasefp7.eu/wsOntology.owl#cardNumber_603">
@@ -7424,6 +7896,102 @@
     <hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
     >resolution</hasName>
   </Resolution>
+  <Concept rdf:about="http://www.scasefp7.eu/wsOntology.owl#getWeatherResult_3249">
+    <hasType>
+      <Concept rdf:about="http://www.scasefp7.eu/wsOntology.owl#wind_9946">
+        <hasType rdf:resource="http://www.scasefp7.eu/wsOntology.owl#string"/>
+        <hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+        >wind</hasName>
+        <isRequired rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+        >true</isRequired>
+      </Concept>
+    </hasType>
+    <hasType>
+      <Concept rdf:about="http://www.scasefp7.eu/wsOntology.owl#pressure_2304">
+        <isRequired rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+        >true</isRequired>
+        <hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+        >pressure</hasName>
+        <hasType rdf:resource="http://www.scasefp7.eu/wsOntology.owl#string"/>
+      </Concept>
+    </hasType>
+    <hasType>
+      <Concept rdf:about="http://www.scasefp7.eu/wsOntology.owl#Temperature_360">
+        <hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+        >Temperature</hasName>
+        <hasType rdf:resource="http://www.scasefp7.eu/wsOntology.owl#string"/>
+        <isRequired rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+        >true</isRequired>
+      </Concept>
+    </hasType>
+    <hasType>
+      <Concept rdf:about="http://www.scasefp7.eu/wsOntology.owl#status_9279">
+        <hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+        >status</hasName>
+        <hasType rdf:resource="http://www.scasefp7.eu/wsOntology.owl#string"/>
+        <isRequired rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+        >true</isRequired>
+      </Concept>
+    </hasType>
+    <hasType>
+      <Concept rdf:about="http://www.scasefp7.eu/wsOntology.owl#RelativeHumidity_8469">
+        <isRequired rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+        >true</isRequired>
+        <hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+        >RelativeHumidity</hasName>
+        <hasType rdf:resource="http://www.scasefp7.eu/wsOntology.owl#string"/>
+      </Concept>
+    </hasType>
+    <hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+    >getWeatherResult</hasName>
+    <isRequired rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+    >true</isRequired>
+    <hasType>
+      <Concept rdf:about="http://www.scasefp7.eu/wsOntology.owl#visibility_4068">
+        <hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+        >visibility</hasName>
+        <hasType rdf:resource="http://www.scasefp7.eu/wsOntology.owl#string"/>
+        <isRequired rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+        >true</isRequired>
+      </Concept>
+    </hasType>
+    <hasType>
+      <Concept rdf:about="http://www.scasefp7.eu/wsOntology.owl#DewPoint_5019">
+        <hasType rdf:resource="http://www.scasefp7.eu/wsOntology.owl#string"/>
+        <hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+        >DewPoint</hasName>
+        <isRequired rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+        >true</isRequired>
+      </Concept>
+    </hasType>
+    <hasType>
+      <Concept rdf:about="http://www.scasefp7.eu/wsOntology.owl#location_5915">
+        <hasType rdf:resource="http://www.scasefp7.eu/wsOntology.owl#string"/>
+        <isRequired rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+        >true</isRequired>
+        <hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+        >location</hasName>
+      </Concept>
+    </hasType>
+    <hasType>
+      <Concept rdf:about="http://www.scasefp7.eu/wsOntology.owl#SkyConditions_1716">
+        <hasType rdf:resource="http://www.scasefp7.eu/wsOntology.owl#string"/>
+        <hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+        >SkyConditions</hasName>
+        <isRequired rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+        >true</isRequired>
+      </Concept>
+    </hasType>
+    <hasType>
+      <Concept rdf:about="http://www.scasefp7.eu/wsOntology.owl#time_802">
+        <hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+        >time</hasName>
+        <isRequired rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+        >true</isRequired>
+        <hasType rdf:resource="http://www.scasefp7.eu/wsOntology.owl#string"/>
+      </Concept>
+    </hasType>
+  </Concept>
   <Concept rdf:about="http://www.scasefp7.eu/wsOntology.owl#queryProductsResult">
     <isArray rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean"
     >false</isArray>
@@ -7465,6 +8033,13 @@
         <hasType rdf:resource="http://www.scasefp7.eu/wsOntology.owl#productID"/>
       </Product>
     </hasType>
+  </Concept>
+  <Concept rdf:about="http://www.scasefp7.eu/wsOntology.owl#CountryName_4816">
+    <hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+    >CountryName</hasName>
+    <isRequired rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+    >true</isRequired>
+    <hasType rdf:resource="http://www.scasefp7.eu/wsOntology.owl#string"/>
   </Concept>
   <Concept rdf:about="http://www.scasefp7.eu/wsOntology.owl#getLetterStatusResult">
     <hasType rdf:resource="http://www.scasefp7.eu/wsOntology.owl#itemID"/>
@@ -9078,13 +9653,7 @@
             </hasIOMappings>
             <hasIOMappings>
               <IOMappings rdf:about="http://www.scasefp7.eu/wsOntology.owl#ValidateAddressBarcodeDigitsMapping">
-                <hasWebServiceConcept>
-                  <Concept rdf:about="http://www.scasefp7.eu/wsOntology.owl#BarcodeDigits">
-                    <hasType rdf:resource="http://www.scasefp7.eu/wsOntology.owl#string"/>
-                    <hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
-                    >BarcodeDigits</hasName>
-                  </Concept>
-                </hasWebServiceConcept>
+                <hasWebServiceConcept rdf:resource="http://www.scasefp7.eu/wsOntology.owl#BarcodeDigits"/>
                 <hasScore rdf:datatype="http://www.w3.org/2001/XMLSchema#double"
                 >0.16</hasScore>
                 <hasOntologyConcept rdf:resource="http://www.scasefp7.eu/wsOntology.owl#barCode"/>
@@ -9389,6 +9958,10 @@
       </Base>
     </hasOutput>
   </operation>
+  <ServiceAccessInfo rdf:about="http://www.scasefp7.eu/wsOntology.owl#ServiceAccessInfo_7612">
+    <hasDescription rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+    >Get Test B</hasDescription>
+  </ServiceAccessInfo>
   <Concept rdf:about="http://www.scasefp7.eu/wsOntology.owl#getGeoIpInfoResult">
     <hasType rdf:resource="http://www.scasefp7.eu/wsOntology.owl#zipCode"/>
     <hasType rdf:resource="http://www.scasefp7.eu/wsOntology.owl#city"/>
@@ -9624,6 +10197,13 @@
     <hasType rdf:resource="http://www.scasefp7.eu/wsOntology.owl#province"/>
     <hasType rdf:resource="http://www.scasefp7.eu/wsOntology.owl#password"/>
   </Concept>
+  <Concept rdf:about="http://www.scasefp7.eu/wsOntology.owl#CityName_7101">
+    <isRequired rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+    >true</isRequired>
+    <hasType rdf:resource="http://www.scasefp7.eu/wsOntology.owl#string"/>
+    <hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+    >CityName</hasName>
+  </Concept>
   <Concept rdf:about="http://www.scasefp7.eu/wsOntology.owl#Concept_4"/>
   <Concept rdf:about="http://www.scasefp7.eu/wsOntology.owl#getYellowPagesResult">
     <hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
@@ -9718,17 +10298,7 @@
             >publicationDate</hasName>
           </DateAndTime>
         </hasType>
-        <hasType>
-          <ISBN rdf:about="http://www.scasefp7.eu/wsOntology.owl#isbn">
-            <hasType rdf:resource="http://www.scasefp7.eu/wsOntology.owl#string"/>
-            <isArray rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean"
-            >false</isArray>
-            <isRequired rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean"
-            >true</isRequired>
-            <hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
-            >isbn</hasName>
-          </ISBN>
-        </hasType>
+        <hasType rdf:resource="http://www.scasefp7.eu/wsOntology.owl#isbn"/>
         <hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
         >extracts</hasName>
       </Concept>
@@ -9952,6 +10522,13 @@
     <isPrototype rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean"
     >false</isPrototype>
   </operation>
+  <Concept rdf:about="http://www.scasefp7.eu/wsOntology.owl#id_8529">
+    <hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+    >id</hasName>
+    <isRequired rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+    >true</isRequired>
+    <hasType rdf:resource="http://www.scasefp7.eu/wsOntology.owl#string"/>
+  </Concept>
   <Concept rdf:about="http://www.scasefp7.eu/wsOntology.owl#sendEmailsResult2">
     <hasType rdf:resource="http://www.scasefp7.eu/wsOntology.owl#string"/>
     <hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
@@ -10522,6 +11099,13 @@
     <hasType rdf:resource="http://www.scasefp7.eu/wsOntology.owl#streetName"/>
     <hasType rdf:resource="http://www.scasefp7.eu/wsOntology.owl#numberString"/>
   </Fragment>
+  <Concept rdf:about="http://www.scasefp7.eu/wsOntology.owl#title_7881">
+    <isRequired rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+    >false</isRequired>
+    <hasType rdf:resource="http://www.scasefp7.eu/wsOntology.owl#string"/>
+    <hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+    >title</hasName>
+  </Concept>
   <Concept rdf:about="http://www.scasefp7.eu/wsOntology.owl#getTotalCallDurationResult">
     <hasType rdf:resource="http://www.scasefp7.eu/wsOntology.owl#string"/>
     <hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
@@ -10596,6 +11180,13 @@
     >getMaximumCallChargeResult</hasName>
     <isArray rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean"
     >true</isArray>
+  </Concept>
+  <Concept rdf:about="http://www.scasefp7.eu/wsOntology.owl#CountryName_527">
+    <hasType rdf:resource="http://www.scasefp7.eu/wsOntology.owl#string"/>
+    <isRequired rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+    >true</isRequired>
+    <hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+    >CountryName</hasName>
   </Concept>
   <Concept rdf:about="http://www.scasefp7.eu/wsOntology.owl#getNameServersResult2">
     <hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
@@ -10951,6 +11542,13 @@
     >getProductInfoResult</hasName>
     <isArray rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean"
     >false</isArray>
+  </Concept>
+  <Concept rdf:about="http://www.scasefp7.eu/wsOntology.owl#CityName_3726">
+    <hasType rdf:resource="http://www.scasefp7.eu/wsOntology.owl#string"/>
+    <isRequired rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+    >true</isRequired>
+    <hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+    >CityName</hasName>
   </Concept>
   <operation rdf:about="http://www.scasefp7.eu/wsOntology.owl#GETrate">
     <hasServiceAccessInfo>
@@ -11393,6 +11991,13 @@
     <isPrototype rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean"
     >false</isPrototype>
   </operation>
+  <Concept rdf:about="http://www.scasefp7.eu/wsOntology.owl#author_2554">
+    <isRequired rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+    >true</isRequired>
+    <hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+    >author</hasName>
+    <hasType rdf:resource="http://www.scasefp7.eu/wsOntology.owl#string"/>
+  </Concept>
   <PatientVariables rdf:about="http://www.scasefp7.eu/wsOntology.owl#heartRate">
     <isArray rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean"
     >false</isArray>
@@ -13409,16 +14014,6 @@
     </hasRealOperations>
     <hasInput rdf:resource="http://www.scasefp7.eu/wsOntology.owl#cardID"/>
     <hasRealOperations>
-      <operation rdf:about="http://www.scasefp7.eu/wsOntology.owl#wsDeleteBillingRecord">
-        <hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
-        >wsDeleteBillingRecord</hasName>
-        <hasServiceDomain rdf:resource="http://www.scasefp7.eu/wsOntology.owl#BusinessDomain"/>
-        <belongsToPrototype rdf:resource="http://www.scasefp7.eu/wsOntology.owl#deleteAccount"/>
-        <isPrototype rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean"
-        >false</isPrototype>
-      </operation>
-    </hasRealOperations>
-    <hasRealOperations>
       <operation rdf:about="http://www.scasefp7.eu/wsOntology.owl#wsUnloadAccountBalance">
         <isPrototype rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean"
         >false</isPrototype>
@@ -13426,6 +14021,16 @@
         >wsUnloadAccountBalance</hasName>
         <hasServiceDomain rdf:resource="http://www.scasefp7.eu/wsOntology.owl#BusinessDomain"/>
         <belongsToPrototype rdf:resource="http://www.scasefp7.eu/wsOntology.owl#deleteAccount"/>
+      </operation>
+    </hasRealOperations>
+    <hasRealOperations>
+      <operation rdf:about="http://www.scasefp7.eu/wsOntology.owl#wsDeleteBillingRecord">
+        <hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+        >wsDeleteBillingRecord</hasName>
+        <hasServiceDomain rdf:resource="http://www.scasefp7.eu/wsOntology.owl#BusinessDomain"/>
+        <belongsToPrototype rdf:resource="http://www.scasefp7.eu/wsOntology.owl#deleteAccount"/>
+        <isPrototype rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean"
+        >false</isPrototype>
       </operation>
     </hasRealOperations>
     <hasOutput rdf:resource="http://www.scasefp7.eu/wsOntology.owl#userID"/>
@@ -14622,9 +15227,9 @@
     <hasInput rdf:resource="http://www.scasefp7.eu/wsOntology.owl#cardType"/>
     <hasOutput rdf:resource="http://www.scasefp7.eu/wsOntology.owl#soapAniAccount"/>
     <hasInput rdf:resource="http://www.scasefp7.eu/wsOntology.owl#firstName"/>
-    <hasInput rdf:resource="http://www.scasefp7.eu/wsOntology.owl#description"/>
-    <hasInput rdf:resource="http://www.scasefp7.eu/wsOntology.owl#userID"/>
     <hasInput rdf:resource="http://www.scasefp7.eu/wsOntology.owl#notes"/>
+    <hasInput rdf:resource="http://www.scasefp7.eu/wsOntology.owl#userID"/>
+    <hasInput rdf:resource="http://www.scasefp7.eu/wsOntology.owl#description"/>
     <hasOutput rdf:resource="http://www.scasefp7.eu/wsOntology.owl#userID"/>
     <hasInput rdf:resource="http://www.scasefp7.eu/wsOntology.owl#currency"/>
     <hasInput rdf:resource="http://www.scasefp7.eu/wsOntology.owl#cardID"/>
@@ -14721,13 +15326,13 @@
       </operation>
     </hasRealOperations>
     <hasRealOperations>
-      <operation rdf:about="http://www.scasefp7.eu/wsOntology.owl#htmlSearchPhone">
-        <belongsToPrototype rdf:resource="http://www.scasefp7.eu/wsOntology.owl#lookupPhone"/>
-        <hasServiceDomain rdf:resource="http://www.scasefp7.eu/wsOntology.owl#CommunicationDomain"/>
+      <operation rdf:about="http://www.scasefp7.eu/wsOntology.owl#lookupCompany">
         <isPrototype rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean"
         >false</isPrototype>
+        <hasServiceDomain rdf:resource="http://www.scasefp7.eu/wsOntology.owl#CommunicationDomain"/>
         <hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
-        >htmlSearchPhone</hasName>
+        >lookupCompany</hasName>
+        <belongsToPrototype rdf:resource="http://www.scasefp7.eu/wsOntology.owl#lookupPhone"/>
       </operation>
     </hasRealOperations>
     <hasRealOperations>
@@ -14744,13 +15349,13 @@
     <isPrototype rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean"
     >true</isPrototype>
     <hasRealOperations>
-      <operation rdf:about="http://www.scasefp7.eu/wsOntology.owl#lookupCompany">
+      <operation rdf:about="http://www.scasefp7.eu/wsOntology.owl#htmlSearchPhone">
+        <belongsToPrototype rdf:resource="http://www.scasefp7.eu/wsOntology.owl#lookupPhone"/>
+        <hasServiceDomain rdf:resource="http://www.scasefp7.eu/wsOntology.owl#CommunicationDomain"/>
         <isPrototype rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean"
         >false</isPrototype>
-        <hasServiceDomain rdf:resource="http://www.scasefp7.eu/wsOntology.owl#CommunicationDomain"/>
         <hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
-        >lookupCompany</hasName>
-        <belongsToPrototype rdf:resource="http://www.scasefp7.eu/wsOntology.owl#lookupPhone"/>
+        >htmlSearchPhone</hasName>
       </operation>
     </hasRealOperations>
     <hasServiceDomain rdf:resource="http://www.scasefp7.eu/wsOntology.owl#CommunicationDomain"/>
@@ -15873,8 +16478,8 @@
             <hasType rdf:resource="http://www.scasefp7.eu/wsOntology.owl#address"/>
             <hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
             >getAddressPlusWithDPVResult</hasName>
-            <hasType rdf:resource="http://www.scasefp7.eu/wsOntology.owl#country"/>
             <hasType rdf:resource="http://www.scasefp7.eu/wsOntology.owl#code"/>
+            <hasType rdf:resource="http://www.scasefp7.eu/wsOntology.owl#country"/>
             <hasType rdf:resource="http://www.scasefp7.eu/wsOntology.owl#city"/>
             <hasType rdf:resource="http://www.scasefp7.eu/wsOntology.owl#description"/>
             <hasType rdf:resource="http://www.scasefp7.eu/wsOntology.owl#longitude"/>
@@ -15951,9 +16556,9 @@
       </operation>
     </hasRealOperations>
     <hasOutput rdf:resource="http://www.scasefp7.eu/wsOntology.owl#longitude"/>
-    <hasInput rdf:resource="http://www.scasefp7.eu/wsOntology.owl#zipCode"/>
-    <hasInput rdf:resource="http://www.scasefp7.eu/wsOntology.owl#coordinates"/>
     <hasInput rdf:resource="http://www.scasefp7.eu/wsOntology.owl#state"/>
+    <hasInput rdf:resource="http://www.scasefp7.eu/wsOntology.owl#coordinates"/>
+    <hasInput rdf:resource="http://www.scasefp7.eu/wsOntology.owl#zipCode"/>
     <hasOutput rdf:resource="http://www.scasefp7.eu/wsOntology.owl#state"/>
     <hasInput rdf:resource="http://www.scasefp7.eu/wsOntology.owl#city"/>
     <hasInput rdf:resource="http://www.scasefp7.eu/wsOntology.owl#licenseKey"/>
@@ -19161,8 +19766,8 @@
         <isPrototype rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean"
         >true</isPrototype>
         <hasInput rdf:resource="http://www.scasefp7.eu/wsOntology.owl#timeTarget"/>
-        <hasInput rdf:resource="http://www.scasefp7.eu/wsOntology.owl#username"/>
         <hasInput rdf:resource="http://www.scasefp7.eu/wsOntology.owl#duration"/>
+        <hasInput rdf:resource="http://www.scasefp7.eu/wsOntology.owl#username"/>
         <hasOutput rdf:resource="http://www.scasefp7.eu/wsOntology.owl#username"/>
       </operation>
     </belongsToPrototype>
@@ -20044,57 +20649,6 @@
     >numberconversion.wso.WSDL</belongsToURL>
     <isPrototype rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean"
     >false</isPrototype>
-  </operation>
-  <operation rdf:about="http://www.scasefp7.eu/wsOntology.owl#getBooks">
-    <hasServiceDomain rdf:resource="http://www.scasefp7.eu/wsOntology.owl#BusinessDomain"/>
-    <hasOutput rdf:resource="http://www.scasefp7.eu/wsOntology.owl#title"/>
-    <hasRealOperations>
-      <operation rdf:about="http://www.scasefp7.eu/wsOntology.owl#getBook">
-        <hasServiceDomain rdf:resource="http://www.scasefp7.eu/wsOntology.owl#BusinessDomain"/>
-        <hasInput rdf:resource="http://www.scasefp7.eu/wsOntology.owl#isbn"/>
-        <isPrototype rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean"
-        >false</isPrototype>
-        <hasOutput>
-          <Author rdf:about="http://www.scasefp7.eu/wsOntology.owl#author">
-            <hasType rdf:resource="http://www.scasefp7.eu/wsOntology.owl#string"/>
-            <isArray rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean"
-            >false</isArray>
-            <hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
-            >author</hasName>
-          </Author>
-        </hasOutput>
-        <hasOutput rdf:resource="http://www.scasefp7.eu/wsOntology.owl#publisher"/>
-        <belongsToPrototype rdf:resource="http://www.scasefp7.eu/wsOntology.owl#getBooks"/>
-        <hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
-        >getBook</hasName>
-      </operation>
-    </hasRealOperations>
-    <hasOutput rdf:resource="http://www.scasefp7.eu/wsOntology.owl#authors"/>
-    <hasPreferredUIName rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
-    >get Book details</hasPreferredUIName>
-    <hasOutput>
-      <Concept rdf:about="http://www.scasefp7.eu/wsOntology.owl#date_45">
-        <hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
-        >date</hasName>
-        <isArray rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean"
-        >false</isArray>
-        <hasType rdf:resource="http://www.scasefp7.eu/wsOntology.owl#string"/>
-      </Concept>
-    </hasOutput>
-    <hasOutput rdf:resource="http://www.scasefp7.eu/wsOntology.owl#publisher"/>
-    <hasOutput>
-      <Concept rdf:about="http://www.scasefp7.eu/wsOntology.owl#bookID">
-        <hasType rdf:resource="http://www.scasefp7.eu/wsOntology.owl#string"/>
-        <hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
-        >bookID</hasName>
-      </Concept>
-    </hasOutput>
-    <hasInput rdf:resource="http://www.scasefp7.eu/wsOntology.owl#BarcodeDigits"/>
-    <hasInput rdf:resource="http://www.scasefp7.eu/wsOntology.owl#isbn"/>
-    <isPrototype rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean"
-    >true</isPrototype>
-    <hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
-    >getBooks</hasName>
   </operation>
   <operation rdf:about="http://www.scasefp7.eu/wsOntology.owl#numberToWords">
     <isPrototype rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean"

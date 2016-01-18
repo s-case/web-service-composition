@@ -1,5 +1,6 @@
 package eu.scasefp7.eclipse.servicecomposition.handlers;
 
+
 import eu.scasefp7.eclipse.servicecomposition.importer.Importer.Operation;
 import eu.scasefp7.eclipse.servicecomposition.importer.JungXMIImporter.Connector;
 import eu.scasefp7.eclipse.servicecomposition.repository.RepositoryClient;
@@ -11,6 +12,10 @@ import eu.scasefp7.eclipse.servicecomposition.views.MyConnection;
 import eu.scasefp7.eclipse.servicecomposition.views.MyNode;
 import eu.scasefp7.eclipse.servicecomposition.views.ServiceCompositionView;
 
+import java.io.BufferedReader;
+
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -28,15 +33,15 @@ import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jface.dialogs.MessageDialog;
-import org.eclipse.swt.custom.BusyIndicator;
 import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.IViewPart;
 import org.eclipse.ui.IViewReference;
 import org.eclipse.ui.IWorkbenchPage;
-import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.ide.IDE;
+
 
 import edu.uci.ics.jung.graph.Graph;
 
@@ -54,22 +59,29 @@ public class ImportHandler extends AbstractHandler {
 			return null;
 
 		try {
-
+			final Shell shell = new Shell();
 			final Display disp = Display.getCurrent();
 			// Runnable myRunnable = new Runnable() {
 			Job ImportSBD = new Job("Import StoryBoard Creator file") {
 				@Override
 				protected IStatus run(IProgressMonitor monitor) {
-					monitor.beginTask("Transforming storyboard creator diagram to workflow of web services...", IProgressMonitor.UNKNOWN);
+					monitor.beginTask("Transforming storyboard creator diagram to workflow of web services...",
+							IProgressMonitor.UNKNOWN);
 
 					try {
 						graph = null;
 						File file = (File) selections[0];
-						RepositoryClient repo = new RepositoryClient();
-						String path = repo.downloadOntology("WS", disp);
+						// check if ontology file exists in .metadata plug-in's
+						// folder
+						ontologyCheck(shell, disp);
 						Algorithm.init();
-						final ArrayList<Operation> operations = Algorithm.importServices(
-								ResourcesPlugin.getWorkspace().getRoot().getLocation().toString() + "/" + "WS.owl");
+						final ArrayList<Operation> operations = Algorithm
+								.importServices(ResourcesPlugin.getWorkspace().getRoot().getLocation().toString()
+										+ "/.metadata/.plugins/eu.scasefp7.servicecomposition/ontology/WS.owl");
+						// final ArrayList<Operation> operations =
+						// Algorithm.importServices(
+						// ResourcesPlugin.getWorkspace().getRoot().getLocation().toString()
+						// + "/" + "WS.owl");
 						// final ArrayList<Operation> operations = Algorithm
 						// .importServices("D:/web-service-composition-Maven-plugin/web-service-composition/eu.scasefp7.eclipse.serviceComposition/data/WS.owl");
 						// final ArrayList<Operation> operations =
@@ -86,10 +98,7 @@ public class ImportHandler extends AbstractHandler {
 							report.updateWeight();
 							System.out.println(report.toString());
 						}
-						
-						
-					
-						
+
 						// If the action was replaced with an operation remove
 						// any
 						// properties left from initial xmi.
@@ -109,42 +118,44 @@ public class ImportHandler extends AbstractHandler {
 
 							}
 						}
-						
+
 						disp.syncExec(new Runnable() {
 							@Override
 							public void run() {
-								
-								
+
 								try {
-									PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage().showView(ServiceCompositionView.ID);
-									ServiceCompositionView view = (ServiceCompositionView) getView(ServiceCompositionView.ID);
+									PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage()
+											.showView(ServiceCompositionView.ID);
+									ServiceCompositionView view = (ServiceCompositionView) getView(
+											ServiceCompositionView.ID);
 									File file = (File) selections[0];
 									existingProject = file.getProject();
 									if (!existingProject.exists()) {
 									} else {
 										view.setScaseProject(existingProject);
 									}
-									final IFile inputFile = ResourcesPlugin.getWorkspace().getRoot().getFileForLocation(
-											Path.fromOSString(ResourcesPlugin.getWorkspace().getRoot().getLocation().toString()
-													+ file.getFullPath().toOSString()));
+									final IFile inputFile = ResourcesPlugin.getWorkspace().getRoot()
+											.getFileForLocation(Path.fromOSString(
+													ResourcesPlugin.getWorkspace().getRoot().getLocation().toString()
+															+ file.getFullPath().toOSString()));
 									if (inputFile != null) {
-										IWorkbenchPage page = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage();
-										
-											IEditorPart openEditor = IDE.openEditor(page, inputFile);
-										
+										IWorkbenchPage page = PlatformUI.getWorkbench().getActiveWorkbenchWindow()
+												.getActivePage();
+
+										IEditorPart openEditor = IDE.openEditor(page, inputFile);
+
 									}
-									
+
 									view.setJungGraph(graph);
 									view.addGraphInZest(graph);
 									view.updateRightComposite(graph);
 									view.setFocus();
-									
-									} catch (Exception e) {
-										// TODO Auto-generated catch block
-										e.printStackTrace();
-									}
-								
-								
+
+								} catch (Exception e) {
+									// TODO Auto-generated catch block
+									e.printStackTrace();
+								}
+
 							}
 						});
 						// Check if there are still unreplaced actions in the
@@ -168,7 +179,6 @@ public class ImportHandler extends AbstractHandler {
 								}
 							}
 						}
-						
 
 						monitor.done();
 						return Status.OK_STATUS;
@@ -176,7 +186,7 @@ public class ImportHandler extends AbstractHandler {
 						ex.printStackTrace();
 						return Status.CANCEL_STATUS;
 
-					}finally{
+					} finally {
 						monitor.done();
 					}
 				}
@@ -190,7 +200,7 @@ public class ImportHandler extends AbstractHandler {
 			e.printStackTrace();
 		}
 		return null;
-		
+
 	}
 
 	public List<MyNode> createGraphNodes(Graph<OwlService, Connector> graph) {
@@ -249,5 +259,42 @@ public class ImportHandler extends AbstractHandler {
 			}
 		}
 		return null;
+	}
+
+	public static void ontologyCheck(Shell shell, Display disp) throws IOException{
+		RepositoryClient repo = new RepositoryClient();
+		repo.copyOntologyToWorkspace();	
+		
+		// check if a newer ontology version exists
+
+		String serverVersion = repo.getLatestSubmissionId();
+		BufferedReader reader = new BufferedReader(
+				new FileReader(ResourcesPlugin.getWorkspace().getRoot().getLocation().toString()
+						+ "/.metadata/.plugins/eu.scasefp7.servicecomposition/ontology/version.txt"));
+		String localVersion = reader.readLine().replaceAll("\\D+", "");
+
+		if (Integer.parseInt(serverVersion) > Integer.parseInt(localVersion)) {
+			// ask user if he would like to download the new
+			// version
+
+			disp.syncExec(new Runnable() {
+				public void run() {
+					boolean answer = MessageDialog.openConfirm(shell,
+							"A newer version of the ontology exists on server",
+							"A newer version of the web services ontology exists on server. Would you like to download it?");
+
+					if (answer) {
+						// OK Button selected
+						try {
+							String path = repo.downloadOntology("WS", disp);
+						} catch (Exception e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+					}
+				}
+			});
+
+		}
 	}
 }
