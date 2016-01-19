@@ -153,20 +153,20 @@ public class RepositoryClient {
 					.returnContent().asStream();
 
 			OutputStream outputStream = null;
-			//write the version file
+			// write the version file
 			File versionFile = new File(path + "/version.txt");
 			if (!versionFile.exists()) {
 				versionFile.getParentFile().mkdirs();
-			}else{
+			} else {
 				versionFile.delete();
 			}
 			versionFile.createNewFile();
 			RandomAccessFile f = new RandomAccessFile(versionFile, "rw");
 			f.seek(0); // to the beginning
-			String version = "submissionId="+latestSubmission;
+			String version = "submissionId=" + latestSubmission;
 			f.write(version.getBytes());
 			f.close();
-			//write the ontology file
+			// write the ontology file
 			File file = new File(path + "/" + text + ".owl");
 			if (!file.exists()) {
 				file.getParentFile().mkdirs();
@@ -258,26 +258,31 @@ public class RepositoryClient {
 			return "";
 		}
 	}
-	
+
 	/**
-	 * Copy the WS.owl and the version.txt files from the plug -in to the workspace /.metadata/.plugins/eu.scasefp7.servicecomposition/ontology folder if they don't already exist
+	 * Copy the WS.owl and the version.txt files from the plug -in to the
+	 * workspace /.metadata/.plugins/eu.scasefp7.servicecomposition/ontology
+	 * folder if they don't already exist
 	 */
-	public void copyOntologyToWorkspace(){
-		//copy the ontology file
+	public void copyOntologyToWorkspace() {
+		// copy the ontology file
 		URL owlFileurl;
+		InputStream inputStream = null;
+		OutputStream outputStream = null;
+		String path = ResourcesPlugin.getWorkspace().getRoot().getLocation().toString()
+				+ "/.metadata/.plugins/eu.scasefp7.servicecomposition/ontology";
 		try {
-			String path = ResourcesPlugin.getWorkspace().getRoot().getLocation().toString()
-					+ "/.metadata/.plugins/eu.scasefp7.servicecomposition/ontology";
+
 			File file = new File(path + "/WS.owl");
 			if (!file.exists()) {
 				file.getParentFile().mkdirs();
 				file.createNewFile();
-				
+
 				owlFileurl = new URL("platform:/plugin/" + Activator.PLUGIN_ID + "/ontology/WS.owl");
-				InputStream inputStream = owlFileurl.openConnection().getInputStream();
-				
+				inputStream = owlFileurl.openConnection().getInputStream();
+
 				System.out.println(file.getAbsolutePath());
-				OutputStream outputStream = new FileOutputStream(file);
+				outputStream = new FileOutputStream(file);
 
 				int read = 0;
 				byte[] bytes = new byte[1024];
@@ -285,20 +290,41 @@ public class RepositoryClient {
 				while ((read = inputStream.read(bytes)) != -1) {
 					outputStream.write(bytes, 0, read);
 				}
-				inputStream.close();
-				outputStream.close();
+//				inputStream.close();
+//				outputStream.close();
 			}
-			
-			
+		} catch (IOException e) {
+			e.printStackTrace();
+		} finally {
+			if (inputStream != null) {
+				try {
+					inputStream.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+			if (outputStream != null) {
+				try {
+					
+					outputStream.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+
+			}
+		}
+
+		InputStream inputStream2 = null;
+		OutputStream outputStream2 = null;
+		try {
 			File versionfile = new File(path + "/version.txt");
 			if (!versionfile.exists()) {
-				URL versionFileurl = new URL(
-						"platform:/plugin/" + Activator.PLUGIN_ID + "/ontology/version.txt");
-				InputStream inputStream2 = versionFileurl.openConnection().getInputStream();
+				URL versionFileurl = new URL("platform:/plugin/" + Activator.PLUGIN_ID + "/ontology/version.txt");
+				inputStream2 = versionFileurl.openConnection().getInputStream();
 				versionfile.createNewFile();
-				
+
 				System.out.println(versionfile.getAbsolutePath());
-				OutputStream outputStream2 = new FileOutputStream(versionfile);
+				outputStream2 = new FileOutputStream(versionfile);
 
 				int read2 = 0;
 				byte[] bytes2 = new byte[1024];
@@ -306,16 +332,31 @@ public class RepositoryClient {
 				while ((read2 = inputStream2.read(bytes2)) != -1) {
 					outputStream2.write(bytes2, 0, read2);
 				}
-				inputStream2.close();
-				outputStream2.close();
+//				inputStream2.close();
+//				outputStream2.close();
 			}
-			
-			
+
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
+		} finally {
+			if (inputStream2 != null) {
+				try {
+					inputStream2.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+			if (outputStream2 != null) {
+				try {
+					
+					outputStream2.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+
+			}
 		}
-		
+
 	}
 
 }
