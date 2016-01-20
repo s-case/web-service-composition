@@ -1,6 +1,7 @@
 package eu.scasefp7.eclipse.servicecomposition.repository;
 
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
@@ -358,17 +359,31 @@ public class WSOntology {
 	}
 
 	public void saveToOWL() {
+		OutputStream out=null;
 		try {
 			System.out.println("saveToOWL is called..");
-			System.out.println(ResourcesPlugin.getWorkspace().getRoot().getLocation().toString() + "/WS.owl");
-			OutputStream out = new FileOutputStream(
-					ResourcesPlugin.getWorkspace().getRoot().getLocation().toString() + "/WS.owl");
+			System.out.println(ResourcesPlugin.getWorkspace().getRoot().getLocation().toString()
+					+ "/.metadata/.plugins/eu.scasefp7.servicecomposition/ontology" + "/WS.owl");
+			out = new FileOutputStream(
+					ResourcesPlugin.getWorkspace().getRoot().getLocation().toString()
+					+ "/.metadata/.plugins/eu.scasefp7.servicecomposition/ontology" + "/WS.owl");
 			if (out != null && !out.toString().isEmpty()) {
 				ontologyModel.write(out, "RDF/XML-ABBREV"); // readable rdf/xml
 			}
-			out.close();
-		} catch (Exception ex) {
-			ex.printStackTrace();
+			//out.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		} finally {
+			
+			if (out != null) {
+				try {
+					
+					out.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+
+			}
 		}
 	}
 }

@@ -1,6 +1,5 @@
 package eu.scasefp7.eclipse.servicecomposition.views;
 
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -315,8 +314,8 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 
 		createNewWorkflow();
 
-//		RepositoryClient repo = new RepositoryClient();
-//		String path = repo.downloadOntology("WS");
+		// RepositoryClient repo = new RepositoryClient();
+		// String path = repo.downloadOntology("WS");
 
 		final Graph graph = viewer.getGraphControl();
 		graph.addSelectionListener(new SelectionAdapter() {
@@ -971,8 +970,6 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 
 		} else {
 
-			
-			
 			final Shell shell = new Shell();
 			ILabelProvider labelProvider = new LabelProvider() {
 
@@ -985,7 +982,6 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 			};
 			final ElementListSelectionDialog dialog = new ElementListSelectionDialog(shell, labelProvider);
 
-			
 			AddNewOperationJob = new Job("Add new operation") {
 				@Override
 				protected IStatus run(IProgressMonitor monitor) {
@@ -998,8 +994,9 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 						// Algorithm.importServices(
 						// "D:/web-service-composition-Maven-plugin/web-service-composition/eu.scasefp7.eclipse.serviceComposition/data/WS.owl",
 						// "data/scripts/");
-						final ArrayList<Operation> operations = Algorithm.importServices(ResourcesPlugin.getWorkspace().getRoot().getLocation().toString()
-								+ "/.metadata/.plugins/eu.scasefp7.servicecomposition/ontology/WS.owl");
+						final ArrayList<Operation> operations = Algorithm
+								.importServices(ResourcesPlugin.getWorkspace().getRoot().getLocation().toString()
+										+ "/.metadata/.plugins/eu.scasefp7.servicecomposition/ontology/WS.owl");
 						ArrayList<Operation> nonPrototypeOperations = new ArrayList<Operation>();
 						// final ArrayList<Operation> operations = Algorithm
 						// .importServices("data/WS.owl", "data/scripts/");
@@ -1030,7 +1027,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 					} catch (Exception ex) {
 						ex.printStackTrace();
 						return Status.CANCEL_STATUS;
-					}finally{
+					} finally {
 						monitor.done();
 					}
 
@@ -2071,7 +2068,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 	private void fillToolBar() {
 		ZoomContributionViewItem toolbarZoomContributionViewItem = new ZoomContributionViewItem(this);
 		IActionBars bars = getViewSite().getActionBars();
-		final Display disp= Display.getCurrent();
+		final Display disp = Display.getCurrent();
 		bars.getMenuManager().add(toolbarZoomContributionViewItem);
 		runWorkflowAction = new Action("Run workflow") {
 			public void run() {
@@ -2102,23 +2099,22 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 			}
 		};
 		cancelWorkflowAction.setImageDescriptor(getImageDescriptor("icons/stop.png"));
-		
-		
+
 		Action DownloadOntologyAction = new Action("Update ontology") {
 			public void run() {
 				Job downloadOntologyJob = new Job("Update ontology") {
 					@Override
 					protected IStatus run(IProgressMonitor monitor) {
 						monitor.beginTask("Downloading ontology ...", IProgressMonitor.UNKNOWN);
-				try {
-					RepositoryClient repo = new RepositoryClient();
-					String path = repo.downloadOntology("WS", disp);
-					return Status.OK_STATUS;
-				} catch (Exception e) {
-					// TODO Auto-generated catch block
-					// e.printStackTrace();
-					return Status.CANCEL_STATUS;
-				}
+						try {
+							RepositoryClient repo = new RepositoryClient();
+							String path = repo.downloadOntology("WS", disp);
+							return Status.OK_STATUS;
+						} catch (Exception e) {
+							// TODO Auto-generated catch block
+							// e.printStackTrace();
+							return Status.CANCEL_STATUS;
+						}
 					}
 				};
 
@@ -2127,7 +2123,6 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 			}
 		};
 		DownloadOntologyAction.setImageDescriptor(getImageDescriptor("icons/downloadOnt.jpg"));
-
 
 		newWorkflowAction = new Action("Create a new workflow") {
 			public void run() {
@@ -2559,7 +2554,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 		for (int i = 0; i < vertices.length; i++) {
 			final OwlService node = (OwlService) vertices[i];
 
-			if (node.getType().contains("Action")&& node.getOperation().getDomain()!=null) {
+			if (node.getType().contains("Action") && node.getOperation().getDomain() != null) {
 				if (node.getOperation().getDomain().getSecurityScheme() != null) {
 					if (node.getOperation().getDomain().getSecurityScheme().equalsIgnoreCase("Basic Authentication")) {
 						showBasicAuthenticationParams();
@@ -3365,7 +3360,8 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 											destGraph.setSelection(new GraphItem[] { graphNode });
 											graphNode.highlight();
 										}
-									} else if (((OwlService) ((MyNode) graphNode.getData()).getObject()).equals(currentService)) {
+									} else if (((OwlService) ((MyNode) graphNode.getData()).getObject())
+											.equals(currentService)) {
 										destGraph.setSelection(new GraphItem[] { graphNode });
 										graphNode.highlight();
 									}
@@ -3377,19 +3373,18 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 						// call the service
 						if (currentService.getOperation() != null) {
 							try {
-								if (currentService.getOperation().getDomain() == null){
+								if (currentService.getOperation().getDomain() == null) {
 									disp.syncExec(new Runnable() {
 										@Override
 										public void run() {
 											MessageDialog.openInformation(disp.getActiveShell(), "Error occured",
 													"Action \"" + currentService.getOperation().getName()
-													+ "\" was not replaced. Please replace it manually with one of the available operations or modify and re-import the storyboard diagram before executing the workflow.");
+															+ "\" was not replaced. Please replace it manually with one of the available operations or modify and re-import the storyboard diagram before executing the workflow.");
 										}
 									});
 									throw new Exception("Service " + currentService.getOperation().getName()
 											+ " is missing its domain");
-								}
-								else if (currentService.getOperation().getType().equalsIgnoreCase("SOAP"))
+								} else if (currentService.getOperation().getType().equalsIgnoreCase("SOAP"))
 									// else if
 									// (!currentService.getOperation().getDomain().isLocal())
 									callWSDL.callOperation(currentService.getOperation());
@@ -3539,7 +3534,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 					ex.printStackTrace();
 					monitor.done();
 					return Status.CANCEL_STATUS;
-				}finally{
+				} finally {
 					monitor.done();
 				}
 			}
@@ -3828,13 +3823,13 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 				break;
 			}
 		double compareMode = 0;
-		boolean equality= false;
+		boolean equality = false;
 		if (logicResult) {
 			int index;
 			if ((index = sourceText.indexOf("==")) != -1) {
 				conditionText = sourceText.substring(index + 2);
 				sourceText = sourceText.substring(0, index);
-				equality=true;
+				equality = true;
 			} else if ((index = sourceText.indexOf("!=")) != -1) {
 				conditionText = sourceText.substring(index + 2);
 				sourceText = sourceText.substring(0, index);
@@ -3842,7 +3837,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 			} else if ((index = sourceText.indexOf("=")) != -1) {
 				conditionText = sourceText.substring(index + 1);
 				sourceText = sourceText.substring(0, index);
-				equality=true;
+				equality = true;
 			} else if ((index = sourceText.indexOf("<")) != -1) {
 				conditionText = sourceText.substring(index + 1);
 				sourceText = sourceText.substring(0, index);
@@ -4170,93 +4165,86 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 			graphNode.dispose();
 		}
 	}
-	
-	
+
 	public class MyTitleAreaDialog extends TitleAreaDialog {
 
-		  private Text txtProjectName;
-		  private String projectName;
+		private Text txtProjectName;
+		private String projectName;
 
-		  public MyTitleAreaDialog(Shell parentShell) {
-		    super(parentShell);
-		  }
+		public MyTitleAreaDialog(Shell parentShell) {
+			super(parentShell);
+		}
 
-		  @Override
-		  public void create() {
-		    super.create();
-		    setTitle("Name of the composite web service");
-		    setMessage("Please enter a name for the new web service project", IMessageProvider.INFORMATION);
-		  }
+		@Override
+		public void create() {
+			super.create();
+			setTitle("Name of the composite web service");
+			setMessage("Please enter a name for the new web service project", IMessageProvider.INFORMATION);
+		}
 
-		  @Override
-		  protected Control createDialogArea(Composite parent) {
-		    Composite area = (Composite) super.createDialogArea(parent);
-		    Composite container = new Composite(area, SWT.NONE);
-		    container.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
-		    GridLayout layout = new GridLayout(2, false);
-		    container.setLayout(layout);
+		@Override
+		protected Control createDialogArea(Composite parent) {
+			Composite area = (Composite) super.createDialogArea(parent);
+			Composite container = new Composite(area, SWT.NONE);
+			container.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+			GridLayout layout = new GridLayout(2, false);
+			container.setLayout(layout);
 
-		    createProjectName(container);
-		   
+			createProjectName(container);
 
-		    return area;
-		  }
-		  
-		  @Override
-		  protected void configureShell(Shell newShell)
-		  {
-		    super.configureShell(newShell);
+			return area;
+		}
 
-		    newShell.setText("Web service project name");
-		  }
+		@Override
+		protected void configureShell(Shell newShell) {
+			super.configureShell(newShell);
 
-		  private void createProjectName(Composite container) {
-		    Label lbtFirstName = new Label(container, SWT.NONE);
-		    lbtFirstName.setText("Project Name");
+			newShell.setText("Web service project name");
+		}
 
-		    GridData dataFirstName = new GridData();
-		    dataFirstName.grabExcessHorizontalSpace = true;
-		    dataFirstName.horizontalAlignment = GridData.FILL;
+		private void createProjectName(Composite container) {
+			Label lbtFirstName = new Label(container, SWT.NONE);
+			lbtFirstName.setText("Project Name");
 
-		    txtProjectName = new Text(container, SWT.BORDER);
-		    txtProjectName.setLayoutData(dataFirstName);
-		  }
-		  
+			GridData dataFirstName = new GridData();
+			dataFirstName.grabExcessHorizontalSpace = true;
+			dataFirstName.horizontalAlignment = GridData.FILL;
 
-		  private void setDialogLocation()
-			{
-				Rectangle monitorArea = getShell().getDisplay().getPrimaryMonitor().getBounds();
-				Rectangle shellArea = getShell().getBounds();
-				int x = monitorArea.x + (monitorArea.width - shellArea.width)/2;
-				int y = monitorArea.y + (monitorArea.height - shellArea.height)/2;
-				getShell().setLocation(x,y);
-			}
+			txtProjectName = new Text(container, SWT.BORDER);
+			txtProjectName.setLayoutData(dataFirstName);
+		}
 
-		  @Override
-		  protected boolean isResizable() {
-		    return true;
-		  }
+		private void setDialogLocation() {
+			Rectangle monitorArea = getShell().getDisplay().getPrimaryMonitor().getBounds();
+			Rectangle shellArea = getShell().getBounds();
+			int x = monitorArea.x + (monitorArea.width - shellArea.width) / 2;
+			int y = monitorArea.y + (monitorArea.height - shellArea.height) / 2;
+			getShell().setLocation(x, y);
+		}
 
-		  // save content of the Text field because it gets disposed
-		  // as soon as the Dialog closes
-		  private void saveInput() {
-			  projectName = txtProjectName.getText();
-		    
-		  }
+		@Override
+		protected boolean isResizable() {
+			return true;
+		}
 
-		  @Override
-		  protected void okPressed() {
-		    saveInput();
-		    super.okPressed();
-		  }
+		// save content of the Text field because it gets disposed
+		// as soon as the Dialog closes
+		private void saveInput() {
+			projectName = txtProjectName.getText();
 
-		  public String getProjectName() {
-		    return projectName;
-		  }
+		}
 
-		} 
-	
-	
+		@Override
+		protected void okPressed() {
+			saveInput();
+			super.okPressed();
+		}
+
+		public String getProjectName() {
+			return projectName;
+		}
+
+	}
 
 	/**
 	 * <h1>generate</h1> Creates a RESTful web service of the workflow, in a
@@ -4273,29 +4261,28 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 		dialog.configureShell(shell);
 		dialog.setDialogLocation();
 		if (dialog.open() == Window.OK) {
-		  System.out.println(dialog.getProjectName());
-		  projectName=dialog.getProjectName().trim();
-		}else{
+			System.out.println(dialog.getProjectName());
+			projectName = dialog.getProjectName().trim();
+		} else {
 			return;
 		}
 
 		ArrayList<String> projectNames = new ArrayList<String>();
-		for (IProject project : ResourcesPlugin.getWorkspace().getRoot().getProjects()){
+		for (IProject project : ResourcesPlugin.getWorkspace().getRoot().getProjects()) {
 			projectNames.add(project.getName());
 		}
-		boolean nameExists= false;
+		boolean nameExists = false;
 		if ((projectName != null) && (projectName.trim().length() > 0)) {
 
-			
-			for (String name:projectNames){
-				if (name.trim().equalsIgnoreCase(projectName)){
-					nameExists= true;
+			for (String name : projectNames) {
+				if (name.trim().equalsIgnoreCase(projectName)) {
+					nameExists = true;
 				}
 			}
-			
+
 			IProgressMonitor monitor = new NullProgressMonitor();
 			IProject existingProject = ResourcesPlugin.getWorkspace().getRoot().getProject(projectName.trim());
-			if (existingProject.exists()|| nameExists) {
+			if (existingProject.exists() || nameExists) {
 				shell = new Shell();
 				boolean result = MessageDialog.openConfirm(shell, "Project already exists",
 						"A project with this name already exists. Would you like to replace it?");
@@ -4309,15 +4296,13 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 				}
 
 			}
-			
-			
+
 			createProject = new Job("Creating project..") {
 				@Override
 				protected IStatus run(IProgressMonitor monitor) {
-					monitor.beginTask("Creating the web service project of the workflow...",
-							IProgressMonitor.UNKNOWN);
-							// IProject project =
-							// ResourcesPlugin.getWorkspace().getRoot().getProject("TestProject");
+					monitor.beginTask("Creating the web service project of the workflow...", IProgressMonitor.UNKNOWN);
+					// IProject project =
+					// ResourcesPlugin.getWorkspace().getRoot().getProject("TestProject");
 
 					// if (!project.exists()) {
 					try {
@@ -4511,9 +4496,10 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 					}
 					return Status.OK_STATUS;
 
-				}};
-				createProject.setUser(true);
-				createProject.schedule();
+				}
+			};
+			createProject.setUser(true);
+			createProject.schedule();
 
 		} else {
 			final Display disp = Display.getCurrent();
@@ -4530,7 +4516,6 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 	}
 
 	public static IProject getWebDataModel(String projName) throws ExecutionException {
-		
 
 		IDataModel model = DataModelFactory.createDataModel(new WebFacetProjectCreationDataModelProvider());
 		model.setProperty(IFacetDataModelProperties.FACET_PROJECT_NAME, projName);
@@ -4539,7 +4524,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 				.getProperty(IFacetProjectCreationDataModelProperties.FACET_DM_MAP);
 		IDataModel webModel = (IDataModel) map.get(IModuleConstants.JST_WEB_MODULE);
 		webModel.setProperty(IJ2EEModuleFacetInstallDataModelProperties.FACET_VERSION_STR, "2.4");
-		
+
 		IStatus st = model.getDefaultOperation().execute(new NullProgressMonitor(), null);
 		return st.isOK() ? ResourcesPlugin.getWorkspace().getRoot().getProject(projName) : null;
 	}
@@ -4764,32 +4749,53 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 						uploadOnServer();
 					}
 					if (webServiceExistsOnServer()) {
-						
+
 						disp.syncExec(new Runnable() {
 							public void run() {
 								boolean answer = MessageDialog.openConfirm(shell, "Upload is complete!",
 										"The web service was uploaded successfully on server!\n"
 												+ "Base URI: http://109.231.126.106:8080/" + currentProject.getName()
 												+ "-0.0.1-SNAPSHOT/\n" + "Resource Path: rest/result/query\n\n"
-												+ "Would you like to update YouREST platform and MDE ontology?");
+												+ "Would you like to update YouREST platform?");
 
 								if (answer) {
 									// OK Button selected
 									try {
-										
-										//upload to WS ontology
-										//get application domain
-										//TODO it should not be hardcoded!!!!!!!!
-										String applicationDomainURI="http://www.scasefp7.eu/wsOntology.owl#BusinessDomain";
-										
-										
-										WSOntology ws=new WSOntology();
-										ws.createNewWSOperation(generator.getOperation().getHasName(), generator.getInputVariables(), generator.getUriParameters(), generator.getOutputVariables(), generator.getOperation().getBelongsToURL(),applicationDomainURI);
+
+										// upload to WS ontology
+										// get application domain
+										// TODO it should not be
+										// hardcoded!!!!!!!!
+										String applicationDomainURI = "http://www.scasefp7.eu/wsOntology.owl#BusinessDomain";
+
+										WSOntology ws = new WSOntology();
+										ws.createNewWSOperation(generator.getOperation().getHasName(),
+												generator.getInputVariables(), generator.getUriParameters(),
+												generator.getOutputVariables(),
+												generator.getOperation().getBelongsToURL(), applicationDomainURI);
 										ws.saveToOWL();
-										RepositoryClient cl=new RepositoryClient();
+										RepositoryClient cl = new RepositoryClient();
 										cl.uploadOntology();
-										
-										
+
+									} catch (Exception e) {
+										// TODO Auto-generated catch block
+										e.printStackTrace();
+									}
+
+								}
+							}
+						});
+
+						disp.syncExec(new Runnable() {
+							public void run() {
+								boolean answer = MessageDialog.openConfirm(shell, "Update Linked Ontology",
+										"Would you like to update Linked Ontology for the MDE plug-in with " + currentProject.getName()
+												+ " composite web service?");
+
+								if (answer) {
+									// OK Button selected
+									try {
+
 										ConnectToMDEOntology.writeToOntology(scaseProject, gGenerator.getOperation());
 									} catch (Exception e) {
 										// TODO Auto-generated catch block
@@ -4831,8 +4837,8 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 					disp.syncExec(new Runnable() {
 						@Override
 						public void run() {
-							MessageDialog.openInformation(disp.getActiveShell(), "Info",		
-								 scaseProject.getName()+" could not be uploaded.\nNo connection to the  web server.\nPlease contact the system's administrator!");
+							MessageDialog.openInformation(disp.getActiveShell(), "Info", scaseProject.getName()
+									+ " could not be uploaded.\nNo connection to the  web server.\nPlease contact the system's administrator!");
 						}
 					});
 					return Status.CANCEL_STATUS;
@@ -4911,9 +4917,9 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 		}
 		return exists;
 	}
-	
-	public void setScaseProject(IProject project){
-		scaseProject=project;
+
+	public void setScaseProject(IProject project) {
+		scaseProject = project;
 	}
 
 }

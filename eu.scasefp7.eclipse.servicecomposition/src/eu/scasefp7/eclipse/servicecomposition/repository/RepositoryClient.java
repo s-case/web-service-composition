@@ -135,38 +135,45 @@ public class RepositoryClient {
 	// }
 
 	public String downloadOntology(String text, Display disp) {
+
+		// FacesContext context = FacesContext.getCurrentInstance();
+
+		// String path = ((ServletContext) context.getExternalContext()
+		// .getContext()).getRealPath("/");
+		String latestSubmission = getLatestSubmissionId();
+
+		String path = ResourcesPlugin.getWorkspace().getRoot().getLocation().toString()
+				+ "/.metadata/.plugins/eu.scasefp7.servicecomposition/ontology";
+		String requestURL = "";
+		if (latestSubmission.equals(""))
+			requestURL = url + "/ontologies/" + text + "/download?apikey=" + apiKey;
+		else
+			requestURL = url + "/ontologies/WS/submissions/" + latestSubmission + "/download?apikey=" + apiKey;
+		InputStream inputStream = null;
+		OutputStream outputStream = null;
+		// write the version file
+		File versionFile = new File(path + "/version.txt");
+		if (!versionFile.exists()) {
+			versionFile.getParentFile().mkdirs();
+		} else {
+			versionFile.delete();
+		}
 		try {
-			// FacesContext context = FacesContext.getCurrentInstance();
-
-			// String path = ((ServletContext) context.getExternalContext()
-			// .getContext()).getRealPath("/");
-			String latestSubmission = getLatestSubmissionId();
-
-			String path = ResourcesPlugin.getWorkspace().getRoot().getLocation().toString()
-					+ "/.metadata/.plugins/eu.scasefp7.servicecomposition/ontology";
-			String requestURL = "";
-			if (latestSubmission.equals(""))
-				requestURL = url + "/ontologies/" + text + "/download?apikey=" + apiKey;
-			else
-				requestURL = url + "/ontologies/WS/submissions/" + latestSubmission + "/download?apikey=" + apiKey;
-			InputStream inputStream = Request.Get(requestURL).connectTimeout(30000).socketTimeout(30000).execute()
-					.returnContent().asStream();
-
-			OutputStream outputStream = null;
-			// write the version file
-			File versionFile = new File(path + "/version.txt");
-			if (!versionFile.exists()) {
-				versionFile.getParentFile().mkdirs();
-			} else {
-				versionFile.delete();
-			}
 			versionFile.createNewFile();
 			RandomAccessFile f = new RandomAccessFile(versionFile, "rw");
 			f.seek(0); // to the beginning
 			String version = "submissionId=" + latestSubmission;
 			f.write(version.getBytes());
 			f.close();
-			// write the ontology file
+		} catch (IOException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+		
+		// write the ontology file
+		try {
+			inputStream = Request.Get(requestURL).connectTimeout(30000).socketTimeout(30000).execute()
+					.returnContent().asStream();
 			File file = new File(path + "/" + text + ".owl");
 			if (!file.exists()) {
 				file.getParentFile().mkdirs();
@@ -181,8 +188,8 @@ public class RepositoryClient {
 			while ((read = inputStream.read(bytes)) != -1) {
 				outputStream.write(bytes, 0, read);
 			}
-			inputStream.close();
-			outputStream.close();
+//			inputStream.close();
+//			outputStream.close();
 
 			// sendGetRequest(url + "/ontologies/"+text+"/download?apikey=" +
 			// apiKey,"",text + ".owl");
@@ -200,7 +207,25 @@ public class RepositoryClient {
 				}
 			});
 			return "";
+		} finally {
+			if (inputStream != null) {
+				try {
+					inputStream.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+			if (outputStream != null) {
+				try {
+
+					outputStream.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+
+			}
 		}
+
 	}
 
 	public boolean uploadOntology() {
@@ -290,8 +315,8 @@ public class RepositoryClient {
 				while ((read = inputStream.read(bytes)) != -1) {
 					outputStream.write(bytes, 0, read);
 				}
-//				inputStream.close();
-//				outputStream.close();
+				// inputStream.close();
+				// outputStream.close();
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -305,7 +330,7 @@ public class RepositoryClient {
 			}
 			if (outputStream != null) {
 				try {
-					
+
 					outputStream.close();
 				} catch (IOException e) {
 					e.printStackTrace();
@@ -332,8 +357,8 @@ public class RepositoryClient {
 				while ((read2 = inputStream2.read(bytes2)) != -1) {
 					outputStream2.write(bytes2, 0, read2);
 				}
-//				inputStream2.close();
-//				outputStream2.close();
+				// inputStream2.close();
+				// outputStream2.close();
 			}
 
 		} catch (IOException e) {
@@ -348,7 +373,7 @@ public class RepositoryClient {
 			}
 			if (outputStream2 != null) {
 				try {
-					
+
 					outputStream2.close();
 				} catch (IOException e) {
 					e.printStackTrace();
