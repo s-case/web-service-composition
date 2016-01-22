@@ -41,29 +41,31 @@ public class RestfulCodeGenerator {
 				+ "@Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})\n" + TAB
 				+ "public Response generateResponse(";
 
-		
-
 		String inputList = "";
 		for (OwlService input : inputs) {
 
 			if (!inputList.isEmpty())
 				inputList += ", ";
 			if (input.getArgument().getType().equals("String")) {
-				inputList += "@QueryParam(\"" + input.getName().getContent().replaceAll("[0123456789]", "") + "\") " + input.getArgument().getType()
-						+ " " + input.getName().getContent().replaceAll("[0123456789]", "");
-			}else if(input.getArgument().getType().equals("int")){
-				inputList += "@QueryParam(\"" + input.getName().getContent().replaceAll("[0123456789]", "") + "\") Integer " + input.getName().getContent().replaceAll("[0123456789]", "");
+				inputList += "@QueryParam(\"" + input.getName().getContent().replaceAll("[0123456789]", "") + "\") "
+						+ input.getArgument().getType() + " "
+						+ input.getName().getContent().replaceAll("[0123456789]", "");
+			} else if (input.getArgument().getType().equals("int")) {
+				inputList += "@QueryParam(\"" + input.getName().getContent().replaceAll("[0123456789]", "")
+						+ "\") Integer " + input.getName().getContent().replaceAll("[0123456789]", "");
 			} else {
 				String type = input.getArgument().getType();
 				inputList += "@QueryParam(\"" + input.getName().getContent().replaceAll("[0123456789]", "") + "\") "
-						+ type.substring(0, 1).toUpperCase() + type.substring(1) + " " + input.getName().getContent().replaceAll("[0123456789]", "");
+						+ type.substring(0, 1).toUpperCase() + type.substring(1) + " "
+						+ input.getName().getContent().replaceAll("[0123456789]", "");
 			}
 
 		}
 		for (Argument param : uriParameters) {
 			if (!inputList.isEmpty())
 				inputList += ", ";
-			inputList += "@QueryParam(\"" + param.getName().getContent().replaceAll("[0123456789]", "") + "\") String " + param.getName().getContent().replaceAll("[0123456789]", "");
+			inputList += "@QueryParam(\"" + param.getName().getContent().replaceAll("[0123456789]", "") + "\") String "
+					+ param.getName().getContent().replaceAll("[0123456789]", "");
 		}
 		code += inputList;
 		code += ") throws Exception {\n";
@@ -175,7 +177,7 @@ public class RestfulCodeGenerator {
 
 	}
 
-	public static void writePom(String path, String projectName) {
+	public static void writePom(String path, String projectName, String hasSoap) {
 
 		try {
 			DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
@@ -383,54 +385,71 @@ public class RestfulCodeGenerator {
 			version4.appendChild(doc.createTextNode("1.3"));
 			dependency4.appendChild(version4);
 
-			 Element dependency5 = doc.createElement("dependency");
-			 dependencies.appendChild(dependency5);
-			
-			 Element groupId5 = doc.createElement("groupId");
-			 groupId5.appendChild(doc.createTextNode("com.google.code.gson"));
-			 dependency5.appendChild(groupId5);
-			
-			 Element artifactId5 = doc.createElement("artifactId");
-			 artifactId5.appendChild(doc.createTextNode("gson"));
-			 dependency5.appendChild(artifactId5);
-			
-			 Element version5 = doc.createElement("version");
-			 version5.appendChild(doc.createTextNode("2.3.1"));
-			 dependency5.appendChild(version5);
+			Element dependency5 = doc.createElement("dependency");
+			dependencies.appendChild(dependency5);
 
-			// Element dependency6 = doc.createElement("dependency");
-			// dependencies.appendChild(dependency6);
-			//
-			// Element groupId6 = doc.createElement("groupId");
-			// groupId6.appendChild(doc.createTextNode("org.apache.httpcomponents"));
-			// dependency6.appendChild(groupId6);
-			//
-			// Element artifactId6 = doc.createElement("artifactId");
-			// artifactId6.appendChild(doc.createTextNode("httpmime"));
-			// dependency6.appendChild(artifactId6);
-			//
-			// Element version6 = doc.createElement("version");
-			// version6.appendChild(doc.createTextNode("4.4.1"));
-			// dependency6.appendChild(version6);
+			Element groupId5 = doc.createElement("groupId");
+			groupId5.appendChild(doc.createTextNode("com.google.code.gson"));
+			dependency5.appendChild(groupId5);
 
-			Element dependency6 = doc.createElement("dependency");
-			dependencies.appendChild(dependency6);
+			Element artifactId5 = doc.createElement("artifactId");
+			artifactId5.appendChild(doc.createTextNode("gson"));
+			dependency5.appendChild(artifactId5);
 
-			Element groupId6 = doc.createElement("groupId");
-			groupId6.appendChild(doc.createTextNode("eu.scasefp7"));
-			dependency6.appendChild(groupId6);
+			Element version5 = doc.createElement("version");
+			version5.appendChild(doc.createTextNode("2.3.1"));
+			dependency5.appendChild(version5);
 
-			Element artifactId6 = doc.createElement("artifactId");
-			artifactId6.appendChild(doc.createTextNode("scase-wsparser"));
-			dependency6.appendChild(artifactId6);
+			if (hasSoap.equals("true")) {
+				Element dependency6 = doc.createElement("dependency");
+				dependencies.appendChild(dependency6);
 
-			Element version6 = doc.createElement("version");
-			version6.appendChild(doc.createTextNode("1.0.1-SNAPSHOT"));
-			dependency6.appendChild(version6);
+				Element groupId6 = doc.createElement("groupId");
+				groupId6.appendChild(doc.createTextNode("eu.scasefp7"));
+				dependency6.appendChild(groupId6);
 
-			Element classifier6 = doc.createElement("classifier");
-			classifier6.appendChild(doc.createTextNode("jar-with-dependencies"));
-			dependency6.appendChild(classifier6);
+				Element artifactId6 = doc.createElement("artifactId");
+				artifactId6.appendChild(doc.createTextNode("scase-wsparser"));
+				dependency6.appendChild(artifactId6);
+
+				Element version6 = doc.createElement("version");
+				version6.appendChild(doc.createTextNode("1.0.1-SNAPSHOT"));
+				dependency6.appendChild(version6);
+
+				Element classifier6 = doc.createElement("classifier");
+				classifier6.appendChild(doc.createTextNode("jar-with-dependencies"));
+				dependency6.appendChild(classifier6);
+			} else {
+				Element dependency6 = doc.createElement("dependency");
+				dependencies.appendChild(dependency6);
+
+				Element groupId6 = doc.createElement("groupId");
+				groupId6.appendChild(doc.createTextNode("org.apache.httpcomponents"));
+				dependency6.appendChild(groupId6);
+
+				Element artifactId6 = doc.createElement("artifactId");
+				artifactId6.appendChild(doc.createTextNode("httpmime"));
+				dependency6.appendChild(artifactId6);
+
+				Element version6 = doc.createElement("version");
+				version6.appendChild(doc.createTextNode("4.4.1"));
+				dependency6.appendChild(version6);
+
+				Element dependency7 = doc.createElement("dependency");
+				dependencies.appendChild(dependency6);
+
+				Element groupId7 = doc.createElement("groupId");
+				groupId7.appendChild(doc.createTextNode("org.apache.httpcomponents"));
+				dependency7.appendChild(groupId7);
+
+				Element artifactId7 = doc.createElement("artifactId");
+				artifactId7.appendChild(doc.createTextNode("httpcore"));
+				dependency7.appendChild(artifactId7);
+
+				Element version7 = doc.createElement("version");
+				version7.appendChild(doc.createTextNode("4.4.1"));
+				dependency7.appendChild(version7);
+			}
 
 			// write the content into xml file
 			TransformerFactory transformerFactory = TransformerFactory.newInstance();

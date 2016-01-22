@@ -4357,11 +4357,24 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 								break;
 							}
 						}
+						
+						boolean hasRest = false;
+						boolean hasSoap = false;
+						for (OwlService service : jungGraph.getVertices()) {
+							if (service.getOperation() != null) {
+								if (service.getOperation().getType().equalsIgnoreCase("Restful")) {
+									hasRest = true;
+								}
+								if (service.getOperation().getType().equalsIgnoreCase("soap")) {
+									hasSoap = true;
+								}
+							}
+						}
 
 						// generate pom.xml
 						pomPath = ResourcesPlugin.getWorkspace().getRoot().getLocation().toString() + "/"
 								+ javaProject.getElementName();
-						RestfulCodeGenerator.writePom(pomPath, projectName);
+						RestfulCodeGenerator.writePom(pomPath, projectName, Boolean.toString(hasSoap));
 
 						// Let's add the maven container to our classpath to let
 						// the
@@ -4452,18 +4465,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 								restBuffer.toString(), false, null);
 						// IType type2 = restClass.getType("RestCode");
 
-						boolean hasRest = false;
-						boolean hasSoap = false;
-						for (OwlService service : jungGraph.getVertices()) {
-							if (service.getOperation() != null) {
-								if (service.getOperation().getType().equalsIgnoreCase("Restful")) {
-									hasRest = true;
-								}
-								if (service.getOperation().getType().equalsIgnoreCase("soap")) {
-									hasSoap = true;
-								}
-							}
-						}
+						
 
 						gGenerator = generator;
 
@@ -4753,7 +4755,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 					}
 					if (webServiceExistsOnServer()) {
 
-						String[] elements = { "Update YouREST", "Update Linked Ontology" };
+						String[] elements = { "Update YouREST (beta)", "Update Linked Ontology" };
 
 						ListSelectionDialog dialog = new ListSelectionDialog(shell, elements,
 								ArrayContentProvider.getInstance(), new LabelProvider(), "selection message");
@@ -4776,7 +4778,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 										Object[] results = dialog.getResult();
 
 										for (Object selectedItem : results) {
-											if (selectedItem.equals("Update YouREST")) {
+											if (selectedItem.equals("Update YouREST (beta)")) {
 												// upload to WS ontology
 												// get application domain
 												// TODO it should not be
