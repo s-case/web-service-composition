@@ -40,7 +40,8 @@ public class WSOntology {
 	public WSOntology() {
 
 		try {
-			String path = ResourcesPlugin.getWorkspace().getRoot().getLocation().toString();
+			String path = ResourcesPlugin.getWorkspace().getRoot().getLocation().toString()
+					+ "/.metadata/.plugins/eu.scasefp7.servicecomposition/ontology";
 			Model base = RDFDataMgr.loadModel(path + "/WS.owl");
 			ontologyModel = ModelFactory.createOntologyModel(OntModelSpec.OWL_DL_MEM_RDFS_INF, base);
 
@@ -103,21 +104,22 @@ public class WSOntology {
 		DatatypeProperty hasResponseType = ontologyModel.getDatatypeProperty(NS + "hasResponseType");
 		operInd.addProperty(hasResponseType, "json");
 		operInd.addProperty(hasResponseType, "xml");
-		//add service access info
+		// add service access info
 		ObjectProperty hasServiceAccessInfo = ontologyModel.getObjectProperty(NS + "hasServiceAccessInfo");
 		OntClass serviceAccessInfoClass = ontologyModel.getOntClass(NS + "ServiceAccessInfo");
-		String accessInfoname="ServiceAccessInfo";
+		String accessInfoname = "ServiceAccessInfo";
 		accessInfoname = changeUri(accessInfoname);
-		IndividualImpl accessInd = (IndividualImpl) ontologyModel.createIndividual(NS + accessInfoname, serviceAccessInfoClass);
+		IndividualImpl accessInd = (IndividualImpl) ontologyModel.createIndividual(NS + accessInfoname,
+				serviceAccessInfoClass);
 		uris.add(accessInd.getURI().toLowerCase());
 		DatatypeProperty hasDescription = ontologyModel.getDatatypeProperty(NS + "hasDescription");
 		String description = "Get";
-		for (String s :projectName.split("(?<!(^|[A-Z]))(?=[A-Z])|(?<!^)(?=[A-Z][a-z])")){
-			description= description + " " +s;
+		for (String s : projectName.split("(?<!(^|[A-Z]))(?=[A-Z])|(?<!^)(?=[A-Z][a-z])")) {
+			description = description + " " + s;
 		}
 		accessInd.addProperty(hasDescription, description);
 		operInd.addProperty(hasServiceAccessInfo, accessInd);
-		
+
 		// create isPrototype prop
 		DatatypeProperty isPrototype = ontologyModel.getDatatypeProperty(NS + "isPrototype");
 		operInd.addProperty(isPrototype, "false");
@@ -245,7 +247,7 @@ public class WSOntology {
 				coInd.addProperty(hasName, arg.getName().toString());
 				// create is required prop
 				if (arg.isRequired()) {
-				coInd.addProperty(isRequired, String.valueOf(arg.isRequired()));
+					coInd.addProperty(isRequired, String.valueOf(arg.isRequired()));
 				}
 				// create is array prop
 				if (arg.isArray()) {
@@ -316,7 +318,7 @@ public class WSOntology {
 				}
 				// create is array prop
 				if (arg.isArray()) {
-				coInd.addProperty(isArray, String.valueOf(arg.isArray()));
+					coInd.addProperty(isArray, String.valueOf(arg.isArray()));
 				}
 				// add children
 				ObjectProperty hasType = ontologyModel.getObjectProperty(NS + "hasType");
@@ -359,25 +361,24 @@ public class WSOntology {
 	}
 
 	public void saveToOWL() {
-		OutputStream out=null;
+		OutputStream out = null;
 		try {
 			System.out.println("saveToOWL is called..");
 			System.out.println(ResourcesPlugin.getWorkspace().getRoot().getLocation().toString()
 					+ "/.metadata/.plugins/eu.scasefp7.servicecomposition/ontology" + "/WS.owl");
-			out = new FileOutputStream(
-					ResourcesPlugin.getWorkspace().getRoot().getLocation().toString()
+			out = new FileOutputStream(ResourcesPlugin.getWorkspace().getRoot().getLocation().toString()
 					+ "/.metadata/.plugins/eu.scasefp7.servicecomposition/ontology" + "/WS.owl");
 			if (out != null && !out.toString().isEmpty()) {
 				ontologyModel.write(out, "RDF/XML-ABBREV"); // readable rdf/xml
 			}
-			//out.close();
+			// out.close();
 		} catch (IOException e) {
 			e.printStackTrace();
 		} finally {
-			
+
 			if (out != null) {
 				try {
-					
+
 					out.close();
 				} catch (IOException e) {
 					e.printStackTrace();
