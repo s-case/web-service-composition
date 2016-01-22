@@ -73,6 +73,7 @@ import org.eclipse.core.runtime.FileLocator;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.MultiStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Platform;
@@ -102,6 +103,7 @@ import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.dialogs.TitleAreaDialog;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.resource.JFaceResources;
+import org.eclipse.jface.viewers.ArrayContentProvider;
 import org.eclipse.jface.viewers.ColumnLabelProvider;
 import org.eclipse.jface.viewers.ILabelProvider;
 import org.eclipse.jface.viewers.ILabelProviderListener;
@@ -115,6 +117,7 @@ import org.eclipse.jface.viewers.TreeViewerColumn;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.jface.viewers.ViewerFilter;
 import org.eclipse.jface.window.Window;
+import org.eclipse.ui.dialogs.ListSelectionDialog;
 import org.eclipse.jst.j2ee.internal.web.archive.operations.WebComponentExportDataModelProvider;
 import org.eclipse.jst.j2ee.internal.web.archive.operations.WebFacetProjectCreationDataModelProvider;
 import org.eclipse.jst.j2ee.project.facet.IJ2EEFacetConstants;
@@ -2106,9 +2109,9 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 					@Override
 					protected IStatus run(IProgressMonitor monitor) {
 						monitor.beginTask("Downloading ontology ...", IProgressMonitor.UNKNOWN);
+						final Shell shell = new Shell();
 						try {
-							RepositoryClient repo = new RepositoryClient();
-							String path = repo.downloadOntology("WS", disp);
+							ImportHandler.ontologyCheck(shell, disp);
 							return Status.OK_STATUS;
 						} catch (Exception e) {
 							// TODO Auto-generated catch block
@@ -4348,7 +4351,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 							// We will look for JavaSE-1.6 as the JRE container
 							// to add
 							// to our classpath
-							if ("JavaSE-1.7".equals(iExecutionEnvironment.getId())) {
+							if ("JavaSE-1.8".equals(iExecutionEnvironment.getId())) {
 								entries.add(JavaCore
 										.newContainerEntry(JavaRuntime.newJREContainerPath(iExecutionEnvironment)));
 								break;
@@ -4652,11 +4655,11 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 
 	private void uploadOnServer() throws Exception {
 
-		String SFTPHOST = "109.231.126.106";
+		String SFTPHOST = "109.231.127.61";
 		int SFTPPORT = 22;
 		String SFTPUSER = "root";
 		String SFTPPASS = "loubas";
-		String SFTPWORKINGDIR = "/home/ubuntu/apache-tomcat-8.0.23/webapps/";
+		String SFTPWORKINGDIR = "/home/ubuntu/apache-tomcat-8.0.30/webapps/";
 		Session session = null;
 		Channel channel = null;
 		ChannelSftp channelSftp = null;
@@ -4750,75 +4753,194 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 					}
 					if (webServiceExistsOnServer()) {
 
+						String[] elements = { "Update YouREST", "Update Linked Ontology" };
+
+						ListSelectionDialog dialog = new ListSelectionDialog(shell, elements,
+								ArrayContentProvider.getInstance(), new LabelProvider(), "selection message");
+
+						dialog.setTitle("Upload is complete!");
+						dialog.setMessage("The web service was deployed successfully on server!\n"
+								+ "Base URI: http://109.231.127.61:8080/" + currentProject.getName()
+								+ "-0.0.1-SNAPSHOT/\n" + "Resource Path: rest/result/query\n\n"
+								+ "Would you like to update YouREST platform and Linked Ontology with the composite web service?");
+
+						// dialog.setInitialSelections(new Object []{"Update
+						// Linked Ontology"});
+
+						// user pressed OK
 						disp.syncExec(new Runnable() {
+							@Override
 							public void run() {
-								boolean answer = MessageDialog.openConfirm(shell, "Upload is complete!",
-										"The web service was uploaded successfully on server!\n"
-												+ "Base URI: http://109.231.126.106:8080/" + currentProject.getName()
-												+ "-0.0.1-SNAPSHOT/\n" + "Resource Path: rest/result/query\n\n"
-												+ "Would you like to update YouREST platform?");
-
-								if (answer) {
-									// OK Button selected
+								if (dialog.open() == Window.OK) {
 									try {
+										Object[] results = dialog.getResult();
 
-										// upload to WS ontology
-										// get application domain
-										// TODO it should not be
-										// hardcoded!!!!!!!!
-										String applicationDomainURI = "http://www.scasefp7.eu/wsOntology.owl#BusinessDomain";
+										for (Object selectedItem : results) {
+											if (selectedItem.equals("Update YouREST")) {
+												// upload to WS ontology
+												// get application domain
+												// TODO it should not be
+												// hardcoded!!!!!!!!
+												String applicationDomainURI = "http://www.scasefp7.eu/wsOntology.owl#BusinessDomain";
+												try {
+													WSOntology ws = new WSOntology();
+													ws.createNewWSOperation(generator.getOperation().getHasName(),
+															generator.getInputVariables(), generator.getUriParameters(),
+															generator.getOutputVariables(),
+															generator.getOperation().getBelongsToURL(),
+															applicationDomainURI);
+													ws.saveToOWL();
+													RepositoryClient cl = new RepositoryClient();
+													cl.uploadOntology();
+												} catch (Exception e) {
+													disp.syncExec(new Runnable() {
+														@Override
+														public void run() {
+															MessageDialog.openError(shell,
+																	"YouREST could not be update!",
+																	"Due to an error, YouREST could not be updated with project "
+																			+ currentProject.getName());
 
-										WSOntology ws = new WSOntology();
-										ws.createNewWSOperation(generator.getOperation().getHasName(),
-												generator.getInputVariables(), generator.getUriParameters(),
-												generator.getOutputVariables(),
-												generator.getOperation().getBelongsToURL(), applicationDomainURI);
-										ws.saveToOWL();
-										RepositoryClient cl = new RepositoryClient();
-										cl.uploadOntology();
-
-									} catch (Exception e) {
-										// TODO Auto-generated catch block
-										e.printStackTrace();
-									}
-
-								}
-							}
-						});
-
-						disp.syncExec(new Runnable() {
-							public void run() {
-								boolean answer = MessageDialog.openConfirm(shell, "Update Linked Ontology",
-										"Would you like to update Linked Ontology for the MDE plug-in with " + currentProject.getName()
-												+ " composite web service?");
-
-								if (answer) {
-									// OK Button selected
-									try {
-
-										ConnectToMDEOntology.writeToOntology(scaseProject, gGenerator.getOperation());
-									} catch (Exception e) {
-										// TODO Auto-generated catch block
-										e.printStackTrace();
-									}
-									final IFile file = ResourcesPlugin.getWorkspace().getRoot()
-											.getFileForLocation(Path.fromOSString(
-													ResourcesPlugin.getWorkspace().getRoot().getLocation().toString()
-															+ "/" + scaseProject.getName() + "/LinkedOntology.owl"));
-									if (file != null) {
-										disp.syncExec(new Runnable() {
-											@Override
-											public void run() {
-												MessageDialog.openInformation(disp.getActiveShell(), "Info",
-														"LinkedOntology.owl file is created under the project "
-																+ scaseProject.getName());
+														}
+													});
+													return;
+												}
 											}
-										});
+											if (selectedItem.equals("Update Linked Ontology")) {
+												ConnectToMDEOntology.writeToOntology(scaseProject,
+														gGenerator.getOperation());
 
+												final IFile file = ResourcesPlugin.getWorkspace().getRoot()
+														.getFileForLocation(Path.fromOSString(ResourcesPlugin
+																.getWorkspace().getRoot().getLocation().toString() + "/"
+																+ scaseProject.getName() + "/LinkedOntology.owl"));
+												if (file != null) {
+													disp.syncExec(new Runnable() {
+														@Override
+														public void run() {
+															MessageDialog.openInformation(disp.getActiveShell(), "Info",
+																	"LinkedOntology.owl file is created under the project "
+																			+ scaseProject.getName());
+														}
+													});
+
+												}
+											}
+										}
+									} catch (Exception e) {
+										e.printStackTrace();
 									}
+								} else {
+									return;
 								}
 							}
 						});
+
+						// //upload to WS ontology
+						// //get application domain
+						// //TODO it should not be hardcoded!!!!!!!!
+						// String
+						// applicationDomainURI="http://www.scasefp7.eu/wsOntology.owl#BusinessDomain";
+						// WSOntology ws=new WSOntology();
+						// try{
+						// ws.createNewWSOperation(generator.getOperation().getHasName(),
+						// generator.getInputVariables(),
+						// generator.getUriParameters(),
+						// generator.getOutputVariables(),
+						// generator.getOperation().getBelongsToURL(),applicationDomainURI);
+						// }catch(Exception e){
+						// disp.syncExec(new Runnable() {
+						// @Override
+						// public void run() {
+						// MessageDialog.openError(shell, "Upload is complete!",
+						// currentProject.getName()
+						// + " problem with generator\n" +
+						// e.getStackTrace().toString());
+						//
+						// }
+						// });
+						// return Status.CANCEL_STATUS;
+						// }
+						// try{
+						//
+						//
+						// ws.saveToOWL();
+						//
+						// }catch(Exception e){
+						// disp.syncExec(new Runnable() {
+						// @Override
+						// public void run() {
+						// MessageDialog.openError(shell, "Upload is complete!",
+						// currentProject.getName()
+						// + " could not be saved\n" +
+						// e.getStackTrace().toString());
+						//
+						// }
+						// });
+						// return Status.CANCEL_STATUS;
+						// }
+						//
+						//
+						// try{
+						// RepositoryClient cl=new RepositoryClient();
+						// cl.uploadOntology();
+						// }catch(Exception e){
+						// disp.syncExec(new Runnable() {
+						// @Override
+						// public void run() {
+						// MessageDialog.openError(shell, "Upload is complete!",
+						// currentProject.getName()
+						// + " could not be uploaded on YouRest\n"+
+						// e.getStackTrace().toString());
+						//
+						// }
+						// });
+						// return Status.CANCEL_STATUS;
+						// }
+						//
+						// disp.syncExec(new Runnable() {
+						// public void run() {
+						// boolean answer = MessageDialog.openConfirm(shell,
+						// "Upload is complete!",
+						// "The web service was uploaded successfully!\n"
+						// + "Base URI: http://109.231.127.61:8080/" +
+						// currentProject.getName()
+						// + "-0.0.1-SNAPSHOT/\n" + "Resource Path:
+						// rest/result/query\n\n"
+						// + "Would you like to also connect the web service to
+						// the MDE ontology?");
+						//
+						// if (answer) {
+						// // OK Button selected
+						// try {
+						// ConnectToMDEOntology.writeToOntology(scaseProject,
+						// gGenerator.getOperation());
+						// } catch (Exception e) {
+						// // TODO Auto-generated catch block
+						// e.printStackTrace();
+						// }
+						// final IFile file =
+						// ResourcesPlugin.getWorkspace().getRoot()
+						// .getFileForLocation(Path.fromOSString(
+						// ResourcesPlugin.getWorkspace().getRoot().getLocation().toString()
+						// + "/" + scaseProject.getName() +
+						// "/LinkedOntology.owl"));
+						// if (file != null) {
+						// disp.syncExec(new Runnable() {
+						// @Override
+						// public void run() {
+						// MessageDialog.openInformation(disp.getActiveShell(),
+						// "Info",
+						// "LinkedOntology.owl file is created under the project
+						// "
+						// + scaseProject.getName());
+						// }
+						// });
+						//
+						// }
+						// }
+						// }
+						// });
 
 					} else {
 						disp.syncExec(new Runnable() {
@@ -4828,17 +4950,20 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 										"Web service could not be deployed on server. Please contact the server administrator.");
 							}
 						});
+						return Status.CANCEL_STATUS;
 					}
 
 					monitor.done();
 					return Status.CANCEL_STATUS;
 				} catch (Exception ex) {
-					final Display disp = Display.getCurrent();
+					ex.printStackTrace();
 					disp.syncExec(new Runnable() {
 						@Override
 						public void run() {
-							MessageDialog.openInformation(disp.getActiveShell(), "Info", scaseProject.getName()
-									+ " could not be uploaded.\nNo connection to the  web server.\nPlease contact the system's administrator!");
+							MessageDialog.openInformation(disp.getActiveShell(), "Info",
+									currentProject.getName()
+											+ " could not be uploaded.\nNo connection to the  web server.\nPlease contact the system's administrator!\n"
+											+ ex.getStackTrace().toString());
 						}
 					});
 					return Status.CANCEL_STATUS;
@@ -4873,7 +4998,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 
 		String username = "admin";
 		String password = "loubas";
-		URL url = new URL("http://109.231.126.106:8080/manager/text/list");
+		URL url = new URL("http://109.231.127.61:8080/manager/text/list");
 		HttpURLConnection con = (HttpURLConnection) url.openConnection();
 		try {
 

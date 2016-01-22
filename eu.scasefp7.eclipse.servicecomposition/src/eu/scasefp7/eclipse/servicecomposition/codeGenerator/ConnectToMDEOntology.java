@@ -102,7 +102,7 @@ public class ConnectToMDEOntology {
 		ArrayList<String> hasResponseType = new ArrayList<String>();
 		hasResponseType.add("JSON");
 		hasResponseType.add("SOAP");
-		String url = "http://109.231.126.106:8080/" + projectName + "-0.0.1-SNAPSHOT/";
+		String url = "http://109.231.127.61:8080/" + projectName + "-0.0.1-SNAPSHOT/";
 		operation = new MDEOperation(url, "RESTful", "GET", projectName, "rest/result/query", hasResponseType, null,
 				null, hasOutput, hasQueryParameters);
 
