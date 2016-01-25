@@ -276,6 +276,14 @@ public class RestfulCodeGenerator {
 			failOnMissingWebXml.appendChild(doc.createTextNode("false"));
 			pluginConfiguration2.appendChild(failOnMissingWebXml);
 
+			//properties
+			Element properties = doc.createElement("properties");
+			rootElement.appendChild(properties);
+
+			Element project_build_sourceEncoding = doc.createElement("project.build.sourceEncoding");
+			project_build_sourceEncoding.appendChild(doc.createTextNode("UTF-8"));
+			properties.appendChild(project_build_sourceEncoding);
+			
 			// repositories
 			Element repositories = doc.createElement("repositories");
 			rootElement.appendChild(repositories);
