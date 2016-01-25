@@ -51,7 +51,7 @@
             schemeId="org.eclipse.ui.defaultAcceleratorConfiguration">
       </key>
    </extension>
-   <extension
+  <!-- <extension
          point="org.eclipse.ui.menus">
       <menuContribution
             locationURI="menu:org.eclipse.ui.main.menu?after=additions">
@@ -65,7 +65,7 @@
             </command>
          </menu>
       </menuContribution>     
-   </extension>
+   </extension>-->
   
   
 
