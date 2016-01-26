@@ -11,6 +11,7 @@ import eu.scasefp7.eclipse.servicecomposition.importer.JungXMIImporter.Connector
 import eu.scasefp7.eclipse.servicecomposition.importer.JungXMIImporter.Service;
 import eu.scasefp7.eclipse.servicecomposition.transformer.JungXMItoOwlTransform;
 import eu.scasefp7.eclipse.servicecomposition.transformer.Matcher;
+import eu.scasefp7.eclipse.servicecomposition.transformer.PathFinding;
 import eu.scasefp7.eclipse.servicecomposition.transformer.Similarity;
 import eu.scasefp7.eclipse.servicecomposition.transformer.Similarity.ComparableName;
 import eu.scasefp7.eclipse.servicecomposition.transformer.Transformer;
@@ -26,6 +27,10 @@ import java.util.Collections;
 import java.util.List;
 
 import org.eclipse.core.resources.ResourcesPlugin;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
+import org.eclipse.jface.dialogs.MessageDialog;
+import org.eclipse.swt.widgets.Display;
 
 import edu.uci.ics.jung.graph.Graph;
 
@@ -366,7 +371,7 @@ public class Algorithm {
 	 * @throws Exception
 	 */
 	public static Graph<OwlService, Connector> transformationAlgorithm(String path,
-			ArrayList<Importer.Operation> operations) throws Exception {
+			ArrayList<Importer.Operation> operations, Display disp) throws Exception {
 
 		costReport costPerUsage = new costReport();
 		costReport costPerMonth = new costReport();
@@ -377,195 +382,205 @@ public class Algorithm {
 		ArrayList<Importer.Operation> candidateOperations = new ArrayList<Importer.Operation>(operations);
 		// load the XMI graph
 		Graph<Service, Connector> xmiGraph = JungXMIImporter.createGraph(path, false);
-		// transform XMI to OWL graph and generate a transformer to manipulate
-		// the graph
-		Transformer transformer = new Transformer(JungXMItoOwlTransform.createOwlGraph(xmiGraph, true));
-		correctStepProbability.clear();
-		boolean noReplacements = false;
-		// run the algorithm
-		while (true) {
+		
+		// check graph
+		IStatus status = checkGraph(JungXMItoOwlTransform.createOwlGraph(xmiGraph, true), disp);
+		if (status.getMessage().equalsIgnoreCase("OK")) {
+			// transform XMI to OWL graph and generate a transformer to manipulate
+			// the graph
+			Transformer transformer = new Transformer(JungXMItoOwlTransform.createOwlGraph(xmiGraph, true));
+			correctStepProbability.clear();
+			boolean noReplacements = false;
+			// run the algorithm
+			while (true) {
 
-			// merge common variables
-			// transformer.createLinkedVariableGraph();
-			// select best operation to replace
-			ArrayList<Transformer.ReplaceInformation> replaceInformations = transformer
-					.getReplaceInformation(operations, 10);
-//			if (replaceInformations.isEmpty()) {
-//				noReplacements = true;
-//			}
-			double maxWeight = Double.NEGATIVE_INFINITY;
-			Transformer.ReplaceInformation selection = null;
-			for (Transformer.ReplaceInformation replace : replaceInformations)
-				if (replace.getWeight() > maxWeight) {
-					selection = replace;
-					maxWeight = replace.getWeight();
-				}
-			if (selection == null)
-				break;
-
-			correctStepProbability.add(new WeightReport(selection, replaceInformations));
-			// if an ideal operation was selected, try to replace with one of
-			// the implementations instead
-			if (!selection.getOperationToReplace().getRealOperations().isEmpty()) {
-				replaceInformations = transformer.getReplaceInformation(
-						selection.getOperationToReplace().getRealOperations(), selection.getTargetService(), 1);
-				maxWeight = Double.NEGATIVE_INFINITY;
+				// merge common variables
+				// transformer.createLinkedVariableGraph();
+				// select best operation to replace
+				ArrayList<Transformer.ReplaceInformation> replaceInformations = transformer
+						.getReplaceInformation(operations, 10);
+				// if (replaceInformations.isEmpty()) {
+				// noReplacements = true;
+				// }
+				double maxWeight = Double.NEGATIVE_INFINITY;
+				Transformer.ReplaceInformation selection = null;
 				for (Transformer.ReplaceInformation replace : replaceInformations)
 					if (replace.getWeight() > maxWeight) {
 						selection = replace;
 						maxWeight = replace.getWeight();
 					}
-			}
-			// perform the replacement
-			selection.performReplacement(transformer.getGraph());
-			// candidateOperations.remove(selection.getOperationToReplace());
-			OwlService service = selection.getTargetService();
-			// expand the workflow as much as possible
-			transformer.expandOperations(service);
-
-			// Calculate total cost
-
-			String currency = ((Operation) service.getContent()).getAccessInfo().getCommercialCostSchema()
-					.getCommercialCostCurrency();
-			String chargeType = ((Operation) service.getContent()).getAccessInfo().getCommercialCostSchema()
-					.getCostPaymentChargeType();
-
-			switch (chargeType) {
-			case "per usage":
-				costPerUsage.calculateCost(currency, service);
-				break;
-			case "per month":
-				costPerMonth.calculateCost(currency, service);
-				break;
-			case "per year":
-				costPerYear.calculateCost(currency, service);
-				break;
-			case "unlimited":
-				costUnlimited.calculateCost(currency, service);
-				break;
-			default:
-				break;
-			}
-
-			// trial period
-			int durationInUsages = ((Operation) service.getContent()).getAccessInfo().getCommercialCostSchema()
-					.getTrialSchema().getDurationInUsages();
-			int durationInDays = ((Operation) service.getContent()).getAccessInfo().getCommercialCostSchema()
-					.getTrialSchema().getDurationInDays();
-			workflowTrialPeriod.setTrialReport(durationInDays, durationInUsages);
-
-			// License
-			String licenseName = ((Operation) service.getContent()).getAccessInfo().getLicense().getLicenseName();
-			workflowLicense.setLicenseReport(licenseName);
-
-		}
-		for (OwlService service: transformer.getGraph().getVertices()){
-			if (service.getOperation() != null) {
-				if (service.getOperation().getDomain() == null) {
-					noReplacements = true;
-				}
-			}
-		}
-		if (!noReplacements) {
-			transformer.createLinkedVariableGraph();
-
-			while (true) {
-
-				OwlService replacedOperation = transformer.placeSingleLinkingOperation(candidateOperations);
-				if (replacedOperation == null)
+				if (selection == null)
 					break;
 
-				// Moved down in order to be executed only if op is not null.
-				transformer.expandOperations(replacedOperation);
+				correctStepProbability.add(new WeightReport(selection, replaceInformations));
+				// if an ideal operation was selected, try to replace with one
+				// of
+				// the implementations instead
+				if (!selection.getOperationToReplace().getRealOperations().isEmpty()) {
+					replaceInformations = transformer.getReplaceInformation(
+							selection.getOperationToReplace().getRealOperations(), selection.getTargetService(), 1);
+					maxWeight = Double.NEGATIVE_INFINITY;
+					for (Transformer.ReplaceInformation replace : replaceInformations)
+						if (replace.getWeight() > maxWeight) {
+							selection = replace;
+							maxWeight = replace.getWeight();
+						}
+				}
+				// perform the replacement
+				selection.performReplacement(transformer.getGraph());
+				// candidateOperations.remove(selection.getOperationToReplace());
+				OwlService service = selection.getTargetService();
+				// expand the workflow as much as possible
+				transformer.expandOperations(service);
 
 				// Calculate total cost
 
-				String currency = ((Operation) replacedOperation.getContent()).getAccessInfo().getCommercialCostSchema()
+				String currency = ((Operation) service.getContent()).getAccessInfo().getCommercialCostSchema()
 						.getCommercialCostCurrency();
-				String chargeType = ((Operation) replacedOperation.getContent()).getAccessInfo()
-						.getCommercialCostSchema().getCostPaymentChargeType();
+				String chargeType = ((Operation) service.getContent()).getAccessInfo().getCommercialCostSchema()
+						.getCostPaymentChargeType();
+
 				switch (chargeType) {
 				case "per usage":
-					costPerUsage.calculateCost(currency, replacedOperation);
+					costPerUsage.calculateCost(currency, service);
 					break;
 				case "per month":
-					costPerMonth.calculateCost(currency, replacedOperation);
+					costPerMonth.calculateCost(currency, service);
 					break;
-				case "per  year":
-					costPerYear.calculateCost(currency, replacedOperation);
+				case "per year":
+					costPerYear.calculateCost(currency, service);
 					break;
 				case "unlimited":
-					costUnlimited.calculateCost(currency, replacedOperation);
+					costUnlimited.calculateCost(currency, service);
 					break;
 				default:
 					break;
 				}
 
 				// trial period
-				int durationInUsages = ((Operation) replacedOperation.getContent()).getAccessInfo()
-						.getCommercialCostSchema().getTrialSchema().getDurationInUsages();
-				int durationInDays = ((Operation) replacedOperation.getContent()).getAccessInfo()
-						.getCommercialCostSchema().getTrialSchema().getDurationInDays();
+				int durationInUsages = ((Operation) service.getContent()).getAccessInfo().getCommercialCostSchema()
+						.getTrialSchema().getDurationInUsages();
+				int durationInDays = ((Operation) service.getContent()).getAccessInfo().getCommercialCostSchema()
+						.getTrialSchema().getDurationInDays();
 				workflowTrialPeriod.setTrialReport(durationInDays, durationInUsages);
 
 				// License
-				String licenseName = ((Operation) replacedOperation.getContent()).getAccessInfo().getLicense()
-						.getLicenseName();
+				String licenseName = ((Operation) service.getContent()).getAccessInfo().getLicense().getLicenseName();
 				workflowLicense.setLicenseReport(licenseName);
 
-				transformer.createLinkedVariableGraph();
-				// candidateOperations.remove(replacedOperation.getOperation());
 			}
-
-			transformer.createLinkedVariableGraph();
-
-			// Calculate and print total cost
-			String perUsage = costPerUsage.calculateWorkflowCost(" per usage");
-			String perMonth = costPerMonth.calculateWorkflowCost(" per month");
-			if (perMonth != "") {
-				perMonth = " + " + perMonth;
-			}
-			String perYear = costPerYear.calculateWorkflowCost(" per year");
-			if (perYear != "") {
-				perYear = " + " + perYear;
-			}
-			String unlimited = costUnlimited.calculateWorkflowCost(" unlimited");
-			if (unlimited != "") {
-				unlimited = " + " + unlimited;
-			}
-			String ret = "Total workflow cost: " + perUsage + perMonth + perYear + unlimited;
-			System.out.println(ret);
-
-			// Calculate and print trial period
-			String ret2 = "Total trial period: ";
-			int minDays = workflowTrialPeriod.findDurationInDays();
-			int minUsages = workflowTrialPeriod.findDurationInUsages();
-			if (minDays != Integer.MAX_VALUE && minUsages != Integer.MAX_VALUE) {
-				ret2 = ret2 + minDays + " days or " + minUsages + " usages.";
-			} else if (minUsages != Integer.MAX_VALUE) {
-				ret2 = ret2 + minUsages + " usages.";
-			} else if (minDays != Integer.MAX_VALUE) {
-				ret2 = ret2 + minDays + " days";
-			} else {
-				ret2 = ret2 + " unlimited.";
-			}
-			ret = ret + "\n" + ret2;
-			System.out.println(ret2);
-
-			// Total Licenses
-			List<String> licenseNames = workflowLicense.getLicenseReport();
-			if (!licenseNames.isEmpty()) {
-				String ret3 = "Licenses: ";
-				for (String licenceName : licenseNames) {
-					ret3 = ret3 + licenceName + " ";
+			for (OwlService service : transformer.getGraph().getVertices()) {
+				if (service.getOperation() != null) {
+					if (service.getOperation().getDomain() == null) {
+						noReplacements = true;
+					}
 				}
-				System.out.println(ret3);
-				ret = ret + "\n" + ret3;
 			}
+			if (!noReplacements) {
+				transformer.createLinkedVariableGraph();
 
+				while (true) {
+
+					OwlService replacedOperation = transformer.placeSingleLinkingOperation(candidateOperations);
+					if (replacedOperation == null)
+						break;
+
+					// Moved down in order to be executed only if op is not
+					// null.
+					transformer.expandOperations(replacedOperation);
+
+					// Calculate total cost
+
+					String currency = ((Operation) replacedOperation.getContent()).getAccessInfo()
+							.getCommercialCostSchema().getCommercialCostCurrency();
+					String chargeType = ((Operation) replacedOperation.getContent()).getAccessInfo()
+							.getCommercialCostSchema().getCostPaymentChargeType();
+					switch (chargeType) {
+					case "per usage":
+						costPerUsage.calculateCost(currency, replacedOperation);
+						break;
+					case "per month":
+						costPerMonth.calculateCost(currency, replacedOperation);
+						break;
+					case "per  year":
+						costPerYear.calculateCost(currency, replacedOperation);
+						break;
+					case "unlimited":
+						costUnlimited.calculateCost(currency, replacedOperation);
+						break;
+					default:
+						break;
+					}
+
+					// trial period
+					int durationInUsages = ((Operation) replacedOperation.getContent()).getAccessInfo()
+							.getCommercialCostSchema().getTrialSchema().getDurationInUsages();
+					int durationInDays = ((Operation) replacedOperation.getContent()).getAccessInfo()
+							.getCommercialCostSchema().getTrialSchema().getDurationInDays();
+					workflowTrialPeriod.setTrialReport(durationInDays, durationInUsages);
+
+					// License
+					String licenseName = ((Operation) replacedOperation.getContent()).getAccessInfo().getLicense()
+							.getLicenseName();
+					workflowLicense.setLicenseReport(licenseName);
+
+					transformer.createLinkedVariableGraph();
+					// candidateOperations.remove(replacedOperation.getOperation());
+				}
+
+				transformer.createLinkedVariableGraph();
+
+				// Calculate and print total cost
+				String perUsage = costPerUsage.calculateWorkflowCost(" per usage");
+				String perMonth = costPerMonth.calculateWorkflowCost(" per month");
+				if (perMonth != "") {
+					perMonth = " + " + perMonth;
+				}
+				String perYear = costPerYear.calculateWorkflowCost(" per year");
+				if (perYear != "") {
+					perYear = " + " + perYear;
+				}
+				String unlimited = costUnlimited.calculateWorkflowCost(" unlimited");
+				if (unlimited != "") {
+					unlimited = " + " + unlimited;
+				}
+				String ret = "Total workflow cost: " + perUsage + perMonth + perYear + unlimited;
+				System.out.println(ret);
+
+				// Calculate and print trial period
+				String ret2 = "Total trial period: ";
+				int minDays = workflowTrialPeriod.findDurationInDays();
+				int minUsages = workflowTrialPeriod.findDurationInUsages();
+				if (minDays != Integer.MAX_VALUE && minUsages != Integer.MAX_VALUE) {
+					ret2 = ret2 + minDays + " days or " + minUsages + " usages.";
+				} else if (minUsages != Integer.MAX_VALUE) {
+					ret2 = ret2 + minUsages + " usages.";
+				} else if (minDays != Integer.MAX_VALUE) {
+					ret2 = ret2 + minDays + " days";
+				} else {
+					ret2 = ret2 + " unlimited.";
+				}
+				ret = ret + "\n" + ret2;
+				System.out.println(ret2);
+
+				// Total Licenses
+				List<String> licenseNames = workflowLicense.getLicenseReport();
+				if (!licenseNames.isEmpty()) {
+					String ret3 = "Licenses: ";
+					for (String licenceName : licenseNames) {
+						ret3 = ret3 + licenceName + " ";
+					}
+					System.out.println(ret3);
+					ret = ret + "\n" + ret3;
+				}
+
+			}
+			return transformer.getGraph();
+		}else{
+			return null;
 		}
 
-		return transformer.getGraph();
+		
 	}
 
 	/**
@@ -590,6 +605,190 @@ public class Algorithm {
 		if (minimumTrust == -1)
 			return new WeightReport(correctStepProbability);
 		return new WeightReport(correctStepProbability, minimumTrust);
+	}
+
+	private static IStatus checkGraph(edu.uci.ics.jung.graph.Graph<OwlService, Connector> graph, final Display disp)
+			throws Exception {
+
+		// Check if every node has a path to StartNode and to
+		// EndNode, a condition has two output edges and the graph contains at
+		// least one operation in order to allow
+		// execution.
+		ArrayList<OwlService> previousList = new ArrayList<OwlService>();
+		ArrayList<OwlService> nextList = new ArrayList<OwlService>();
+		int numberOfActions = 0;
+		OwlService startingService = null;
+		OwlService endingService = null;
+
+		for (OwlService service : graph.getVertices()) {
+			// detect starting service
+			if (service.getType().trim().equals("StartNode")) {
+				startingService = service;
+
+			}
+			// detect ending service
+			if (service.getType().trim().equals("EndNode")) {
+				endingService = service;
+
+			}
+		}
+
+		if (startingService == null) {
+			try {
+				throw new Exception("Graph should contain a Start Node.");
+			} catch (Exception e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+			disp.syncExec(new Runnable() {
+
+				@Override
+				public void run() {
+					MessageDialog.openInformation(disp.getActiveShell(), "Error occured",
+							"Graph should contain a Start Node.");
+				}
+
+			});
+			return Status.CANCEL_STATUS;
+		}
+		if (endingService == null) {
+			try {
+				throw new Exception("Graph should contain an End Node.");
+			} catch (Exception e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+			disp.syncExec(new Runnable() {
+
+				@Override
+				public void run() {
+					MessageDialog.openInformation(disp.getActiveShell(), "Error occured",
+							"Graph should contain an End Node.");
+				}
+
+			});
+			return Status.CANCEL_STATUS;
+		}
+
+		for (OwlService service : graph.getVertices()) {
+
+			if (service.getType().contains("Action") || service.getType().contains("Condition")) {
+
+				if (service.getType().contains("Action")) {
+					numberOfActions++;
+				}
+				if (service.getType().contains("Condition") && (graph.getOutEdges(service).size() < 2)) {
+					final OwlService unlinked = service;
+					try {
+						throw new Exception("\"" + unlinked.getName().toString() + "\""
+								+ " condition should have two output edges.");
+					} catch (Exception e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					}
+
+					disp.syncExec(new Runnable() {
+						@Override
+						public void run() {
+							MessageDialog.openInformation(disp.getActiveShell(), "Error occured",
+									"\"" + unlinked.getName().toString() + "\""
+											+ " condition should have two output edges.");
+						}
+					});
+					return Status.CANCEL_STATUS;
+				}
+
+				if (service.getType().contains("Condition")){
+					final OwlService unlinked = service;
+					for (Connector connector : graph.getOutEdges(service)){
+						if (connector.getCondition().isEmpty()){
+							try {
+								throw new Exception("\"" + unlinked.getName().toString() + "\""
+										+ " condition path should have a name.");
+							} catch (Exception e1) {
+								// TODO Auto-generated catch block
+								e1.printStackTrace();
+							}
+
+							disp.syncExec(new Runnable() {
+								@Override
+								public void run() {
+									MessageDialog.openInformation(disp.getActiveShell(), "Error occured",
+											"\"" + unlinked.getName().toString() + "\""
+													+ " condition path should have a name.");
+								}
+							});
+							return Status.CANCEL_STATUS;
+						}
+					}
+				}
+				previousList = (new PathFinding(graph).findOperationPath(startingService, service));
+				if (previousList.get(0) != startingService) {
+					final OwlService unlinked = previousList.get(0);
+					try {
+						throw new Exception("\"" + unlinked.getName().toString() + "\""
+								+ " has no path to StartNode. Check for unlinked operations.");
+					} catch (Exception e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					}
+					disp.syncExec(new Runnable() {
+
+						@Override
+						public void run() {
+							MessageDialog.openInformation(disp.getActiveShell(), "Error occured",
+									"\"" + unlinked.getName().toString() + "\""
+											+ " has no path to StartNode. Check for unlinked operations.");
+						}
+					});
+					return Status.CANCEL_STATUS;
+				}
+				nextList = (new PathFinding(graph).findOperationPath(service, endingService));
+				if (nextList.get(0) != service) {
+					final OwlService unlinked = service;
+					try {
+						throw new Exception("\"" + unlinked.getName().toString() + "\""
+								+ " has no path to EndNode. Check for unlinked operations.");
+					} catch (Exception e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					}
+
+					disp.syncExec(new Runnable() {
+						@Override
+						public void run() {
+							MessageDialog.openInformation(disp.getActiveShell(), "Error occured",
+									"\"" + unlinked.getName().toString() + "\""
+											+ " has no path to EndNode. Check for unlinked operations.");
+						}
+					});
+					return Status.CANCEL_STATUS;
+
+				}
+
+			}
+		}
+		if (numberOfActions == 0) {
+
+			try {
+				throw new Exception("Graph should contain at least one Operation.");
+			} catch (Exception e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+			disp.syncExec(new Runnable() {
+
+				@Override
+				public void run() {
+					MessageDialog.openInformation(disp.getActiveShell(), "Error occured",
+							"Graph should contain at least one Action.");
+				}
+
+			});
+			return Status.CANCEL_STATUS;
+
+		}
+		return Status.OK_STATUS;
 	}
 
 	/**

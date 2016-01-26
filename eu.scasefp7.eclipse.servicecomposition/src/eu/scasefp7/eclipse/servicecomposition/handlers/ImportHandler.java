@@ -89,8 +89,9 @@ public class ImportHandler extends AbstractHandler {
 						// "data/testing_scripts/");
 						final String pathToSBDFile = ResourcesPlugin.getWorkspace().getRoot().getLocation().toString()
 								+ file.getFullPath().toOSString();
-						graph = Algorithm.transformationAlgorithm(pathToSBDFile, operations);
+						graph = Algorithm.transformationAlgorithm(pathToSBDFile, operations, disp);
 
+						if (graph!= null){
 						// SHOW REPLACEMENT REPORT
 						System.out.println();
 						for (WeightReport report : Algorithm.getStepReports()) {
@@ -182,6 +183,15 @@ public class ImportHandler extends AbstractHandler {
 
 						monitor.done();
 						return Status.OK_STATUS;
+					}else{
+						try {
+							throw new Exception("Graph can not be null");
+						} catch (Exception e1) {
+							// TODO Auto-generated catch block
+							e1.printStackTrace();
+						}
+						return Status.CANCEL_STATUS;
+					}
 					} catch (Exception ex) {
 						ex.printStackTrace();
 						return Status.CANCEL_STATUS;
