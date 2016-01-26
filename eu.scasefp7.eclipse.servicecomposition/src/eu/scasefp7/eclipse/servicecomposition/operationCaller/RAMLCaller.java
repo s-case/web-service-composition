@@ -54,7 +54,7 @@ public class RAMLCaller {
 
 	// http://localhost:8080/RESTfulExample/json/product/get
 	// http://localhost:8080/AdviceFromIP/rest/result/query?ipAddress=160.40.50.176
-	public void callRESTfulOperation(Operation ramlOperation) {
+	public void callRESTfulOperation(Operation ramlOperation) throws Exception{
 
 		String wsUrl = ramlOperation.getDomain().getURI();
 		if (ramlOperation.getDomain().getResourcePath() != null) {
@@ -110,6 +110,7 @@ public class RAMLCaller {
 				URL url = new URL((wsUrl + inputListGet).replaceAll(" ", "%20"));
 				System.out.println("Calling " + url.toString());
 				conn = (HttpURLConnection) url.openConnection();
+				conn.setConnectTimeout(30000);
 				conn.setRequestMethod(ramlOperation.getDomain().getCrudVerb());
 				conn.setRequestProperty("Accept", "application/json");
 				if (ramlOperation.getDomain().getSecurityScheme() != null) {
@@ -121,7 +122,7 @@ public class RAMLCaller {
 						conn.setRequestProperty("Authorization", "Basic " + encoding);
 					}
 				}
-
+				
 				if (conn.getResponseCode() != 200) {
 					throw new RuntimeException("Failed : HTTP error code : " + conn.getResponseCode());
 				}
@@ -142,8 +143,9 @@ public class RAMLCaller {
 				e.printStackTrace();
 
 			} catch (IOException e) {
-
 				e.printStackTrace();
+				throw new IOException();
+				
 
 			} finally {
 				if (conn != null) {
@@ -197,7 +199,7 @@ public class RAMLCaller {
 			} catch (IOException e) {
 
 				e.printStackTrace();
-
+				throw new IOException();
 			}
 
 		} else if (ramlOperation.getDomain().getCrudVerb().equalsIgnoreCase("delete")) {
@@ -216,6 +218,7 @@ public class RAMLCaller {
 				System.out.println(httpURLConnection.getResponseCode());
 			} catch (IOException exception) {
 				exception.printStackTrace();
+				throw new IOException();
 			} finally {
 				if (httpURLConnection != null) {
 					httpURLConnection.disconnect();
@@ -267,12 +270,13 @@ public class RAMLCaller {
 			} catch (IOException e) {
 
 				e.printStackTrace();
-
+				throw new IOException();
 			}
 
 		} else {
 			System.out
 					.println("Operation " + ramlOperation.getDomain().getCrudVerb() + " is not a valid CRUD operation");
+			throw new Exception();
 		}
 
 		if (!result.isEmpty()) {
