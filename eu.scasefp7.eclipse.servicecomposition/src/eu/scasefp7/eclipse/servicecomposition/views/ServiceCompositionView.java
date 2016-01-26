@@ -96,6 +96,7 @@ import org.eclipse.jdt.launching.JavaRuntime;
 import org.eclipse.jdt.launching.LibraryLocation;
 import org.eclipse.jdt.launching.environments.IExecutionEnvironment;
 import org.eclipse.jdt.launching.environments.IExecutionEnvironmentsManager;
+import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IToolBarManager;
 import org.eclipse.jface.dialogs.IMessageProvider;
@@ -108,10 +109,12 @@ import org.eclipse.jface.viewers.ColumnLabelProvider;
 import org.eclipse.jface.viewers.ILabelProvider;
 import org.eclipse.jface.viewers.ILabelProviderListener;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
+import org.eclipse.jface.viewers.ISelectionProvider;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.ITreeContentProvider;
 import org.eclipse.jface.viewers.LabelProvider;
 import org.eclipse.jface.viewers.SelectionChangedEvent;
+import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.jface.viewers.TreeViewerColumn;
 import org.eclipse.jface.viewers.Viewer;
@@ -144,9 +147,10 @@ import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
+import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
-import org.eclipse.swt.widgets.Dialog;
+//import org.eclipse.swt.widgets.Dialog;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Label;
@@ -730,90 +734,131 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 	 * @author mkoutli
 	 *
 	 */
-	public class RenameConditionDialog extends Dialog {
-		String value;
+	public class RenameConditionDialog extends TitleAreaDialog {
+		private Text txtConditionName;
+		private String conditionName;
+		private Text txtConditionValue;
+		private String conditionValue;
+		private String conditionSymbol;
+		private int index;
+		private Combo lineHeight;
 
-		/**
-		 * @param parent
-		 */
-		public RenameConditionDialog(Shell parent) {
-			super(parent);
+		public RenameConditionDialog(Shell parentShell) {
+			super(parentShell);
 		}
 
-		// /**
-		// * @param parent
-		// * @param style
-		// */
-		// public RenameConditionDialog(Shell parent, int style) {
-		// super(parent, style);
-		// }
+		@Override
+		public void create() {
+			super.create();
+			setTitle("Create condition");
+			setMessage(
+					"Please enter a variable's name (e.g the name of a previous output), a value for this variable and a comparison symbol.",
+					IMessageProvider.INFORMATION);
+		}
 
-		/**
-		 * Makes the dialog visible.
-		 * 
-		 * @return
-		 */
-		public String open() {
-			Shell parent = getParent();
-			final Shell shell = new Shell(parent, SWT.TITLE | SWT.BORDER | SWT.APPLICATION_MODAL);
-			shell.setText("Name of the condition");
+		@Override
+		protected Control createDialogArea(Composite parent) {
+			Composite area = (Composite) super.createDialogArea(parent);
+			Composite container = new Composite(area, SWT.NONE);
+			container.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+			GridLayout layout = new GridLayout(2, false);
+			container.setLayout(layout);
 
-			shell.setLayout(new GridLayout(2, true));
+			createConditionName(container);
+			createConditionValue(container);
+			createConditionSymbol(container);
+			return area;
+		}
 
-			Label label = new Label(shell, SWT.NULL);
-			label.setText("Please enter the condition");
+		@Override
+		protected void configureShell(Shell newShell) {
+			super.configureShell(newShell);
 
-			final Text text = new Text(shell, SWT.SINGLE | SWT.BORDER);
+			newShell.setText("Condition node");
+		}
 
-			final Button buttonOK = new Button(shell, SWT.PUSH);
-			buttonOK.setText("Ok");
-			buttonOK.setLayoutData(new GridData(GridData.HORIZONTAL_ALIGN_END));
-			Button buttonCancel = new Button(shell, SWT.PUSH);
-			buttonCancel.setText("Cancel");
+		private void createConditionName(Composite container) {
+			Label lbtFirstName = new Label(container, SWT.NONE);
+			lbtFirstName.setText("Variable name");
 
-			text.addListener(SWT.Modify, new Listener() {
-				public void handleEvent(Event event) {
-					try {
-						value = new String(text.getText());
-						buttonOK.setEnabled(true);
-					} catch (Exception e) {
-						buttonOK.setEnabled(false);
-					}
-				}
-			});
+			GridData dataFirstName = new GridData();
+			dataFirstName.grabExcessHorizontalSpace = true;
+			dataFirstName.horizontalAlignment = GridData.FILL;
 
-			buttonOK.addListener(SWT.Selection, new Listener() {
-				public void handleEvent(Event event) {
-					shell.dispose();
-				}
-			});
+			txtConditionName = new Text(container, SWT.BORDER);
+			txtConditionName.setLayoutData(dataFirstName);
+		}
 
-			buttonCancel.addListener(SWT.Selection, new Listener() {
-				public void handleEvent(Event event) {
-					value = null;
-					shell.dispose();
-				}
-			});
+		private void createConditionValue(Composite container) {
+			Label lbtFirstName = new Label(container, SWT.NONE);
+			lbtFirstName.setText("Value");
 
-			shell.addListener(SWT.Traverse, new Listener() {
-				public void handleEvent(Event event) {
-					if (event.detail == SWT.TRAVERSE_ESCAPE)
-						event.doit = false;
-				}
-			});
+			GridData dataFirstName = new GridData();
+			dataFirstName.grabExcessHorizontalSpace = true;
+			dataFirstName.horizontalAlignment = GridData.FILL;
 
-			text.setText("");
-			shell.pack();
-			shell.open();
+			txtConditionValue = new Text(container, SWT.BORDER);
+			txtConditionValue.setLayoutData(dataFirstName);
+		}
 
-			Display display = parent.getDisplay();
-			while (!shell.isDisposed()) {
-				if (!display.readAndDispatch())
-					display.sleep();
+		private void createConditionSymbol(Composite container) {
+			
+			lineHeight = new Combo(container, SWT.READ_ONLY | SWT.BORDER);
+			lineHeight.setLayoutData(new GridData(SWT.LEAD, SWT.CENTER, false, false));
+			String[] choices = { "==", "!=", ">", "<" };
+			lineHeight.setItems(choices);
+			lineHeight.select(0);
+			
+		}
+
+		private void setDialogLocation() {
+			Rectangle monitorArea = getShell().getDisplay().getPrimaryMonitor().getBounds();
+			Rectangle shellArea = getShell().getBounds();
+			int x = monitorArea.x + (monitorArea.width - shellArea.width) / 2;
+			int y = monitorArea.y + (monitorArea.height - shellArea.height) / 2;
+			getShell().setLocation(x, y);
+		}
+
+		@Override
+		protected boolean isResizable() {
+			return true;
+		}
+
+		// save content of the Text field because it gets disposed
+		// as soon as the Dialog closes
+		private void saveInput() {
+			conditionName = txtConditionName.getText();
+			conditionValue = txtConditionValue.getText();
+			index = lineHeight.getSelectionIndex();
+			if (index == 0) {
+				conditionSymbol = "==";
+			} else if (index == 1) {
+				conditionSymbol = "!=";
+			} else if (index == 2) {
+				conditionSymbol = ">";
+			} else if (index == 3) {
+				conditionSymbol = "<";
 			}
-
-			return value;
 		}
+
+		@Override
+		protected void okPressed() {
+			saveInput();
+			super.okPressed();
+		}
+
+		public String getConditionName() {
+			return conditionName;
+		}
+
+		public String getConditionValue() {
+			return conditionValue;
+		}
+
+		public String getConditionSymbol() {
+			return conditionSymbol;
+		}
+
 	}
 
 	/**
@@ -825,8 +870,16 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 	private void renameCondition(GraphConnection edge) {
 		Shell shell = new Shell();
 		RenameConditionDialog dialog = new RenameConditionDialog(shell);
-		// System.out.println(dialog.open());
-		String s = dialog.open();
+		String s = "";
+		dialog.create();
+		dialog.configureShell(shell);
+		dialog.setDialogLocation();
+		if (dialog.open() == Window.OK) {
+			s = dialog.getConditionName().trim() + dialog.getConditionSymbol() + dialog.getConditionValue().trim();
+			System.out.println(s);
+		} else {
+			return;
+		}
 		boolean exist = false;
 		// If a string was returned, say so.
 		if ((s != null) && (s.trim().length() > 0)) {
@@ -896,7 +949,16 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 			Shell shell = new Shell();
 			RenameConditionDialog dialog = new RenameConditionDialog(shell);
 
-			String s = dialog.open();
+			String s = "";
+			dialog.create();
+			dialog.configureShell(shell);
+			dialog.setDialogLocation();
+			if (dialog.open() == Window.OK) {
+				s = dialog.getConditionName().trim() + dialog.getConditionSymbol() + dialog.getConditionValue().trim();
+				System.out.println(s);
+			} else {
+				return;
+			}
 			boolean exist = false;
 			// If a string was returned, say so.
 			if ((s != null) && (s.trim().length() > 0)) {
@@ -956,6 +1018,271 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 	@Inject
 	UISynchronize sync;
 
+	class TreeLabelProvider extends ColumnLabelProvider implements ILabelProvider {
+		public String getText(Object element) {
+			return ((OperationNode) element).getName();
+		}
+
+		public Image getImage(Object arg0) {
+			return null;
+		}
+
+		public void addListener(ILabelProviderListener arg0) {
+		}
+
+		public void dispose() {
+		}
+
+		public boolean isLabelProperty(Object arg0, String arg1) {
+			return false;
+		}
+
+		public void removeListener(ILabelProviderListener arg0) {
+		}
+	}
+
+	class TreeContentProvider implements ITreeContentProvider {
+		public Object[] getChildren(Object parentElement) {
+			Vector<OperationNode> subcats = ((OperationNode) parentElement).getSubCategories();
+			return subcats == null ? new Object[0] : subcats.toArray();
+		}
+
+		public Object getParent(Object element) {
+			return ((OperationNode) element).getParent();
+		}
+
+		public boolean hasChildren(Object element) {
+			return ((OperationNode) element).getSubCategories() != null;
+		}
+
+		public Object[] getElements(Object inputElement) {
+			if (inputElement != null && inputElement instanceof Vector) {
+				return ((Vector<OperationNode>) inputElement).toArray();
+			}
+			return new Object[0];
+		}
+
+		public void dispose() {
+		}
+
+		public void inputChanged(Viewer viewer, Object oldInput, Object newInput) {
+		}
+	}
+
+	private ColumnLabelProvider createTreeColumnLabelProvider() {
+		return new ColumnLabelProvider() {
+
+			@Override
+			public String getText(Object element) {
+				return ((OperationNode) element).getValue();
+			}
+
+		};
+	}
+
+	class OperationNode {
+		private String name;
+		private String value;
+		private Operation operation;
+		private Argument argument;
+		private Vector<OperationNode> subCategories;
+		private OperationNode parent;
+
+		public OperationNode(String name, OperationNode parent, Operation service, Argument argument, String value) {
+			if (service != null) {
+				this.name = name;
+			} else if (argument != null) {
+				this.name = name + " [" + argument.getType() + "]:";
+			}
+			this.parent = parent;
+			this.operation = service;
+			this.argument = argument;
+			this.value = value;
+
+			if (parent != null)
+				parent.addSubCategory(this);
+		}
+
+		public Vector<OperationNode> getSubCategories() {
+			return subCategories;
+		}
+
+		private void addSubCategory(OperationNode subcategory) {
+			if (subCategories == null)
+				subCategories = new Vector<OperationNode>();
+			if (!subCategories.contains(subcategory))
+				subCategories.add(subcategory);
+		}
+
+		public String getName() {
+			return name;
+		}
+
+		public Argument getArgument() {
+			return argument;
+		}
+
+		public Operation getOperation() {
+			return operation;
+		}
+
+		public String getValue() {
+			return value;
+		}
+
+		public OperationNode getParent() {
+			return parent;
+		}
+	}
+
+	public class TreeDialog extends Dialog {
+		private ArrayList<Operation> operations = new ArrayList<Operation>();
+		private Display disp;
+		private Operation operation;
+
+		public TreeDialog(Shell parentShell) {
+			super(parentShell);
+		}
+
+		public void setOperations(ArrayList<Operation> operations) {
+			this.operations = operations;
+		}
+
+		public void setDisp(Display disp) {
+			this.disp = disp;
+		}
+
+		public void setOperation(Operation operation) {
+			this.operation = operation;
+		}
+
+		public Operation getOperation() {
+			return this.operation;
+		}
+
+		@Override
+		protected Control createDialogArea(Composite parent) {
+			Composite container = (Composite) super.createDialogArea(parent);
+			// Button button = new Button(container, SWT.PUSH);
+			// button.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER,
+			// false,
+			// false));
+			// button.setText("Press me");
+			// button.addSelectionListener(new SelectionAdapter() {
+			// @Override
+			// public void widgetSelected(SelectionEvent e) {
+			// System.out.println("Pressed");
+			// }
+			// });
+
+			TreeViewer tree = new TreeViewer(container, SWT.BORDER | SWT.H_SCROLL | SWT.V_SCROLL);
+			TreeViewerColumn column1 = new TreeViewerColumn(tree, SWT.LEFT);
+			column1.getColumn().setText("Attribute");
+			column1.getColumn().setWidth(200);
+			column1.getColumn().setResizable(true);
+			TreeViewerColumn column2 = new TreeViewerColumn(tree, SWT.RIGHT);
+			column2.getColumn().setText("Value");
+			column2.getColumn().setWidth(200);
+			column2.getColumn().setResizable(true);
+
+			Vector<OperationNode> nodes = new Vector<OperationNode>();
+
+			for (Operation operation : operations) {
+				OperationNode n = new OperationNode(operation.getName().toString(), null, operation, null, "");
+				OperationNode subn1 = new OperationNode("Inputs", n, operation, null, "");
+				OperationNode subn2 = new OperationNode("Outputs", n, operation, null, "");
+				OperationNode subn3 = new OperationNode("URL", n, operation, null, operation.getDomain().getURI());
+				column2.setLabelProvider(createTreeColumnLabelProvider());
+				for (Argument input : operation.getInputs()) {
+					OperationNode inputn = new OperationNode("", subn1, operation, input, input.getName().toString());
+					column2.setLabelProvider(createTreeColumnLabelProvider());
+				}
+				for (Argument output : operation.getOutputs()) {
+					OperationNode outputn = new OperationNode("", subn2, operation, output,
+							output.getName().toString());
+					column2.setLabelProvider(createTreeColumnLabelProvider());
+				}
+
+				nodes.add(n);
+
+			}
+
+			tree.getTree().setLayoutData(new GridData(GridData.FILL_BOTH));
+			tree.setContentProvider(new TreeContentProvider());
+			column1.setLabelProvider(new TreeLabelProvider());
+			tree.setInput(nodes);
+
+			// the viewer field is an already configured TreeViewer
+			Tree tree2 = (Tree) tree.getControl();
+
+			Listener listener = new Listener() {
+
+				@Override
+				public void handleEvent(Event event) {
+					TreeItem treeItem = (TreeItem) event.item;
+					final TreeColumn[] treeColumns = treeItem.getParent().getColumns();
+					disp.asyncExec(new Runnable() {
+
+						@Override
+						public void run() {
+							for (TreeColumn treeColumn : treeColumns)
+								treeColumn.pack();
+						}
+					});
+				}
+			};
+
+			tree2.addListener(SWT.Expand, listener);
+
+			tree.addSelectionChangedListener(new ISelectionChangedListener() {
+				public void selectionChanged(SelectionChangedEvent event) {
+					if (event.getSelection() instanceof IStructuredSelection) {
+						IStructuredSelection selection = (IStructuredSelection) event.getSelection();
+						if (selection.getFirstElement() != null) {
+							if (((OperationNode) selection.getFirstElement()).getParent() == null) {
+								setOperation(((OperationNode) selection.getFirstElement()).getOperation());
+							} else {
+								setOperation(((OperationNode) selection.getFirstElement()).getOperation());
+								tree.setSelection(StructuredSelection.EMPTY);
+							}
+						}
+
+					}
+				}
+			});
+
+			// tree.expandAll();
+
+			return container;
+		}
+
+		// overriding this methods allows you to set the
+		// title of the custom dialog
+		@Override
+		protected void configureShell(Shell newShell) {
+			super.configureShell(newShell);
+			newShell.setText("S-CASE Operations");
+		}
+
+		private void setDialogLocation() {
+			Rectangle monitorArea = getShell().getDisplay().getPrimaryMonitor().getBounds();
+			Rectangle shellArea = getShell().getBounds();
+			int x = monitorArea.x + (monitorArea.width - shellArea.width) / 2;
+			int y = monitorArea.y + (monitorArea.height - shellArea.height) / 2;
+			getShell().setLocation(x, y);
+		}
+
+		@Override
+		protected boolean isResizable() {
+			return true;
+		}
+
+		@Override
+		protected void okPressed() {
+			super.okPressed();
+		}
+	}
+
 	/**
 	 * <h1>addNewOperation</h1> Add a new Operation with its IO. For this, the
 	 * method calls <code>SelectionWindowOp</code> method in order to display a
@@ -983,7 +1310,8 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 						return "";
 				}
 			};
-			final ElementListSelectionDialog dialog = new ElementListSelectionDialog(shell, labelProvider);
+			// final ElementListSelectionDialog dialog = new
+			// ElementListSelectionDialog(shell, labelProvider);
 
 			AddNewOperationJob = new Job("Add new operation") {
 				@Override
@@ -1021,7 +1349,24 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 						// Open selection window
 						disp.syncExec(new Runnable() {
 							public void run() {
-								SelectionWindowOp(shell, dialog, nonPrototypeOperations, list);
+
+								TreeDialog dialog = new TreeDialog(shell);
+								dialog.setDisp(disp);
+								dialog.setOperations(nonPrototypeOperations);
+								dialog.create();
+								dialog.configureShell(shell);
+								dialog.setDialogLocation();
+								if (dialog.open() == Window.OK) {
+									Operation selectedItem = dialog.getOperation();
+									if (selectedItem != null) {
+										addNode(selectedItem, operations);
+									}
+
+								} else {
+									return;
+								}
+								// SelectionWindowOp(shell, dialog,
+								// nonPrototypeOperations, list);
 							}
 						});
 
@@ -1298,7 +1643,17 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 					Shell shell = new Shell();
 					RenameConditionDialog dialog = new RenameConditionDialog(shell);
 					// System.out.println(dialog.open());
-					String s = dialog.open();
+					String s = "";
+					dialog.create();
+					dialog.configureShell(shell);
+					dialog.setDialogLocation();
+					if (dialog.open() == Window.OK) {
+						s = dialog.getConditionName().trim() + dialog.getConditionSymbol()
+								+ dialog.getConditionValue().trim();
+						System.out.println(s);
+					} else {
+						return;
+					}
 					boolean exist = false;
 					// If a string was returned, say so.
 					if ((s != null) && (s.trim().length() > 0)) {
@@ -4357,7 +4712,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 								break;
 							}
 						}
-						
+
 						boolean hasRest = false;
 						boolean hasSoap = false;
 						for (OwlService service : jungGraph.getVertices()) {
@@ -4464,8 +4819,6 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 						ICompilationUnit restClass = pack.createCompilationUnit("WebService.java",
 								restBuffer.toString(), false, null);
 						// IType type2 = restClass.getType("RestCode");
-
-						
 
 						gGenerator = generator;
 
