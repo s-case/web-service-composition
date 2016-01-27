@@ -127,7 +127,7 @@ public class JungXMIImporter {
 			NamedNodeMap propertyNode = e.getAttributes();
 			for(int attr=0;attr<propertyNode.getLength();attr++){
 				if(propertyNode.item(attr).getNodeName().compareTo("properties")==0)
-					connections.add(propertyNode.item(attr).getNodeValue());
+					connections = substring(propertyNode.item(attr).getNodeValue(), connections);
 				else if(propertyNode.item(attr).getNodeName().compareTo("nextNode")==0
 						|| propertyNode.item(attr).getNodeName().compareTo("firstNode")==0){
 					towards.add(propertyNode.item(attr).getNodeValue());
@@ -333,5 +333,32 @@ public class JungXMIImporter {
 		
 		return graph;
 		
+	}
+	
+	/**
+	 * Separates a string into different strings every time "_" character occurs
+	 * and puts the strings in a list.
+	 * 
+	 * @param s:
+	 *            the initial string
+	 * @param list:
+	 *            the empty list
+	 * @return the list with the string values
+	 */
+	protected static ArrayList<String> substring(String s, ArrayList<String> list) {
+		int previousOccurance = 0;
+		int counter = 0;
+		for (int i = 0; i < s.length(); i++) {
+			if (s.charAt(i) == '_') {
+				counter++;
+				if (counter > 1 && previousOccurance < i) {
+					list.add(s.substring(previousOccurance, i - 1));
+				}
+				previousOccurance = i;
+			}
+		}
+		list.add(s.substring(previousOccurance, s.length()));
+
+		return list;
 	}
 }
