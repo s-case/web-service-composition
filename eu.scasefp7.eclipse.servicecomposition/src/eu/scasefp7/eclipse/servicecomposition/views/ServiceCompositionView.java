@@ -4891,60 +4891,30 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 			throws Exception {
 
 		// Check if every node has a path to StartNode and to
-		// EndNode, a condition has two output edges and the graph contains at
-		// least one operation in order to allow
-		// execution.
-		ArrayList<OwlService> previousList = new ArrayList<OwlService>();
-		ArrayList<OwlService> nextList = new ArrayList<OwlService>();
-		int numberOfActions = 0;
+				// EndNode, a condition has two output edges and the graph contains at
+				// least one operation in order to allow
+				// execution.
+				
+				int numberOfActions = 0;
+				OwlService startingService = null;
+				OwlService endingService = null;
 
-		for (OwlService service : graph.getVertices()) {
-			// detect starting service
-			if (service.getType().trim().equals("StartNode")) {
-				startingService = service;
+				for (OwlService service : graph.getVertices()) {
+					// detect starting service
+					if (service.getType().trim().equals("StartNode")) {
+						startingService = service;
 
-			}
-			// detect ending service
-			if (service.getType().trim().equals("EndNode")) {
-				endingService = service;
-
-			}
-		}
-
-		for (OwlService service : graph.getVertices()) {
-
-			if (service.getType().contains("Action") || service.getType().contains("Condition")) {
-
-				if (service.getType().contains("Action")) {
-					numberOfActions++;
-				}
-				if (service.getType().contains("Condition") && (graph.getOutEdges(service).size() < 2)) {
-					final OwlService unlinked = service;
-					try {
-						throw new Exception("\"" + unlinked.getName().toString() + "\""
-								+ " condition should have two output edges.");
-					} catch (Exception e1) {
-						// TODO Auto-generated catch block
-						e1.printStackTrace();
 					}
+					// detect ending service
+					if (service.getType().trim().equals("EndNode")) {
+						endingService = service;
 
-					disp.syncExec(new Runnable() {
-						@Override
-						public void run() {
-							MessageDialog.openInformation(disp.getActiveShell(), "Error occured",
-									"\"" + unlinked.getName().toString() + "\""
-											+ " condition should have two output edges.");
-						}
-					});
-					return Status.CANCEL_STATUS;
+					}
 				}
 
-				previousList = (new PathFinding(graph).findOperationPath(startingService, service));
-				if (previousList.get(0) != startingService) {
-					final OwlService unlinked = previousList.get(0);
+				if (startingService == null) {
 					try {
-						throw new Exception("\"" + unlinked.getName().toString() + "\""
-								+ " has no path to StartNode. Check for unlinked operations.");
+						throw new Exception("Graph should contain a Start Node.");
 					} catch (Exception e1) {
 						// TODO Auto-generated catch block
 						e1.printStackTrace();
@@ -4954,58 +4924,221 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 						@Override
 						public void run() {
 							MessageDialog.openInformation(disp.getActiveShell(), "Error occured",
-									"\"" + unlinked.getName().toString() + "\""
-											+ " has no path to StartNode. Check for unlinked operations.");
+									"Graph should contain a Start Node.");
 						}
+
 					});
 					return Status.CANCEL_STATUS;
 				}
-				nextList = (new PathFinding(graph).findOperationPath(service, endingService));
-				if (nextList.get(0) != service) {
-					final OwlService unlinked = service;
+				if (endingService == null) {
 					try {
-						throw new Exception("\"" + unlinked.getName().toString() + "\""
-								+ " has no path to EndNode. Check for unlinked operations.");
+						throw new Exception("Graph should contain an End Node.");
 					} catch (Exception e1) {
 						// TODO Auto-generated catch block
 						e1.printStackTrace();
 					}
-
 					disp.syncExec(new Runnable() {
+
 						@Override
 						public void run() {
 							MessageDialog.openInformation(disp.getActiveShell(), "Error occured",
-									"\"" + unlinked.getName().toString() + "\""
-											+ " has no path to EndNode. Check for unlinked operations.");
+									"Graph should contain an End Node.");
 						}
+
+					});
+					return Status.CANCEL_STATUS;
+				}
+
+				for (OwlService service : graph.getVertices()) {
+					//check that action has at least one input and one out put edge
+					if (service.getType().contains("Action") || service.getType().contains("Condition")) {
+
+						if (service.getType().contains("Action")) {
+							numberOfActions++;
+							int predecessorCount=0;
+							int successorCount = 0;
+							for (OwlService predecessor: graph.getPredecessors(service)){
+								if (predecessor.getType().contains("Action") || predecessor.getType().contains("Condition") || predecessor.getType().contains("StartNode")){
+									predecessorCount++;
+								}
+							}
+							if (predecessorCount==0){
+								final OwlService unlinked = service;
+								try {
+									throw new Exception("\"" + unlinked.getName().toString() + "\""
+											+ " has no input connection.");
+								} catch (Exception e1) {
+									// TODO Auto-generated catch block
+									e1.printStackTrace();
+								}
+								disp.syncExec(new Runnable() {
+
+									@Override
+									public void run() {
+										MessageDialog.openInformation(disp.getActiveShell(), "Error occured",
+												"\"" + unlinked.getName().toString() + "\""
+														+ " has no input connection.");
+									}
+								});
+								return Status.CANCEL_STATUS;
+							}
+							
+							for (OwlService successor: graph.getSuccessors(service)){
+								if (successor.getType().contains("Action") || successor.getType().contains("Condition") || successor.getType().contains("EndNode")){
+									successorCount++;
+								}
+							}
+							if (successorCount==0){
+								final OwlService unlinked = service;
+								try {
+									throw new Exception("\"" + unlinked.getName().toString() + "\""
+											+ " has no output connection.");
+								} catch (Exception e1) {
+									// TODO Auto-generated catch block
+									e1.printStackTrace();
+								}
+								disp.syncExec(new Runnable() {
+
+									@Override
+									public void run() {
+										MessageDialog.openInformation(disp.getActiveShell(), "Error occured",
+												"\"" + unlinked.getName().toString() + "\""
+														+ " has no output connection.");
+									}
+								});
+								return Status.CANCEL_STATUS;
+							}
+						}
+						
+						//check that end node has one input edge
+						if (service.getType().contains("EndNode") && (graph.getInEdges(service).size() == 0)) {
+							
+							try {
+								throw new Exception("End Node should have an input edge.");
+							} catch (Exception e1) {
+								// TODO Auto-generated catch block
+								e1.printStackTrace();
+							}
+
+							disp.syncExec(new Runnable() {
+								@Override
+								public void run() {
+									MessageDialog.openInformation(disp.getActiveShell(), "Error occured",
+											"End Node should have an input edge.");
+								}
+							});
+							return Status.CANCEL_STATUS;
+						}
+						//check that start node has one output edge
+						if (service.getType().contains("StartNode") && (graph.getOutEdges(service).size() == 0)) {
+							
+							try {
+								throw new Exception("Start Node should have an input edge.");
+							} catch (Exception e1) {
+								// TODO Auto-generated catch block
+								e1.printStackTrace();
+							}
+
+							disp.syncExec(new Runnable() {
+								@Override
+								public void run() {
+									MessageDialog.openInformation(disp.getActiveShell(), "Error occured",
+											"Start Node should have an input edge.");
+								}
+							});
+							return Status.CANCEL_STATUS;
+						}
+						//check that condition has one input edge
+						if (service.getType().contains("Condition") && (graph.getInEdges(service).size() == 0)) {
+							final OwlService unlinked = service;
+							try {
+								throw new Exception("\"" + unlinked.getName().toString() + "\""
+										+ " condition should have one input edge.");
+							} catch (Exception e1) {
+								// TODO Auto-generated catch block
+								e1.printStackTrace();
+							}
+
+							disp.syncExec(new Runnable() {
+								@Override
+								public void run() {
+									MessageDialog.openInformation(disp.getActiveShell(), "Error occured",
+											"\"" + unlinked.getName().toString() + "\""
+													+ " condition should have an input edge.");
+								}
+							});
+							return Status.CANCEL_STATUS;
+						}
+						//check that condition has two output edges
+						if (service.getType().contains("Condition") && (graph.getOutEdges(service).size() < 2)) {
+							final OwlService unlinked = service;
+							try {
+								throw new Exception("\"" + unlinked.getName().toString() + "\""
+										+ " condition should have two output edges.");
+							} catch (Exception e1) {
+								// TODO Auto-generated catch block
+								e1.printStackTrace();
+							}
+
+							disp.syncExec(new Runnable() {
+								@Override
+								public void run() {
+									MessageDialog.openInformation(disp.getActiveShell(), "Error occured",
+											"\"" + unlinked.getName().toString() + "\""
+													+ " condition should have two output edges.");
+								}
+							});
+							return Status.CANCEL_STATUS;
+						}
+						//check that condition output edges have text
+						if (service.getType().contains("Condition")){
+							final OwlService unlinked = service;
+							for (Connector connector : graph.getOutEdges(service)){
+								if (connector.getCondition().isEmpty()){
+									try {
+										throw new Exception("\"" + unlinked.getName().toString() + "\""
+												+ " condition path should have a name.");
+									} catch (Exception e1) {
+										// TODO Auto-generated catch block
+										e1.printStackTrace();
+									}
+
+									disp.syncExec(new Runnable() {
+										@Override
+										public void run() {
+											MessageDialog.openInformation(disp.getActiveShell(), "Error occured",
+													"\"" + unlinked.getName().toString() + "\""
+															+ " condition path should have a name.");
+										}
+									});
+									return Status.CANCEL_STATUS;
+								}
+							}
+						}
+
+					}
+				}
+				if (numberOfActions == 0) {
+
+					try {
+						throw new Exception("Graph should contain at least one Operation.");
+					} catch (Exception e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					}
+					disp.syncExec(new Runnable() {
+
+						@Override
+						public void run() {
+							MessageDialog.openInformation(disp.getActiveShell(), "Error occured",
+									"Graph should contain at least one Action.");
+						}
+
 					});
 					return Status.CANCEL_STATUS;
 
 				}
-
-			}
-		}
-		if (numberOfActions == 0) {
-
-			try {
-				throw new Exception("Graph should contain at least one Operation.");
-			} catch (Exception e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
-			}
-			disp.syncExec(new Runnable() {
-
-				@Override
-				public void run() {
-					MessageDialog.openInformation(disp.getActiveShell(), "Error occured",
-							"Graph should contain at least one Operation.");
-				}
-
-			});
-			return Status.CANCEL_STATUS;
-
-		}
-		return Status.OK_STATUS;
+				return Status.OK_STATUS;
 	}
 
 	private void uploadOnServer() throws Exception {
