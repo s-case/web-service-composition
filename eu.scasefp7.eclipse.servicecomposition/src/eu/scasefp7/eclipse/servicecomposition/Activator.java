@@ -134,7 +134,7 @@ public class Activator extends AbstractUIPlugin {
 		msg += "\n!FAILURE_TIMESTAMP " + formatter.format(new Date());
 		errorID++;
 		if (plugin != null)
-			plugin.getLog().log(new Status(Status.INFO, PLUGIN_ID, Status.OK, msg, exception));
+			plugin.getLog().log(new Status(Status.ERROR, PLUGIN_ID, Status.OK, msg, exception));
 		else
 			exception.printStackTrace();
 	}
