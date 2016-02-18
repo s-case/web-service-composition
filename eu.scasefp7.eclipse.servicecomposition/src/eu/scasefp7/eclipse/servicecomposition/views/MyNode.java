@@ -5,7 +5,7 @@ import java.util.List;
 
 public class MyNode {
 	private final String id;
-	private final String name;
+	private String name;
 	private final Object object;
 	private List<MyNode> connections;
 	private List<MyConnection> linkedConnections;
@@ -34,6 +34,9 @@ public class MyNode {
 		return connections;
 	}
 
+	public void setName(String name){
+		this.name = name;
+	}
 	public void setConnections(List<MyNode> connections) {
 		this.connections = connections;
 	}

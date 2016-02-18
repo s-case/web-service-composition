@@ -222,6 +222,10 @@ public class JungXMItoOwlTransform {
 						+ " (Only Operation, Argument or ApplicationDomain are instances are valid.");
 		}
 		
+		public void setName(String name){
+			this.name = new ComparableName(name);
+		}
+		
 		/**
 		 * <h1>setisMatchedIO</h1> In order to set isMatchedIO variable of OwlService when it is a merged with another IO variable
 		 * @param isMatchedIO

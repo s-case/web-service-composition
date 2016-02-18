@@ -161,6 +161,11 @@ public class JungXMIImporter {
 		protected Service source;
 		protected Service target;
 		protected String condition;
+		
+		public Connector(){
+			
+		}
+		
 		public Connector(Service source, Service target, String condition){
 			this.source = source;
 			this.target = target;

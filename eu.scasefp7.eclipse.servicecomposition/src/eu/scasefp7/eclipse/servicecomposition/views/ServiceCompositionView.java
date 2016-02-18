@@ -1,14 +1,18 @@
 package eu.scasefp7.eclipse.servicecomposition.views;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
 import java.io.Writer;
 import java.net.Authenticator;
 import java.net.HttpURLConnection;
@@ -153,10 +157,12 @@ import org.eclipse.swt.widgets.Control;
 //import org.eclipse.swt.widgets.Dialog;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
+import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
+import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.swt.widgets.Tree;
@@ -197,14 +203,25 @@ import com.jcraft.jsch.ChannelSftp;
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.Session;
 
+import edu.uci.ics.jung.graph.DirectedSparseGraph;
 import edu.uci.ics.jung.graph.SparseMultigraph;
+import edu.uci.ics.jung.graph.UndirectedSparseGraph;
 import edu.uci.ics.jung.graph.util.EdgeType;
+import edu.uci.ics.jung.io.GraphIOException;
+import edu.uci.ics.jung.io.GraphMLWriter;
+import edu.uci.ics.jung.io.graphml.EdgeMetadata;
+import edu.uci.ics.jung.io.graphml.GraphMLReader2;
+import edu.uci.ics.jung.io.graphml.GraphMetadata;
+import edu.uci.ics.jung.io.graphml.HyperEdgeMetadata;
+import edu.uci.ics.jung.io.graphml.NodeMetadata;
 import eu.scasefp7.eclipse.servicecomposition.operationCaller.RAMLCaller;
+import eu.scasefp7.eclipse.core.ontology.LinkedOntologyAPI;
 import eu.scasefp7.eclipse.servicecomposition.Activator;
 import eu.scasefp7.eclipse.servicecomposition.codeGenerator.CallRestfulServiceCode;
 import eu.scasefp7.eclipse.servicecomposition.codeGenerator.CallWSDLServiceCode;
 import eu.scasefp7.eclipse.servicecomposition.codeGenerator.ConnectToMDEOntology;
 import eu.scasefp7.eclipse.servicecomposition.codeGenerator.FunctionCodeNode;
+import eu.scasefp7.eclipse.servicecomposition.codeGenerator.MDERepresentation;
 import eu.scasefp7.eclipse.servicecomposition.codeGenerator.NonLinearCodeGenerator;
 import eu.scasefp7.eclipse.servicecomposition.codeGenerator.RestfulCodeGenerator;
 import eu.scasefp7.eclipse.servicecomposition.codeInterpreter.UserInput;
@@ -227,6 +244,7 @@ import eu.scasefp7.eclipse.servicecomposition.transformer.PathFinding;
 import eu.scasefp7.eclipse.servicecomposition.transformer.Similarity;
 import eu.scasefp7.eclipse.servicecomposition.transformer.Transformer;
 import eu.scasefp7.eclipse.servicecomposition.transformer.JungXMItoOwlTransform.OwlService;
+import eu.scasefp7.eclipse.servicecomposition.ui.ResourceFileSelectionDialog;
 
 /**
  * This sample class demonstrates how to plug-in a new workbench view. The view
@@ -253,10 +271,13 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 	private int layout = 1;
 	private Composite parent;
 	private edu.uci.ics.jung.graph.Graph<OwlService, Connector> jungGraph;
+	File workflowFile;
 	private Action runWorkflowAction;
 	private Action newWorkflowAction;
 	private Action displayCostAction;
 	private Action generateCodeAction;
+	private Action saveWorkflowAction;
+	private Action openWorkflowAction;
 	private ScrolledComposite sc;
 	private Composite rightComposite;
 	private SashForm sashForm;
@@ -413,7 +434,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 						@Override
 						public void handleEvent(Event event) {
 
-							renameCondition(selectedGraphEdge);
+							renameConditionEdge(selectedGraphEdge);
 						}
 					});
 
@@ -456,6 +477,8 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 						item.setText("Link this condition to..");
 						MenuItem item2 = new MenuItem(menu, SWT.NONE);
 						item2.setText("Remove condition");
+						MenuItem item3 = new MenuItem(menu, SWT.NONE);
+						item3.setText("Rename condition");
 
 						if (((MyNode) selectedGraphNode.getData()).getLinkedConnections().size() < 2) {
 							item.setEnabled(true);
@@ -483,6 +506,15 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 							public void handleEvent(Event event) {
 								String mode = "Condition";
 								removeNode(selectedGraphNode, mode);
+							}
+						});
+						// rename condition
+						item3.addListener(SWT.Selection, new Listener() {
+
+							@Override
+							public void handleEvent(Event event) {
+								String mode = "Condition";
+								renameConditionNode(selectedGraphNode);
 							}
 						});
 
@@ -734,6 +766,91 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 	 * @author mkoutli
 	 *
 	 */
+	public class RenameEdgeConditionDialog extends TitleAreaDialog {
+		private Text txtConditionName;
+		private String conditionName;
+
+		public RenameEdgeConditionDialog(Shell parentShell) {
+			super(parentShell);
+		}
+
+		@Override
+		public void create() {
+			super.create();
+			setTitle("Name of the condition");
+			setMessage("Please enter a name for the condition edge", IMessageProvider.INFORMATION);
+		}
+
+		@Override
+		protected Control createDialogArea(Composite parent) {
+			Composite area = (Composite) super.createDialogArea(parent);
+			Composite container = new Composite(area, SWT.NONE);
+			container.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+			GridLayout layout = new GridLayout(2, false);
+			container.setLayout(layout);
+
+			createProjectName(container);
+
+			return area;
+		}
+
+		@Override
+		protected void configureShell(Shell newShell) {
+			super.configureShell(newShell);
+
+			newShell.setText("Condition edge name");
+		}
+
+		private void createProjectName(Composite container) {
+			Label lbtFirstName = new Label(container, SWT.NONE);
+			lbtFirstName.setText("Condition Edge Name");
+
+			GridData dataFirstName = new GridData();
+			dataFirstName.grabExcessHorizontalSpace = true;
+			dataFirstName.horizontalAlignment = GridData.FILL;
+
+			txtConditionName = new Text(container, SWT.BORDER);
+			txtConditionName.setLayoutData(dataFirstName);
+		}
+
+		private void setDialogLocation() {
+			Rectangle monitorArea = getShell().getDisplay().getPrimaryMonitor().getBounds();
+			Rectangle shellArea = getShell().getBounds();
+			int x = monitorArea.x + (monitorArea.width - shellArea.width) / 2;
+			int y = monitorArea.y + (monitorArea.height - shellArea.height) / 2;
+			getShell().setLocation(x, y);
+		}
+
+		@Override
+		protected boolean isResizable() {
+			return true;
+		}
+
+		// save content of the Text field because it gets disposed
+		// as soon as the Dialog closes
+		private void saveInput() {
+			conditionName = txtConditionName.getText();
+
+		}
+
+		@Override
+		protected void okPressed() {
+			saveInput();
+			super.okPressed();
+		}
+
+		public String getConditionName() {
+			return conditionName;
+		}
+
+	}
+
+	/**
+	 * Dialog for renaming condition node
+	 * 
+	 * @author mkoutli
+	 *
+	 */
 	public class RenameConditionDialog extends TitleAreaDialog {
 		private Text txtConditionName;
 		private String conditionName;
@@ -802,13 +919,13 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 		}
 
 		private void createConditionSymbol(Composite container) {
-			
+
 			lineHeight = new Combo(container, SWT.READ_ONLY | SWT.BORDER);
 			lineHeight.setLayoutData(new GridData(SWT.LEAD, SWT.CENTER, false, false));
 			String[] choices = { "==", "!=", ">", "<" };
 			lineHeight.setItems(choices);
 			lineHeight.select(0);
-			
+
 		}
 
 		private void setDialogLocation() {
@@ -867,15 +984,15 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 	 * 
 	 * @param edge
 	 */
-	private void renameCondition(GraphConnection edge) {
+	private void renameConditionEdge(GraphConnection edge) {
 		Shell shell = new Shell();
-		RenameConditionDialog dialog = new RenameConditionDialog(shell);
+		RenameEdgeConditionDialog dialog = new RenameEdgeConditionDialog(shell);
 		String s = "";
 		dialog.create();
 		dialog.configureShell(shell);
 		dialog.setDialogLocation();
 		if (dialog.open() == Window.OK) {
-			s = dialog.getConditionName().trim() + dialog.getConditionSymbol() + dialog.getConditionValue().trim();
+			s = dialog.getConditionName().trim();
 			System.out.println(s);
 		} else {
 			return;
@@ -927,6 +1044,39 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 				}
 
 			});
+		}
+	}
+
+	private void renameConditionNode(GraphNode node) {
+		Shell shell = new Shell();
+		RenameConditionDialog dialog = new RenameConditionDialog(shell);
+
+		String s = "";
+		dialog.create();
+		dialog.configureShell(shell);
+		dialog.setDialogLocation();
+		if (dialog.open() == Window.OK) {
+			if (dialog.getConditionValue().trim().isEmpty()) {
+				s = dialog.getConditionName().trim();
+			} else {
+				s = dialog.getConditionName().trim() + dialog.getConditionSymbol() + dialog.getConditionValue().trim();
+			}
+			System.out.println(s);
+		} else {
+			return;
+		}
+
+		// If a string was returned, say so.
+		if ((s != null) && (s.trim().length() > 0)) {
+
+			((OwlService) ((MyNode) node.getData()).getObject()).setName(s);
+			System.out.println("New condition name " + s);
+			((MyNode) node.getData()).setName(s);
+			node.setText(s);
+			this.setJungGraph(jungGraph);
+			this.updateRightComposite(jungGraph);
+			this.setFocus();
+
 		}
 	}
 
@@ -1496,20 +1646,9 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 							((MyNode) graphNode.getData()).getLinkedConnections().add(connect);
 							((MyNode) graphNode.getData()).getConnections().add((MyNode) selectedGraphNode.getData());
 
-							// EntityConnectionData connectionData = new
-							// EntityConnectionData(
-							// (MyNode) graphNode.getData(), (MyNode)
-							// selectedGraphNode.getData());
-							// viewer.addRelationship(connectionData, (MyNode)
-							// graphNode.getData(),
-							// (MyNode) selectedGraphNode.getData());
-
 							GraphConnection graphConnection = new GraphConnection(graph, SWT.NONE, graphNode,
 									selectedGraphNode);
-							// MyNode dest = (MyNode)
-							// graphConnection.getDestination().getData();
-							// MyNode src = (MyNode)
-							// graphConnection.getSource().getData();
+
 							EntityConnectionData connectionData = new EntityConnectionData((MyNode) graphNode.getData(),
 									(MyNode) selectedGraphNode.getData());
 							graphConnection.setData(connectionData);
@@ -1543,20 +1682,9 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 							((MyNode) selectedGraphNode.getData()).getLinkedConnections().add(connect);
 							((MyNode) selectedGraphNode.getData()).getConnections().add((MyNode) graphNode.getData());
 
-							// EntityConnectionData connectionData = new
-							// EntityConnectionData(
-							// (MyNode) selectedGraphNode.getData(), (MyNode)
-							// graphNode.getData());
-							// viewer.addRelationship(connectionData, (MyNode)
-							// selectedGraphNode.getData(),
-							// (MyNode) graphNode.getData());
-
 							GraphConnection graphConnection = new GraphConnection(graph, SWT.NONE, selectedGraphNode,
 									graphNode);
-							// MyNode dest = (MyNode)
-							// graphConnection.getDestination().getData();
-							// MyNode src = (MyNode)
-							// graphConnection.getSource().getData();
+
 							EntityConnectionData connectionData = new EntityConnectionData(
 									(MyNode) selectedGraphNode.getData(), (MyNode) graphNode.getData());
 							graphConnection.setData(connectionData);
@@ -1575,7 +1703,6 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 				}
 
 				this.setJungGraph(jungGraph);
-				// this.getViewer().setInput(createGraphNodes(jungGraph));
 				this.updateRightComposite(jungGraph);
 				this.setFocus();
 				break;
@@ -1592,18 +1719,12 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 	private void linkNode(Object selectedItem) {
 
 		OwlService source = (OwlService) ((MyNode) selectedGraphNode.getData()).getObject();
-		// String targetName = selectedItem.toString();
-		// Similarity.ComparableName targetComparableName = new
-		// Similarity.ComparableName(targetName);
+
 		Collection<OwlService> services = new ArrayList<OwlService>(jungGraph.getVertices());
-		// Graph graph = viewer.getGraphControl();
 
 		for (OwlService service : services) {
 			if (service.equals(selectedItem)) {
 				if (source.getType().contains("Action") || source.getType().contains("StartNode")) {
-
-					// OwlService target = new OwlService(service);
-					// String condition = "";
 
 					// Add link to Jung Graph
 					jungGraph.addEdge(new Connector(source, service, ""), source, service, EdgeType.DIRECTED);
@@ -1618,20 +1739,8 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 							((MyNode) selectedGraphNode.getData()).getLinkedConnections().add(connect);
 							((MyNode) selectedGraphNode.getData()).getConnections().add((MyNode) graphNode.getData());
 
-							// EntityConnectionData connectionData = new
-							// EntityConnectionData(
-							// (MyNode) selectedGraphNode.getData(), (MyNode)
-							// graphNode.getData());
-							// viewer.addRelationship(connectionData, (MyNode)
-							// selectedGraphNode.getData(),
-							// (MyNode) graphNode.getData());
-
 							GraphConnection graphConnection = new GraphConnection(graph, SWT.NONE, selectedGraphNode,
 									graphNode);
-							// MyNode dest = (MyNode)
-							// graphConnection.getDestination().getData();
-							// MyNode src = (MyNode)
-							// graphConnection.getSource().getData();
 							EntityConnectionData connectionData = new EntityConnectionData(
 									(MyNode) selectedGraphNode.getData(), (MyNode) graphNode.getData());
 							graphConnection.setData(connectionData);
@@ -1641,15 +1750,14 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 
 				} else if (source.getType().contains("Condition")) {
 					Shell shell = new Shell();
-					RenameConditionDialog dialog = new RenameConditionDialog(shell);
+					RenameEdgeConditionDialog dialog = new RenameEdgeConditionDialog(shell);
 					// System.out.println(dialog.open());
 					String s = "";
 					dialog.create();
 					dialog.configureShell(shell);
 					dialog.setDialogLocation();
 					if (dialog.open() == Window.OK) {
-						s = dialog.getConditionName().trim() + dialog.getConditionSymbol()
-								+ dialog.getConditionValue().trim();
+						s = dialog.getConditionName().trim();
 						System.out.println(s);
 					} else {
 						return;
@@ -1690,21 +1798,9 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 									((MyNode) selectedGraphNode.getData()).getConnections()
 											.add((MyNode) graphNode.getData());
 
-									// EntityConnectionData connectionData = new
-									// EntityConnectionData(
-									// (MyNode) selectedGraphNode.getData(),
-									// (MyNode) graphNode.getData());
-									// viewer.addRelationship(connectionData,
-									// (MyNode) selectedGraphNode.getData(),
-									// (MyNode) graphNode.getData());
-
 									GraphConnection graphConnection = new GraphConnection(graph, SWT.NONE,
 											selectedGraphNode, graphNode);
 									graphConnection.setText(s);
-									// MyNode dest = (MyNode)
-									// graphConnection.getDestination().getData();
-									// MyNode src = (MyNode)
-									// graphConnection.getSource().getData();
 									EntityConnectionData connectionData = new EntityConnectionData(
 											(MyNode) selectedGraphNode.getData(), (MyNode) graphNode.getData());
 									graphConnection.setData(connectionData);
@@ -1713,7 +1809,6 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 							}
 
 							this.setJungGraph(jungGraph);
-							// this.getViewer().setInput(createGraphNodes(jungGraph));
 							this.updateRightComposite(jungGraph);
 							this.setFocus();
 						}
@@ -2534,6 +2629,39 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 		};
 		generateCodeAction.setImageDescriptor(getImageDescriptor("icons/java.png"));
 
+		saveWorkflowAction = new Action("Save the workflow.") {
+			public void run() {
+
+				try {
+					final Display disp = Display.getCurrent();
+					IStatus status = checkGraph(jungGraph, disp);
+					if (status.getMessage().equalsIgnoreCase("OK")) {
+						saveWorkflow();
+					}
+
+				} catch (Exception e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+
+			}
+		};
+		saveWorkflowAction.setImageDescriptor(getImageDescriptor("icons/save.png"));
+
+		openWorkflowAction = new Action("Open a workflow file.") {
+			public void run() {
+
+				try {
+					openWorkflow();
+				} catch (Exception e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+
+			}
+		};
+		openWorkflowAction.setImageDescriptor(getImageDescriptor("icons/open.png"));
+
 		Action uploadOnServerAction = new Action("Upload RESTful web service on server.") {
 			public void run() {
 
@@ -2563,13 +2691,15 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 		uploadOnServerAction.setImageDescriptor(getImageDescriptor("icons/database.png"));
 
 		IToolBarManager mgr = getViewSite().getActionBars().getToolBarManager();
-		mgr.add(DownloadOntologyAction);
-		mgr.add(uploadOnServerAction);
-		mgr.add(generateCodeAction);
-		mgr.add(displayCostAction);
 		mgr.add(newWorkflowAction);
+		mgr.add(openWorkflowAction);
+		mgr.add(saveWorkflowAction);
 		mgr.add(runWorkflowAction);
 		mgr.add(cancelWorkflowAction);
+		mgr.add(generateCodeAction);
+		mgr.add(uploadOnServerAction);
+		mgr.add(displayCostAction);
+		mgr.add(DownloadOntologyAction);
 
 	}
 
@@ -4192,6 +4322,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 				conditionText = sourceText.substring(index + 2);
 				sourceText = sourceText.substring(0, index);
 				negativeLogic = !negativeLogic;
+				equality = true;
 			} else if ((index = sourceText.indexOf("=")) != -1) {
 				conditionText = sourceText.substring(index + 1);
 				sourceText = sourceText.substring(0, index);
@@ -4604,6 +4735,540 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 
 	}
 
+	public edu.uci.ics.jung.graph.Graph<OwlService, Connector> loadWorkflowFile(File file) {
+		
+		edu.uci.ics.jung.graph.Graph<OwlService, Connector> g = null;
+
+		try {
+			Algorithm.init();
+
+			ArrayList<Operation> operations = Algorithm
+					.importServices(ResourcesPlugin.getWorkspace().getRoot().getLocation().toString()
+							+ "/.metadata/.plugins/eu.scasefp7.servicecomposition/ontology/WS.owl");
+			g = readFile(file, operations);
+
+		} catch (Exception ex) {
+			ex.printStackTrace();
+
+		}
+
+		return g;
+
+	}
+
+	private edu.uci.ics.jung.graph.Graph<OwlService, Connector> readFile(File file, ArrayList<Operation> operations) {
+		edu.uci.ics.jung.graph.Graph<OwlService, Connector> g = null;
+		HashMap<String, OwlService> nodes = new HashMap<String, OwlService>();
+		HashMap<String, String> ids = new HashMap<String, String>();
+		HashMap<String, String> matchedIO = new HashMap<String, String>();
+		try {
+			BufferedReader fileReader = new BufferedReader(new FileReader(file.getAbsolutePath()));
+
+			/* Create the Graph Transformer */
+			org.apache.commons.collections15.Transformer<GraphMetadata, edu.uci.ics.jung.graph.Graph<OwlService, Connector>> graphTransformer = new org.apache.commons.collections15.Transformer<GraphMetadata, edu.uci.ics.jung.graph.Graph<OwlService, Connector>>() {
+
+				public edu.uci.ics.jung.graph.Graph<OwlService, Connector> transform(GraphMetadata metadata) {
+					if (metadata.getEdgeDefault().equals(metadata.getEdgeDefault().DIRECTED)) {
+						return new DirectedSparseGraph<OwlService, Connector>();
+					} else {
+						return new UndirectedSparseGraph<OwlService, Connector>();
+					}
+				}
+			};
+
+			/* Create the Vertex Transformer */
+
+			org.apache.commons.collections15.Transformer<NodeMetadata, OwlService> vertexTransformer = new org.apache.commons.collections15.Transformer<NodeMetadata, OwlService>() {
+				public OwlService transform(NodeMetadata metadata) {
+
+					OwlService v = null;
+					if (metadata.getProperty("type").equals("Action")) {
+						for (Operation op : operations) {
+							if (metadata.getProperty("name").equals(op.getName().toString())
+									&& metadata.getProperty("url").equals(op.getDomain().getURI())) {
+								v = new OwlService(op);
+								v.setId(Integer.parseInt(metadata.getId().replaceAll("\\D+", "")));
+								nodes.put(metadata.getId(), v);
+							}
+						}
+					} else if (metadata.getProperty("type").equals("Condition")) {
+						v = new OwlService(new Service(metadata.getProperty("name"), metadata.getProperty("type")));
+						nodes.put(metadata.getId(), v);
+					} else if (metadata.getProperty("type").equals("Property")) {
+						ArrayList<Argument> possibleArguments = new ArrayList<Argument>();
+						for (Operation op : operations) {
+							for (Argument arg : op.getInputs()) {
+								addArguments(arg, possibleArguments);
+							}
+							for (Argument arg : op.getOutputs()) {
+								addArguments(arg, possibleArguments);
+							}
+						}
+						for (Argument arg : possibleArguments) {
+							if (arg.getName().toString().equals(metadata.getProperty("name"))
+									&& arg.getType().equals(metadata.getProperty("IOType"))
+									&& Boolean.toString(arg.isNative()).equals(metadata.getProperty("IOisNative"))
+									&& Boolean.toString(arg.isArray()).equals(metadata.getProperty("IOisArray"))
+									&& Boolean.toString(arg.isRequired()).equals(metadata.getProperty("IOisRequired"))
+									&& arg.getBelongsToOperation().getName().toString()
+											.equals(metadata.getProperty("operationName"))) {
+								Argument argument = new Argument(arg);
+								v = new OwlService(argument);
+								// v.getArgument().setOwlService(v);
+							}
+						}
+						ids.put(metadata.getId(), metadata.getId().replaceAll("\\D+", ""));
+						matchedIO.put(metadata.getId(), metadata.getProperty("matchedIO"));
+
+						v.setId(Integer.parseInt(metadata.getId().replaceAll("\\D+", "")));
+						v.setisMatchedIO(Boolean.parseBoolean(metadata.getProperty("matchedIO")));
+
+						nodes.put(metadata.getId(), v);
+					} else {
+						v = new OwlService(new Service("", metadata.getProperty("type")));
+						nodes.put(metadata.getId(), v);
+					}
+
+					return v;
+				}
+			};
+
+			/* Create the Edge Transformer */
+			org.apache.commons.collections15.Transformer<EdgeMetadata, Connector> edgeTransformer = new org.apache.commons.collections15.Transformer<EdgeMetadata, Connector>() {
+				public Connector transform(EdgeMetadata metadata) {
+
+					Connector e = new Connector(nodes.get(metadata.getSource()), nodes.get(metadata.getTarget()), "");
+					if (metadata.getProperty("condition") != null) {
+						e.setCondition(metadata.getProperty("condition"));
+					}
+					return e;
+				}
+			};
+
+			/* Create the Hyperedge Transformer */
+			org.apache.commons.collections15.Transformer<HyperEdgeMetadata, Connector> hyperEdgeTransformer = new org.apache.commons.collections15.Transformer<HyperEdgeMetadata, Connector>() {
+				public Connector transform(HyperEdgeMetadata metadata) {
+					Connector e = new Connector();
+					return e;
+				}
+			};
+
+			/* Create the graphMLReader2 */
+			GraphMLReader2<edu.uci.ics.jung.graph.Graph<OwlService, Connector>, OwlService, Connector> graphReader = new GraphMLReader2<edu.uci.ics.jung.graph.Graph<OwlService, Connector>, OwlService, Connector>(
+					fileReader, graphTransformer, vertexTransformer, edgeTransformer, hyperEdgeTransformer);
+
+			/* Get the new graph object from the GraphML file */
+			g = graphReader.readGraph();
+			ArrayList<Operation> graphOperations = new ArrayList<Operation>();
+			for (OwlService op : g.getVertices()) {
+				if (op.getOperation() != null) {
+					graphOperations.add(op.getOperation());
+				}
+			}
+			ArrayList<Argument> arguments = new ArrayList<Argument>();
+			for (Operation op : graphOperations) {
+				for (Argument arg : op.getInputs()) {
+					addArguments(arg, arguments);
+				}
+				for (Argument arg : op.getOutputs()) {
+					addArguments(arg, arguments);
+				}
+			}
+			for (OwlService arg : g.getVertices()) {
+				if (arg.getArgument() != null) {
+					for (Argument argument : arguments) {
+						if (argument.getName().toString().equals(arg.getArgument().getName().toString())
+								&& argument.getType().equals(arg.getArgument().getType())
+								&& Boolean.toString(argument.isArray())
+										.equals(Boolean.toString(arg.getArgument().isArray()))
+								&& Boolean.toString(argument.isNative())
+										.equals(Boolean.toString(arg.getArgument().isNative()))
+								&& Boolean.toString(argument.isRequired())
+										.equals(Boolean.toString(arg.getArgument().isRequired()))) {
+							arg.setContent(argument);
+							arg.getArgument().setOwlService(arg);
+						}
+						if (argument.equals(arg.getArgument())) {
+							int a = 1;
+						}
+					}
+				}
+			}
+
+		} catch (Exception ex) {
+			ex.printStackTrace();
+
+		}
+		return g;
+	}
+
+	private static void addArguments(Argument arg, ArrayList<Argument> possibleArguments) {
+
+		for (Argument sub : arg.getSubtypes()) {
+
+			addArguments(sub, possibleArguments);
+		}
+		possibleArguments.add(arg);
+
+	}
+
+	/**
+	 * <h1>openWorkflow</h1> Opens a workflow file. Method is called by pressing
+	 * the appropriate button in the toolbar.
+	 */
+	public void openWorkflow() {
+		FileDialog fileDialog = new FileDialog(new Shell());
+		// Set the text
+		fileDialog.setText("Select Workflow File..");
+		// Set filter on .txt files
+		fileDialog.setFilterExtensions(new String[] { "*.sc" });
+		if (scaseProject != null) {
+			fileDialog.setFilterPath(
+					ResourcesPlugin.getWorkspace().getRoot().getLocation().toString() + "/" + scaseProject.getName());
+		} else {
+			fileDialog.setFilterPath(ResourcesPlugin.getWorkspace().getRoot().getLocation().toString());
+		}
+		// Open Dialog and save result of selection
+		String selected = fileDialog.open();
+		File file = new File(selected);
+		final Display disp = Display.getCurrent();
+		Job OpenWorkflowJob = new Job("Open workflow..") {
+			@Override
+			protected IStatus run(IProgressMonitor monitor) {
+				monitor.beginTask("Loading operations...", IProgressMonitor.UNKNOWN);
+
+				try {
+
+					edu.uci.ics.jung.graph.Graph<OwlService, Connector> graph = loadWorkflowFile(file);
+					if (graph != null) {
+						disp.syncExec(new Runnable() {
+							public void run() {
+								setJungGraph(graph);
+								addGraphInZest(graph);
+								updateRightComposite(graph);
+							}
+						});
+					}
+
+					monitor.done();
+					return Status.OK_STATUS;
+				} catch (Exception ex) {
+					ex.printStackTrace();
+					return Status.CANCEL_STATUS;
+				} finally {
+					monitor.done();
+				}
+			}
+		};
+		OpenWorkflowJob.schedule();
+
+	}
+
+	/**
+	 * This class provides a facade for the "save" FileDialog class. If the
+	 * selected file already exists, the user is asked to confirm before
+	 * overwriting.
+	 */
+	public class SafeSaveDialog {
+		// The wrapped FileDialog
+		private FileDialog dlg;
+
+		/**
+		 * SafeSaveDialog constructor
+		 * 
+		 * @param shell
+		 *            the parent shell
+		 */
+		public SafeSaveDialog(Shell shell) {
+			dlg = new FileDialog(shell, SWT.SAVE);
+		}
+
+		public String open() {
+			// We store the selected file name in fileName
+			String fileName = null;
+
+			// The user has finished when one of the
+			// following happens:
+			// 1) The user dismisses the dialog by pressing Cancel
+			// 2) The selected file name does not exist
+			// 3) The user agrees to overwrite existing file
+			boolean done = false;
+
+			while (!done) {
+				// Open the File Dialog
+				fileName = dlg.open();
+				if (fileName == null) {
+					// User has cancelled, so quit and return
+					done = true;
+				} else {
+					// User has selected a file; see if it already exists
+					File file = new File(fileName);
+					if (file.exists()) {
+						// The file already exists; asks for confirmation
+						MessageBox mb = new MessageBox(dlg.getParent(), SWT.ICON_WARNING | SWT.YES | SWT.NO);
+
+						// We really should read this string from a
+						// resource bundle
+						mb.setMessage(fileName + " already exists. Do you want to replace it?");
+
+						// If they click Yes, we're done and we drop out. If
+						// they click No, we redisplay the File Dialog
+						done = mb.open() == SWT.YES;
+					} else {
+						// File does not exist, so drop out
+						done = true;
+					}
+				}
+			}
+			return fileName;
+		}
+
+		public String getFileName() {
+			return dlg.getFileName();
+		}
+
+		public String[] getFileNames() {
+			return dlg.getFileNames();
+		}
+
+		public String[] getFilterExtensions() {
+			return dlg.getFilterExtensions();
+		}
+
+		public String[] getFilterNames() {
+			return dlg.getFilterNames();
+		}
+
+		public String getFilterPath() {
+			return dlg.getFilterPath();
+		}
+
+		public void setFileName(String string) {
+			dlg.setFileName(string);
+		}
+
+		public void setFilterExtensions(String[] extensions) {
+			dlg.setFilterExtensions(extensions);
+		}
+
+		public void setFilterNames(String[] names) {
+			dlg.setFilterNames(names);
+		}
+
+		public void setFilterPath(String string) {
+			dlg.setFilterPath(string);
+		}
+
+		public Shell getParent() {
+			return dlg.getParent();
+		}
+
+		public int getStyle() {
+			return dlg.getStyle();
+		}
+
+		public String getText() {
+			return dlg.getText();
+		}
+
+		public void setText(String string) {
+			dlg.setText(string);
+		}
+	}
+
+	/**
+	 * <h1>saveWorkflow</h1> Saves the current workflow.Method is called by
+	 * pressing the appropriate button in the toolbar.
+	 */
+	public void saveWorkflow() {
+
+		Shell shell = new Shell();
+		SafeSaveDialog dialog = new SafeSaveDialog(shell);
+		dialog.setFilterExtensions(new String[] { "*.sc"});
+		dialog.setText("Save workflow..");
+		if (scaseProject != null) {
+			dialog.setFilterPath(
+					ResourcesPlugin.getWorkspace().getRoot().getLocation().toString() + "/" + scaseProject.getName());
+		} else {
+			dialog.setFilterPath(ResourcesPlugin.getWorkspace().getRoot().getLocation().toString());
+		}
+
+		dialog.setFileName("workflow.sc");
+		String path = dialog.open();
+		
+
+		GraphMLWriter<OwlService, Connector> graphWriter = new GraphMLWriter<OwlService, Connector>();
+
+		PrintWriter out = null;
+		// String path =
+		// ResourcesPlugin.getWorkspace().getRoot().getLocation().toString();
+		try {
+			workflowFile = new File(path);
+			if (!workflowFile.exists()) {
+				workflowFile.getParentFile().mkdirs();
+				workflowFile.createNewFile();
+			}
+			out = new PrintWriter(new BufferedWriter(new FileWriter(workflowFile, false)));
+
+			graphWriter.addVertexData("type", "The type of the vertex", "Action",
+					new org.apache.commons.collections15.Transformer<OwlService, String>() {
+						public String transform(OwlService v) {
+							return (v.getType());
+						}
+					});
+
+			graphWriter.addVertexData("matchedIO", "Vertex is matched IO", "false",
+					new org.apache.commons.collections15.Transformer<OwlService, String>() {
+						public String transform(OwlService v) {
+							return Boolean.toString(v.getisMatchedIO());
+						}
+					});
+
+			graphWriter.addVertexData("name", "Vertex name", "",
+					new org.apache.commons.collections15.Transformer<OwlService, String>() {
+						public String transform(OwlService v) {
+
+							return (v.getName().toString());
+						}
+					});
+
+			graphWriter.addVertexData("url", "Vertex url", "",
+					new org.apache.commons.collections15.Transformer<OwlService, String>() {
+						public String transform(OwlService v) {
+							String url = "";
+							if (v.getOperation() != null) {
+								url = v.getOperation().getDomain().getURI();
+							}
+							return url;
+						}
+					});
+
+			// graphWriter.addVertexData("inputs", "Vertex inputs", "",
+			// new org.apache.commons.collections15.Transformer<OwlService,
+			// String>() {
+			// public String transform(OwlService v) {
+			// String inputNames = "";
+			// if (v.getOperation() != null) {
+			// for (Argument input : v.getOperation().getInputs()) {
+			// inputNames += input.getName().toString() + ",";
+			// }
+			// }
+			// return inputNames;
+			// }
+			// });
+			//
+			// graphWriter.addVertexData("outputs", "Vertex outputs", "",
+			// new org.apache.commons.collections15.Transformer<OwlService,
+			// String>() {
+			// public String transform(OwlService v) {
+			// String outputNames = "";
+			// if (v.getOperation() != null) {
+			// for (Argument output : v.getOperation().getOutputs()) {
+			// outputNames += output.getName().toString() + ",";
+			// }
+			// }
+			// return outputNames;
+			// }
+			// });
+
+			graphWriter.addVertexData("operationName", "Vertex operation name", "",
+					new org.apache.commons.collections15.Transformer<OwlService, String>() {
+						public String transform(OwlService v) {
+							String operationName = "";
+							if (v.getOperation() != null) {
+								operationName = v.getOperation().getName().toString();
+							} else if (v.getArgument() != null) {
+								operationName = v.getArgument().getBelongsToOperation().getName().toString();
+							}
+							return operationName;
+						}
+					});
+
+			graphWriter.addVertexData("IOType", "IO Argument type", "",
+					new org.apache.commons.collections15.Transformer<OwlService, String>() {
+						public String transform(OwlService v) {
+							String type = "";
+							if (v.getArgument() != null) {
+								type = v.getArgument().getType();
+							}
+							return type;
+						}
+					});
+
+			graphWriter.addVertexData("IOisNative", "IO Argument isNative value", "",
+					new org.apache.commons.collections15.Transformer<OwlService, String>() {
+						public String transform(OwlService v) {
+							String isNative = "";
+							if (v.getArgument() != null) {
+								isNative = Boolean.toString(v.getArgument().isNative());
+							}
+							return isNative;
+						}
+					});
+			graphWriter.addVertexData("IOisArray", "IO Argument isArray value", "",
+					new org.apache.commons.collections15.Transformer<OwlService, String>() {
+						public String transform(OwlService v) {
+							String isArray = "";
+							if (v.getArgument() != null) {
+								isArray = Boolean.toString(v.getArgument().isArray());
+							}
+							return isArray;
+						}
+					});
+
+			graphWriter.addVertexData("IOisRequired", "IO Argument isRequired value", "",
+					new org.apache.commons.collections15.Transformer<OwlService, String>() {
+						public String transform(OwlService v) {
+							String isRequired = "";
+							if (v.getArgument() != null) {
+								isRequired = Boolean.toString(v.getArgument().isRequired());
+							}
+							return isRequired;
+						}
+					});
+
+			graphWriter.addVertexData("IOSubtypes", "IO Argument Subtypes", "",
+					new org.apache.commons.collections15.Transformer<OwlService, String>() {
+						public String transform(OwlService v) {
+							String subtypes = "";
+							if (v.getArgument() != null) {
+								for (Argument sub : v.getArgument().getSubtypes()) {
+									subtypes += sub.getName().toString() + ",";
+								}
+							}
+							return subtypes;
+						}
+					});
+
+			graphWriter.addEdgeData("condition", "Edge condition name", "",
+					new org.apache.commons.collections15.Transformer<Connector, String>() {
+						public String transform(Connector v) {
+
+							return v.getCondition();
+						}
+					});
+
+			graphWriter.setVertexIDs(new org.apache.commons.collections15.Transformer<OwlService, String>() {
+				public String transform(OwlService v) {
+					if (v.getName().toString().isEmpty()) {
+						return v.getType() + Integer.toString(v.getId());
+					}
+					return v.getName().toString() + Integer.toString(v.getId());
+				}
+			});
+
+			graphWriter.save(jungGraph, out);
+
+		} catch (IOException e) {
+			e.printStackTrace();
+		} finally {
+			if (out != null) {
+				out.close();
+			}
+		}
+
+	}
+
 	/**
 	 * <h1>generate</h1> Creates a RESTful web service of the workflow, in a
 	 * maven-based eclipse project. Method is called by pressing the appropriate
@@ -4891,169 +5556,212 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 			throws Exception {
 
 		// Check if every node has a path to StartNode and to
-				// EndNode, a condition has two output edges and the graph contains at
-				// least one operation in order to allow
-				// execution.
-				
-				int numberOfActions = 0;
-				OwlService startingService = null;
-				OwlService endingService = null;
+		// EndNode, a condition has two output edges and the graph contains at
+		// least one operation in order to allow
+		// execution.
 
-				for (OwlService service : graph.getVertices()) {
-					// detect starting service
-					if (service.getType().trim().equals("StartNode")) {
-						startingService = service;
+		int numberOfActions = 0;
+		OwlService startingService = null;
+		OwlService endingService = null;
 
+		for (OwlService service : graph.getVertices()) {
+			// detect starting service
+			if (service.getType().trim().equals("StartNode")) {
+				startingService = service;
+
+			}
+			// detect ending service
+			if (service.getType().trim().equals("EndNode")) {
+				endingService = service;
+
+			}
+		}
+
+		if (startingService == null) {
+			try {
+				throw new Exception("Graph should contain a Start Node.");
+			} catch (Exception e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+			disp.syncExec(new Runnable() {
+
+				@Override
+				public void run() {
+					MessageDialog.openInformation(disp.getActiveShell(), "Error occured",
+							"Graph should contain a Start Node.");
+				}
+
+			});
+			return Status.CANCEL_STATUS;
+		}
+		if (endingService == null) {
+			try {
+				throw new Exception("Graph should contain an End Node.");
+			} catch (Exception e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+			disp.syncExec(new Runnable() {
+
+				@Override
+				public void run() {
+					MessageDialog.openInformation(disp.getActiveShell(), "Error occured",
+							"Graph should contain an End Node.");
+				}
+
+			});
+			return Status.CANCEL_STATUS;
+		}
+
+		for (OwlService service : graph.getVertices()) {
+			// check that action has at least one input and one out put edge
+			if (service.getType().contains("Action") || service.getType().contains("Condition")) {
+
+				if (service.getType().contains("Action")) {
+					numberOfActions++;
+					int predecessorCount = 0;
+					int successorCount = 0;
+					for (OwlService predecessor : graph.getPredecessors(service)) {
+						if (predecessor.getType().contains("Action") || predecessor.getType().contains("Condition")
+								|| predecessor.getType().contains("StartNode")) {
+							predecessorCount++;
+						}
 					}
-					// detect ending service
-					if (service.getType().trim().equals("EndNode")) {
-						endingService = service;
+					if (predecessorCount == 0) {
+						final OwlService unlinked = service;
+						try {
+							throw new Exception(
+									"\"" + unlinked.getName().toString() + "\"" + " has no input connection.");
+						} catch (Exception e1) {
+							// TODO Auto-generated catch block
+							e1.printStackTrace();
+						}
+						disp.syncExec(new Runnable() {
 
+							@Override
+							public void run() {
+								MessageDialog.openInformation(disp.getActiveShell(), "Error occured",
+										"\"" + unlinked.getName().toString() + "\"" + " has no input connection.");
+							}
+						});
+						return Status.CANCEL_STATUS;
+					}
+
+					for (OwlService successor : graph.getSuccessors(service)) {
+						if (successor.getType().contains("Action") || successor.getType().contains("Condition")
+								|| successor.getType().contains("EndNode")) {
+							successorCount++;
+						}
+					}
+					if (successorCount == 0) {
+						final OwlService unlinked = service;
+						try {
+							throw new Exception(
+									"\"" + unlinked.getName().toString() + "\"" + " has no output connection.");
+						} catch (Exception e1) {
+							// TODO Auto-generated catch block
+							e1.printStackTrace();
+						}
+						disp.syncExec(new Runnable() {
+
+							@Override
+							public void run() {
+								MessageDialog.openInformation(disp.getActiveShell(), "Error occured",
+										"\"" + unlinked.getName().toString() + "\"" + " has no output connection.");
+							}
+						});
+						return Status.CANCEL_STATUS;
 					}
 				}
 
-				if (startingService == null) {
+				// check that end node has one input edge
+				if (service.getType().contains("EndNode") && (graph.getInEdges(service).size() == 0)) {
+
 					try {
-						throw new Exception("Graph should contain a Start Node.");
+						throw new Exception("End Node should have an input edge.");
 					} catch (Exception e1) {
 						// TODO Auto-generated catch block
 						e1.printStackTrace();
 					}
-					disp.syncExec(new Runnable() {
 
+					disp.syncExec(new Runnable() {
 						@Override
 						public void run() {
 							MessageDialog.openInformation(disp.getActiveShell(), "Error occured",
-									"Graph should contain a Start Node.");
+									"End Node should have an input edge.");
 						}
-
 					});
 					return Status.CANCEL_STATUS;
 				}
-				if (endingService == null) {
+				// check that start node has one output edge
+				if (service.getType().contains("StartNode") && (graph.getOutEdges(service).size() == 0)) {
+
 					try {
-						throw new Exception("Graph should contain an End Node.");
+						throw new Exception("Start Node should have an input edge.");
 					} catch (Exception e1) {
 						// TODO Auto-generated catch block
 						e1.printStackTrace();
 					}
-					disp.syncExec(new Runnable() {
 
+					disp.syncExec(new Runnable() {
 						@Override
 						public void run() {
 							MessageDialog.openInformation(disp.getActiveShell(), "Error occured",
-									"Graph should contain an End Node.");
+									"Start Node should have an input edge.");
 						}
-
 					});
 					return Status.CANCEL_STATUS;
 				}
+				// check that condition has one input edge
+				if (service.getType().contains("Condition") && (graph.getInEdges(service).size() == 0)) {
+					final OwlService unlinked = service;
+					try {
+						throw new Exception(
+								"\"" + unlinked.getName().toString() + "\"" + " condition should have one input edge.");
+					} catch (Exception e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					}
 
-				for (OwlService service : graph.getVertices()) {
-					//check that action has at least one input and one out put edge
-					if (service.getType().contains("Action") || service.getType().contains("Condition")) {
-
-						if (service.getType().contains("Action")) {
-							numberOfActions++;
-							int predecessorCount=0;
-							int successorCount = 0;
-							for (OwlService predecessor: graph.getPredecessors(service)){
-								if (predecessor.getType().contains("Action") || predecessor.getType().contains("Condition") || predecessor.getType().contains("StartNode")){
-									predecessorCount++;
-								}
-							}
-							if (predecessorCount==0){
-								final OwlService unlinked = service;
-								try {
-									throw new Exception("\"" + unlinked.getName().toString() + "\""
-											+ " has no input connection.");
-								} catch (Exception e1) {
-									// TODO Auto-generated catch block
-									e1.printStackTrace();
-								}
-								disp.syncExec(new Runnable() {
-
-									@Override
-									public void run() {
-										MessageDialog.openInformation(disp.getActiveShell(), "Error occured",
-												"\"" + unlinked.getName().toString() + "\""
-														+ " has no input connection.");
-									}
-								});
-								return Status.CANCEL_STATUS;
-							}
-							
-							for (OwlService successor: graph.getSuccessors(service)){
-								if (successor.getType().contains("Action") || successor.getType().contains("Condition") || successor.getType().contains("EndNode")){
-									successorCount++;
-								}
-							}
-							if (successorCount==0){
-								final OwlService unlinked = service;
-								try {
-									throw new Exception("\"" + unlinked.getName().toString() + "\""
-											+ " has no output connection.");
-								} catch (Exception e1) {
-									// TODO Auto-generated catch block
-									e1.printStackTrace();
-								}
-								disp.syncExec(new Runnable() {
-
-									@Override
-									public void run() {
-										MessageDialog.openInformation(disp.getActiveShell(), "Error occured",
-												"\"" + unlinked.getName().toString() + "\""
-														+ " has no output connection.");
-									}
-								});
-								return Status.CANCEL_STATUS;
-							}
+					disp.syncExec(new Runnable() {
+						@Override
+						public void run() {
+							MessageDialog.openInformation(disp.getActiveShell(), "Error occured", "\""
+									+ unlinked.getName().toString() + "\"" + " condition should have an input edge.");
 						}
-						
-						//check that end node has one input edge
-						if (service.getType().contains("EndNode") && (graph.getInEdges(service).size() == 0)) {
-							
-							try {
-								throw new Exception("End Node should have an input edge.");
-							} catch (Exception e1) {
-								// TODO Auto-generated catch block
-								e1.printStackTrace();
-							}
+					});
+					return Status.CANCEL_STATUS;
+				}
+				// check that condition has two output edges
+				if (service.getType().contains("Condition") && (graph.getOutEdges(service).size() < 2)) {
+					final OwlService unlinked = service;
+					try {
+						throw new Exception("\"" + unlinked.getName().toString() + "\""
+								+ " condition should have two output edges.");
+					} catch (Exception e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					}
 
-							disp.syncExec(new Runnable() {
-								@Override
-								public void run() {
-									MessageDialog.openInformation(disp.getActiveShell(), "Error occured",
-											"End Node should have an input edge.");
-								}
-							});
-							return Status.CANCEL_STATUS;
+					disp.syncExec(new Runnable() {
+						@Override
+						public void run() {
+							MessageDialog.openInformation(disp.getActiveShell(), "Error occured",
+									"\"" + unlinked.getName().toString() + "\""
+											+ " condition should have two output edges.");
 						}
-						//check that start node has one output edge
-						if (service.getType().contains("StartNode") && (graph.getOutEdges(service).size() == 0)) {
-							
-							try {
-								throw new Exception("Start Node should have an input edge.");
-							} catch (Exception e1) {
-								// TODO Auto-generated catch block
-								e1.printStackTrace();
-							}
-
-							disp.syncExec(new Runnable() {
-								@Override
-								public void run() {
-									MessageDialog.openInformation(disp.getActiveShell(), "Error occured",
-											"Start Node should have an input edge.");
-								}
-							});
-							return Status.CANCEL_STATUS;
-						}
-						//check that condition has one input edge
-						if (service.getType().contains("Condition") && (graph.getInEdges(service).size() == 0)) {
-							final OwlService unlinked = service;
+					});
+					return Status.CANCEL_STATUS;
+				}
+				// check that condition output edges have text
+				if (service.getType().contains("Condition")) {
+					final OwlService unlinked = service;
+					for (Connector connector : graph.getOutEdges(service)) {
+						if (connector.getCondition().isEmpty()) {
 							try {
 								throw new Exception("\"" + unlinked.getName().toString() + "\""
-										+ " condition should have one input edge.");
+										+ " condition path should have a name.");
 							} catch (Exception e1) {
 								// TODO Auto-generated catch block
 								e1.printStackTrace();
@@ -5064,81 +5772,37 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 								public void run() {
 									MessageDialog.openInformation(disp.getActiveShell(), "Error occured",
 											"\"" + unlinked.getName().toString() + "\""
-													+ " condition should have an input edge.");
+													+ " condition path should have a name.");
 								}
 							});
 							return Status.CANCEL_STATUS;
 						}
-						//check that condition has two output edges
-						if (service.getType().contains("Condition") && (graph.getOutEdges(service).size() < 2)) {
-							final OwlService unlinked = service;
-							try {
-								throw new Exception("\"" + unlinked.getName().toString() + "\""
-										+ " condition should have two output edges.");
-							} catch (Exception e1) {
-								// TODO Auto-generated catch block
-								e1.printStackTrace();
-							}
-
-							disp.syncExec(new Runnable() {
-								@Override
-								public void run() {
-									MessageDialog.openInformation(disp.getActiveShell(), "Error occured",
-											"\"" + unlinked.getName().toString() + "\""
-													+ " condition should have two output edges.");
-								}
-							});
-							return Status.CANCEL_STATUS;
-						}
-						//check that condition output edges have text
-						if (service.getType().contains("Condition")){
-							final OwlService unlinked = service;
-							for (Connector connector : graph.getOutEdges(service)){
-								if (connector.getCondition().isEmpty()){
-									try {
-										throw new Exception("\"" + unlinked.getName().toString() + "\""
-												+ " condition path should have a name.");
-									} catch (Exception e1) {
-										// TODO Auto-generated catch block
-										e1.printStackTrace();
-									}
-
-									disp.syncExec(new Runnable() {
-										@Override
-										public void run() {
-											MessageDialog.openInformation(disp.getActiveShell(), "Error occured",
-													"\"" + unlinked.getName().toString() + "\""
-															+ " condition path should have a name.");
-										}
-									});
-									return Status.CANCEL_STATUS;
-								}
-							}
-						}
-
 					}
 				}
-				if (numberOfActions == 0) {
 
-					try {
-						throw new Exception("Graph should contain at least one Operation.");
-					} catch (Exception e1) {
-						// TODO Auto-generated catch block
-						e1.printStackTrace();
-					}
-					disp.syncExec(new Runnable() {
+			}
+		}
+		if (numberOfActions == 0) {
 
-						@Override
-						public void run() {
-							MessageDialog.openInformation(disp.getActiveShell(), "Error occured",
-									"Graph should contain at least one Action.");
-						}
+			try {
+				throw new Exception("Graph should contain at least one Operation.");
+			} catch (Exception e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+			disp.syncExec(new Runnable() {
 
-					});
-					return Status.CANCEL_STATUS;
-
+				@Override
+				public void run() {
+					MessageDialog.openInformation(disp.getActiveShell(), "Error occured",
+							"Graph should contain at least one Action.");
 				}
-				return Status.OK_STATUS;
+
+			});
+			return Status.CANCEL_STATUS;
+
+		}
+		return Status.OK_STATUS;
 	}
 
 	private void uploadOnServer() throws Exception {

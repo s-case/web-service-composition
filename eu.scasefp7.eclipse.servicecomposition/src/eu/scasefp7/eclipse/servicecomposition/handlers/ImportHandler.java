@@ -51,7 +51,7 @@ public class ImportHandler extends AbstractHandler {
 
 	@Override
 	public Object execute(ExecutionEvent event) throws ExecutionException {
-		ResourceFileSelectionDialog dialog = new ResourceFileSelectionDialog("Select a .scd file", "",
+		ResourceFileSelectionDialog dialog = new ResourceFileSelectionDialog("Select an .scd file", "",
 				new String[] { "scd" });
 		dialog.open();
 		final Object[] selections = dialog.getResult();

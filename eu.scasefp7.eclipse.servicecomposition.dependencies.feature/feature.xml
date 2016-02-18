@@ -231,8 +231,6 @@ project S-CASE
          version="0.0.0"
          unpack="false"/>
 
-   
-
    <plugin
          id="net.sf.jung.api"
          download-size="0"
@@ -240,6 +238,13 @@ project S-CASE
          version="0.0.0"
          unpack="false"/>
 
+	<plugin
+         id="net.sf.jung.io"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+         
    <plugin
          id="net.sourceforge.collections.generic"
          download-size="0"

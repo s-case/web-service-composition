@@ -231,7 +231,7 @@ public class FunctionCodeNode extends CodeNode {
 			if (next.getArgument() == null && !next.getName().isEmpty()) {
 				if (!graph.findEdge(service, next).toString().isEmpty()) {
 					String varName = "";
-					String conditionName = service.getName().toString();
+					String conditionName = service.getName().getComparableForm();
 					String conditionValue = "";
 					int index;
 					String symbol = "";
@@ -383,7 +383,7 @@ public class FunctionCodeNode extends CodeNode {
 		for (OwlService service: graph.getPredecessors(sub)){
 			if (service.getArgument()!=null){
 				ret=".get"+service.getName().getContent().replaceAll("[0123456789]", "")+"()"+ret;
-				roadToSub(service, graph, ret);
+				ret=roadToSub(service, graph, ret);
 			}else{
 				return ret;
 			}
