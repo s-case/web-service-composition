@@ -354,7 +354,11 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 					GraphNode graphNode = (GraphNode) graph.getNodes().get(i);
 					graphNode.unhighlight();
 				}
-				graph.setSelection(new GraphItem[] { (GraphNode) e.item });
+				if (e.item instanceof GraphNode) {
+					graph.setSelection(new GraphItem[] { (GraphNode) e.item });
+				} else {
+					graph.setSelection(new GraphItem[] { (GraphConnection) e.item });
+				}
 
 			}
 
@@ -4736,7 +4740,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 	}
 
 	public edu.uci.ics.jung.graph.Graph<OwlService, Connector> loadWorkflowFile(File file) {
-		
+
 		edu.uci.ics.jung.graph.Graph<OwlService, Connector> g = null;
 
 		try {
@@ -5084,7 +5088,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 
 		Shell shell = new Shell();
 		SafeSaveDialog dialog = new SafeSaveDialog(shell);
-		dialog.setFilterExtensions(new String[] { "*.sc"});
+		dialog.setFilterExtensions(new String[] { "*.sc" });
 		dialog.setText("Save workflow..");
 		if (scaseProject != null) {
 			dialog.setFilterPath(
@@ -5095,7 +5099,6 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 
 		dialog.setFileName("workflow.sc");
 		String path = dialog.open();
-		
 
 		GraphMLWriter<OwlService, Connector> graphWriter = new GraphMLWriter<OwlService, Connector>();
 
