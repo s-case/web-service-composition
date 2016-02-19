@@ -52,18 +52,7 @@ import org.codehaus.plexus.classworlds.realm.ClassRealm;
 
 import javax.inject.Inject;
 
-//import org.apache.commons.fileupload.FileItem;
-//import org.apache.commons.fileupload.FileUpload;
-//import org.apache.commons.fileupload.FileUploadBase.FileUploadIOException;
-//import org.apache.commons.fileupload.FileUploadException;
-//import org.apache.commons.fileupload.disk.DiskFileItemFactory;
-//import org.apache.commons.fileupload.util.Streams;
-//import org.apache.maven.shared.invoker.DefaultInvocationRequest;
-//import org.apache.maven.shared.invoker.DefaultInvoker;
-//import org.apache.maven.shared.invoker.InvocationOutputHandler;
-//import org.apache.maven.shared.invoker.InvocationRequest;
-//import org.apache.maven.shared.invoker.InvocationResult;
-//import org.apache.maven.shared.invoker.Invoker;
+
 import org.eclipse.core.commands.ExecutionException;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IFolder;
@@ -1527,6 +1516,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 						monitor.done();
 						return Status.OK_STATUS;
 					} catch (Exception ex) {
+						Activator.log("Error while loading the operations from the ontology", ex);
 						ex.printStackTrace();
 						return Status.CANCEL_STATUS;
 					} finally {
@@ -1876,7 +1866,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 					transformer.expandOperations(owlService);
 					// transformer.createLinkedVariableGraph();
 				} catch (Exception e) {
-					// TODO Auto-generated catch block
+					Activator.log("Error while expanding new operation", e);
 					e.printStackTrace();
 				}
 				edu.uci.ics.jung.graph.Graph<OwlService, Connector> tempGraph = new SparseMultigraph<OwlService, Connector>();
@@ -1887,7 +1877,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 					tempTransformer.expandOperations(owlService);
 
 				} catch (Exception e) {
-					// TODO Auto-generated catch block
+					Activator.log("Error while expanding new operation", e);
 					e.printStackTrace();
 				}
 				addOperationInZest(owlService, tempGraph);
@@ -2535,7 +2525,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 					cleanOutputs();
 					runWorkflow();
 				} catch (Exception e) {
-					// TODO Auto-generated catch block
+					Activator.log("Error while running the workflow", e);
 					e.printStackTrace();
 				}
 
@@ -2568,7 +2558,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 							ImportHandler.ontologyCheck(shell, disp);
 							return Status.OK_STATUS;
 						} catch (Exception e) {
-							// TODO Auto-generated catch block
+							Activator.log("Error while downloading the ontology", e);
 							// e.printStackTrace();
 							return Status.CANCEL_STATUS;
 						}
@@ -3373,7 +3363,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 					try {
 						service.setContent((Value) arg);
 					} catch (Exception e) {
-						// TODO Auto-generated catch block
+						Activator.log("Error setting outputs content", e);
 						e.printStackTrace();
 					}
 				}
@@ -3525,6 +3515,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 						VALUE_SIMILARITY_THRESHOLD = Double
 								.parseDouble(prop.getProperty("interpreter.VALUE_SIMILARITY_THRESHOLD"));
 					} catch (Exception e) {
+						Activator.log("Error occured while trying to load matcher settings from " + propFileName, e);
 						System.err.println("Error occured while trying to load matcher settings from " + propFileName);
 					}
 					edu.uci.ics.jung.graph.Graph<OwlService, Connector> graph = new SparseMultigraph<OwlService, Connector>();
@@ -3888,7 +3879,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 								 * getOperation());
 								 */
 							} catch (Exception e) {
-
+								Activator.log("Error occured while calling " + currentService.getOperation().getName().toString(), e);
 								e.printStackTrace();
 								disp.syncExec(new Runnable() {
 									@Override
@@ -4023,6 +4014,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 					monitor.done();
 					return Status.OK_STATUS;
 				} catch (Exception ex) {
+					Activator.log("Error while running the workflow", ex);
 					ex.printStackTrace();
 					monitor.done();
 					return Status.CANCEL_STATUS;
@@ -4752,6 +4744,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 			g = readFile(file, operations);
 
 		} catch (Exception ex) {
+			Activator.log("Error loading workflow file", ex);
 			ex.printStackTrace();
 
 		}
@@ -4900,6 +4893,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 			}
 
 		} catch (Exception ex) {
+			Activator.log("Error while reading graph from workflow file", ex);
 			ex.printStackTrace();
 
 		}
@@ -5263,6 +5257,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 			graphWriter.save(jungGraph, out);
 
 		} catch (IOException e) {
+			Activator.log("Error while saving workflow", e);
 			e.printStackTrace();
 		} finally {
 			if (out != null) {
@@ -5516,7 +5511,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 						root.refreshLocal(IResource.DEPTH_INFINITE, monitor);
 
 					} catch (Exception e) {
-						// TODO Auto-generated catch block
+						Activator.log("Error while generating java project", e);
 						e.printStackTrace();
 						return Status.CANCEL_STATUS;
 					}
@@ -5835,6 +5830,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 					+ "/target/" + projectName + "-0.0.1-SNAPSHOT.war");
 			channelSftp.put(new FileInputStream(f), f.getName());
 		} catch (Exception ex) {
+			Activator.log("Error while uploading war file on server", ex);
 			ex.printStackTrace();
 
 		}
@@ -5991,112 +5987,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 							}
 						});
 
-						// //upload to WS ontology
-						// //get application domain
-						// //TODO it should not be hardcoded!!!!!!!!
-						// String
-						// applicationDomainURI="http://www.scasefp7.eu/wsOntology.owl#BusinessDomain";
-						// WSOntology ws=new WSOntology();
-						// try{
-						// ws.createNewWSOperation(generator.getOperation().getHasName(),
-						// generator.getInputVariables(),
-						// generator.getUriParameters(),
-						// generator.getOutputVariables(),
-						// generator.getOperation().getBelongsToURL(),applicationDomainURI);
-						// }catch(Exception e){
-						// disp.syncExec(new Runnable() {
-						// @Override
-						// public void run() {
-						// MessageDialog.openError(shell, "Upload is complete!",
-						// currentProject.getName()
-						// + " problem with generator\n" +
-						// e.getStackTrace().toString());
-						//
-						// }
-						// });
-						// return Status.CANCEL_STATUS;
-						// }
-						// try{
-						//
-						//
-						// ws.saveToOWL();
-						//
-						// }catch(Exception e){
-						// disp.syncExec(new Runnable() {
-						// @Override
-						// public void run() {
-						// MessageDialog.openError(shell, "Upload is complete!",
-						// currentProject.getName()
-						// + " could not be saved\n" +
-						// e.getStackTrace().toString());
-						//
-						// }
-						// });
-						// return Status.CANCEL_STATUS;
-						// }
-						//
-						//
-						// try{
-						// RepositoryClient cl=new RepositoryClient();
-						// cl.uploadOntology();
-						// }catch(Exception e){
-						// disp.syncExec(new Runnable() {
-						// @Override
-						// public void run() {
-						// MessageDialog.openError(shell, "Upload is complete!",
-						// currentProject.getName()
-						// + " could not be uploaded on YouRest\n"+
-						// e.getStackTrace().toString());
-						//
-						// }
-						// });
-						// return Status.CANCEL_STATUS;
-						// }
-						//
-						// disp.syncExec(new Runnable() {
-						// public void run() {
-						// boolean answer = MessageDialog.openConfirm(shell,
-						// "Upload is complete!",
-						// "The web service was uploaded successfully!\n"
-						// + "Base URI: http://109.231.127.61:8080/" +
-						// currentProject.getName()
-						// + "-0.0.1-SNAPSHOT/\n" + "Resource Path:
-						// rest/result/query\n\n"
-						// + "Would you like to also connect the web service to
-						// the MDE ontology?");
-						//
-						// if (answer) {
-						// // OK Button selected
-						// try {
-						// ConnectToMDEOntology.writeToOntology(scaseProject,
-						// gGenerator.getOperation());
-						// } catch (Exception e) {
-						// // TODO Auto-generated catch block
-						// e.printStackTrace();
-						// }
-						// final IFile file =
-						// ResourcesPlugin.getWorkspace().getRoot()
-						// .getFileForLocation(Path.fromOSString(
-						// ResourcesPlugin.getWorkspace().getRoot().getLocation().toString()
-						// + "/" + scaseProject.getName() +
-						// "/LinkedOntology.owl"));
-						// if (file != null) {
-						// disp.syncExec(new Runnable() {
-						// @Override
-						// public void run() {
-						// MessageDialog.openInformation(disp.getActiveShell(),
-						// "Info",
-						// "LinkedOntology.owl file is created under the project
-						// "
-						// + scaseProject.getName());
-						// }
-						// });
-						//
-						// }
-						// }
-						// }
-						// });
-
+						
 					} else {
 						disp.syncExec(new Runnable() {
 							@Override
@@ -6111,6 +6002,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 					monitor.done();
 					return Status.CANCEL_STATUS;
 				} catch (Exception ex) {
+					Activator.log("Error while uploading", ex);
 					ex.printStackTrace();
 					disp.syncExec(new Runnable() {
 						@Override
@@ -6189,7 +6081,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 				throw new IOException("HTTP Error " + code + ": " + msg);
 			}
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
+			Activator.log("Error while contacting the web server", e);
 			e.printStackTrace();
 		} finally {
 

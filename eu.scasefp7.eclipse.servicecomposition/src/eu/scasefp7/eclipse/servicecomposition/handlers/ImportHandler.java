@@ -1,6 +1,7 @@
 package eu.scasefp7.eclipse.servicecomposition.handlers;
 
 
+import eu.scasefp7.eclipse.servicecomposition.Activator;
 import eu.scasefp7.eclipse.servicecomposition.importer.Importer.Operation;
 import eu.scasefp7.eclipse.servicecomposition.importer.JungXMIImporter.Connector;
 import eu.scasefp7.eclipse.servicecomposition.repository.RepositoryClient;
@@ -154,6 +155,7 @@ public class ImportHandler extends AbstractHandler {
 
 								} catch (Exception e) {
 									// TODO Auto-generated catch block
+									Activator.log("Error while opening the service composition view", e);
 									e.printStackTrace();
 								}
 
@@ -188,11 +190,13 @@ public class ImportHandler extends AbstractHandler {
 							throw new Exception("Graph can not be null");
 						} catch (Exception e1) {
 							// TODO Auto-generated catch block
+							Activator.log("Graph is null", e1);
 							e1.printStackTrace();
 						}
 						return Status.CANCEL_STATUS;
 					}
 					} catch (Exception ex) {
+						Activator.log("Error while importing the .scd file", ex);
 						ex.printStackTrace();
 						return Status.CANCEL_STATUS;
 
@@ -207,6 +211,7 @@ public class ImportHandler extends AbstractHandler {
 
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
+			Activator.log("Error while importing the .scd file", e);
 			e.printStackTrace();
 		}
 		return null;
@@ -298,7 +303,7 @@ public class ImportHandler extends AbstractHandler {
 						try {
 							String path = repo.downloadOntology("WS", disp);
 						} catch (Exception e) {
-							// TODO Auto-generated catch block
+							Activator.log("Error occured while downloading the ontology", e);
 							e.printStackTrace();
 						}
 					}
