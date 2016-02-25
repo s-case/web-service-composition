@@ -799,7 +799,7 @@ public class Transformer {
 				graph.removeEdge(targetConnector);
 				dummyService.setContent(targetOperation);
 				dummyService.lock();
-				graph.addEdge(new Connector((OwlService) targetConnector.getSource(), dummyService, ""),
+				graph.addEdge(new Connector((OwlService) targetConnector.getSource(), dummyService, targetConnector.getCondition()),
 						(OwlService) targetConnector.getSource(), dummyService, EdgeType.DIRECTED);
 				graph.addEdge(new Connector(dummyService, (OwlService) targetConnector.getTarget(), ""), dummyService,
 						(OwlService) targetConnector.getTarget(), EdgeType.DIRECTED);
