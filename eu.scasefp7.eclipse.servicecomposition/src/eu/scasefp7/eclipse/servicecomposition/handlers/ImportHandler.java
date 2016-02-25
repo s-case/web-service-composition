@@ -1,6 +1,5 @@
 package eu.scasefp7.eclipse.servicecomposition.handlers;
 
-
 import eu.scasefp7.eclipse.servicecomposition.Activator;
 import eu.scasefp7.eclipse.servicecomposition.importer.Importer.Operation;
 import eu.scasefp7.eclipse.servicecomposition.importer.JungXMIImporter.Connector;
@@ -42,7 +41,6 @@ import org.eclipse.ui.IViewReference;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.ide.IDE;
-
 
 import edu.uci.ics.jung.graph.Graph;
 
@@ -92,109 +90,111 @@ public class ImportHandler extends AbstractHandler {
 								+ file.getFullPath().toOSString();
 						graph = Algorithm.transformationAlgorithm(pathToSBDFile, operations, disp);
 
-						if (graph!= null){
-						// SHOW REPLACEMENT REPORT
-						System.out.println();
-						for (WeightReport report : Algorithm.getStepReports()) {
-							report.getReplaceInformation().reEvaluateWeight(graph);
-							report.updateWeight();
-							System.out.println(report.toString());
-						}
+						if (graph != null) {
+							// SHOW REPLACEMENT REPORT
+							System.out.println();
+							for (WeightReport report : Algorithm.getStepReports()) {
+								report.getReplaceInformation().reEvaluateWeight(graph);
+								report.updateWeight();
+								System.out.println(report.toString());
+							}
 
-						// If the action was replaced with an operation remove
-						// any
-						// properties left from initial xmi.
-						Collection<OwlService> services = new ArrayList<OwlService>(graph.getVertices());
-						boolean propertyExists = false;
-						for (OwlService property : services) {
-							if (property.getArgument() != null) {
-								if (property.getArgument().getParent().isEmpty()) {
-									propertyExists = true;
-									for (OwlService operation : graph.getSuccessors(property)) {
-										if (operation.getOperation() != null) {
-											if (operation.getOperation().getDomain() != null)
-												graph.removeVertex(property);
+							// If the action was replaced with an operation
+							// remove
+							// any
+							// properties left from initial xmi.
+							Collection<OwlService> services = new ArrayList<OwlService>(graph.getVertices());
+							boolean propertyExists = false;
+							for (OwlService property : services) {
+								if (property.getArgument() != null) {
+									if (property.getArgument().getParent().isEmpty()) {
+										propertyExists = true;
+										for (OwlService operation : graph.getSuccessors(property)) {
+											if (operation.getOperation() != null) {
+												if (operation.getOperation().getDomain() != null)
+													graph.removeVertex(property);
+											}
 										}
 									}
+
 								}
-
 							}
-						}
 
-						disp.syncExec(new Runnable() {
-							@Override
-							public void run() {
+							disp.syncExec(new Runnable() {
+								@Override
+								public void run() {
 
-								try {
-									PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage()
-											.showView(ServiceCompositionView.ID);
-									ServiceCompositionView view = (ServiceCompositionView) getView(
-											ServiceCompositionView.ID);
-									File file = (File) selections[0];
-									existingProject = file.getProject();
-									if (!existingProject.exists()) {
+									try {
+										PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage()
+												.showView(ServiceCompositionView.ID);
+										ServiceCompositionView view = (ServiceCompositionView) getView(
+												ServiceCompositionView.ID);
+										File file = (File) selections[0];
+										existingProject = file.getProject();
+										if (!existingProject.exists()) {
+										} else {
+											view.setScaseProject(existingProject);
+										}
+										final IFile inputFile = ResourcesPlugin.getWorkspace().getRoot()
+												.getFileForLocation(Path.fromOSString(
+														ResourcesPlugin.getWorkspace().getRoot().getLocation()
+																.toString() + file.getFullPath().toOSString()));
+										if (inputFile != null) {
+											IWorkbenchPage page = PlatformUI.getWorkbench().getActiveWorkbenchWindow()
+													.getActivePage();
+
+											IEditorPart openEditor = IDE.openEditor(page, inputFile);
+
+										}
+
+										view.setJungGraph(graph);
+										view.addGraphInZest(graph);
+										view.updateRightComposite(graph);
+										view.setFocus();
+
+									} catch (Exception e) {
+										// TODO Auto-generated catch block
+										Activator.log("Error while opening the service composition view", e);
+										e.printStackTrace();
+									}
+
+								}
+							});
+							// Check if there are still unreplaced actions in
+							// the
+							// graph
+							boolean serviceHasOperations = false;
+							// view.getViewer().setInput(createGraphNodes(graph));
+							for (OwlService service : graph.getVertices()) {
+								if (service.getOperation() != null) {
+									if (service.getOperation().getDomain() != null) {
+										serviceHasOperations = true;
 									} else {
-										view.setScaseProject(existingProject);
+										disp.syncExec(new Runnable() {
+											@Override
+											public void run() {
+												MessageDialog.openInformation(disp.getActiveShell(), "Info",
+														"No matching operation was found for action \""
+																+ service.getOperation().getName()
+																+ "\". Please modify the storyboard diagram or manually add an operation.");
+											}
+										});
 									}
-									final IFile inputFile = ResourcesPlugin.getWorkspace().getRoot()
-											.getFileForLocation(Path.fromOSString(
-													ResourcesPlugin.getWorkspace().getRoot().getLocation().toString()
-															+ file.getFullPath().toOSString()));
-									if (inputFile != null) {
-										IWorkbenchPage page = PlatformUI.getWorkbench().getActiveWorkbenchWindow()
-												.getActivePage();
-
-										IEditorPart openEditor = IDE.openEditor(page, inputFile);
-
-									}
-
-									view.setJungGraph(graph);
-									view.addGraphInZest(graph);
-									view.updateRightComposite(graph);
-									view.setFocus();
-
-								} catch (Exception e) {
-									// TODO Auto-generated catch block
-									Activator.log("Error while opening the service composition view", e);
-									e.printStackTrace();
-								}
-
-							}
-						});
-						// Check if there are still unreplaced actions in the
-						// graph
-						boolean serviceHasOperations = false;
-						// view.getViewer().setInput(createGraphNodes(graph));
-						for (OwlService service : graph.getVertices()) {
-							if (service.getOperation() != null) {
-								if (service.getOperation().getDomain() != null) {
-									serviceHasOperations = true;
-								} else {
-									disp.syncExec(new Runnable() {
-										@Override
-										public void run() {
-											MessageDialog.openInformation(disp.getActiveShell(), "Info",
-													"No matching operation was found for action \""
-															+ service.getOperation().getName()
-															+ "\". Please modify the storyboard diagram or manually add an operation.");
-										}
-									});
 								}
 							}
-						}
 
-						monitor.done();
-						return Status.OK_STATUS;
-					}else{
-						try {
-							throw new Exception("Graph can not be null");
-						} catch (Exception e1) {
-							// TODO Auto-generated catch block
-							Activator.log("Graph is null", e1);
-							e1.printStackTrace();
+							monitor.done();
+							return Status.OK_STATUS;
+						} else {
+							try {
+								throw new Exception("Graph can not be null");
+							} catch (Exception e1) {
+								// TODO Auto-generated catch block
+								Activator.log("Graph is null", e1);
+								e1.printStackTrace();
+							}
+							return Status.CANCEL_STATUS;
 						}
-						return Status.CANCEL_STATUS;
-					}
 					} catch (Exception ex) {
 						Activator.log("Error while importing the .scd file", ex);
 						ex.printStackTrace();
@@ -276,10 +276,10 @@ public class ImportHandler extends AbstractHandler {
 		return null;
 	}
 
-	public static void ontologyCheck(Shell shell, Display disp) throws IOException{
+	public static void ontologyCheck(Shell shell, Display disp) throws IOException {
 		RepositoryClient repo = new RepositoryClient();
-		repo.copyOntologyToWorkspace();	
-		
+		repo.copyOntologyToWorkspace();
+
 		// check if a newer ontology version exists
 
 		String serverVersion = repo.getLatestSubmissionId();
@@ -287,29 +287,30 @@ public class ImportHandler extends AbstractHandler {
 				new FileReader(ResourcesPlugin.getWorkspace().getRoot().getLocation().toString()
 						+ "/.metadata/.plugins/eu.scasefp7.servicecomposition/ontology/version.txt"));
 		String localVersion = reader.readLine().replaceAll("\\D+", "");
+		if (!serverVersion.toString().isEmpty() && !localVersion.toString().isEmpty()) {
+			if (Integer.parseInt(serverVersion) > Integer.parseInt(localVersion)) {
+				// ask user if he would like to download the new
+				// version
 
-		if (Integer.parseInt(serverVersion) > Integer.parseInt(localVersion)) {
-			// ask user if he would like to download the new
-			// version
+				disp.syncExec(new Runnable() {
+					public void run() {
+						boolean answer = MessageDialog.openConfirm(shell,
+								"A newer version of the ontology exists on server",
+								"A newer version of the web services ontology exists on server. Would you like to download it?");
 
-			disp.syncExec(new Runnable() {
-				public void run() {
-					boolean answer = MessageDialog.openConfirm(shell,
-							"A newer version of the ontology exists on server",
-							"A newer version of the web services ontology exists on server. Would you like to download it?");
-
-					if (answer) {
-						// OK Button selected
-						try {
-							String path = repo.downloadOntology("WS", disp);
-						} catch (Exception e) {
-							Activator.log("Error occured while downloading the ontology", e);
-							e.printStackTrace();
+						if (answer) {
+							// OK Button selected
+							try {
+								String path = repo.downloadOntology("WS", disp);
+							} catch (Exception e) {
+								Activator.log("Error occured while downloading the ontology", e);
+								e.printStackTrace();
+							}
 						}
 					}
-				}
-			});
+				});
 
+			}
 		}
 	}
 }
