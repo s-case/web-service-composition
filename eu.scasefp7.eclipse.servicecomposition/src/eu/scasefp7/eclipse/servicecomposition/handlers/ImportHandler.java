@@ -150,6 +150,8 @@ public class ImportHandler extends AbstractHandler {
 										view.setJungGraph(graph);
 										view.addGraphInZest(graph);
 										view.updateRightComposite(graph);
+										view.setSavedWorkflow(false);
+										view.setDirty(true);
 										view.setFocus();
 
 									} catch (Exception e) {
