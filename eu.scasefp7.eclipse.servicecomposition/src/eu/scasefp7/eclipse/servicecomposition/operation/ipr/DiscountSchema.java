@@ -13,7 +13,7 @@ import java.util.List;
 
 
 public class DiscountSchema {
-
+	//discount when used together with another service in the workflow
 	private int discount = 0;
 	private Operation pairedService = new Operation();
 	

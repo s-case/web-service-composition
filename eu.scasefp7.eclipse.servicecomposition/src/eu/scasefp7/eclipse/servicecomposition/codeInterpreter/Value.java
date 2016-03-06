@@ -20,6 +20,9 @@ import eu.scasefp7.eclipse.servicecomposition.importer.Importer.Argument;
  */
 public class Value extends Argument{
 	private static HashMap<Argument, Value> enumeration = new HashMap<Argument, Value>();
+	/**
+	 * value of the variable
+	 */
 	private String value = "";
 	/**
 	 * Generates the value from a given variable. Always use <code>getValue</code> instead of

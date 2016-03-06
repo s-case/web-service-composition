@@ -40,10 +40,12 @@ import gr.iti.wsdl.wsdlToolkit.WSOperation;
  * @author Manios Krasanakis
  */
 public abstract class Importer {
+	//ontology urls
 	public static String stringType = "String";
 	public static String prefix = "http://www.scasefp7.eu/wsOntology.owl#";
 	public static String classPrefix = "http://www.scasefp7.eu/wsOntology.owl#";
 
+	//ontology properties
 	protected static ObjectProperty belongsToPrototype;
 	protected static DatatypeProperty belongsToURL;
 	protected static DatatypeProperty belongsToWSType;
@@ -69,6 +71,7 @@ public abstract class Importer {
 	 * domain.
 	 */
 	public static class ApplicationDomain {
+		//properties concerning application domain
 		private String uri;
 		private String name;
 		private boolean local;
@@ -174,6 +177,7 @@ public abstract class Importer {
 	 * multitude of operations.
 	 */
 	public static class OwlClass {
+		//properties concerning ontology class
 		private ComparableName name;
 		private OwlClass superClass;
 		private ArrayList<Operation> operations = new ArrayList<Operation>();
@@ -261,6 +265,7 @@ public abstract class Importer {
 	 * service.
 	 */
 	public static class AccessInfo {
+		//cost and license info of the service
 		private String license = "";
 		private double pricePerUse = 0;// Math.random()*10;//in EUR
 
@@ -290,6 +295,7 @@ public abstract class Importer {
 	 * operations have a redundant copy of the operation's arguments.
 	 */
 	public static class Operation {
+		//operation parameters
 		protected ComparableName name;
 		protected ApplicationDomain domain = null;
 		protected ArrayList<Argument> outputs = new ArrayList<Argument>();
@@ -936,6 +942,7 @@ public abstract class Importer {
 	 * Arguments can also be used as inputs or outputs.
 	 */
 	public static class Argument {
+		//input/output variables parameters
 		private ComparableName name = new ComparableName("");
 		private String type = "";
 		private boolean isArray = false;

@@ -1,7 +1,7 @@
 package eu.scasefp7.eclipse.servicecomposition.operation.ipr;
 
 public class PerCountrySolutionUsage {
-
+	//statistics of successful usages of the service per country
 	private String forCountry = "";
 	private int nrOfSuccessfullUsages;
 	private int nrOfUnsuccessfulUsages;

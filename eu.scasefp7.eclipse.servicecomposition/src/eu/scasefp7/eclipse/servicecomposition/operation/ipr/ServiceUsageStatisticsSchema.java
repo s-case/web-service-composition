@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ServiceUsageStatisticsSchema {
-
+	//statistics
 	private int totalNrOfSuccessfulUsages;
 	private int totalNrOfUnsuccessfulUsages;
 	private int totalNrOfUsages;

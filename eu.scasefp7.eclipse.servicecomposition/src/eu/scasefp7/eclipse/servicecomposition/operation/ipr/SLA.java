@@ -10,6 +10,7 @@ import java.util.List;
 
 public class SLA {
 
+	//cost, usage duration and discount aspects of the service
 	private String SLA_CostCurrency = "";
 	private String SLA_CostPaymentChargeType = "";
 	private Date SLA_EndDate;

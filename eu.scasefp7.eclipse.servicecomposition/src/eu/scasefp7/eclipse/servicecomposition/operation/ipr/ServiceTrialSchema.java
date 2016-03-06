@@ -1,7 +1,7 @@
 package eu.scasefp7.eclipse.servicecomposition.operation.ipr;
 
 public class ServiceTrialSchema {
-
+	//trial period of the service characteristics
 	private String limitedFunctionalityDescription = "";
 	private boolean offersFullFunctionalityDuringTrial;
 	private int durationInDays;

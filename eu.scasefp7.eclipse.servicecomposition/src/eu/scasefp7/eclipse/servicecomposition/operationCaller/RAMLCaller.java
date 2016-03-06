@@ -50,6 +50,9 @@ import eu.scasefp7.eclipse.servicecomposition.views.ServiceCompositionView.Imple
  */
 public class RAMLCaller {
 
+	/**
+	 * primitive datatypes
+	 */
 	String[] datatypes = new String[] { "string", "long", "int", "float", "double", "dateTime", "boolean" };
 
 	// http://localhost:8080/RESTfulExample/json/product/get

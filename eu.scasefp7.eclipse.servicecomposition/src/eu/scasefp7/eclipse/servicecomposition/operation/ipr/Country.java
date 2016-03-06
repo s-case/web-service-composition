@@ -1,6 +1,7 @@
 package eu.scasefp7.eclipse.servicecomposition.operation.ipr;
 
 public class Country{
+	//supported country and language of the service
 	private String country = "";
 	private String language = "";
 	

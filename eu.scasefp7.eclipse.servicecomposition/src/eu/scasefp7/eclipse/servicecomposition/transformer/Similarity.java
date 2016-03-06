@@ -19,7 +19,13 @@ import eu.scasefp7.eclipse.servicecomposition.Activator;
 public class Similarity {
 
 	public static class ComparableName {
+		/**
+		 * the original name
+		 */
 		protected String content;
+		/**
+		 * name after camel case separation
+		 */
 		protected String comparable;
 
 		public ComparableName(String name) {

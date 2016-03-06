@@ -30,7 +30,7 @@ import eu.scasefp7.eclipse.servicecomposition.importer.Importer.Argument;
 import eu.scasefp7.eclipse.servicecomposition.transformer.JungXMItoOwlTransform.OwlService;
 
 public class WSOntology {
-
+	//uris of the ontology file
 	private String SOURCE = "http://www.scasefp7.eu/wsOntology.owl";
 	private String NS = SOURCE + "#";
 

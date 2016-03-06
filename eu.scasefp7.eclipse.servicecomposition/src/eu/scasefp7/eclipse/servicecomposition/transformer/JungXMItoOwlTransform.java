@@ -27,9 +27,21 @@ public class JungXMItoOwlTransform {
 	 * The service can be locked in order to not be able to change.
 	 */
 	public static class OwlService extends Service {
+		/**
+		 * the operation or the argument that the node represents
+		 */
 		private Object content;
+		/**
+		 * if content can be modified
+		 */
 		private boolean editable = true;
+		/**
+		 * if it matches another variable
+		 */
 		private boolean isMatchedIO = false;
+		/**
+		 * the id of the node
+		 */
 		private int id=0;
 
 		@Override

@@ -39,9 +39,21 @@ public class Transformer {
 	 * information about an operation
 	 */
 	public static class ReplaceInformation {
+		/**
+		 * the replaced owl service
+		 */
 		private OwlService owlService;
+		/**
+		 * the replaced operation
+		 */
 		private Operation operation;
+		/**
+		 * similarity weight
+		 */
 		private double weight;
+		/**
+		 * original action
+		 */
 		private Operation originalServiceOperation;
 
 		public ReplaceInformation(OwlService owlService, Operation operation, double weight) {

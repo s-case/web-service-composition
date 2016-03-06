@@ -49,10 +49,18 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 	protected ArrayList<OwlService> matchedOutputs = new ArrayList<OwlService>();
 	protected ArrayList<Argument> uriParameters = new ArrayList<Argument>();
 
+	/**
+	 * instance of ConnectToMDEOntology
+	 */
 	protected ConnectToMDEOntology instance = new ConnectToMDEOntology();
+	/**
+	 * operation to be written in MDE ontology
+	 */
 	protected MDEOperation operation;
 	
-	
+	/**
+	 * primitive datatypes
+	 */
 	String[] datatypes = new String[] { "string", "long", "int", "float", "double", "dateTime", "boolean" };
 
 	HashMap<OwlService, OwlService> map = new HashMap<OwlService, OwlService>();

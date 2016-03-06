@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class NodeModelContentProvider {
+	//nodes and connectios of the zest graph
 	private List<MyConnection> connections;
 	private List<MyNode> nodes;
 

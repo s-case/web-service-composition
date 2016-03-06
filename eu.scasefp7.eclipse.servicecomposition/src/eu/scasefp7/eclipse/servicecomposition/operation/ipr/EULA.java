@@ -7,7 +7,7 @@ import java.util.List;
 
 
 public class EULA {
-
+	//cost, usage duration and discount aspects of the service
 	private String EULA_costCurrency = "";
 	private String EULA_costPaymentChargeType = "";
 	private Date EULA_EndDate;

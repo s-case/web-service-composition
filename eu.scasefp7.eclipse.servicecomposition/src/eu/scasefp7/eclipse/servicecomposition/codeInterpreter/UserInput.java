@@ -19,6 +19,9 @@ import javax.swing.JTextField;
  * @author Manios Krasanakis
  */
 public class UserInput {
+	/**
+	 * user selection
+	 */
 	private static Object selectedObject;
 	/**
 	 * <h1>getSelection</h1>

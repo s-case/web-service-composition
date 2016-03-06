@@ -1,7 +1,7 @@
 package eu.scasefp7.eclipse.servicecomposition.operation.ipr;
 
 public class ServiceUserFeedback {
-
+	//user ratings
 	private String forCountry = "";
 	private int nrOfNegativeRatings;
 	private int nrOfPositiveRatings;

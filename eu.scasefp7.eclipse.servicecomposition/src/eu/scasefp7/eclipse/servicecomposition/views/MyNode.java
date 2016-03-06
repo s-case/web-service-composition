@@ -3,7 +3,12 @@ package eu.scasefp7.eclipse.servicecomposition.views;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * @author mkoutli
+ *Represents the node of the workflow (zest diagram)
+ */
 public class MyNode {
+	//node attributes
 	private final String id;
 	private String name;
 	private final Object object;

@@ -1,7 +1,7 @@
 package eu.scasefp7.eclipse.servicecomposition.operation.ipr;
 
 public class PerCountryReputation {
-
+	// reputation of the service in a specific country
 	private String forCountry = "";
 	private float reputationScore;
 

@@ -8,7 +8,7 @@ import java.util.List;
 
 
 public class Vendor {
-
+	//vendor description
 	private String vendorName = "";
 	private ReputationSchema reputation = new ReputationSchema();
 	private String contactDetails = "";

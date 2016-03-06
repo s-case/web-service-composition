@@ -28,7 +28,13 @@ import gr.iti.wsdl.wsdlToolkit.NativeObject;
  * @author Manios Krasanakis
  */
 public class FunctionCodeNode extends CodeNode {
+	/**
+	 * tab indentation
+	 */
 	protected static String TAB = "   ";
+	/**
+	 * code generator instance
+	 */
 	protected CodeGenerator codeGenerator;
 
 	public static CodeNode createInstance(OwlService service, CodeGenerator codeGenerator) {

@@ -10,7 +10,9 @@ import eu.scasefp7.eclipse.servicecomposition.importer.JungXMIImporter.Connector
 import eu.scasefp7.eclipse.servicecomposition.transformer.JungXMItoOwlTransform.OwlService;
 
 public class RestFunctionCodeNode extends CodeNode {
-
+	/**
+	 * tab indentation
+	 */
 	protected static String TAB = "   ";
 	protected CodeGenerator codeGenerator;
 

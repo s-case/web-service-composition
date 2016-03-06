@@ -24,8 +24,13 @@ import eu.scasefp7.eclipse.servicecomposition.Activator;
 
 public class ResourceFileSelectionDialog extends ElementTreeSelectionDialog {
 
+	/**
+	 * file extensions
+	 */
 	private String[] extensions;
-
+	/**
+	 * content provider of the dialog
+	 */
 	private static ITreeContentProvider contentProvider = new ITreeContentProvider() {
 		public Object[] getChildren(Object element) {
 			if (element instanceof IContainer) {

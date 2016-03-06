@@ -4,12 +4,33 @@ import java.util.ArrayList;
 
 public class MDERepresentation {
 
+	/**
+	 * ontology property
+	 */
 	private boolean isAuthToken;
+	/**
+	 * ontology property
+	 */
 	private boolean isOptional;
+	/**
+	 * ontology property
+	 */
 	private String belongsToURL;
+	/**
+	 * ontology property
+	 */
 	private String hasName;
+	/**
+	 * ontology property
+	 */
 	private String isType;
+	/**
+	 * ontology property
+	 */
 	private ArrayList<MDERepresentation> hasElements;
+	/**
+	 * ontology property
+	 */
 	private ArrayList<String> hasPrimitiveElements;
 	
 

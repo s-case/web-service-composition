@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ReputationSchema {
-
+	//reputation of the service overall and per country
 	private float overallReputationScore ;
 
 	private List<PerCountryReputation> perCountryReputation = new ArrayList<PerCountryReputation>();

@@ -43,18 +43,40 @@ import edu.uci.ics.jung.graph.Graph;
  */
 public class Algorithm {
 
-	// store replacement strategy evaluation (obtained with getter)
+	/** store replacement strategy evaluation (obtained with getter)
+	 */
 	private static ArrayList<WeightReport> correctStepProbability = new ArrayList<WeightReport>();
 
 	// private static boolean expandOperationStrategy = false;
 
 	public static class WeightReport {
+		/**
+		 * total weight of the service
+		 */
 		private double weight;
+		/**
+		 * worst probability depending on the maximum number of words of either the action or the service name
+		 */
 		private double worstCaseProbability;
+		/**
+		 * probability of successful replacement
+		 */
 		private double effectiveProbability;
+		/**
+		 * description of the service
+		 */
 		private String description;
+		/**
+		 * similarity between action and service names
+		 */
 		private double nameSimilarity;
+		/**
+		 * 
+		 */
 		private double numberOfWords;
+		/**
+		 * the replacement selection
+		 */
 		private ReplaceInformation selection = null;
 
 		public WeightReport(ReplaceInformation selection, ArrayList<ReplaceInformation> replaceInformations) {
@@ -156,10 +178,25 @@ public class Algorithm {
 	 *
 	 */
 	public static class costReport {
+		/**
+		 * total cost in euro
+		 */
 		protected float totalCostEUR = 0;
+		/**
+		 * total cost in usd
+		 */
 		protected float totalCostUSD = 0;
+		/**
+		 * total cost in gbp
+		 */
 		protected float totalCostGBP = 0;
+		/**
+		 * total cost
+		 */
 		protected double totalCost = 0;
+		/**
+		 * all currencies in the workflow
+		 */
 		protected String totalCurrency = "";
 
 		public costReport() {
@@ -252,9 +289,16 @@ public class Algorithm {
 	 * @author mkoutli
 	 *
 	 */
+	
 	public static class trialReport {
-
+		
+		/**
+		 * trial duration in days
+		 */
 		private List<Integer> durationInDays = new ArrayList<Integer>();
+		/**
+		 * trial duration in usages
+		 */
 		private List<Integer> durationInUsages = new ArrayList<Integer>();
 
 		public trialReport() {
@@ -283,7 +327,11 @@ public class Algorithm {
 	 * @author mkoutli
 	 *
 	 */
+	
 	public static class licenseReport {
+		/**
+		 * the licenses of the service
+		 */
 		private List<String> licenseNames = new ArrayList<String>();
 
 		public licenseReport() {

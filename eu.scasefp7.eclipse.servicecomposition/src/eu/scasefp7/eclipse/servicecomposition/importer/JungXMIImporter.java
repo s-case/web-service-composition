@@ -27,6 +27,7 @@ import eu.scasefp7.eclipse.servicecomposition.transformer.Similarity.ComparableN
  * @author Manios Krasanakis
  */
 public class JungXMIImporter {
+	//parameters concerning .scd files
 	public static String prefix = "auth.storyboards:";
 	public static String[] textTypes = {"Note", "Text"};
 	public static String[] types = {"storyboardactions", "storyboardproperties", "storyboardstartnode", "storyboardendnode", "storyboardconditions", "storyboardstoryboards"};
@@ -37,6 +38,7 @@ public class JungXMIImporter {
 	 * can also be considered services.
 	 */
 	public static class Service extends Object{
+		//name and type of the service
 		protected ComparableName name;
 		protected String type;
 		/**
@@ -109,6 +111,7 @@ public class JungXMIImporter {
 	 * in mapping the various services.
 	 */
 	private static class XMIService{
+		//parameters of a service in an .scd file
 		protected String id = "";
 		protected Service service;
 		protected ArrayList<String> towards = new ArrayList<String>();
@@ -158,6 +161,7 @@ public class JungXMIImporter {
 	 * that must hold true for the transition to take place.
 	 */
 	public static class Connector extends Object{
+		//an edge's source, target nodes and text
 		protected Service source;
 		protected Service target;
 		protected String condition;

@@ -4,15 +4,45 @@ import java.util.ArrayList;
 
 public class MDEOperation {
 
+	/**
+	 * ontology property
+	 */
 	private String belongsToURL;
+	/**
+	 * ontology property
+	 */
 	private String belongsToWSType;
+	/**
+	 * ontology property
+	 */
 	private String hasCRUDVerb;
+	/**
+	 * ontology property
+	 */
 	private String hasName;
+	/**
+	 * ontology property
+	 */
 	private String hasResourcePath;
+	/**
+	 * ontology property
+	 */
 	private ArrayList<String> hasResponseType;
+	/**
+	 * ontology property
+	 */
 	private ArrayList<MDERepresentation> hasURIParameters;
+	/**
+	 * ontology property
+	 */
 	private ArrayList<MDERepresentation> hasInput;
+	/**
+	 * ontology property
+	 */
 	private ArrayList<MDERepresentation> hasOutput;
+	/**
+	 * ontology property
+	 */
 	private ArrayList<MDERepresentation> hasQueryParameters;
 
 	MDEOperation(String belongsToURL, String belongsToWSType, String hasCRUDVerb, String hasName,

@@ -3,7 +3,7 @@ package eu.scasefp7.eclipse.servicecomposition.operation.ipr;
 
 
 public class ServiceUserSchema {
-
+	//user specific solution
 	private String userId = "";
 	private EULA eula;
 	private String refersToSolution = "";

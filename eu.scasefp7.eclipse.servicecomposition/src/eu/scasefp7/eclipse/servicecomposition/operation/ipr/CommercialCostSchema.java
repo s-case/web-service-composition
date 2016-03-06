@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class CommercialCostSchema {
+	//costs of the service
 	private String commercialCostCurrency = "";
 	private String costPaymentChargeType = "";
 	private float commercialCost;

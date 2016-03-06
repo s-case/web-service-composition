@@ -1,7 +1,7 @@
 package eu.scasefp7.eclipse.servicecomposition.operation.ipr;
 
 public class ServiceLicense {
-
+	//service license
 	private String licenseDescription = "";
 	private String licenseName = "";
 	private boolean proprietary = false;

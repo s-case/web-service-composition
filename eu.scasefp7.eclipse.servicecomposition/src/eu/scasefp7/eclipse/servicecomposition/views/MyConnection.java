@@ -1,6 +1,11 @@
 package eu.scasefp7.eclipse.servicecomposition.views;
-
+/**
+ * 
+ * @author mkoutli
+ *Represents the edge of the workflow (zest graph)
+ */
 public class MyConnection {
+	//edge attributes
 	  final String id; 
 	  final String label; 
 	  final MyNode source;

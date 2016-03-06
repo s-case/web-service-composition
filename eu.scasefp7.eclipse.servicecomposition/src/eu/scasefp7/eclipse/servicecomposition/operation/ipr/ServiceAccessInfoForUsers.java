@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ServiceAccessInfoForUsers {
-
+	//all non-functional characteristics of the service
 	private List<Description> description = new ArrayList<Description>();
 	private String URLForAccess = "";
 	private float maxDiscount=0;

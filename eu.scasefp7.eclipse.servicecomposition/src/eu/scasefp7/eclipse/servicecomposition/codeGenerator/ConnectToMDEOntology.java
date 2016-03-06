@@ -15,7 +15,13 @@ import edu.uci.ics.jung.graph.Graph;
 
 public class ConnectToMDEOntology {
 
+	/**
+	 * the operation to be written in the ontology
+	 */
 	MDEOperation operation;
+	/**
+	 * primitive datatypes
+	 */
 	String[] datatypes = new String[] { "string", "long", "int", "float", "double", "dateTime", "boolean" };
 
 	ConnectToMDEOntology() {

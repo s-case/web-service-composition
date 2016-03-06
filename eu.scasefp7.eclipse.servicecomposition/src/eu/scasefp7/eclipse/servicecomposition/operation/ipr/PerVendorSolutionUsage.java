@@ -1,7 +1,7 @@
 package eu.scasefp7.eclipse.servicecomposition.operation.ipr;
 
 public class PerVendorSolutionUsage {
-
+	//statistics of successful usages of the service per vendor
 	private int nrOfSuccessfulUsages;
 	private int nrOfUnsuccessfulUsages;
 	private int nrOfUsages;

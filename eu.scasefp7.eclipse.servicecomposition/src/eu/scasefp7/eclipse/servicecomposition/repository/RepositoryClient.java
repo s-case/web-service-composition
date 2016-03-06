@@ -54,7 +54,13 @@ import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.swt.widgets.Display;
 
 public class RepositoryClient {
+	/**
+	 * apikey for accessing the server
+	 */
 	private String apiKey = "1cfae05f-9e67-486f-820b-b393dec5764b";
+	/**
+	 * url of the server
+	 */
 	private String url = "http://109.231.126.165:8080";
 	// private String apiKey = "1cfae05f-9e67-486f-820b-b393dec5764b";
 	// private String url = "http://repo.scasefp7.com:8080";

@@ -42,10 +42,25 @@ public abstract class CodeGenerator {
 	 * function <code>getCode</code> is called.
 	 */
 	public static abstract class CodeNode {
+		/**
+		 * generated code
+		 */
 		protected String code = "";
+		/**
+		 * service for which code will be written
+		 */
 		protected OwlService service = null;
+		/**
+		 * update code?
+		 */
 		protected boolean updateCode = false;
+		/**
+		 * tab
+		 */
 		protected int tabs = 0;
+		/**
+		 * outputs code
+		 */
 		protected String outputSynchronizer = "";
 
 		/**
