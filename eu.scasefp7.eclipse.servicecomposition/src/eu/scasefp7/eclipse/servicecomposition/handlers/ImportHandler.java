@@ -191,6 +191,7 @@ public class ImportHandler extends AbstractHandler {
 												.getFileForLocation(Path.fromOSString(
 														ResourcesPlugin.getWorkspace().getRoot().getLocation()
 																.toString() + file.getFullPath().toOSString()));
+										view.setStoryboardFile(inputFile);
 										if (inputFile != null) {
 											IWorkbenchPage page = PlatformUI.getWorkbench().getActiveWorkbenchWindow()
 													.getActivePage();

@@ -113,6 +113,7 @@ import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.jface.viewers.ViewerFilter;
 import org.eclipse.jface.window.Window;
 import org.eclipse.ui.dialogs.ListSelectionDialog;
+import org.eclipse.ui.ide.IDE;
 import org.eclipse.jst.j2ee.internal.web.archive.operations.WebComponentExportDataModelProvider;
 import org.eclipse.jst.j2ee.internal.web.archive.operations.WebFacetProjectCreationDataModelProvider;
 import org.eclipse.jst.j2ee.project.facet.IJ2EEFacetConstants;
@@ -157,7 +158,10 @@ import org.eclipse.swt.widgets.Tree;
 import org.eclipse.swt.widgets.TreeColumn;
 import org.eclipse.swt.widgets.TreeItem;
 import org.eclipse.ui.IActionBars;
+import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.ISaveablePart;
+import org.eclipse.ui.IWorkbenchPage;
+import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.dialogs.ElementListSelectionDialog;
 import org.eclipse.ui.internal.util.BundleUtility;
 import org.eclipse.ui.part.ViewPart;
@@ -225,6 +229,7 @@ import eu.scasefp7.eclipse.servicecomposition.operationCaller.WSDLCaller;
 import eu.scasefp7.eclipse.servicecomposition.repository.RepositoryClient;
 import eu.scasefp7.eclipse.servicecomposition.repository.WSOntology;
 import eu.scasefp7.eclipse.servicecomposition.tester.Algorithm;
+import eu.scasefp7.eclipse.servicecomposition.tester.Algorithm.WeightReport;
 import eu.scasefp7.eclipse.servicecomposition.tester.Algorithm.costReport;
 import eu.scasefp7.eclipse.servicecomposition.tester.Algorithm.licenseReport;
 import eu.scasefp7.eclipse.servicecomposition.tester.Algorithm.trialReport;
@@ -264,14 +269,16 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 	// the saved workflow file
 	private File workflowFile;
 	private String workflowFilePath = "";
+	//the storyboard file
+	private IFile storyboardFile;
 	// toolbar actions
 	private Action runWorkflowAction;
 	private Action newWorkflowAction;
-	private Action ImportationAction;
 	private Action displayCostAction;
 	private Action generateCodeAction;
 	private Action saveWorkflowAction;
 	private Action openWorkflowAction;
+	private Action reloadWorkflowAction;
 	// composite in ui
 	private ScrolledComposite sc;
 	private Composite rightComposite;
@@ -2709,7 +2716,6 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 		openWorkflowAction = new Action("Open a workflow file.") {
 			public void run() {
 
-				
 				try {
 					if (getSavedWorkflow()) {
 						openWorkflow();
@@ -2730,7 +2736,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 									}
 								}
 								openWorkflow();
-							} else if (result == 1) {	
+							} else if (result == 1) {
 								openWorkflow();
 							}
 						} else {
@@ -2748,6 +2754,21 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 		};
 		openWorkflowAction.setImageDescriptor(getImageDescriptor("icons/open.png"));
 
+		reloadWorkflowAction = new Action("Reload storyboard file.") {
+			public void run() {
+
+				try {
+					
+					reloadStoryboard(disp);
+				} catch (Exception e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+
+			}
+		};
+		reloadWorkflowAction.setImageDescriptor(getImageDescriptor("icons/reload_storyboard.png"));
+		
 		Action uploadOnServerAction = new Action("Upload RESTful web service on server.") {
 			public void run() {
 
@@ -2785,6 +2806,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 		mgr.add(generateCodeAction);
 		mgr.add(uploadOnServerAction);
 		mgr.add(displayCostAction);
+		mgr.add(reloadWorkflowAction);
 		// mgr.add(DownloadOntologyAction);
 
 	}
@@ -3030,6 +3052,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 		this.updateRightComposite(jungGraph);
 		this.setSavedWorkflow(false);
 		this.setWorkflowFilePath("");
+		this.setStoryboardFile(null);
 		this.setFocus();
 
 	}
@@ -4554,6 +4577,11 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 	public String getWorkflowFilePath() {
 		return workflowFilePath;
 	}
+	
+	public void setStoryboardFile(IFile file){
+		this.storyboardFile= file;
+	}
+	
 
 	/**
 	 * <h1>addOperationInZest</h1> It is called by <code>addNode</code> in order
@@ -5028,6 +5056,156 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 		possibleArguments.add(arg);
 
 	}
+	
+	
+	private void reloadStoryboard(Display disp){
+		if (this.storyboardFile!=null){
+			Job reloadSBD = new Job("Reload StoryBoard Creator file") {
+				@Override
+				protected IStatus run(IProgressMonitor monitor) {
+					monitor.beginTask("Transforming storyboard creator diagram to workflow of web services...",
+							IProgressMonitor.UNKNOWN);
+					
+					try {
+						jungGraph = null;
+						IFile file = storyboardFile;
+//						// check if ontology file exists in .metadata plug-in's
+//						// folder
+//						ontologyCheck(shell, disp);
+						Algorithm.init();
+						final ArrayList<Operation> operations = Algorithm
+								.importServices(ResourcesPlugin.getWorkspace().getRoot().getLocation().toString()
+										+ "/.metadata/.plugins/eu.scasefp7.servicecomposition/ontology/WS.owl");
+						// final ArrayList<Operation> operations =
+						// Algorithm.importServices(
+						// ResourcesPlugin.getWorkspace().getRoot().getLocation().toString()
+						// + "/" + "WS.owl");
+						// final ArrayList<Operation> operations = Algorithm
+						// .importServices("D:/web-service-composition-Maven-plugin/web-service-composition/eu.scasefp7.eclipse.serviceComposition/data/WS.owl");
+						// final ArrayList<Operation> operations =
+						// Algorithm.importServices("",
+						// "data/testing_scripts/");
+						final String pathToSBDFile = ResourcesPlugin.getWorkspace().getRoot().getLocation().toString()
+								+ file.getFullPath().toOSString();
+						jungGraph = Algorithm.transformationAlgorithm(pathToSBDFile, operations, disp);
+
+						if (jungGraph != null) {
+							// SHOW REPLACEMENT REPORT
+							System.out.println();
+							for (WeightReport report : Algorithm.getStepReports()) {
+								report.getReplaceInformation().reEvaluateWeight(jungGraph);
+								report.updateWeight();
+								System.out.println(report.toString());
+							}
+
+							// If the action was replaced with an operation
+							// remove
+							// any
+							// properties left from initial xmi.
+							Collection<OwlService> services = new ArrayList<OwlService>(jungGraph.getVertices());
+							boolean propertyExists = false;
+							for (OwlService property : services) {
+								if (property.getArgument() != null) {
+									if (property.getArgument().getParent().isEmpty()) {
+										propertyExists = true;
+										for (OwlService operation : jungGraph.getSuccessors(property)) {
+											if (operation.getOperation() != null) {
+												if (operation.getOperation().getDomain() != null)
+													jungGraph.removeVertex(property);
+											}
+										}
+									}
+
+								}
+							}
+
+							disp.syncExec(new Runnable() {
+								@Override
+								public void run() {
+
+									try {
+										
+											IWorkbenchPage page = PlatformUI.getWorkbench().getActiveWorkbenchWindow()
+													.getActivePage();
+
+											IEditorPart openEditor = IDE.openEditor(page, storyboardFile);
+
+										
+										setJungGraph(jungGraph);
+										addGraphInZest(jungGraph);
+										updateRightComposite(jungGraph);
+										setSavedWorkflow(false);
+										// view.setDirty(true);
+										setFocus();
+
+									} catch (Exception e) {
+										// TODO Auto-generated catch block
+										Activator.log("Error while opening the service composition view", e);
+										e.printStackTrace();
+									}
+
+								}
+							});
+							// Check if there are still unreplaced actions in
+							// the
+							// graph
+							boolean serviceHasOperations = false;
+							// view.getViewer().setInput(createGraphNodes(graph));
+							for (OwlService service : jungGraph.getVertices()) {
+								if (service.getOperation() != null) {
+									if (service.getOperation().getDomain() != null) {
+										serviceHasOperations = true;
+									} else {
+										disp.syncExec(new Runnable() {
+											@Override
+											public void run() {
+												MessageDialog.openInformation(disp.getActiveShell(), "Info",
+														"No matching operation was found for action \""
+																+ service.getOperation().getName()
+																+ "\". Please modify the storyboard diagram or manually add an operation.");
+											}
+										});
+									}
+								}
+							}
+
+							monitor.done();
+							return Status.OK_STATUS;
+						} else {
+							try {
+								throw new Exception("Graph can not be null");
+							} catch (Exception e1) {
+								// TODO Auto-generated catch block
+								Activator.log("Graph is null", e1);
+								e1.printStackTrace();
+							}
+							return Status.CANCEL_STATUS;
+						}
+					} catch (Exception ex) {
+						Activator.log("Error while importing the .scd file", ex);
+						ex.printStackTrace();
+						return Status.CANCEL_STATUS;
+
+					} finally {
+						monitor.done();
+					}
+				}
+
+			};
+			reloadSBD.setUser(true);
+			reloadSBD.schedule();
+		}else{
+			disp.syncExec(new Runnable() {
+
+				@Override
+				public void run() {
+					MessageDialog.openInformation(disp.getActiveShell(), "Info",
+							"Nothing to reload! You should import a storyboard file first!");
+				}
+
+			});
+		}
+	}
 
 	/**
 	 * <h1>openWorkflow</h1> Opens a workflow file. Method is called by pressing
@@ -5069,6 +5247,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 							});
 						}
 						setSavedWorkflow(true);
+						setStoryboardFile(null);
 						monitor.done();
 						return Status.OK_STATUS;
 					} catch (Exception ex) {
@@ -5392,13 +5571,12 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 
 		setSavedWorkflow(true);
 		// setDirty(false);
-		
+
 		disp.syncExec(new Runnable() {
 
 			@Override
 			public void run() {
-				MessageDialog.openInformation(disp.getActiveShell(), "Info",
-						"Workflow is saved.");
+				MessageDialog.openInformation(disp.getActiveShell(), "Info", "Workflow is saved.");
 			}
 
 		});
