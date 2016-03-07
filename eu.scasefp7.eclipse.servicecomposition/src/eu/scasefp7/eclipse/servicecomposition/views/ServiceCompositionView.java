@@ -250,7 +250,7 @@ import eu.scasefp7.eclipse.servicecomposition.ui.ResourceFileSelectionDialog;
  * <p>
  */
 
-public class ServiceCompositionView extends ViewPart implements IZoomableWorkbenchPart, ISaveablePart {
+public class ServiceCompositionView extends ViewPart implements IZoomableWorkbenchPart {
 
 	/**
 	 * The ID of the view as specified by the extension.
@@ -259,15 +259,20 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 
 	private int layout = 1;
 	private Composite parent;
+	// the graph that appears in the view
 	private edu.uci.ics.jung.graph.Graph<OwlService, Connector> jungGraph;
+	// the saved workflow file
 	private File workflowFile;
 	private String workflowFilePath = "";
+	// toolbar actions
 	private Action runWorkflowAction;
 	private Action newWorkflowAction;
+	private Action ImportationAction;
 	private Action displayCostAction;
 	private Action generateCodeAction;
 	private Action saveWorkflowAction;
 	private Action openWorkflowAction;
+	// composite in ui
 	private ScrolledComposite sc;
 	private Composite rightComposite;
 	private SashForm sashForm;
@@ -278,39 +283,51 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 	private TreeViewer treeViewer;
 	private Composite uriParamsComposite;
 	private Composite authParamsComposite;
+	// constants
 	private static double VARIABLE_NAME_SIMILARITY_THRESHOLD = 0.5;
 	private static double MAX_DISTANCE_BETWEEN_SOLUTIONS = 0.1;
 	private static double VALUE_SIMILARITY_THRESHOLD = 0;
+	// the selected owlservice
 	private OwlService currentService;
 	private GraphViewer viewer;
+	// generated project name
 	private String projectName = "";
+	// generated project
 	IProject currentProject;
 	NonLinearCodeGenerator gGenerator = new NonLinearCodeGenerator();
 	private String pomPath = "";
+	// maven build
 	public static MavenExecutionRequestPopulator populator;
 	public static DefaultPlexusContainer container;
 	public static Maven maven;
 	static public List<MavenProject> buildedProjects = new ArrayList<MavenProject>();
 	static public SettingsBuilder settingsBuilder;
 	private MavenExecutionResult installResult = null;
+	// the s-case project
 	private IProject scaseProject;
+	// if the workflow is saved
 	private boolean savedWorkflow = false;
 
 	// predicates for special types of branches
 	private static String[] TRUE_PREDICATES = { "true", "yes" };
 	private static String[] FALSE_PREDICATES = { "false", "no" };
 	private static String[] ELSE_PREDICATES = { "else", "otherwise" };
+	// starting and ending service in the graph
 	private OwlService startingService = null;
 	private OwlService endingService = null;
+	// eclipse jobs
 	private Job runWorkflowJob;
 	private Job AddNewOperationJob;
 	private Job createWarFileJob;
 	private Job createProject;
 	private Job uploadToServerJob;
+	// zest graph connection and node
 	private GraphConnection selectedGraphEdge;
 	private GraphNode selectedGraphNode;
 	private Point point;
+	// code generation object
 	private NonLinearCodeGenerator generator;
+	// property to denote file is not saved
 	private boolean isDirty = false;
 
 	public void createPartControl(Composite parent) {
@@ -714,7 +731,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 		}
 
 		this.setSavedWorkflow(false);
-		this.setDirty(true);
+		// this.setDirty(true);
 
 	}
 
@@ -759,7 +776,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 		SelectionWindowNode(list, option);
 
 		this.setSavedWorkflow(false);
-		this.setDirty(true);
+		// this.setDirty(true);
 	}
 
 	/**
@@ -1049,7 +1066,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 		}
 
 		this.setSavedWorkflow(false);
-		this.setDirty(true);
+		// this.setDirty(true);
 	}
 
 	private void renameConditionNode(GraphNode node) {
@@ -1085,7 +1102,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 		}
 
 		this.setSavedWorkflow(false);
-		this.setDirty(true);
+		// this.setDirty(true);
 	}
 
 	/**
@@ -1173,7 +1190,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 		}
 
 		this.setSavedWorkflow(false);
-		this.setDirty(true);
+		// this.setDirty(true);
 	}
 
 	@Inject
@@ -1547,7 +1564,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 			AddNewOperationJob.schedule();
 		}
 		this.setSavedWorkflow(false);
-		this.setDirty(true);
+		// this.setDirty(true);
 
 	}
 
@@ -2195,7 +2212,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 		updateRightComposite(jungGraph);
 		this.setLayout();
 		this.setSavedWorkflow(false);
-		this.setDirty(true);
+		// this.setDirty(true);
 	}
 
 	/**
@@ -2264,7 +2281,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 
 		this.setJungGraph(jungGraph);
 		this.setSavedWorkflow(false);
-		this.setDirty(true);
+		// this.setDirty(true);
 		// this.getViewer().setInput(createGraphNodes(jungGraph));
 		updateRightComposite(jungGraph);
 
@@ -2543,43 +2560,46 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 		};
 		runWorkflowAction.setImageDescriptor(getImageDescriptor("icons/run.png"));
 		// runWorkflowAction.setEnabled(false);
-		Action cancelWorkflowAction = new Action("Stop execution of workflow") {
-			public void run() {
 
-				try {
-					runWorkflowJob.cancel();
-				} catch (Exception e) {
-					// TODO Auto-generated catch block
-					// e.printStackTrace();
-				}
+		// Action cancelWorkflowAction = new Action("Stop execution of
+		// workflow") {
+		// public void run() {
+		//
+		// try {
+		// runWorkflowJob.cancel();
+		// } catch (Exception e) {
+		// // TODO Auto-generated catch block
+		// // e.printStackTrace();
+		// }
+		//
+		// }
+		// };
+		// cancelWorkflowAction.setImageDescriptor(getImageDescriptor("icons/stop.png"));
 
-			}
-		};
-		cancelWorkflowAction.setImageDescriptor(getImageDescriptor("icons/stop.png"));
-
-		Action DownloadOntologyAction = new Action("Update ontology") {
-			public void run() {
-				Job downloadOntologyJob = new Job("Update ontology") {
-					@Override
-					protected IStatus run(IProgressMonitor monitor) {
-						monitor.beginTask("Downloading ontology ...", IProgressMonitor.UNKNOWN);
-						final Shell shell = new Shell();
-						try {
-							ImportHandler.ontologyCheck(shell, disp);
-							return Status.OK_STATUS;
-						} catch (Exception e) {
-							Activator.log("Error while downloading the ontology", e);
-							// e.printStackTrace();
-							return Status.CANCEL_STATUS;
-						}
-					}
-				};
-
-				downloadOntologyJob.schedule();
-
-			}
-		};
-		DownloadOntologyAction.setImageDescriptor(getImageDescriptor("icons/downloadOnt.jpg"));
+		// Action DownloadOntologyAction = new Action("Update ontology") {
+		// public void run() {
+		// Job downloadOntologyJob = new Job("Update ontology") {
+		// @Override
+		// protected IStatus run(IProgressMonitor monitor) {
+		// monitor.beginTask("Downloading ontology ...",
+		// IProgressMonitor.UNKNOWN);
+		// final Shell shell = new Shell();
+		// try {
+		// ImportHandler.ontologyCheck(shell, disp);
+		// return Status.OK_STATUS;
+		// } catch (Exception e) {
+		// Activator.log("Error while downloading the ontology", e);
+		// // e.printStackTrace();
+		// return Status.CANCEL_STATUS;
+		// }
+		// }
+		// };
+		//
+		// downloadOntologyJob.schedule();
+		//
+		// }
+		// };
+		// DownloadOntologyAction.setImageDescriptor(getImageDescriptor("icons/downloadOnt.jpg"));
 
 		newWorkflowAction = new Action("Create a new workflow") {
 			public void run() {
@@ -2597,7 +2617,14 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 							int result = dialog.open();
 							System.out.println(result);
 							if (result == 0) {
-								saveWorkflow(true);
+								IStatus status = checkGraph(jungGraph, disp);
+								if (status.getMessage().equalsIgnoreCase("OK")) {
+									if (workflowFilePath.isEmpty()) {
+										saveWorkflow(true);
+									} else {
+										saveWorkflow(false);
+									}
+								}
 								// clean outputs
 								cleanOutputs();
 								createNewWorkflow();
@@ -2682,8 +2709,36 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 		openWorkflowAction = new Action("Open a workflow file.") {
 			public void run() {
 
+				
 				try {
-					openWorkflow();
+					if (getSavedWorkflow()) {
+						openWorkflow();
+					} else {
+						if (jungGraphHasOperations()) {
+							MessageDialog dialog = new MessageDialog(shell, "Workflow is not saved", null,
+									"This workflow is not saved. Would you like to save it before creating a new one?",
+									MessageDialog.QUESTION_WITH_CANCEL, new String[] { "Yes", "No", "Cancel" }, 0);
+							int result = dialog.open();
+							System.out.println(result);
+							if (result == 0) {
+								IStatus status = checkGraph(jungGraph, disp);
+								if (status.getMessage().equalsIgnoreCase("OK")) {
+									if (workflowFilePath.isEmpty()) {
+										saveWorkflow(true);
+									} else {
+										saveWorkflow(false);
+									}
+								}
+								openWorkflow();
+							} else if (result == 1) {	
+								openWorkflow();
+							}
+						} else {
+							openWorkflow();
+						}
+
+					}
+
 				} catch (Exception e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
@@ -2726,15 +2781,15 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 		mgr.add(openWorkflowAction);
 		mgr.add(saveWorkflowAction);
 		mgr.add(runWorkflowAction);
-		mgr.add(cancelWorkflowAction);
+		// mgr.add(cancelWorkflowAction);
 		mgr.add(generateCodeAction);
 		mgr.add(uploadOnServerAction);
 		mgr.add(displayCostAction);
-		mgr.add(DownloadOntologyAction);
+		// mgr.add(DownloadOntologyAction);
 
 	}
 
-	private boolean jungGraphHasOperations() {
+	public boolean jungGraphHasOperations() {
 		boolean hasOperations = false;
 		for (OwlService service : jungGraph.getVertices()) {
 			if (service.getType().equals("Action") || service.getType().equals("Condition")) {
@@ -2974,6 +3029,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 		// this.getViewer().setInput(createGraphNodes(jungGraph));
 		this.updateRightComposite(jungGraph);
 		this.setSavedWorkflow(false);
+		this.setWorkflowFilePath("");
 		this.setFocus();
 
 	}
@@ -4991,39 +5047,40 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 		}
 		// Open Dialog and save result of selection
 		String selected = fileDialog.open();
-		workflowFilePath = selected;
-		File file = new File(selected);
-		final Display disp = Display.getCurrent();
-		Job OpenWorkflowJob = new Job("Open workflow..") {
-			@Override
-			protected IStatus run(IProgressMonitor monitor) {
-				monitor.beginTask("Loading operations...", IProgressMonitor.UNKNOWN);
+		if (selected != null) {
+			workflowFilePath = selected;
+			File file = new File(selected);
+			final Display disp = Display.getCurrent();
+			Job OpenWorkflowJob = new Job("Open workflow..") {
+				@Override
+				protected IStatus run(IProgressMonitor monitor) {
+					monitor.beginTask("Loading operations...", IProgressMonitor.UNKNOWN);
 
-				try {
+					try {
 
-					edu.uci.ics.jung.graph.Graph<OwlService, Connector> graph = loadWorkflowFile(file);
-					if (graph != null) {
-						disp.syncExec(new Runnable() {
-							public void run() {
-								setJungGraph(graph);
-								addGraphInZest(graph);
-								updateRightComposite(graph);
-							}
-						});
+						edu.uci.ics.jung.graph.Graph<OwlService, Connector> graph = loadWorkflowFile(file);
+						if (graph != null) {
+							disp.syncExec(new Runnable() {
+								public void run() {
+									setJungGraph(graph);
+									addGraphInZest(graph);
+									updateRightComposite(graph);
+								}
+							});
+						}
+						setSavedWorkflow(true);
+						monitor.done();
+						return Status.OK_STATUS;
+					} catch (Exception ex) {
+						ex.printStackTrace();
+						return Status.CANCEL_STATUS;
+					} finally {
+						monitor.done();
 					}
-
-					monitor.done();
-					return Status.OK_STATUS;
-				} catch (Exception ex) {
-					ex.printStackTrace();
-					return Status.CANCEL_STATUS;
-				} finally {
-					monitor.done();
 				}
-			}
-		};
-		OpenWorkflowJob.schedule();
-
+			};
+			OpenWorkflowJob.schedule();
+		}
 	}
 
 	/**
@@ -5143,7 +5200,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 	 * pressing the appropriate button in the toolbar.
 	 */
 	public void saveWorkflow(boolean doSaveAs) {
-
+		final Display disp = Display.getCurrent();
 		String path = workflowFilePath;
 		if (doSaveAs) {
 			Shell shell = new Shell();
@@ -5159,7 +5216,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 
 			dialog.setFileName("workflow.sc");
 			path = dialog.open();
-		} 
+		}
 
 		GraphMLWriter<OwlService, Connector> graphWriter = new GraphMLWriter<OwlService, Connector>();
 
@@ -5334,6 +5391,17 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 		}
 
 		setSavedWorkflow(true);
+		// setDirty(false);
+		
+		disp.syncExec(new Runnable() {
+
+			@Override
+			public void run() {
+				MessageDialog.openInformation(disp.getActiveShell(), "Info",
+						"Workflow is saved.");
+			}
+
+		});
 
 	}
 
@@ -5620,7 +5688,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 		return st.isOK() ? ResourcesPlugin.getWorkspace().getRoot().getProject(projName) : null;
 	}
 
-	private IStatus checkGraph(edu.uci.ics.jung.graph.Graph<OwlService, Connector> graph, final Display disp)
+	public IStatus checkGraph(edu.uci.ics.jung.graph.Graph<OwlService, Connector> graph, final Display disp)
 			throws Exception {
 
 		// Check if every node has a path to StartNode and to
@@ -6163,63 +6231,64 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 		scaseProject = project;
 	}
 
-	@Override
-	public void doSave(IProgressMonitor monitor) {
-		try {
-			final Display disp = Display.getCurrent();
-			IStatus status = checkGraph(jungGraph, disp);
-			if (status.getMessage().equalsIgnoreCase("OK")) {
-				if (workflowFilePath.isEmpty()) {
-					saveWorkflow(true);
-				} else {
-					saveWorkflow(false);
-				}
-			}
-			setDirty(false);
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-
-	}
-
-	@Override
-	public void doSaveAs() {
-		try {
-			final Display disp = Display.getCurrent();
-			IStatus status = checkGraph(jungGraph, disp);
-			if (status.getMessage().equalsIgnoreCase("OK")) {
-				saveWorkflow(true);
-			}
-			setDirty(false);
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	}
-
-	@Override
-	public boolean isDirty() {
-		// TODO Auto-generated method stub
-		return isDirty;
-
-	}
-
-	@Override
-	public boolean isSaveAsAllowed() {
-		// TODO Auto-generated method stub
-		return true;
-	}
-
-	@Override
-	public boolean isSaveOnCloseNeeded() {
-		// TODO Auto-generated method stub
-		return false;
-	}
-
-	public void setDirty(boolean d) {
-		this.isDirty = d;
-		firePropertyChange(PROP_DIRTY);
-	}
+	// // implements ISaveablePart
+	// @Override
+	// public void doSave(IProgressMonitor monitor) {
+	// try {
+	// final Display disp = Display.getCurrent();
+	// IStatus status = checkGraph(jungGraph, disp);
+	// if (status.getMessage().equalsIgnoreCase("OK")) {
+	// if (workflowFilePath.isEmpty()) {
+	// saveWorkflow(true);
+	// } else {
+	// saveWorkflow(false);
+	// }
+	// }
+	// setDirty(false);
+	// } catch (Exception e) {
+	// // TODO Auto-generated catch block
+	// e.printStackTrace();
+	// }
+	//
+	// }
+	//
+	// @Override
+	// public void doSaveAs() {
+	// try {
+	// final Display disp = Display.getCurrent();
+	// IStatus status = checkGraph(jungGraph, disp);
+	// if (status.getMessage().equalsIgnoreCase("OK")) {
+	// saveWorkflow(true);
+	// }
+	// setDirty(false);
+	// } catch (Exception e) {
+	// // TODO Auto-generated catch block
+	// e.printStackTrace();
+	// }
+	// }
+	//
+	// @Override
+	// public boolean isDirty() {
+	// // TODO Auto-generated method stub
+	// return isDirty;
+	//
+	// }
+	//
+	// @Override
+	// public boolean isSaveAsAllowed() {
+	// // TODO Auto-generated method stub
+	// return true;
+	// }
+	//
+	// @Override
+	// public boolean isSaveOnCloseNeeded() {
+	// // TODO Auto-generated method stub
+	// return false;
+	// }
+	//
+	// public void setDirty(boolean d) {
+	// this.isDirty = d;
+	// firePropertyChange(PROP_DIRTY);
+	// }
 
 }

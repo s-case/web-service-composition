@@ -39,27 +39,79 @@ import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.IViewPart;
 import org.eclipse.ui.IViewReference;
 import org.eclipse.ui.IWorkbenchPage;
+import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.ide.IDE;
 
 import edu.uci.ics.jung.graph.Graph;
 
 public class ImportHandler extends AbstractHandler {
+	/**
+	 * the workflow
+	 */
 	Graph<OwlService, Connector> graph;
+	/**
+	 * s-case project
+	 */
 	IProject existingProject;
 
 	@Override
 	public Object execute(ExecutionEvent event) throws ExecutionException {
+
+		final Shell shell = new Shell();
+		final Display disp = Display.getCurrent();
+
+		try {
+			PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage().showView(ServiceCompositionView.ID);
+		} catch (PartInitException e2) {
+			// TODO Auto-generated catch block
+			e2.printStackTrace();
+		}
+		ServiceCompositionView view = (ServiceCompositionView) getView(ServiceCompositionView.ID);
+		Graph<OwlService, Connector> previousGraph = view.getJungGraph();
+		if (previousGraph != null) {
+			if (view.jungGraphHasOperations() && !view.getSavedWorkflow()) {
+				MessageDialog saveDialog = new MessageDialog(shell, "Workflow is not saved", null,
+						"This workflow is not saved. Would you like to save it before creating a new one?",
+						MessageDialog.QUESTION_WITH_CANCEL, new String[] { "Yes", "No", "Cancel" }, 0);
+				int result = saveDialog.open();
+				System.out.println(result);
+				if (result == 0) {
+					IStatus status;
+					try {
+						status = view.checkGraph(previousGraph, disp);
+
+						if (status.getMessage().equalsIgnoreCase("OK")) {
+							if (view.getWorkflowFilePath().isEmpty()) {
+								view.saveWorkflow(true);
+							} else {
+								view.saveWorkflow(false);
+							}
+						}
+					} catch (Exception e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+				} else if (result == 2) {
+					return null;
+				}
+			}
+		}
+		importStoryboard(disp, shell);
+		return null;
+
+	}
+
+	private void importStoryboard(Display disp, Shell shell) {
 		ResourceFileSelectionDialog dialog = new ResourceFileSelectionDialog("Select an .scd file", "",
 				new String[] { "scd" });
 		dialog.open();
 		final Object[] selections = dialog.getResult();
 		if (selections == null)
-			return null;
+			return;
 
 		try {
-			final Shell shell = new Shell();
-			final Display disp = Display.getCurrent();
+
 			// Runnable myRunnable = new Runnable() {
 			Job ImportSBD = new Job("Import StoryBoard Creator file") {
 				@Override
@@ -151,7 +203,8 @@ public class ImportHandler extends AbstractHandler {
 										view.addGraphInZest(graph);
 										view.updateRightComposite(graph);
 										view.setSavedWorkflow(false);
-										view.setDirty(true);
+										view.setWorkflowFilePath("");
+										// view.setDirty(true);
 										view.setFocus();
 
 									} catch (Exception e) {
@@ -216,8 +269,6 @@ public class ImportHandler extends AbstractHandler {
 			Activator.log("Error while importing the .scd file", e);
 			e.printStackTrace();
 		}
-		return null;
-
 	}
 
 	public List<MyNode> createGraphNodes(Graph<OwlService, Connector> graph) {
