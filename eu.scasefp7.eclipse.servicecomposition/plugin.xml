@@ -34,6 +34,10 @@
             categoryId="eu.scasefp7.eclipse.mainmenu"
             id="eu.scasefp7.eclipse.servicecomposition.importSBD">
       </command>
+      <command
+            id="StoryboardMenuId"
+            name="StoryboardMenuId">
+      </command>
    </extension>
    <extension
          point="org.eclipse.ui.handlers">
@@ -51,6 +55,30 @@
             schemeId="org.eclipse.ui.defaultAcceleratorConfiguration">
       </key>
    </extension>
+   <extension
+         point="org.eclipse.ui.menus">
+      <menuContribution
+            allPopups="false"
+            locationURI="toolbar:eu.scasefp7.eclipse.servicecomposition.views.ServiceCompositionView">
+         <command
+               commandId="eu.scasefp7.eclipse.servicecomposition.importSBD"
+               icon="icons/import_storyboard.png"
+               label="Import storyboard"
+               style="push"
+               tooltip="Imports Web Service Composition Storyboard Diagram">
+         </command>
+         <command
+               commandId="org.eclipse.ui.newWizard"
+               label="Create storyboard"
+               style="push"
+               tooltip="Create new storyboard file">
+            <parameter
+                  name="newWizardId"
+                  value="eu.scasefp7.eclipse.storyboards.diagram.part.ServiceCompositionStoryboardsCreationWizardID">
+            </parameter>
+         </command>
+      </menuContribution>
+   </extension>
   <!-- <extension
          point="org.eclipse.ui.menus">
       <menuContribution
@@ -59,6 +87,11 @@
                id="eu.scasefp7.eclipse.menu.main"
                label="S-CASE"
                mnemonic="S">
+         <command
+               commandId="eu.scasefp7.eclipse.servicecomposition.importSBD"
+               label="Import storyboard"
+               style="push">
+         </command>
             <command
                   commandId="eu.scasefp7.eclipse.servicecomposition.importSBD"
                   mnemonic="D">
