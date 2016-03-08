@@ -569,6 +569,9 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 						item.setText("Remove operation "
 								+ ((OwlService) ((MyNode) selectedGraphNode.getData()).getObject()).getName());
 						item.setEnabled(true);
+						MenuItem item1 = new MenuItem(menu, SWT.NONE);
+						item1.setText("See alternative operations");
+						item1.setEnabled(true);
 						MenuItem item2 = new MenuItem(menu, SWT.NONE);
 						item2.setText("Link this operation to..");
 
@@ -603,6 +606,14 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 							public void handleEvent(Event event) {
 								String mode = "Operation";
 								removeNode(selectedGraphNode, mode);
+							}
+						});
+						// See alternative operations
+						item1.addListener(SWT.Selection, new Listener() {
+
+							@Override
+							public void handleEvent(Event event) {
+								
 							}
 						});
 
