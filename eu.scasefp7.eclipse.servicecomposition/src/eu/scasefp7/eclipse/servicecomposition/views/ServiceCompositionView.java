@@ -237,6 +237,7 @@ import eu.scasefp7.eclipse.servicecomposition.transformer.Matcher;
 import eu.scasefp7.eclipse.servicecomposition.transformer.PathFinding;
 import eu.scasefp7.eclipse.servicecomposition.transformer.Similarity;
 import eu.scasefp7.eclipse.servicecomposition.transformer.Transformer;
+import eu.scasefp7.eclipse.servicecomposition.transformer.Transformer.ReplaceInformation;
 import eu.scasefp7.eclipse.servicecomposition.transformer.JungXMItoOwlTransform.OwlService;
 import eu.scasefp7.eclipse.servicecomposition.ui.ResourceFileSelectionDialog;
 
@@ -269,7 +270,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 	// the saved workflow file
 	private File workflowFile;
 	private String workflowFilePath = "";
-	//the storyboard file
+	// the storyboard file
 	private IFile storyboardFile;
 	// toolbar actions
 	private Action runWorkflowAction;
@@ -613,7 +614,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 
 							@Override
 							public void handleEvent(Event event) {
-								
+								showAlternatives(selectedGraphNode);
 							}
 						});
 
@@ -689,7 +690,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 	private void matchIO(final GraphNode node) {
 
 		// ArrayList<String> list = new ArrayList<String>();
-		ArrayList<OwlService> list = new ArrayList<OwlService>();
+		ArrayList<Object> list = new ArrayList<Object>();
 
 		if (node.getTargetConnections().size() == 0) {
 			// System.out.println("Node is an input");
@@ -762,7 +763,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 	 */
 	private void linkOperation(final GraphNode node, final String mode) {
 
-		ArrayList<OwlService> list = new ArrayList<OwlService>();
+		ArrayList<Object> list = new ArrayList<Object>();
 		// String option = "link";
 		Collection<OwlService> services = new ArrayList<OwlService>(jungGraph.getVertices());
 		for (OwlService service : services) {
@@ -1622,9 +1623,10 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 	 * @param list
 	 *            : the nodes to choose from
 	 * @param option
-	 *            : match IOs or link operation/condition/StartNode/EndNode
+	 *            : match IOs or link operation/condition/StartNode/EndNode or
+	 *            show alternative operations
 	 */
-	public void SelectionWindowNode(ArrayList<OwlService> list, String option) {
+	public void SelectionWindowNode(ArrayList<Object> list, String option) {
 
 		Shell shell = new Shell();
 		ElementListSelectionDialog dialog = new ElementListSelectionDialog(shell, new LabelProvider());
@@ -1640,6 +1642,9 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 		} else if (option == "matchoutput") {
 			dialog.setTitle("Match this output with..");
 			dialog.setMessage("Please select an appropriate input:");
+		} else if (option == "alternativeOperations") {
+			dialog.setTitle("Select an alternative operation..");
+			dialog.setMessage("Please select an alternative operation for replacement:");
 		}
 
 		// user pressed OK
@@ -1657,6 +1662,10 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 			} else if (option == "matchoutput") {
 				for (Object selectedItem : result) {
 					addEdge(selectedItem, option);
+				}
+			} else if (option == "alternativeOperations") {
+				for (Object selectedItem : result) {
+					replaceOperation(selectedItem);
 				}
 			}
 
@@ -2305,6 +2314,16 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 
 	}
 
+	private void showAlternatives(GraphNode node) {
+		ArrayList<Object> list = new ArrayList<Object>();
+		for (ReplaceInformation replacement : ((MyNode) node.getData()).getAlternativeOperations()) {
+			if (!((OwlService) ((MyNode) selectedGraphNode.getData()).getObject()).getOperation()
+					.equals(replacement.getOperationToReplace()))
+				list.add(replacement);
+		}
+		SelectionWindowNode(list, "alternativeOperations");
+	}
+
 	public List<MyNode> createGraphNodes(OwlService owlService) {
 
 		List<MyNode> nodes = new ArrayList<MyNode>();
@@ -2769,7 +2788,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 			public void run() {
 
 				try {
-					
+
 					reloadStoryboard(disp);
 				} catch (Exception e) {
 					// TODO Auto-generated catch block
@@ -2779,7 +2798,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 			}
 		};
 		reloadWorkflowAction.setImageDescriptor(getImageDescriptor("icons/reload_storyboard.png"));
-		
+
 		Action uploadOnServerAction = new Action("Upload RESTful web service on server.") {
 			public void run() {
 
@@ -4588,11 +4607,10 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 	public String getWorkflowFilePath() {
 		return workflowFilePath;
 	}
-	
-	public void setStoryboardFile(IFile file){
-		this.storyboardFile= file;
+
+	public void setStoryboardFile(IFile file) {
+		this.storyboardFile = file;
 	}
-	
 
 	/**
 	 * <h1>addOperationInZest</h1> It is called by <code>addNode</code> in order
@@ -4750,6 +4768,36 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 	public void addGraphInZest(edu.uci.ics.jung.graph.Graph<OwlService, Connector> graph) {
 
 		List<MyNode> nodes = createGraphNodes(graph);
+		addZestNodes(nodes);
+
+	}
+
+	/**
+	 * <h1>addGraphInZest</h1> It is called in order to create a zest graph
+	 * according to <code>graph</code>
+	 * 
+	 * @param graph
+	 *            : the jung graph
+	 */
+	public void addGraphInZest(edu.uci.ics.jung.graph.Graph<OwlService, Connector> graph,
+			ArrayList<WeightReport> reports) {
+
+		List<MyNode> nodes = createGraphNodes(graph);
+		for (WeightReport report : reports) {
+			for (MyNode node : nodes) {
+				if (((OwlService) node.getObject()).getOperation() != null) {
+					if (((OwlService) node.getObject()).equals(report.getReplaceInformation().getTargetService())) {
+						node.setAlternativeOperations(report.getReplaceInformation().getAlternativeOperations());
+						break;
+					}
+				}
+			}
+		}
+		addZestNodes(nodes);
+
+	}
+
+	private void addZestNodes(List<MyNode> nodes) {
 		Graph zestGraph = viewer.getGraphControl();
 		int graphNodeSize = zestGraph.getNodes().size();
 		deleteAllNodes(zestGraph, graphNodeSize);
@@ -4795,6 +4843,161 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 			}
 		}
 		viewer.applyLayout();
+	}
+
+	/**
+	 * <h1>replaceOperation</h1> Replace an operation with the alternative
+	 * operation that the user has chosen.
+	 * 
+	 * @param selectedItem:
+	 *            the alternative operation that the user has chosen
+	 */
+	private void replaceOperation(Object selectedItem) {
+
+		// find previous and next services
+		MyNode previousOperation = null;
+		GraphNode previousGraphNode = null;
+		MyNode nextOperation = null;
+		GraphNode nextGraphNode = null;
+		String edgeText = "";
+
+		Graph graph = viewer.getGraphControl();
+		for (int i = 0; i < graph.getNodes().size(); i++) {
+			GraphNode graphNode = (GraphNode) graph.getNodes().get(i);
+			for (int j = 0; j < ((MyNode) graphNode.getData()).getLinkedConnections().size(); j++) {
+				if (((MyNode) graphNode.getData()).getLinkedConnections().get(j).getDestination()
+						.equals(selectedGraphNode.getData())
+						&& (((OwlService) ((MyNode) graphNode.getData()).getObject()).getOperation() != null
+								|| ((OwlService) ((MyNode) graphNode.getData()).getObject()).getType()
+										.equals("StartNode")
+								|| ((OwlService) ((MyNode) graphNode.getData()).getObject()).getType()
+										.equals("Condition"))) {
+					previousOperation = ((MyNode) graphNode.getData());
+					previousGraphNode = graphNode;
+					edgeText = ((MyNode) graphNode.getData()).getLinkedConnections().get(j).getLabel();
+					break;
+				}
+			}
+			for (int k = 0; k < graphNode.getTargetConnections().size(); k++) {
+				if (((MyNode) ((GraphConnection) graphNode.getTargetConnections().get(k)).getSource().getData())
+						.equals(selectedGraphNode.getData())
+						&& (((OwlService) ((MyNode) graphNode.getData()).getObject()).getOperation() != null
+								|| ((OwlService) ((MyNode) graphNode.getData()).getObject()).getType().equals("EndNode")
+								|| ((OwlService) ((MyNode) graphNode.getData()).getObject()).getType()
+										.equals("Condition"))) {
+					nextOperation = ((MyNode) graphNode.getData());
+					nextGraphNode = graphNode;
+					break;
+				}
+			}
+		}
+		// get replaceinfo
+		List<ReplaceInformation> alternativeOperations = ((MyNode) selectedGraphNode.getData())
+				.getAlternativeOperations();
+
+		// remove selected node
+		String mode = "Operation";
+		removeNode(selectedGraphNode, mode);
+
+		// add new node
+		Collection<OwlService> services = new ArrayList<OwlService>(jungGraph.getVertices());
+		String operationType = "Action";
+		OwlService owlService = new OwlService(((ReplaceInformation) selectedItem).getOperationToReplace());
+		for (OwlService s : services) {
+			if (owlService.getName().getContent().equals(s.getName().getContent())) {
+				if (owlService.getId() <= s.getId()) {
+					owlService.setId(s.getId() + 1);
+				}
+			}
+
+		}
+
+		jungGraph.addVertex(owlService);
+
+		System.out.println("New operation: " + owlService + " is added to the graph");
+		Transformer transformer = new Transformer(jungGraph);
+		try {
+			// Add the io variables of the operation
+			transformer.expandOperations(owlService);
+			// transformer.createLinkedVariableGraph();
+		} catch (Exception e) {
+			Activator.log("Error while expanding new operation", e);
+			e.printStackTrace();
+		}
+		edu.uci.ics.jung.graph.Graph<OwlService, Connector> tempGraph = new SparseMultigraph<OwlService, Connector>();
+		tempGraph.addVertex(owlService);
+		Transformer tempTransformer = new Transformer(tempGraph);
+		try {
+			// Add the io variables of the operation
+			tempTransformer.expandOperations(owlService);
+
+		} catch (Exception e) {
+			Activator.log("Error while expanding new operation", e);
+			e.printStackTrace();
+		}
+		addOperationInZest(owlService, tempGraph);
+
+		// add alternatives
+
+		for (int j = 0; j < graph.getNodes().size(); j++) {
+			GraphNode graphNode = (GraphNode) graph.getNodes().get(j);
+			if (((OwlService) ((MyNode) graphNode.getData()).getObject()).equals(owlService)) {
+				((MyNode) graphNode.getData()).setAlternativeOperations(alternativeOperations);
+			}
+		}
+		// add previous connection
+		// Add link to Jung Graph
+		jungGraph.addEdge(new Connector((OwlService) previousOperation.getObject(), owlService, edgeText),
+				(OwlService) previousOperation.getObject(), owlService, EdgeType.DIRECTED);
+		// Add link to Zest Graph
+
+		for (int j = 0; j < graph.getNodes().size(); j++) {
+			GraphNode graphNode = (GraphNode) graph.getNodes().get(j);
+			if (((OwlService) ((MyNode) graphNode.getData()).getObject()).equals(owlService)) {
+
+				MyConnection connect = new MyConnection(previousGraphNode.toString() + graphNode.toString(), edgeText,
+						(MyNode) previousGraphNode.getData(), (MyNode) graphNode.getData());
+				((MyNode) previousGraphNode.getData()).getLinkedConnections().add(connect);
+				((MyNode) previousGraphNode.getData()).getConnections().add((MyNode) graphNode.getData());
+
+				GraphConnection graphConnection = new GraphConnection(graph, SWT.NONE, previousGraphNode, graphNode);
+				graphConnection.setText(edgeText);
+				EntityConnectionData connectionData = new EntityConnectionData((MyNode) previousGraphNode.getData(),
+						(MyNode) graphNode.getData());
+				graphConnection.setData(connectionData);
+
+			}
+		}
+
+		// add next connection
+
+		// Add link to Jung Graph
+		jungGraph.addEdge(new Connector(owlService, (OwlService) nextOperation.getObject(), ""), owlService,
+				(OwlService) nextOperation.getObject(), EdgeType.DIRECTED);
+		// Add link to Zest Graph
+
+		for (int j = 0; j < graph.getNodes().size(); j++) {
+			GraphNode graphNode = (GraphNode) graph.getNodes().get(j);
+			if (((OwlService) ((MyNode) graphNode.getData()).getObject()).equals(owlService)) {
+
+				MyConnection connect = new MyConnection(graphNode.toString() + nextGraphNode.toString(), "",
+						(MyNode) graphNode.getData(), (MyNode) nextGraphNode.getData());
+				((MyNode) graphNode.getData()).getLinkedConnections().add(connect);
+				((MyNode) graphNode.getData()).getConnections().add((MyNode) nextGraphNode.getData());
+
+				GraphConnection graphConnection = new GraphConnection(graph, SWT.NONE, graphNode, nextGraphNode);
+				EntityConnectionData connectionData = new EntityConnectionData((MyNode) graphNode.getData(),
+						(MyNode) nextGraphNode.getData());
+				graphConnection.setData(connectionData);
+
+			}
+		}
+
+		this.setJungGraph(jungGraph);
+		updateRightComposite(jungGraph);
+		this.setLayout();
+		this.setSavedWorkflow(false);
+		// this.setDirty(true);
 
 	}
 
@@ -5067,22 +5270,22 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 		possibleArguments.add(arg);
 
 	}
-	
-	
-	private void reloadStoryboard(Display disp){
-		if (this.storyboardFile!=null){
+
+	private void reloadStoryboard(Display disp) {
+		if (this.storyboardFile != null) {
 			Job reloadSBD = new Job("Reload StoryBoard Creator file") {
 				@Override
 				protected IStatus run(IProgressMonitor monitor) {
 					monitor.beginTask("Transforming storyboard creator diagram to workflow of web services...",
 							IProgressMonitor.UNKNOWN);
-					
+
 					try {
 						jungGraph = null;
 						IFile file = storyboardFile;
-//						// check if ontology file exists in .metadata plug-in's
-//						// folder
-//						ontologyCheck(shell, disp);
+						// // check if ontology file exists in .metadata
+						// plug-in's
+						// // folder
+						// ontologyCheck(shell, disp);
 						Algorithm.init();
 						final ArrayList<Operation> operations = Algorithm
 								.importServices(ResourcesPlugin.getWorkspace().getRoot().getLocation().toString()
@@ -5135,13 +5338,12 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 								public void run() {
 
 									try {
-										
-											IWorkbenchPage page = PlatformUI.getWorkbench().getActiveWorkbenchWindow()
-													.getActivePage();
 
-											IEditorPart openEditor = IDE.openEditor(page, storyboardFile);
+										IWorkbenchPage page = PlatformUI.getWorkbench().getActiveWorkbenchWindow()
+												.getActivePage();
 
-										
+										IEditorPart openEditor = IDE.openEditor(page, storyboardFile);
+
 										setJungGraph(jungGraph);
 										addGraphInZest(jungGraph);
 										updateRightComposite(jungGraph);
@@ -5205,7 +5407,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 			};
 			reloadSBD.setUser(true);
 			reloadSBD.schedule();
-		}else{
+		} else {
 			disp.syncExec(new Runnable() {
 
 				@Override

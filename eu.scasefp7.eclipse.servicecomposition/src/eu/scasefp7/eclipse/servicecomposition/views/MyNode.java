@@ -3,24 +3,35 @@ package eu.scasefp7.eclipse.servicecomposition.views;
 import java.util.ArrayList;
 import java.util.List;
 
+import eu.scasefp7.eclipse.servicecomposition.transformer.Transformer.ReplaceInformation;
+
 /**
- * @author mkoutli
- *Represents the node of the workflow (zest diagram)
+ * @author mkoutli Represents the node of the workflow (zest diagram)
  */
 public class MyNode {
-	//node attributes
+	// node attributes
 	private final String id;
 	private String name;
-	private final Object object;
+	private Object object;
 	private List<MyNode> connections;
 	private List<MyConnection> linkedConnections;
+	private List<ReplaceInformation> alternativeOperations;
 
 	public MyNode(String id, String name, Object obj) {
 		this.id = id;
 		this.name = name;
 		this.object = obj;
 		this.connections = new ArrayList<MyNode>();
-		linkedConnections=new ArrayList<MyConnection>();
+		this.linkedConnections = new ArrayList<MyConnection>();
+		this.alternativeOperations = new ArrayList<ReplaceInformation>();
+	}
+
+	public List<ReplaceInformation> getAlternativeOperations() {
+		return alternativeOperations;
+	}
+
+	public void setAlternativeOperations(List<ReplaceInformation> alternativeOperations) {
+		this.alternativeOperations = alternativeOperations;
 	}
 
 	public String getId() {
@@ -39,9 +50,14 @@ public class MyNode {
 		return connections;
 	}
 
-	public void setName(String name){
+	public void setObject(Object object) {
+		this.object = object;
+	}
+	
+	public void setName(String name) {
 		this.name = name;
 	}
+
 	public void setConnections(List<MyNode> connections) {
 		this.connections = connections;
 	}

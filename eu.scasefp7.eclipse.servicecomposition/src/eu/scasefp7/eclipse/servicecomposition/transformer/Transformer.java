@@ -55,6 +55,10 @@ public class Transformer {
 		 * original action
 		 */
 		private Operation originalServiceOperation;
+		/**
+		 * alternative operations for replacement
+		 */
+		private ArrayList<ReplaceInformation> alternativeOperations = new ArrayList<ReplaceInformation>();
 
 		public ReplaceInformation(OwlService owlService, Operation operation, double weight) {
 			this.owlService = owlService;
@@ -135,6 +139,20 @@ public class Transformer {
 		 */
 		public double getWeight() {
 			return weight;
+		}
+		/**
+		 * <h1>setAlternativeOperations</h1> Add alternative operations for replacement to the list
+		 * @param replace
+		 */
+		public void setAlternativeOperations(ReplaceInformation replace){
+			this.alternativeOperations.add(replace);
+		}
+		/**
+		 * <h1>getAlternativeOperations</h1>
+		 * @return alternative operations list
+		 */
+		public ArrayList<ReplaceInformation> getAlternativeOperations(){
+			return alternativeOperations;
 		}
 
 		/**

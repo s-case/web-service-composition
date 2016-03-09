@@ -201,7 +201,7 @@ public class ImportHandler extends AbstractHandler {
 										}
 
 										view.setJungGraph(graph);
-										view.addGraphInZest(graph);
+										view.addGraphInZest(graph, Algorithm.getStepReports());
 										view.updateRightComposite(graph);
 										view.setSavedWorkflow(false);
 										view.setWorkflowFilePath("");
