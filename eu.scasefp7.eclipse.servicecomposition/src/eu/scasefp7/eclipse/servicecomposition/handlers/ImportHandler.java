@@ -269,7 +269,8 @@ public class ImportHandler extends AbstractHandler {
 			};
 			ImportSBD.setUser(true);
 			ImportSBD.schedule();
-
+			// Trace user action
+			Activator.TRACE.trace("/debug/executeCommand", "Storyboard is imported.");
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			Activator.log("Error while importing the .scd file", e);

@@ -3,17 +3,22 @@ package eu.scasefp7.eclipse.servicecomposition;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Dictionary;
+import java.util.Hashtable;
 import java.util.TimeZone;
 
 import org.eclipse.core.runtime.Status;
 import org.eclipse.jface.resource.ImageDescriptor;
+import org.eclipse.osgi.service.debug.DebugOptions;
+import org.eclipse.osgi.service.debug.DebugOptionsListener;
+import org.eclipse.osgi.service.debug.DebugTrace;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
 import org.osgi.framework.BundleContext;
 
 /**
  * The activator class controls the plug-in life cycle
  */
-public class Activator extends AbstractUIPlugin {
+public class Activator extends AbstractUIPlugin implements DebugOptionsListener {
 
 	/**
 	 * A UTC ISO 8601 date formatter used to log the time of errors.
@@ -41,6 +46,12 @@ public class Activator extends AbstractUIPlugin {
 	// The shared instance
 	private static Activator plugin;
 
+	/** Cached debug tracing flag. */
+	public static boolean DEBUG = false;
+
+	/** Cached debug trace output. */
+	public static DebugTrace TRACE = null;
+
 	/**
 	 * The constructor
 	 */
@@ -58,6 +69,11 @@ public class Activator extends AbstractUIPlugin {
 		plugin = this;
 		STARTING_TIME = formatter.format(new Date());
 		errorID = 0;
+
+		Dictionary<String, String> props = new Hashtable<String, String>(4);
+		props.put(DebugOptions.LISTENER_SYMBOLICNAME, PLUGIN_ID);
+		context.registerService(DebugOptionsListener.class.getName(), this, props);
+
 	}
 
 	/*
@@ -137,5 +153,12 @@ public class Activator extends AbstractUIPlugin {
 			plugin.getLog().log(new Status(Status.ERROR, PLUGIN_ID, Status.OK, msg, exception));
 		else
 			exception.printStackTrace();
+	}
+
+	@Override
+	public void optionsChanged(DebugOptions options) {
+		DEBUG = options.getBooleanOption(PLUGIN_ID + "/debug", false);
+		TRACE = options.newDebugTrace(PLUGIN_ID);
+
 	}
 }

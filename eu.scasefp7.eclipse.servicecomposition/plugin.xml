@@ -99,7 +99,18 @@
          </menu>
       </menuContribution>     
    </extension>-->
-  
+  <extension
+        id="eu.scasefp7.eclipse.core.ui.tracing"
+        name="S-CASE Core UI tracing"
+        point="org.eclipse.ui.trace.traceComponents">
+  	<component
+         id="eu.scasefp7.eclipse.core.trace"
+         label="S-CASE">
+        <bundle
+        	name="eu.scasefp7.eclipse.*">
+        </bundle>
+      </component>
+   </extension>
   
 
 </plugin>

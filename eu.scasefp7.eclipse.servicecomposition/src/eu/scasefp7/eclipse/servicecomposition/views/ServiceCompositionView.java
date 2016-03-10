@@ -5803,10 +5803,13 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 		setSavedWorkflow(true);
 		// setDirty(false);
 
+		// Trace user action
+		Activator.TRACE.trace("/debug/executeCommand", "Workflow is saved.");
+		
 		disp.syncExec(new Runnable() {
 
 			@Override
-			public void run() {
+			public void run() {		
 				MessageDialog.openInformation(disp.getActiveShell(), "Info", "Workflow is saved.");
 			}
 
