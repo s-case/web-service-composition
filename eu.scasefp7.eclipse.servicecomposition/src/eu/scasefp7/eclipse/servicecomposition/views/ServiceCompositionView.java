@@ -328,7 +328,6 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 	private Job AddNewOperationJob;
 	private Job createWarFileJob;
 	private Job createProject;
-	private Job uploadToServerJob;
 	// zest graph connection and node
 	private GraphConnection selectedGraphEdge;
 	private GraphNode selectedGraphNode;
@@ -1517,6 +1516,9 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 
 					try {
 						ImportHandler.ontologyCheck(shell, disp);
+						// check if user has cancelled
+						if (monitor.isCanceled())
+							return Status.CANCEL_STATUS;
 						Algorithm.init();
 						// final ArrayList<Operation> operations =
 						// Algorithm.importServices(
@@ -1542,7 +1544,9 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 							}
 
 						}
-
+						// check if user has cancelled
+						if (monitor.isCanceled())
+							return Status.CANCEL_STATUS;
 						// Open selection window
 						disp.syncExec(new Runnable() {
 							public void run() {
@@ -3677,7 +3681,9 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 						System.err.println("Error occured while trying to load matcher settings from " + propFileName);
 					}
 					edu.uci.ics.jung.graph.Graph<OwlService, Connector> graph = new SparseMultigraph<OwlService, Connector>();
-
+					// check if user has cancelled
+					if (monitor.isCanceled())
+						return Status.CANCEL_STATUS;
 					// replace all services in the graph with implementations
 					HashMap<OwlService, OwlService> implementations = new HashMap<OwlService, OwlService>();
 					for (OwlService service : jungGraph.getVertices()) {
@@ -3734,7 +3740,9 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 							graph.addEdge(new Connector(target, source, connector.getCondition()), target, source,
 									EdgeType.UNDIRECTED);
 					}
-
+					// check if user has cancelled
+					if (monitor.isCanceled())
+						return Status.CANCEL_STATUS;
 					// initialize variable lists
 					final ArrayList<Value> inputVariables = new ArrayList<Value>();
 					final ArrayList<Value> outputVariables = new ArrayList<Value>();
@@ -3896,7 +3904,9 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 					}
 
 					currentService = startingService;
-
+					// check if user has cancelled
+					if (monitor.isCanceled())
+						return Status.CANCEL_STATUS;
 					// get input values
 					disp.syncExec(new Runnable() {
 						@Override
@@ -3921,7 +3931,9 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 							}
 						}
 					});
-
+					// check if user has cancelled
+					if (monitor.isCanceled())
+						return Status.CANCEL_STATUS;
 					// get uri parameters values
 					disp.syncExec(new Runnable() {
 						@Override
@@ -5301,6 +5313,10 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 						// "data/testing_scripts/");
 						final String pathToSBDFile = ResourcesPlugin.getWorkspace().getRoot().getLocation().toString()
 								+ file.getFullPath().toOSString();
+						// check if user has cancelled
+						if (monitor.isCanceled())
+							return Status.CANCEL_STATUS;
+						// transform graph
 						jungGraph = Algorithm.transformationAlgorithm(pathToSBDFile, operations, disp);
 
 						if (jungGraph != null) {
@@ -5332,7 +5348,9 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 
 								}
 							}
-
+							// check if user has cancelled
+							if (monitor.isCanceled())
+								return Status.CANCEL_STATUS;
 							disp.syncExec(new Runnable() {
 								@Override
 								public void run() {
@@ -5861,7 +5879,9 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 						currentProject = project;
 						// project.create(monitor);
 						project.open(monitor);
-
+						// check if user has cancelled
+						if (monitor.isCanceled())
+							return Status.CANCEL_STATUS;
 						// Configure the project to be a Java project and a
 						// maven
 						// project
@@ -5873,7 +5893,9 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 						project.setDescription(description, monitor);
 
 						IJavaProject javaProject = JavaCore.create(project);
-
+						// check if user has cancelled
+						if (monitor.isCanceled())
+							return Status.CANCEL_STATUS;
 						// src
 
 						IFolder src = project.getFolder("src");
@@ -5917,7 +5939,9 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 								}
 							}
 						}
-
+						// check if user has cancelled
+						if (monitor.isCanceled())
+							return Status.CANCEL_STATUS;
 						// generate pom.xml
 						pomPath = ResourcesPlugin.getWorkspace().getRoot().getLocation().toString() + "/"
 								+ javaProject.getElementName();
@@ -5936,7 +5960,9 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 
 						// add libs to project class path
 						javaProject.setRawClasspath(entries.toArray(new IClasspathEntry[entries.size()]), null);
-
+						// check if user has cancelled
+						if (monitor.isCanceled())
+							return Status.CANCEL_STATUS;
 						// Let's create our target/classes output folder
 
 						IFolder target = project.getFolder("target");
@@ -5974,7 +6000,9 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 
 						IPackageFragment pack = javaProject.getPackageFragmentRoot(src)
 								.createPackageFragment("eu.scasefp7.services.composite", false, null);
-
+						// check if user has cancelled
+						if (monitor.isCanceled())
+							return Status.CANCEL_STATUS;
 						// generate code of Workflow Class
 						generator = new NonLinearCodeGenerator();
 						String source = generator.generateCode(jungGraph, "workflow", false, projectName);
@@ -5991,7 +6019,9 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 
 						// type.createField("private String age;", null, true,
 						// null);
-
+						// check if user has cancelled
+						if (monitor.isCanceled())
+							return Status.CANCEL_STATUS;
 						// generate code of REST
 						// detect input variables
 						ArrayList<OwlService> inputVariables = new ArrayList<OwlService>();
@@ -6013,7 +6043,9 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 						// IType type2 = restClass.getType("RestCode");
 
 						gGenerator = generator;
-
+						// check if user has cancelled
+						if (monitor.isCanceled())
+							return Status.CANCEL_STATUS;
 						if (hasRest) {
 							String code = CallRestfulServiceCode.generateCode(pack.getElementName());
 							StringBuffer codeBuffer = new StringBuffer();
@@ -6029,7 +6061,9 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 							ICompilationUnit callWSDLClass = pack.createCompilationUnit("CallWSDLService.java",
 									codeBuffer.toString(), false, null);
 						}
-
+						// check if user has cancelled
+						if (monitor.isCanceled())
+							return Status.CANCEL_STATUS;
 						// edit web.xml
 						String path = ResourcesPlugin.getWorkspace().getRoot().getLocation().toString() + "/"
 								+ javaProject.getElementName() + "/WebContent/WEB-INF/web.xml";
@@ -6332,7 +6366,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 		return Status.OK_STATUS;
 	}
 
-	private void uploadOnServer() throws Exception {
+	private IStatus uploadOnServer(IProgressMonitor monitor) throws Exception {
 
 		String SFTPHOST = "109.231.127.61";
 		int SFTPPORT = 22;
@@ -6349,20 +6383,27 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 			java.util.Properties config = new java.util.Properties();
 			config.put("StrictHostKeyChecking", "no");
 			session.setConfig(config);
+			// check if user has cancelled
+			if (monitor.isCanceled())
+				return Status.CANCEL_STATUS;
 			session.connect();
 			channel = session.openChannel("sftp");
 			channel.connect();
 			channelSftp = (ChannelSftp) channel;
 			channelSftp.cd("..");
 			channelSftp.cd(SFTPWORKINGDIR);
+			// check if user has cancelled
+			if (monitor.isCanceled())
+				return Status.CANCEL_STATUS;
 			File f = new File(ResourcesPlugin.getWorkspace().getRoot().getLocation().toString() + "/" + projectName
 					+ "/target/" + projectName + "-0.0.1-SNAPSHOT.war");
 			channelSftp.put(new FileInputStream(f), f.getName());
 		} catch (Exception ex) {
 			Activator.log("Error while uploading war file on server", ex);
 			ex.printStackTrace();
-
+			return Status.CANCEL_STATUS;
 		}
+		return Status.OK_STATUS;
 
 	}
 
@@ -6419,7 +6460,9 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 								if (answer) {
 									// OK Button selected
 									try {
-										uploadOnServer();
+										IStatus status = uploadOnServer(monitor);
+										if (status.equals(Status.CANCEL_STATUS))
+											return;
 									} catch (Exception e) {
 										// TODO Auto-generated catch block
 										e.printStackTrace();
@@ -6429,8 +6472,13 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 						});
 
 					} else {
-						uploadOnServer();
+						IStatus status = uploadOnServer(monitor);
+						if (status.equals(Status.CANCEL_STATUS))
+							return Status.CANCEL_STATUS;
 					}
+					// check if user has cancelled
+					if (monitor.isCanceled())
+						return Status.CANCEL_STATUS;
 					if (webServiceExistsOnServer()) {
 
 						String[] elements = { "Update YouREST (beta)", "Update Linked Ontology" };

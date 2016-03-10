@@ -125,6 +125,8 @@ public class ImportHandler extends AbstractHandler {
 						// check if ontology file exists in .metadata plug-in's
 						// folder
 						ontologyCheck(shell, disp);
+						//check if user has cancelled before importing operations
+						if (monitor.isCanceled()) return Status.CANCEL_STATUS;
 						Algorithm.init();
 						final ArrayList<Operation> operations = Algorithm
 								.importServices(ResourcesPlugin.getWorkspace().getRoot().getLocation().toString()
@@ -140,6 +142,8 @@ public class ImportHandler extends AbstractHandler {
 						// "data/testing_scripts/");
 						final String pathToSBDFile = ResourcesPlugin.getWorkspace().getRoot().getLocation().toString()
 								+ file.getFullPath().toOSString();
+						//check if the user has cancelled the job before transforming
+						if (monitor.isCanceled()) return Status.CANCEL_STATUS;
 						graph = Algorithm.transformationAlgorithm(pathToSBDFile, operations, disp);
 
 						if (graph != null) {
@@ -171,7 +175,8 @@ public class ImportHandler extends AbstractHandler {
 
 								}
 							}
-
+							// check if user cancelled before showing the view
+							if (monitor.isCanceled()) return Status.CANCEL_STATUS;
 							disp.syncExec(new Runnable() {
 								@Override
 								public void run() {
