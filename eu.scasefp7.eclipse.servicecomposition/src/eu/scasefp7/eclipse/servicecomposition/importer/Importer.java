@@ -53,6 +53,7 @@ public abstract class Importer {
 	protected static DatatypeProperty belongsToUser;
 	protected static DatatypeProperty isRequired;
 	protected static DatatypeProperty hasName;
+	protected static ObjectProperty hasQueryParameters;
 	protected static ObjectProperty hasInput;
 	protected static ObjectProperty hasOutput;
 	protected static DatatypeProperty hasURIParameters;
@@ -363,6 +364,9 @@ public abstract class Importer {
 
 			if (ind.getPropertyValue(Importer.isPrototype) != null)
 				this.isPrototype = !ind.getPropertyValue(Importer.isPrototype).asLiteral().getString().equals("false");
+			
+			// load inputs
+			loadWSIO(ind, hasQueryParameters, inputs);
 			// load inputs
 			loadWSIO(ind, hasInput, inputs);
 			// load outputs

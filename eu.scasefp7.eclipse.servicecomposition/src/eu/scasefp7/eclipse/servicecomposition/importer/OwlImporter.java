@@ -40,6 +40,7 @@ public class OwlImporter extends Importer{
 		belongsToUser = ontologyModel.getDatatypeProperty(prefix + "belongsToUser");
 		hasName = ontologyModel.getDatatypeProperty(prefix + "hasName");
 		isPrototype = ontologyModel.getDatatypeProperty(prefix + "isPrototype");
+		hasQueryParameters= ontologyModel.getObjectProperty(prefix + "hasQueryParameters");
 		hasInput = ontologyModel.getObjectProperty(prefix + "hasInput");
 		hasURIParameters = ontologyModel.getDatatypeProperty(prefix + "hasURIParameters");
 		hasCRUDVerb = ontologyModel.getDatatypeProperty(prefix + "hasCRUDVerb");
