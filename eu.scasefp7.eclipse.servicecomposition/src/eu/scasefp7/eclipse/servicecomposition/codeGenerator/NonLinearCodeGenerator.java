@@ -57,7 +57,7 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 	 * operation to be written in MDE ontology
 	 */
 	protected MDEOperation operation;
-	
+
 	/**
 	 * primitive datatypes
 	 */
@@ -183,8 +183,9 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 		// detect uri parameters
 		for (OwlService service : graph.getVertices()) {
 			if (service.getOperation() != null) {
-				for (Argument param : service.getOperation().getUriParameters()) {
-					uriParameters.add(param);
+				for (Argument param : service.getOperation().getInputs()) {
+					if (param.isTypeOf().equals("URIParameter"))
+						uriParameters.add(param);
 				}
 			}
 		}
@@ -202,7 +203,7 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 						CodeNode code = RestFunctionCodeNode.createInstance(service, this);
 						code.applyTab();
 						functionCode += code.createFunctionCode(graph, allVariables);
-						for (Argument arg : service.getOperation().getUriParameters()) {
+						for (Argument arg : uriParameters) {
 							declaredVariables += TAB + "private Variable " + arg.getName().getContent().toString()
 									+ " = new Variable(\"" + arg.getName().getContent().replaceAll("[0123456789]", "")
 									+ "\",\"\", \"" + arg.getType() + "\");\n";
@@ -253,10 +254,10 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 		}
 		String operationResponseObjects = "";
 		for (OwlService op : remainingOperations) {
-			//if (op.getOperation().getType().equalsIgnoreCase("RESTful")) {
-				declaredVariables += TAB + "private " + op.getName().getContent() + "Response " + op.getName().getContent()
-						+ "_response = new " + op.getName().getContent() + "Response();\n";
-			//}
+			// if (op.getOperation().getType().equalsIgnoreCase("RESTful")) {
+			declaredVariables += TAB + "private " + op.getName().getContent() + "Response " + op.getName().getContent()
+					+ "_response = new " + op.getName().getContent() + "Response();\n";
+			// }
 			operationResponseObjects += TAB + TAB + "public static class " + op.getName().getContent() + "Response {\n";
 			String VarDeclaration = "";
 			String getSet = "\n\n";
@@ -264,55 +265,65 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 				String subType = output.getType();
 
 				if (output.getSubtypes().isEmpty() && !output.isArray()) {
-					VarDeclaration += TAB + TAB + TAB + "private String " + output.getName().getContent().replaceAll("[0123456789]", "")
-							+ " = \"\";\n";
+					VarDeclaration += TAB + TAB + TAB + "private String "
+							+ output.getName().getContent().replaceAll("[0123456789]", "") + " = \"\";\n";
 
-					getSet += TAB + TAB + "public void set" + output.getName().getContent().replaceAll("[0123456789]", "") + "(String "
+					getSet += TAB + TAB + "public void set"
+							+ output.getName().getContent().replaceAll("[0123456789]", "") + "(String "
 							+ output.getName().getContent().replaceAll("[0123456789]", "") + ") {\n" + TAB + TAB + TAB
 							+ "this." + output.getName().getContent().replaceAll("[0123456789]", "") + " = "
 							+ output.getName().getContent().replaceAll("[0123456789]", "") + ";\n" + TAB + TAB + "}\n";
 					getSet += TAB + TAB + "@XmlElement\n" + TAB + TAB + "public String get"
-							+ output.getName().getContent().replaceAll("[0123456789]", "") + "() {\n" + TAB + TAB + TAB + "return "
-							+ output.getName().getContent().replaceAll("[0123456789]", "") + ";\n" + TAB + TAB + "}\n";
+							+ output.getName().getContent().replaceAll("[0123456789]", "") + "() {\n" + TAB + TAB + TAB
+							+ "return " + output.getName().getContent().replaceAll("[0123456789]", "") + ";\n" + TAB
+							+ TAB + "}\n";
 				} else if (output.isArray() && RAMLCaller.stringContainsItemFromList(output.getType(), datatypes)) {
-					VarDeclaration += TAB + TAB + TAB + "private ArrayList <String> " + output.getName().getContent().replaceAll("[0123456789]", "")
+					VarDeclaration += TAB + TAB + TAB + "private ArrayList <String> "
+							+ output.getName().getContent().replaceAll("[0123456789]", "")
 							+ "= new ArrayList<String>();\n";
 
-					getSet += TAB + TAB + "public void set" + output.getName().getContent().replaceAll("[0123456789]", "") + "(ArrayList<String> "
+					getSet += TAB + TAB + "public void set"
+							+ output.getName().getContent().replaceAll("[0123456789]", "") + "(ArrayList<String> "
 							+ output.getName().getContent().replaceAll("[0123456789]", "") + ") {\n" + TAB + TAB + TAB
 							+ "this." + output.getName().getContent().replaceAll("[0123456789]", "") + " = "
 							+ output.getName().getContent().replaceAll("[0123456789]", "") + ";\n" + TAB + TAB + "}\n";
 					getSet += TAB + TAB + "@XmlElement\n" + TAB + TAB + "public ArrayList<String> get"
-							+ output.getName().getContent().replaceAll("[0123456789]", "") + "() {\n" + TAB + TAB + TAB + "return "
-							+ output.getName().getContent().replaceAll("[0123456789]", "") + ";\n" + TAB + TAB + "}\n";
+							+ output.getName().getContent().replaceAll("[0123456789]", "") + "() {\n" + TAB + TAB + TAB
+							+ "return " + output.getName().getContent().replaceAll("[0123456789]", "") + ";\n" + TAB
+							+ TAB + "}\n";
 				} else if (output.isArray() && !RAMLCaller.stringContainsItemFromList(output.getType(), datatypes)) {
 					VarDeclaration += TAB + TAB + TAB + "private ArrayList <" + subType.substring(0, 1).toUpperCase()
-							+ subType.substring(1) + "> " + output.getName().getContent().replaceAll("[0123456789]", "") + " = new ArrayList<"
-							+ subType.substring(0, 1).toUpperCase() + subType.substring(1) + ">();\n";
+							+ subType.substring(1) + "> " + output.getName().getContent().replaceAll("[0123456789]", "")
+							+ " = new ArrayList<" + subType.substring(0, 1).toUpperCase() + subType.substring(1)
+							+ ">();\n";
 
-					getSet += TAB + TAB + "public void set" + output.getName().getContent().replaceAll("[0123456789]", "") + "(ArrayList<"
+					getSet += TAB + TAB + "public void set"
+							+ output.getName().getContent().replaceAll("[0123456789]", "") + "(ArrayList<"
 							+ subType.substring(0, 1).toUpperCase() + subType.substring(1) + "> "
 							+ output.getName().getContent().replaceAll("[0123456789]", "") + ") {\n" + TAB + TAB + TAB
 							+ "this." + output.getName().getContent().replaceAll("[0123456789]", "") + " = "
 							+ output.getName().getContent().replaceAll("[0123456789]", "") + ";\n" + TAB + TAB + "}\n";
 					getSet += TAB + TAB + "@XmlElement\n" + TAB + TAB + "public ArrayList<"
 							+ subType.substring(0, 1).toUpperCase() + subType.substring(1) + "> get"
-							+ output.getName().getContent().replaceAll("[0123456789]", "") + "() {\n" + TAB + TAB + TAB + "return "
-							+ output.getName().getContent().replaceAll("[0123456789]", "") + ";\n" + TAB + TAB + "}\n";
+							+ output.getName().getContent().replaceAll("[0123456789]", "") + "() {\n" + TAB + TAB + TAB
+							+ "return " + output.getName().getContent().replaceAll("[0123456789]", "") + ";\n" + TAB
+							+ TAB + "}\n";
 				} else if (!output.isArray() && !output.getSubtypes().isEmpty()) {
 					VarDeclaration += TAB + TAB + TAB + "private " + subType.substring(0, 1).toUpperCase()
-							+ subType.substring(1) + " " + output.getName().getContent().replaceAll("[0123456789]", "") + " = new "
-							+ subType.substring(0, 1).toUpperCase() + subType.substring(1) + "();\n";
+							+ subType.substring(1) + " " + output.getName().getContent().replaceAll("[0123456789]", "")
+							+ " = new " + subType.substring(0, 1).toUpperCase() + subType.substring(1) + "();\n";
 
-					getSet += TAB + TAB + "public void set" + output.getName().getContent().replaceAll("[0123456789]", "") + "("
+					getSet += TAB + TAB + "public void set"
+							+ output.getName().getContent().replaceAll("[0123456789]", "") + "("
 							+ subType.substring(0, 1).toUpperCase() + subType.substring(1) + " "
 							+ output.getName().getContent().replaceAll("[0123456789]", "") + ") {\n" + TAB + TAB + TAB
 							+ "this." + output.getName().getContent().replaceAll("[0123456789]", "") + " = "
 							+ output.getName().getContent().replaceAll("[0123456789]", "") + ";\n" + TAB + TAB + "}\n";
 					getSet += TAB + TAB + "@XmlElement\n" + TAB + TAB + "public "
 							+ subType.substring(0, 1).toUpperCase() + subType.substring(1) + " get"
-							+ output.getName().getContent().replaceAll("[0123456789]", "") + "() {\n" + TAB + TAB + TAB + "return "
-							+ output.getName().getContent().replaceAll("[0123456789]", "") + ";\n" + TAB + TAB + "}\n";
+							+ output.getName().getContent().replaceAll("[0123456789]", "") + "() {\n" + TAB + TAB + TAB
+							+ "return " + output.getName().getContent().replaceAll("[0123456789]", "") + ";\n" + TAB
+							+ TAB + "}\n";
 				}
 
 			}
@@ -330,7 +341,7 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 				declaredInputs += ", ";
 			if (input.getArgument().getType() == "") {
 				declaredInputs += "String " + input.getName().getContent();
-			}else if(input.getArgument().getType().equals("int")){
+			} else if (input.getArgument().getType().equals("int")) {
 				declaredInputs += "Integer " + input.getName().getContent();
 			} else {
 				declaredInputs += input.getArgument().getType().substring(0, 1).toUpperCase()
@@ -359,9 +370,10 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 		}
 		resultClassDeclaration += operationResponseObjects;
 
-//		if (outputVariables.size() == 1 && subOutputVariables.size() == 0) {
-//			resultClassName = outputVariables.get(0).getArgument().getType();
-//			resultObjectDeclaration = TAB + TAB + "return " + outputVariables.get(0).getName().getContent() + ";";
+		// if (outputVariables.size() == 1 && subOutputVariables.size() == 0) {
+		// resultClassName = outputVariables.get(0).getArgument().getType();
+		// resultObjectDeclaration = TAB + TAB + "return " +
+		// outputVariables.get(0).getName().getContent() + ";";
 		if (!outputVariables.isEmpty()) {
 
 			String resultObjectName = "response";
@@ -381,41 +393,49 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 					constractorInstanceVars += ", ";
 				}
 				constractorInstanceVars += arg.getArgument().getBelongsToOperation().getName().getContent()
-						+ "_response.get" + arg.getName().toString().replaceAll("[0123456789]", "")  + "()";
+						+ "_response.get" + arg.getName().toString().replaceAll("[0123456789]", "") + "()";
 				if (!constractorVars.isEmpty()) {
 					constractorVars += ", ";
 				}
-				constractorVarsBody += TAB + TAB + TAB + "this." + arg.getName().getContent().replaceAll("[0123456789]", "") + " = "
+				constractorVarsBody += TAB + TAB + TAB + "this."
+						+ arg.getName().getContent().replaceAll("[0123456789]", "") + " = "
 						+ arg.getName().getContent().replaceAll("[0123456789]", "") + ";\n";
 				String type = arg.getArgument().getType();
 				if (arg.getArgument().getSubtypes().isEmpty() && !arg.getArgument().isArray()) {
-					constractorVars += "String " + arg.getName().getContent().replaceAll("[0123456789]", "") ;
-					resultClassDeclaration += TAB + TAB + "private String " + arg.getName().getContent().replaceAll("[0123456789]", "") + " = \"\";\n";
-					resultClassConstractor1 += TAB + TAB + TAB + "this." + arg.getName().getContent().replaceAll("[0123456789]", "") + " = \"\";\n";
+					constractorVars += "String " + arg.getName().getContent().replaceAll("[0123456789]", "");
+					resultClassDeclaration += TAB + TAB + "private String "
+							+ arg.getName().getContent().replaceAll("[0123456789]", "") + " = \"\";\n";
+					resultClassConstractor1 += TAB + TAB + TAB + "this."
+							+ arg.getName().getContent().replaceAll("[0123456789]", "") + " = \"\";\n";
 				} else if (arg.getArgument().isArray()
 						&& RAMLCaller.stringIsItemFromList(arg.getArgument().getType(), datatypes)) {
-					constractorVars += "ArrayList <String> " + arg.getName().getContent().replaceAll("[0123456789]", "") ;
-					resultClassDeclaration += TAB + TAB + "private ArrayList <String> " + arg.getName().getContent().replaceAll("[0123456789]", "")
+					constractorVars += "ArrayList <String> "
+							+ arg.getName().getContent().replaceAll("[0123456789]", "");
+					resultClassDeclaration += TAB + TAB + "private ArrayList <String> "
+							+ arg.getName().getContent().replaceAll("[0123456789]", "")
 							+ " = new ArrayList<String>();\n";
-					resultClassConstractor1 += TAB + TAB + TAB + "this." + arg.getName().getContent().replaceAll("[0123456789]", "")
+					resultClassConstractor1 += TAB + TAB + TAB + "this."
+							+ arg.getName().getContent().replaceAll("[0123456789]", "")
 							+ " = new ArrayList<String>();\n";
 				} else if (arg.getArgument().isArray()
 						&& !RAMLCaller.stringIsItemFromList(arg.getArgument().getType(), datatypes)) {
 					constractorVars += "ArrayList <" + type.substring(0, 1).toUpperCase() + type.substring(1) + "> "
-							+ arg.getName().getContent().replaceAll("[0123456789]", "") ;
+							+ arg.getName().getContent().replaceAll("[0123456789]", "");
 					resultClassDeclaration += TAB + TAB + "private ArrayList <" + type.substring(0, 1).toUpperCase()
-							+ type.substring(1) + "> " + arg.getName().getContent().replaceAll("[0123456789]", "") + " = new ArrayList<"
-							+ type.substring(0, 1).toUpperCase() + type.substring(1) + ">();\n";
-					resultClassConstractor1 += TAB + TAB + TAB + "this." + arg.getName().getContent().replaceAll("[0123456789]", "")
+							+ type.substring(1) + "> " + arg.getName().getContent().replaceAll("[0123456789]", "")
 							+ " = new ArrayList<" + type.substring(0, 1).toUpperCase() + type.substring(1) + ">();\n";
+					resultClassConstractor1 += TAB + TAB + TAB + "this."
+							+ arg.getName().getContent().replaceAll("[0123456789]", "") + " = new ArrayList<"
+							+ type.substring(0, 1).toUpperCase() + type.substring(1) + ">();\n";
 
 				} else if (!arg.getArgument().isArray() && !arg.getArgument().getSubtypes().isEmpty()) {
 					constractorVars += type.substring(0, 1).toUpperCase() + type.substring(1) + " "
-							+ arg.getName().getContent().replaceAll("[0123456789]", "") ;
+							+ arg.getName().getContent().replaceAll("[0123456789]", "");
 					resultClassDeclaration += TAB + TAB + "private " + type.substring(0, 1).toUpperCase()
-							+ type.substring(1) + " " + arg.getName().getContent().replaceAll("[0123456789]", "") + " = new "
-							+ type.substring(0, 1).toUpperCase() + type.substring(1) + "();\n";
-					resultClassConstractor1 += TAB + TAB + TAB + "this." + arg.getName().getContent().replaceAll("[0123456789]", "") + " = new "
+							+ type.substring(1) + " " + arg.getName().getContent().replaceAll("[0123456789]", "")
+							+ " = new " + type.substring(0, 1).toUpperCase() + type.substring(1) + "();\n";
+					resultClassConstractor1 += TAB + TAB + TAB + "this."
+							+ arg.getName().getContent().replaceAll("[0123456789]", "") + " = new "
 							+ type.substring(0, 1).toUpperCase() + type.substring(1) + "();\n";
 				}
 
@@ -466,44 +486,52 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 			for (OwlService arg : outputVariables) {
 				String type = arg.getArgument().getType();
 				if (arg.getArgument().getSubtypes().isEmpty() && !arg.getArgument().isArray()) {
-					resultClassDeclaration += TAB + TAB + "public void set" + arg.getName().getContent().replaceAll("[0123456789]", "") + "(String "
+					resultClassDeclaration += TAB + TAB + "public void set"
+							+ arg.getName().getContent().replaceAll("[0123456789]", "") + "(String "
 							+ arg.getName().getContent().replaceAll("[0123456789]", "") + ") {\n" + TAB + TAB + TAB
 							+ "this." + arg.getName().getContent().replaceAll("[0123456789]", "") + " = "
 							+ arg.getName().getContent().replaceAll("[0123456789]", "") + ";\n" + TAB + TAB + "}\n";
 					resultClassDeclaration += TAB + TAB + "@XmlElement\n" + TAB + TAB + "public String get"
-							+ arg.getName().getContent().replaceAll("[0123456789]", "") + "() {\n" + TAB + TAB + TAB + "return "
-							+ arg.getName().getContent().replaceAll("[0123456789]", "") + ";\n" + TAB + TAB + "}\n";
+							+ arg.getName().getContent().replaceAll("[0123456789]", "") + "() {\n" + TAB + TAB + TAB
+							+ "return " + arg.getName().getContent().replaceAll("[0123456789]", "") + ";\n" + TAB + TAB
+							+ "}\n";
 				} else if (arg.getArgument().isArray()
 						&& RAMLCaller.stringIsItemFromList(arg.getArgument().getType(), datatypes)) {
-					resultClassDeclaration += TAB + TAB + "public void set" + arg.getName().getContent().replaceAll("[0123456789]", "")
-							+ "(ArrayList<String> " + arg.getName().getContent().replaceAll("[0123456789]", "")
-							+ ") {\n" + TAB + TAB + TAB + "this." + arg.getName().getContent() + " = "
+					resultClassDeclaration += TAB + TAB + "public void set"
+							+ arg.getName().getContent().replaceAll("[0123456789]", "") + "(ArrayList<String> "
+							+ arg.getName().getContent().replaceAll("[0123456789]", "") + ") {\n" + TAB + TAB + TAB
+							+ "this." + arg.getName().getContent() + " = "
 							+ arg.getName().getContent().replaceAll("[0123456789]", "") + ";\n" + TAB + TAB + "}\n";
 					resultClassDeclaration += TAB + TAB + "@XmlElement\n" + TAB + TAB + "public ArrayList<String> get"
-							+ arg.getName().getContent().replaceAll("[0123456789]", "") + "() {\n" + TAB + TAB + TAB + "return "
-							+ arg.getName().getContent().replaceAll("[0123456789]", "") + ";\n" + TAB + TAB + "}\n";
+							+ arg.getName().getContent().replaceAll("[0123456789]", "") + "() {\n" + TAB + TAB + TAB
+							+ "return " + arg.getName().getContent().replaceAll("[0123456789]", "") + ";\n" + TAB + TAB
+							+ "}\n";
 				} else if (arg.getArgument().isArray()
 						&& !RAMLCaller.stringIsItemFromList(arg.getArgument().getType(), datatypes)) {
 
-					resultClassDeclaration += TAB + TAB + "public void set" + arg.getName().getContent().replaceAll("[0123456789]", "") + "(ArrayList<"
+					resultClassDeclaration += TAB + TAB + "public void set"
+							+ arg.getName().getContent().replaceAll("[0123456789]", "") + "(ArrayList<"
 							+ type.substring(0, 1).toUpperCase() + type.substring(1) + "> "
 							+ arg.getName().getContent().replaceAll("[0123456789]", "") + ") {\n" + TAB + TAB + TAB
 							+ "this." + arg.getName().getContent().replaceAll("[0123456789]", "") + " = "
 							+ arg.getName().getContent().replaceAll("[0123456789]", "") + ";\n" + TAB + TAB + "}\n";
 					resultClassDeclaration += TAB + TAB + "@XmlElement\n" + TAB + TAB + "public ArrayList<"
 							+ type.substring(0, 1).toUpperCase() + type.substring(1) + "> get"
-							+ arg.getName().getContent().replaceAll("[0123456789]", "") + "() {\n" + TAB + TAB + TAB + "return "
-							+ arg.getName().getContent().replaceAll("[0123456789]", "") + ";\n" + TAB + TAB + "}\n";
+							+ arg.getName().getContent().replaceAll("[0123456789]", "") + "() {\n" + TAB + TAB + TAB
+							+ "return " + arg.getName().getContent().replaceAll("[0123456789]", "") + ";\n" + TAB + TAB
+							+ "}\n";
 				} else if (!arg.getArgument().isArray() && !arg.getArgument().getSubtypes().isEmpty()) {
-					resultClassDeclaration += TAB + TAB + "public void set" + arg.getName().getContent().replaceAll("[0123456789]", "") + "("
+					resultClassDeclaration += TAB + TAB + "public void set"
+							+ arg.getName().getContent().replaceAll("[0123456789]", "") + "("
 							+ type.substring(0, 1).toUpperCase() + type.substring(1) + " "
 							+ arg.getName().getContent().replaceAll("[0123456789]", "") + ") {\n" + TAB + TAB + TAB
 							+ "this." + arg.getName().getContent().replaceAll("[0123456789]", "") + " = "
 							+ arg.getName().getContent().replaceAll("[0123456789]", "") + ";\n" + TAB + TAB + "}\n";
 					resultClassDeclaration += TAB + TAB + "@XmlElement\n" + TAB + TAB + "public "
 							+ type.substring(0, 1).toUpperCase() + type.substring(1) + " get"
-							+ arg.getName().getContent().replaceAll("[0123456789]", "") + "() {\n" + TAB + TAB + TAB + "return "
-							+ arg.getName().getContent().replaceAll("[0123456789]", "") + ";\n" + TAB + TAB + "}\n";
+							+ arg.getName().getContent().replaceAll("[0123456789]", "") + "() {\n" + TAB + TAB + TAB
+							+ "return " + arg.getName().getContent().replaceAll("[0123456789]", "") + ";\n" + TAB + TAB
+							+ "}\n";
 				}
 			}
 
@@ -527,10 +555,10 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 			if (type.equalsIgnoreCase("String")) {
 				declaredInputs += TAB + TAB + TAB + "this." + arg.getName().getContent() + ".value" + " = "
 						+ arg.getName().getContent() + ";\n";
-				
-			}else if(type.equalsIgnoreCase("int")){
-				declaredInputs += TAB + TAB + TAB + "this." + arg.getName().getContent() + ".value" + " = Integer.toString("
-						+ arg.getName().getContent() + ");\n";
+
+			} else if (type.equalsIgnoreCase("int")) {
+				declaredInputs += TAB + TAB + TAB + "this." + arg.getName().getContent() + ".value"
+						+ " = Integer.toString(" + arg.getName().getContent() + ");\n";
 			} else {
 				declaredInputs += TAB + TAB + TAB + "this." + arg.getName().getContent() + ".value" + " = "
 						+ type.substring(0, 1).toUpperCase() + type.substring(1) + ".toString("
@@ -600,15 +628,19 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 
 		for (OwlService matchedOutput : matchedOutputs) {
 			for (OwlService matchedInput : graph.getSuccessors(matchedOutput)) {
-//				if (matchedInput.getArgument().getBelongsToOperation().getType().equalsIgnoreCase("SOAP")) {
-//					declaredInputs += TAB + TAB + TAB + matchedInput.getName().getContent().toString() + ".value = "
-//							+ matchedOutput.getName().getContent().toString() + ".value;\n";
-//				} else {
-					String ret=".get"+matchedOutput.getName().getContent().replaceAll("[0123456789]", "")+"()";
-					ret=roadToSub(matchedOutput, graph, ret);
-					declaredInputs += TAB + TAB + TAB + matchedInput.getName().getContent().toString() + ".value = "
-							+ matchedOutput.getArgument().getBelongsToOperation().getName()+ "_response"+ret+";\n";
-				//}
+				// if
+				// (matchedInput.getArgument().getBelongsToOperation().getType().equalsIgnoreCase("SOAP"))
+				// {
+				// declaredInputs += TAB + TAB + TAB +
+				// matchedInput.getName().getContent().toString() + ".value = "
+				// + matchedOutput.getName().getContent().toString() +
+				// ".value;\n";
+				// } else {
+				String ret = ".get" + matchedOutput.getName().getContent().replaceAll("[0123456789]", "") + "()";
+				ret = roadToSub(matchedOutput, graph, ret);
+				declaredInputs += TAB + TAB + TAB + matchedInput.getName().getContent().toString() + ".value = "
+						+ matchedOutput.getArgument().getBelongsToOperation().getName() + "_response" + ret + ";\n";
+				// }
 
 			}
 		}
@@ -746,12 +778,13 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 		return ObjectClasses;
 
 	}
-	private String roadToSub(OwlService sub,Graph<OwlService, Connector> graph, String ret){
-		for (OwlService service: graph.getPredecessors(sub)){
-			if (service.getArgument()!=null){
-				ret=".get"+service.getName().getContent().replaceAll("[0123456789]", "")+"()"+ret;
-				ret=roadToSub(service, graph, ret);
-			}else{
+
+	private String roadToSub(OwlService sub, Graph<OwlService, Connector> graph, String ret) {
+		for (OwlService service : graph.getPredecessors(sub)) {
+			if (service.getArgument() != null) {
+				ret = ".get" + service.getName().getContent().replaceAll("[0123456789]", "") + "()" + ret;
+				ret = roadToSub(service, graph, ret);
+			} else {
 				return ret;
 			}
 		}

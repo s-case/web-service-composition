@@ -108,9 +108,10 @@ public class RestFunctionCodeNode extends CodeNode {
 		} else {
 			ret += "String wsUrl =\"" + operation.getDomain().getURI() + "\";\n";
 		}
-		for (Argument arg : operation.getUriParameters()) {
-			ret += "wsUrl = wsUrl.replace(\"{" + arg.getName().toString() + "}\", " + arg.getName().toString()
-					+ ".value);\n";
+		for (Argument arg : operation.getInputs()) {
+			if (arg.isTypeOf().equals("URIParameter"))
+				ret += "wsUrl = wsUrl.replace(\"{" + arg.getName().toString() + "}\", " + arg.getName().toString()
+						+ ".value);\n";
 		}
 		ret += "String crudVerb=\"" + operation.getDomain().getCrudVerb() + "\";\n";
 		if (operation.getDomain().getSecurityScheme() != null) {
