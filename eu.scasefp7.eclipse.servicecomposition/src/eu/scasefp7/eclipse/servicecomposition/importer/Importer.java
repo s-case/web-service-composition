@@ -40,12 +40,12 @@ import gr.iti.wsdl.wsdlToolkit.WSOperation;
  * @author Manios Krasanakis
  */
 public abstract class Importer {
-	//ontology urls
+	// ontology urls
 	public static String stringType = "String";
 	public static String prefix = "http://www.scasefp7.eu/wsOntology.owl#";
 	public static String classPrefix = "http://www.scasefp7.eu/wsOntology.owl#";
 
-	//ontology properties
+	// ontology properties
 	protected static ObjectProperty belongsToPrototype;
 	protected static DatatypeProperty belongsToURL;
 	protected static DatatypeProperty belongsToWSType;
@@ -53,14 +53,15 @@ public abstract class Importer {
 	protected static DatatypeProperty belongsToUser;
 	protected static DatatypeProperty isRequired;
 	protected static DatatypeProperty hasName;
-	protected static ObjectProperty hasQueryParameters;
+	// protected static ObjectProperty hasQueryParameters;
 	protected static ObjectProperty hasInput;
 	protected static ObjectProperty hasOutput;
-	protected static DatatypeProperty hasURIParameters;
+	// protected static DatatypeProperty hasURIParameters;
 	protected static DatatypeProperty hasCRUDVerb;
 	protected static DatatypeProperty hasSecurityScheme;
 	protected static ObjectProperty hasType;
 	protected static DatatypeProperty isPrototype;
+	protected static DatatypeProperty isTypeOf;
 	protected static DatatypeProperty isArray;
 	protected static DatatypeProperty hasResourcePath;
 	protected static OntModel ontologyModel;
@@ -72,7 +73,7 @@ public abstract class Importer {
 	 * domain.
 	 */
 	public static class ApplicationDomain {
-		//properties concerning application domain
+		// properties concerning application domain
 		private String uri;
 		private String name;
 		private boolean local;
@@ -178,7 +179,7 @@ public abstract class Importer {
 	 * multitude of operations.
 	 */
 	public static class OwlClass {
-		//properties concerning ontology class
+		// properties concerning ontology class
 		private ComparableName name;
 		private OwlClass superClass;
 		private ArrayList<Operation> operations = new ArrayList<Operation>();
@@ -266,7 +267,7 @@ public abstract class Importer {
 	 * service.
 	 */
 	public static class AccessInfo {
-		//cost and license info of the service
+		// cost and license info of the service
 		private String license = "";
 		private double pricePerUse = 0;// Math.random()*10;//in EUR
 
@@ -296,12 +297,12 @@ public abstract class Importer {
 	 * operations have a redundant copy of the operation's arguments.
 	 */
 	public static class Operation {
-		//operation parameters
+		// operation parameters
 		protected ComparableName name;
 		protected ApplicationDomain domain = null;
 		protected ArrayList<Argument> outputs = new ArrayList<Argument>();
 		protected ArrayList<Argument> inputs = new ArrayList<Argument>();
-		protected ArrayList<Argument> uriParameters = new ArrayList<Argument>();
+		//protected ArrayList<Argument> uriParameters = new ArrayList<Argument>();
 		protected ArrayList<Argument> authenticationParameters = new ArrayList<Argument>();
 		protected ArrayList<Operation> realOperations = new ArrayList<Operation>();
 		protected ServiceAccessInfoForUsers accessInfo = new ServiceAccessInfoForUsers();
@@ -328,7 +329,7 @@ public abstract class Importer {
 		Operation(Individual ind) throws Exception {
 			// load basic properties
 			name = new ComparableName(ind.getPropertyValue(hasName).asLiteral().getString());
-			
+
 			// SOAP or RESTful
 			if (ind.getPropertyValue(belongsToWSType) != null) {
 				type = ind.getPropertyValue(belongsToWSType).asLiteral().getString();
@@ -364,15 +365,13 @@ public abstract class Importer {
 
 			if (ind.getPropertyValue(Importer.isPrototype) != null)
 				this.isPrototype = !ind.getPropertyValue(Importer.isPrototype).asLiteral().getString().equals("false");
-			
-			// load inputs
-			loadWSIO(ind, hasQueryParameters, inputs);
+
 			// load inputs
 			loadWSIO(ind, hasInput, inputs);
 			// load outputs
 			loadWSIO(ind, hasOutput, outputs);
 			// load uri Parameters
-			loadWSURI(ind, hasURIParameters, uriParameters);
+			// loadWSURI(ind, hasURIParameters, uriParameters);
 			// load authentication Parameters
 			loadWSAuth(ind, hasSecurityScheme, authenticationParameters);
 			// load Cost, License Parameters
@@ -584,10 +583,13 @@ public abstract class Importer {
 										pairedServiceSchema.loadWSIO(PairedServiceSchemasInd, hasInput,
 												pairedServiceSchema.inputs);
 									}
-									if (PairedServiceSchemasInd.getPropertyValue(hasURIParameters) != null) {
-										pairedServiceSchema.loadWSURI(PairedServiceSchemasInd, hasURIParameters,
-												pairedServiceSchema.uriParameters);
-									}
+									// if
+									// (PairedServiceSchemasInd.getPropertyValue(hasURIParameters)
+									// != null) {
+									// pairedServiceSchema.loadWSURI(PairedServiceSchemasInd,
+									// hasURIParameters,
+									// pairedServiceSchema.uriParameters);
+									// }
 									if (PairedServiceSchemasInd.getPropertyValue(hasSecurityScheme) != null) {
 										pairedServiceSchema.loadWSAuth(PairedServiceSchemasInd, hasSecurityScheme,
 												pairedServiceSchema.authenticationParameters);
@@ -678,7 +680,7 @@ public abstract class Importer {
 			domain = null;
 			outputs.clear();
 			inputs.clear();
-			uriParameters.clear();
+			//uriParameters.clear();
 			authenticationParameters.clear();
 			realOperations.clear();
 		}
@@ -701,7 +703,7 @@ public abstract class Importer {
 			isPrototype = prototype.isPrototype;
 			outputs.addAll(prototype.outputs);
 			inputs.addAll(prototype.inputs);
-			uriParameters.addAll(prototype.uriParameters);
+			//uriParameters.addAll(prototype.uriParameters);
 			authenticationParameters.addAll(prototype.authenticationParameters);
 			realOperations.addAll(prototype.realOperations);
 		}
@@ -733,32 +735,33 @@ public abstract class Importer {
 			}
 		}
 
-		private void loadWSURI(Individual operInd, DatatypeProperty prop, ArrayList<Argument> vec) {
-			// List<String> primitiveDataTypes=getAllPrimitiveDataTypes();
-			if (operInd.getPropertyValue(prop) != null) {
-				NodeIterator it = operInd.listPropertyValues(prop);
-				while (it.hasNext()) {
-					Literal l = it.next().asLiteral();
-					String name = l.getValue().toString();
-					String type = "String";
-					Argument arg = new Argument(name, type, false, false, null);
-					arg.setBelongsToOperation(this);
-					vec.add(arg);
-				}
-			}
-		}
+		// private void loadWSURI(Individual operInd, DatatypeProperty prop,
+		// ArrayList<Argument> vec) {
+		// // List<String> primitiveDataTypes=getAllPrimitiveDataTypes();
+		// if (operInd.getPropertyValue(prop) != null) {
+		// NodeIterator it = operInd.listPropertyValues(prop);
+		// while (it.hasNext()) {
+		// Literal l = it.next().asLiteral();
+		// String name = l.getValue().toString();
+		// String type = "String";
+		// Argument arg = new Argument(name, type, false, false, null);
+		// arg.setBelongsToOperation(this);
+		// vec.add(arg);
+		// }
+		// }
+		// }
 
 		private void loadWSAuth(Individual operInd, DatatypeProperty prop, ArrayList<Argument> vec) {
 			String securityScheme = "";
 			if (operInd.getPropertyValue(prop) != null) {
 				securityScheme = operInd.getPropertyValue(prop).asLiteral().getString();
-				getDomain().securityScheme=securityScheme;
+				getDomain().securityScheme = securityScheme;
 			}
 			if (securityScheme.equalsIgnoreCase("Basic Authentication")) {
-				Argument username = new Argument("Username", "String", false, false, null);
+				Argument username = new Argument("Username", "String", "authParameter", false, false, null);
 				username.setBelongsToOperation(this);
 				vec.add(username);
-				Argument password = new Argument("Password", "String", false, false, null);
+				Argument password = new Argument("Password", "String", "authParameter", false, false, null);
 				password.setBelongsToOperation(this);
 				vec.add(password);
 			}
@@ -809,9 +812,9 @@ public abstract class Importer {
 			return outputs;
 		}
 
-		public ArrayList<Argument> getUriParameters() {
-			return uriParameters;
-		}
+//		public ArrayList<Argument> getUriParameters() {
+//			return uriParameters;
+//		}
 
 		public ArrayList<Argument> getAuthenticationParameters() {
 			return authenticationParameters;
@@ -847,8 +850,8 @@ public abstract class Importer {
 				op.domain = domain;
 			if (op.inputs.isEmpty())
 				op.inputs.addAll(inputs);
-			if (op.uriParameters.isEmpty())
-				op.uriParameters.addAll(uriParameters);
+//			if (op.uriParameters.isEmpty())
+//				op.uriParameters.addAll(uriParameters);
 			if (op.authenticationParameters.isEmpty())
 				op.authenticationParameters.addAll(authenticationParameters);
 			if (op.outputs.isEmpty())
@@ -887,11 +890,11 @@ public abstract class Importer {
 				ins += arg.toString();
 			}
 			String uris = "";
-			for (Argument arg : uriParameters) {
-				if (!uris.isEmpty())
-					uris += ", ";
-				uris += arg.toString();
-			}
+//			for (Argument arg : uriParameters) {
+//				if (!uris.isEmpty())
+//					uris += ", ";
+//				uris += arg.toString();
+//			}
 			String outs = "";
 			for (Argument arg : outputs) {
 				if (!outs.isEmpty())
@@ -946,11 +949,12 @@ public abstract class Importer {
 	 * Arguments can also be used as inputs or outputs.
 	 */
 	public static class Argument {
-		//input/output variables parameters
+		// input/output variables parameters
 		private ComparableName name = new ComparableName("");
 		private String type = "";
 		private boolean isArray = false;
 		private boolean isNative = true;
+		private String isTypeOf = "";
 		private ArrayList<Argument> subtypes = new ArrayList<Argument>();
 		// if Argument isArray it has elements which are filled when the
 		// operation is called
@@ -967,9 +971,11 @@ public abstract class Importer {
 		 *            can be null to not declare any subtypes without later
 		 *            causing exceptions (not direct assignment)
 		 */
-		public Argument(String name, String type, boolean isArray, boolean isNative, ArrayList<Argument> subtypes) {
+		public Argument(String name, String type, String isTypeOf, boolean isArray, boolean isNative,
+				ArrayList<Argument> subtypes) {
 			this.name = new ComparableName(name);
 			this.type = type;
+			this.isTypeOf = isTypeOf;
 			if (this.type.toLowerCase().equals(stringType.toLowerCase()))
 				this.type = stringType;
 			this.isArray = isArray;
@@ -1010,19 +1016,21 @@ public abstract class Importer {
 					type = ioInd.getPropertyValue(hasName).asLiteral().getString().trim();
 				}
 				isNative = false;
-				
+
 				operation.loadWSIO(ioInd, hasType, subtypes);
 			}
-			
+			if (ioInd.getPropertyValue(Importer.isTypeOf) != null)
+				this.isTypeOf = ioInd.getPropertyValue(Importer.isTypeOf).asLiteral().getString();
 			belongsToOperation = operation;
 			if (ioInd.getPropertyValue(Importer.isArray) != null)
 				this.isArray = !ioInd.getPropertyValue(Importer.isArray).asLiteral().getString().equals("false");
 			if (ioInd.getPropertyValue(Importer.isRequired) != null)
-				try{
-				this.isRequired = ioInd.getPropertyValue(Importer.isRequired).asLiteral().getBoolean();
-				}catch(Exception ex){
-					
-					this.isRequired = Boolean.parseBoolean(ioInd.getPropertyValue(Importer.isRequired).asLiteral().getString());
+				try {
+					this.isRequired = ioInd.getPropertyValue(Importer.isRequired).asLiteral().getBoolean();
+				} catch (Exception ex) {
+
+					this.isRequired = Boolean
+							.parseBoolean(ioInd.getPropertyValue(Importer.isRequired).asLiteral().getString());
 				}
 			for (Argument sub : this.subtypes)
 				sub.parent.add(this);
@@ -1038,9 +1046,9 @@ public abstract class Importer {
 		public Argument(Argument prototype) {
 			name = prototype.name;
 			type = prototype.type;
+			isTypeOf = prototype.isTypeOf;
 			isArray = prototype.isArray;
 			isNative = prototype.isNative;
-			isArray = prototype.isArray;
 			isRequired = prototype.isRequired;
 			for (Argument sub : prototype.getSubtypes()) {
 				Argument arg = new Argument(sub);
@@ -1078,6 +1086,15 @@ public abstract class Importer {
 		}
 
 		/**
+		 * <h1>isTypeOf</h1>
+		 * 
+		 * @return the type of the parameter (e.g. query)
+		 */
+		public String isTypeOf() {
+			return isTypeOf;
+		}
+
+		/**
 		 * <h1>isArray</h1>
 		 * 
 		 * @return true if the argument is declared to be an array
@@ -1094,8 +1111,8 @@ public abstract class Importer {
 		public boolean isRequired() {
 			return isRequired;
 		}
-		
-		public void setIsRequired(boolean isRequired){
+
+		public void setIsRequired(boolean isRequired) {
 			this.isRequired = isRequired;
 		}
 
@@ -1124,13 +1141,13 @@ public abstract class Importer {
 		public OwlService getOwlService() {
 			return belongsToOwlService;
 		}
-		
-		public Operation getBelongsToOperation(){
+
+		public Operation getBelongsToOperation() {
 			return belongsToOperation;
 		}
-		
-		public void setBelongsToOperation(Operation operation){
-			this.belongsToOperation= operation;
+
+		public void setBelongsToOperation(Operation operation) {
+			this.belongsToOperation = operation;
 		}
 
 		public void setOwlService(OwlService service) {

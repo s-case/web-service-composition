@@ -32,7 +32,7 @@ public class Value extends Argument{
 	 * @throws Exception 
 	 */
 	public Value(Argument variable){
-		super(variable.getName().toString(), variable.getType(), variable.isArray(), variable.isNative(), null);
+		super(variable.getName().toString(), variable.getType(), variable.isTypeOf(), variable.isArray(), variable.isNative(), null);
 		setIsRequired(variable.isRequired());
 		enumeration.put(variable, this);
 		if(variable instanceof Value)

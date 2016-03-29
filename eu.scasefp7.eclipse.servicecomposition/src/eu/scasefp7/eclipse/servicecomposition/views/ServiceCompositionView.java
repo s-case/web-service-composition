@@ -3154,32 +3154,32 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 			}
 		}
 
-		// create UriParams composite
-
-		rightComposite.setLayout(new GridLayout());
-		Composite urisLabelComposite = new Composite(rightComposite, SWT.FILL);
-
-		urisLabelComposite.setLayout(new GridLayout());
-		Label label3 = new Label(urisLabelComposite, SWT.FILL);
-		label3.setText("Workflow URI Parameters:");
-		label3.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
-		label3.setFont(JFaceResources.getFontRegistry().getBold(""));
-		uriParamsComposite = new Composite(rightComposite, SWT.FILL);
-		uriParamsComposite.setLayout(new GridLayout(2, false));
-
-		// get all uriParams
-
-		for (int i = 0; i < vertices.length; i++) {
-			final OwlService node = (OwlService) vertices[i];
-
-			if (node.getType().contains("Action")) {
-				if (!node.getOperation().getUriParameters().isEmpty()) {
-					for (Argument arg : node.getOperation().getUriParameters()) {
-						showUriParams(arg);
-					}
-				}
-			}
-		}
+//		// create UriParams composite
+//
+//		rightComposite.setLayout(new GridLayout());
+//		Composite urisLabelComposite = new Composite(rightComposite, SWT.FILL);
+//
+//		urisLabelComposite.setLayout(new GridLayout());
+//		Label label3 = new Label(urisLabelComposite, SWT.FILL);
+//		label3.setText("Workflow URI Parameters:");
+//		label3.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
+//		label3.setFont(JFaceResources.getFontRegistry().getBold(""));
+//		uriParamsComposite = new Composite(rightComposite, SWT.FILL);
+//		uriParamsComposite.setLayout(new GridLayout(2, false));
+//
+//		// get all uriParams
+//
+//		for (int i = 0; i < vertices.length; i++) {
+//			final OwlService node = (OwlService) vertices[i];
+//
+//			if (node.getType().contains("Action")) {
+//				if (!node.getOperation().getUriParameters().isEmpty()) {
+//					for (Argument arg : node.getOperation().getUriParameters()) {
+//						showUriParams(arg);
+//					}
+//				}
+//			}
+//		}
 		// create authentication Params composite
 
 		rightComposite.setLayout(new GridLayout());
@@ -3784,11 +3784,11 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 								}
 
 							}
-							if (!op.getUriParameters().isEmpty()) {
-								for (Argument arg : op.getUriParameters()) {
-									uriParamVariables.add((Value) arg);
-								}
-							}
+//							if (!op.getUriParameters().isEmpty()) {
+//								for (Argument arg : op.getUriParameters()) {
+//									uriParamVariables.add((Value) arg);
+//								}
+//							}
 							if (!op.getAuthenticationParameters().isEmpty()) {
 								for (Argument arg : op.getAuthenticationParameters()) {
 									authParamVariables.add((Value) arg);
@@ -4589,8 +4589,8 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 				getInputs().add(new Value(input));
 			for (Argument output : operation.getOutputs())
 				getOutputs().add(new Value(output));
-			for (Argument uriParam : operation.getUriParameters())
-				getUriParameters().add(new Value(uriParam));
+//			for (Argument uriParam : operation.getUriParameters())
+//				getUriParameters().add(new Value(uriParam));
 			for (Argument authParam : operation.getAuthenticationParameters())
 				getAuthenticationParameters().add(new Value(authParam));
 		}

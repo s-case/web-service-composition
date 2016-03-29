@@ -50,7 +50,7 @@ public class PythonImporter extends Importer{
 					for(String arg : args.split(",")){
 						if(!arg.trim().isEmpty())
 							try {
-								inputs.add(new Argument(arg.trim(), "", false, false, null));
+								inputs.add(new Argument(arg.trim(), "", "pythonParameter", false, false, null));
 							} catch (Exception e) {
 								// TODO Auto-generated catch block
 								e.printStackTrace();
@@ -160,14 +160,14 @@ public class PythonImporter extends Importer{
 			}
 			for(String var : retVariable.split(","))
 				try {
-					outputs.add(new Argument(var.trim(), "", false, false,null));
+					outputs.add(new Argument(var.trim(), "", "pythonParameter", false, false,null));
 				} catch (Exception e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
 			if(outputs.isEmpty())
 				try {
-					outputs.add(new Argument(name+"Result", "", false, false,null));
+					outputs.add(new Argument(name+"Result", "", "pythonParameter", false, false,null));
 				} catch (Exception e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();

@@ -63,28 +63,38 @@ public class RAMLCaller {
 		if (ramlOperation.getDomain().getResourcePath() != null) {
 			wsUrl += ramlOperation.getDomain().getResourcePath();
 		}
-		ArrayList<String> uriParams = new ArrayList<String>();
-		for (Argument arg : ramlOperation.getUriParameters()) {
-			uriParams.add(arg.getName().getContent().toString());
+		ArrayList<String> uriParamNames = new ArrayList<String>();
+		ArrayList<Argument> uriParams = new ArrayList<Argument>();
+		ArrayList<Argument> queryParams = new ArrayList<Argument>();
+		ArrayList<Argument> bodyParams = new ArrayList<Argument>();
+		for (Argument arg : ramlOperation.getInputs()) {
+			if (arg.isTypeOf().equals("URIParameter")){
+			uriParamNames.add(arg.getName().getContent().toString());
+			uriParams.add(arg);
+			}else if (arg.isTypeOf().equals("QueryParameter")){
+				queryParams.add(arg);
+			}else if (arg.isTypeOf().equals("BodyParameter")){
+				bodyParams.add(arg);
+			}
 		}
-		String[] uriParamsArr = new String[uriParams.size()];
-		uriParamsArr = uriParams.toArray(uriParamsArr);
+		String[] uriParamsArr = new String[uriParamNames.size()];
+		uriParamsArr = uriParamNames.toArray(uriParamsArr);
 
 		if (stringContainsItemFromList(wsUrl, uriParamsArr)) {
 			Value val = null;
-			for (Argument arg : ramlOperation.getUriParameters()) {
+			for (Argument arg : uriParams) {
 				val = (Value) arg;
 				wsUrl = wsUrl.replace("{" + arg.getName().toString() + "}", val.getValue());
 			}
 
 		}
 
-		ArrayList<Argument> inputs = ramlOperation.getInputs();
+		//ArrayList<Argument> inputs = ramlOperation.getInputs();
 		String inputList = "";
-		if (!inputs.isEmpty()) {
+		if (!queryParams.isEmpty()) {
 			// inputList = "?";
 			Value val = null;
-			for (Argument input : inputs) {
+			for (Argument input : queryParams) {
 				if (!inputList.isEmpty()) {
 					val = (Value) input;
 					if (!(val.getValue().isEmpty() && !input.isRequired())) {
@@ -177,7 +187,7 @@ public class RAMLCaller {
 
 				List<NameValuePair> urlParameters = new ArrayList<NameValuePair>();
 				Value val = null;
-				for (Argument input : inputs) {
+				for (Argument input : bodyParams) {
 					val = (Value) input;
 					urlParameters.add(new BasicNameValuePair(input.getName().getContent().toString(), val.getValue()));
 				}
@@ -241,7 +251,7 @@ public class RAMLCaller {
 
 				List<NameValuePair> urlParameters = new ArrayList<NameValuePair>();
 				Value val = null;
-				for (Argument input : inputs) {
+				for (Argument input : bodyParams) {
 					val = (Value) input;
 					urlParameters.add(new BasicNameValuePair(input.getName().getContent().toString(), val.getValue()));
 				}
@@ -329,7 +339,7 @@ public class RAMLCaller {
 					if (array.get(i) != null) {
 						Argument out;
 						try {
-							out = new Argument(output.getName().toString() + "[" + i + "]", "", false,
+							out = new Argument(output.getName().toString() + "[" + i + "]", "", "BodyParameter", false,
 									output.isNative(), output.getSubtypes());
 							out.setOwlService(output.getOwlService());
 							Value value = new Value(out);

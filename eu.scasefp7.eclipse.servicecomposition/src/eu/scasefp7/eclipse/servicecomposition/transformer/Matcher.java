@@ -368,43 +368,43 @@ public class Matcher {
 	 * @return the merged variable
 	 * @throws Exception
 	 *             if variables cannot be marged (this should never occur when
-	 *             using <code>getSameVariableInstances</code>)
-	 */
-	public static Importer.Argument mergeVariables(ArrayList<Importer.Argument> variables) throws Exception {
-		String name = "";
-		String type = "";
-		boolean isArray = false;
-		boolean isNative = true;
-		ArrayList<Importer.Argument> subtypes = new ArrayList<Importer.Argument>();
-		ArrayList<Object> classInstanceList = new ArrayList<Object>();
-		for (Importer.Argument arg : variables) {
-			if (arg != null) {// && common(classInstanceList,
-								// arg.getParent()).isEmpty()){
-				if (name.isEmpty())
-					name = arg.getName().toString();
-				// else if(!name.equals(arg.getName()))
-				// throw new
-				// Exception("Cannot merge variables due to different non-empty
-				// variable names: "+name+", "+arg.getName());
-				if (type.isEmpty())
-					type = arg.getType();
-				else if (!arg.getType().isEmpty() && !type.equals(arg.getType()))
-					throw new Exception("Cannot merge variables due to different non-empty variable types: " + type
-							+ ", " + arg.getType());
-				isArray = isArray || arg.isArray();
-				isNative = isNative && arg.isNative();
-				addToArray(classInstanceList, arg.getParent());
-				for (Argument sub : arg.getSubtypes())
-					if (!subtypes.contains(sub))
-						subtypes.add(sub);
-			}
-		}
-		if (type.isEmpty())
-			type = Importer.stringType;
-		Argument arg = new Importer.Argument(name, type, isArray, isNative, subtypes);
-		addToArray(arg.getParent(), classInstanceList);
-		return arg;
-	}
+//	 *             using <code>getSameVariableInstances</code>)
+//	 */
+//	public static Importer.Argument mergeVariables(ArrayList<Importer.Argument> variables) throws Exception {
+//		String name = "";
+//		String type = "";
+//		boolean isArray = false;
+//		boolean isNative = true;
+//		ArrayList<Importer.Argument> subtypes = new ArrayList<Importer.Argument>();
+//		ArrayList<Object> classInstanceList = new ArrayList<Object>();
+//		for (Importer.Argument arg : variables) {
+//			if (arg != null) {// && common(classInstanceList,
+//								// arg.getParent()).isEmpty()){
+//				if (name.isEmpty())
+//					name = arg.getName().toString();
+//				// else if(!name.equals(arg.getName()))
+//				// throw new
+//				// Exception("Cannot merge variables due to different non-empty
+//				// variable names: "+name+", "+arg.getName());
+//				if (type.isEmpty())
+//					type = arg.getType();
+//				else if (!arg.getType().isEmpty() && !type.equals(arg.getType()))
+//					throw new Exception("Cannot merge variables due to different non-empty variable types: " + type
+//							+ ", " + arg.getType());
+//				isArray = isArray || arg.isArray();
+//				isNative = isNative && arg.isNative();
+//				addToArray(classInstanceList, arg.getParent());
+//				for (Argument sub : arg.getSubtypes())
+//					if (!subtypes.contains(sub))
+//						subtypes.add(sub);
+//			}
+//		}
+//		if (type.isEmpty())
+//			type = Importer.stringType;
+//		Argument arg = new Importer.Argument(name, type, isArray, isNative, subtypes);
+//		addToArray(arg.getParent(), classInstanceList);
+//		return arg;
+//	}
 
 	/**
 	 * <h1>createCommonVariable</h1> Calls <code>createCommonVariable</code> for
@@ -414,15 +414,15 @@ public class Matcher {
 	 * @return an OwlService which contains the merged variable
 	 * @throws Exception
 	 */
-	public static OwlService createCommonVariable(ArrayList<OwlService> variableServices) throws Exception {
-		ArrayList<Importer.Argument> variables = new ArrayList<Importer.Argument>();
-		for (OwlService variableService : variableServices) {
-			Importer.Argument arg = variableService.getArgument();
-			if (arg != null)
-				variables.add(arg);
-		}
-		return new OwlService(mergeVariables(variables));
-	}
+//	public static OwlService createCommonVariable(ArrayList<OwlService> variableServices) throws Exception {
+//		ArrayList<Importer.Argument> variables = new ArrayList<Importer.Argument>();
+//		for (OwlService variableService : variableServices) {
+//			Importer.Argument arg = variableService.getArgument();
+//			if (arg != null)
+//				variables.add(arg);
+//		}
+//		return new OwlService(mergeVariables(variables));
+//	}
 
 	/**
 	 * <h1>mergeVariables</h1> Easier call for <code>mergeVariables</code> for
@@ -433,12 +433,12 @@ public class Matcher {
 	 * @return
 	 * @throws Exception
 	 */
-	public static Importer.Argument mergeVariables(Importer.Argument var0, Importer.Argument var1) throws Exception {
-		ArrayList<Importer.Argument> variables = new ArrayList<Importer.Argument>();
-		variables.add(var0);
-		variables.add(var1);
-		return mergeVariables(variables);
-	}
+//	public static Importer.Argument mergeVariables(Importer.Argument var0, Importer.Argument var1) throws Exception {
+//		ArrayList<Importer.Argument> variables = new ArrayList<Importer.Argument>();
+//		variables.add(var0);
+//		variables.add(var1);
+//		return mergeVariables(variables);
+//	}
 	private static void getNative(Argument output, ArrayList<Argument> nativeOutputs) {
 		if (output.isNative()&& !output.isArray()) {
 			nativeOutputs.add(output);

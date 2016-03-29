@@ -166,7 +166,7 @@ public class JungXMItoOwlTransform {
 				throw new Exception("Owl service is currently not editable: " + toString());
 			if (content == null) {
 				if (type.equals("Property"))
-					this.content = new Argument(getName().toString(), "", false, true, null);
+					this.content = new Argument(getName().toString(), "", "", false, true, null);
 				else if (type.equals("Action"))
 					this.content = new Operation(getName().toString(), (ApplicationDomain) null);
 				else if (type.equals("Domain"))
