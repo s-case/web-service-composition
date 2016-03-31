@@ -97,7 +97,12 @@ import org.eclipse.jface.dialogs.TitleAreaDialog;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.jface.viewers.ArrayContentProvider;
+import org.eclipse.jface.viewers.CellEditor;
 import org.eclipse.jface.viewers.ColumnLabelProvider;
+import org.eclipse.jface.viewers.ColumnViewerEditor;
+import org.eclipse.jface.viewers.ColumnViewerEditorActivationEvent;
+import org.eclipse.jface.viewers.ColumnViewerEditorActivationStrategy;
+import org.eclipse.jface.viewers.EditingSupport;
 import org.eclipse.jface.viewers.ILabelProvider;
 import org.eclipse.jface.viewers.ILabelProviderListener;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
@@ -107,8 +112,10 @@ import org.eclipse.jface.viewers.ITreeContentProvider;
 import org.eclipse.jface.viewers.LabelProvider;
 import org.eclipse.jface.viewers.SelectionChangedEvent;
 import org.eclipse.jface.viewers.StructuredSelection;
+import org.eclipse.jface.viewers.TextCellEditor;
 import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.jface.viewers.TreeViewerColumn;
+import org.eclipse.jface.viewers.TreeViewerEditor;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.jface.viewers.ViewerFilter;
 import org.eclipse.jface.window.Window;
@@ -134,6 +141,8 @@ import org.eclipse.swt.events.MenuDetectEvent;
 import org.eclipse.swt.events.MenuDetectListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.graphics.Font;
+import org.eclipse.swt.graphics.FontData;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
@@ -239,7 +248,14 @@ import eu.scasefp7.eclipse.servicecomposition.transformer.Similarity;
 import eu.scasefp7.eclipse.servicecomposition.transformer.Transformer;
 import eu.scasefp7.eclipse.servicecomposition.transformer.Transformer.ReplaceInformation;
 import eu.scasefp7.eclipse.servicecomposition.transformer.JungXMItoOwlTransform.OwlService;
+import eu.scasefp7.eclipse.servicecomposition.ui.MyTextCellEditor;
+import eu.scasefp7.eclipse.servicecomposition.ui.MyTitleAreaDialog;
+import eu.scasefp7.eclipse.servicecomposition.ui.Node;
+import eu.scasefp7.eclipse.servicecomposition.ui.RenameConditionDialog;
+import eu.scasefp7.eclipse.servicecomposition.ui.RenameEdgeConditionDialog;
 import eu.scasefp7.eclipse.servicecomposition.ui.ResourceFileSelectionDialog;
+import eu.scasefp7.eclipse.servicecomposition.ui.SafeSaveDialog;
+import eu.scasefp7.eclipse.servicecomposition.ui.TreeDialog;
 
 /**
  * This sample class demonstrates how to plug-in a new workbench view. The view
@@ -284,11 +300,14 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 	private ScrolledComposite sc;
 	private Composite rightComposite;
 	private SashForm sashForm;
-	private Composite inputsComposite;
+	private Tree inputsComposite;
 	private Tree outputsComposite;
 	private TreeViewerColumn column1;
 	private TreeViewerColumn column2;
+	private TreeViewerColumn columna;
+	private TreeViewerColumn columnb;
 	private TreeViewer treeViewer;
+	private TreeViewer inputsTreeViewer;
 	private Composite uriParamsComposite;
 	private Composite authParamsComposite;
 	// constants
@@ -798,224 +817,6 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 	}
 
 	/**
-	 * Dialog for renaming an edge coming out of a condition.
-	 * 
-	 * @author mkoutli
-	 *
-	 */
-	public class RenameEdgeConditionDialog extends TitleAreaDialog {
-		private Text txtConditionName;
-		private String conditionName;
-
-		public RenameEdgeConditionDialog(Shell parentShell) {
-			super(parentShell);
-		}
-
-		@Override
-		public void create() {
-			super.create();
-			setTitle("Name of the condition");
-			setMessage("Please enter a name for the condition edge", IMessageProvider.INFORMATION);
-		}
-
-		@Override
-		protected Control createDialogArea(Composite parent) {
-			Composite area = (Composite) super.createDialogArea(parent);
-			Composite container = new Composite(area, SWT.NONE);
-			container.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
-			GridLayout layout = new GridLayout(2, false);
-			container.setLayout(layout);
-
-			createProjectName(container);
-
-			return area;
-		}
-
-		@Override
-		protected void configureShell(Shell newShell) {
-			super.configureShell(newShell);
-
-			newShell.setText("Condition edge name");
-		}
-
-		private void createProjectName(Composite container) {
-			Label lbtFirstName = new Label(container, SWT.NONE);
-			lbtFirstName.setText("Condition Edge Name");
-
-			GridData dataFirstName = new GridData();
-			dataFirstName.grabExcessHorizontalSpace = true;
-			dataFirstName.horizontalAlignment = GridData.FILL;
-
-			txtConditionName = new Text(container, SWT.BORDER);
-			txtConditionName.setLayoutData(dataFirstName);
-		}
-
-		private void setDialogLocation() {
-			Rectangle monitorArea = getShell().getDisplay().getPrimaryMonitor().getBounds();
-			Rectangle shellArea = getShell().getBounds();
-			int x = monitorArea.x + (monitorArea.width - shellArea.width) / 2;
-			int y = monitorArea.y + (monitorArea.height - shellArea.height) / 2;
-			getShell().setLocation(x, y);
-		}
-
-		@Override
-		protected boolean isResizable() {
-			return true;
-		}
-
-		// save content of the Text field because it gets disposed
-		// as soon as the Dialog closes
-		private void saveInput() {
-			conditionName = txtConditionName.getText();
-
-		}
-
-		@Override
-		protected void okPressed() {
-			saveInput();
-			super.okPressed();
-		}
-
-		public String getConditionName() {
-			return conditionName;
-		}
-
-	}
-
-	/**
-	 * Dialog for renaming condition node
-	 * 
-	 * @author mkoutli
-	 *
-	 */
-	public class RenameConditionDialog extends TitleAreaDialog {
-		private Text txtConditionName;
-		private String conditionName;
-		private Text txtConditionValue;
-		private String conditionValue;
-		private String conditionSymbol;
-		private int index;
-		private Combo lineHeight;
-
-		public RenameConditionDialog(Shell parentShell) {
-			super(parentShell);
-		}
-
-		@Override
-		public void create() {
-			super.create();
-			setTitle("Create condition");
-			setMessage(
-					"Please enter a variable's name (e.g the name of a previous output), a value for this variable and a comparison symbol.",
-					IMessageProvider.INFORMATION);
-		}
-
-		@Override
-		protected Control createDialogArea(Composite parent) {
-			Composite area = (Composite) super.createDialogArea(parent);
-			Composite container = new Composite(area, SWT.NONE);
-			container.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
-			GridLayout layout = new GridLayout(2, false);
-			container.setLayout(layout);
-
-			createConditionName(container);
-			createConditionValue(container);
-			createConditionSymbol(container);
-			return area;
-		}
-
-		@Override
-		protected void configureShell(Shell newShell) {
-			super.configureShell(newShell);
-
-			newShell.setText("Condition node");
-		}
-
-		private void createConditionName(Composite container) {
-			Label lbtFirstName = new Label(container, SWT.NONE);
-			lbtFirstName.setText("Variable name");
-
-			GridData dataFirstName = new GridData();
-			dataFirstName.grabExcessHorizontalSpace = true;
-			dataFirstName.horizontalAlignment = GridData.FILL;
-
-			txtConditionName = new Text(container, SWT.BORDER);
-			txtConditionName.setLayoutData(dataFirstName);
-		}
-
-		private void createConditionValue(Composite container) {
-			Label lbtFirstName = new Label(container, SWT.NONE);
-			lbtFirstName.setText("Value");
-
-			GridData dataFirstName = new GridData();
-			dataFirstName.grabExcessHorizontalSpace = true;
-			dataFirstName.horizontalAlignment = GridData.FILL;
-
-			txtConditionValue = new Text(container, SWT.BORDER);
-			txtConditionValue.setLayoutData(dataFirstName);
-		}
-
-		private void createConditionSymbol(Composite container) {
-
-			lineHeight = new Combo(container, SWT.READ_ONLY | SWT.BORDER);
-			lineHeight.setLayoutData(new GridData(SWT.LEAD, SWT.CENTER, false, false));
-			String[] choices = { "==", "!=", ">", "<" };
-			lineHeight.setItems(choices);
-			lineHeight.select(0);
-
-		}
-
-		private void setDialogLocation() {
-			Rectangle monitorArea = getShell().getDisplay().getPrimaryMonitor().getBounds();
-			Rectangle shellArea = getShell().getBounds();
-			int x = monitorArea.x + (monitorArea.width - shellArea.width) / 2;
-			int y = monitorArea.y + (monitorArea.height - shellArea.height) / 2;
-			getShell().setLocation(x, y);
-		}
-
-		@Override
-		protected boolean isResizable() {
-			return true;
-		}
-
-		// save content of the Text field because it gets disposed
-		// as soon as the Dialog closes
-		private void saveInput() {
-			conditionName = txtConditionName.getText();
-			conditionValue = txtConditionValue.getText();
-			index = lineHeight.getSelectionIndex();
-			if (index == 0) {
-				conditionSymbol = "==";
-			} else if (index == 1) {
-				conditionSymbol = "!=";
-			} else if (index == 2) {
-				conditionSymbol = ">";
-			} else if (index == 3) {
-				conditionSymbol = "<";
-			}
-		}
-
-		@Override
-		protected void okPressed() {
-			saveInput();
-			super.okPressed();
-		}
-
-		public String getConditionName() {
-			return conditionName;
-		}
-
-		public String getConditionValue() {
-			return conditionValue;
-		}
-
-		public String getConditionSymbol() {
-			return conditionSymbol;
-		}
-
-	}
-
-	/**
 	 * <h1>renameCondition</h1>Rename the selected edge. Edge is coming out of a
 	 * condition node.
 	 * 
@@ -1213,271 +1014,6 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 
 	@Inject
 	UISynchronize sync;
-
-	class TreeLabelProvider extends ColumnLabelProvider implements ILabelProvider {
-		public String getText(Object element) {
-			return ((OperationNode) element).getName();
-		}
-
-		public Image getImage(Object arg0) {
-			return null;
-		}
-
-		public void addListener(ILabelProviderListener arg0) {
-		}
-
-		public void dispose() {
-		}
-
-		public boolean isLabelProperty(Object arg0, String arg1) {
-			return false;
-		}
-
-		public void removeListener(ILabelProviderListener arg0) {
-		}
-	}
-
-	class TreeContentProvider implements ITreeContentProvider {
-		public Object[] getChildren(Object parentElement) {
-			Vector<OperationNode> subcats = ((OperationNode) parentElement).getSubCategories();
-			return subcats == null ? new Object[0] : subcats.toArray();
-		}
-
-		public Object getParent(Object element) {
-			return ((OperationNode) element).getParent();
-		}
-
-		public boolean hasChildren(Object element) {
-			return ((OperationNode) element).getSubCategories() != null;
-		}
-
-		public Object[] getElements(Object inputElement) {
-			if (inputElement != null && inputElement instanceof Vector) {
-				return ((Vector<OperationNode>) inputElement).toArray();
-			}
-			return new Object[0];
-		}
-
-		public void dispose() {
-		}
-
-		public void inputChanged(Viewer viewer, Object oldInput, Object newInput) {
-		}
-	}
-
-	private ColumnLabelProvider createTreeColumnLabelProvider() {
-		return new ColumnLabelProvider() {
-
-			@Override
-			public String getText(Object element) {
-				return ((OperationNode) element).getValue();
-			}
-
-		};
-	}
-
-	class OperationNode {
-		private String name;
-		private String value;
-		private Operation operation;
-		private Argument argument;
-		private Vector<OperationNode> subCategories;
-		private OperationNode parent;
-
-		public OperationNode(String name, OperationNode parent, Operation service, Argument argument, String value) {
-			if (service != null) {
-				this.name = name;
-			} else if (argument != null) {
-				this.name = name + " [" + argument.getType() + "]:";
-			}
-			this.parent = parent;
-			this.operation = service;
-			this.argument = argument;
-			this.value = value;
-
-			if (parent != null)
-				parent.addSubCategory(this);
-		}
-
-		public Vector<OperationNode> getSubCategories() {
-			return subCategories;
-		}
-
-		private void addSubCategory(OperationNode subcategory) {
-			if (subCategories == null)
-				subCategories = new Vector<OperationNode>();
-			if (!subCategories.contains(subcategory))
-				subCategories.add(subcategory);
-		}
-
-		public String getName() {
-			return name;
-		}
-
-		public Argument getArgument() {
-			return argument;
-		}
-
-		public Operation getOperation() {
-			return operation;
-		}
-
-		public String getValue() {
-			return value;
-		}
-
-		public OperationNode getParent() {
-			return parent;
-		}
-	}
-
-	public class TreeDialog extends Dialog {
-		private ArrayList<Operation> operations = new ArrayList<Operation>();
-		private Display disp;
-		private Operation operation;
-
-		public TreeDialog(Shell parentShell) {
-			super(parentShell);
-		}
-
-		public void setOperations(ArrayList<Operation> operations) {
-			this.operations = operations;
-		}
-
-		public void setDisp(Display disp) {
-			this.disp = disp;
-		}
-
-		public void setOperation(Operation operation) {
-			this.operation = operation;
-		}
-
-		public Operation getOperation() {
-			return this.operation;
-		}
-
-		@Override
-		protected Control createDialogArea(Composite parent) {
-			Composite container = (Composite) super.createDialogArea(parent);
-			// Button button = new Button(container, SWT.PUSH);
-			// button.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER,
-			// false,
-			// false));
-			// button.setText("Press me");
-			// button.addSelectionListener(new SelectionAdapter() {
-			// @Override
-			// public void widgetSelected(SelectionEvent e) {
-			// System.out.println("Pressed");
-			// }
-			// });
-
-			TreeViewer tree = new TreeViewer(container, SWT.BORDER | SWT.H_SCROLL | SWT.V_SCROLL);
-			TreeViewerColumn column1 = new TreeViewerColumn(tree, SWT.LEFT);
-			column1.getColumn().setText("Attribute");
-			column1.getColumn().setWidth(200);
-			column1.getColumn().setResizable(true);
-			TreeViewerColumn column2 = new TreeViewerColumn(tree, SWT.RIGHT);
-			column2.getColumn().setText("Value");
-			column2.getColumn().setWidth(200);
-			column2.getColumn().setResizable(true);
-
-			Vector<OperationNode> nodes = new Vector<OperationNode>();
-
-			for (Operation operation : operations) {
-				OperationNode n = new OperationNode(operation.getName().toString(), null, operation, null, "");
-				OperationNode subn1 = new OperationNode("Inputs", n, operation, null, "");
-				OperationNode subn2 = new OperationNode("Outputs", n, operation, null, "");
-				OperationNode subn3 = new OperationNode("URL", n, operation, null, operation.getDomain().getURI());
-				column2.setLabelProvider(createTreeColumnLabelProvider());
-				for (Argument input : operation.getInputs()) {
-					OperationNode inputn = new OperationNode("", subn1, operation, input, input.getName().toString());
-					column2.setLabelProvider(createTreeColumnLabelProvider());
-				}
-				for (Argument output : operation.getOutputs()) {
-					OperationNode outputn = new OperationNode("", subn2, operation, output,
-							output.getName().toString());
-					column2.setLabelProvider(createTreeColumnLabelProvider());
-				}
-
-				nodes.add(n);
-
-			}
-
-			tree.getTree().setLayoutData(new GridData(GridData.FILL_BOTH));
-			tree.setContentProvider(new TreeContentProvider());
-			column1.setLabelProvider(new TreeLabelProvider());
-			tree.setInput(nodes);
-
-			// the viewer field is an already configured TreeViewer
-			Tree tree2 = (Tree) tree.getControl();
-
-			Listener listener = new Listener() {
-
-				@Override
-				public void handleEvent(Event event) {
-					TreeItem treeItem = (TreeItem) event.item;
-					final TreeColumn[] treeColumns = treeItem.getParent().getColumns();
-					disp.asyncExec(new Runnable() {
-
-						@Override
-						public void run() {
-							for (TreeColumn treeColumn : treeColumns)
-								treeColumn.pack();
-						}
-					});
-				}
-			};
-
-			tree2.addListener(SWT.Expand, listener);
-
-			tree.addSelectionChangedListener(new ISelectionChangedListener() {
-				public void selectionChanged(SelectionChangedEvent event) {
-					if (event.getSelection() instanceof IStructuredSelection) {
-						IStructuredSelection selection = (IStructuredSelection) event.getSelection();
-						if (selection.getFirstElement() != null) {
-							if (((OperationNode) selection.getFirstElement()).getParent() == null) {
-								setOperation(((OperationNode) selection.getFirstElement()).getOperation());
-							} else {
-								setOperation(((OperationNode) selection.getFirstElement()).getOperation());
-								tree.setSelection(StructuredSelection.EMPTY);
-							}
-						}
-
-					}
-				}
-			});
-
-			// tree.expandAll();
-
-			return container;
-		}
-
-		// overriding this methods allows you to set the
-		// title of the custom dialog
-		@Override
-		protected void configureShell(Shell newShell) {
-			super.configureShell(newShell);
-			newShell.setText("S-CASE Operations");
-		}
-
-		private void setDialogLocation() {
-			Rectangle monitorArea = getShell().getDisplay().getPrimaryMonitor().getBounds();
-			Rectangle shellArea = getShell().getBounds();
-			int x = monitorArea.x + (monitorArea.width - shellArea.width) / 2;
-			int y = monitorArea.y + (monitorArea.height - shellArea.height) / 2;
-			getShell().setLocation(x, y);
-		}
-
-		@Override
-		protected boolean isResizable() {
-			return true;
-		}
-
-		@Override
-		protected void okPressed() {
-			super.okPressed();
-		}
-	}
 
 	/**
 	 * <h1>addNewOperation</h1> Add a new Operation with its IO. For this, the
@@ -2335,8 +1871,10 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 		nodes.add(operationNode);
 
 		for (OwlService input : jungGraph.getPredecessors(owlService)) {
-			MyNode inputNode = new MyNode(input.toString(), input.toString(), input);
-			nodes.add(inputNode);
+			nodes = createInputNodes(input, nodes);
+			// MyNode inputNode = new MyNode(input.toString(), input.toString(),
+			// input);
+			// nodes.add(inputNode);
 
 		}
 
@@ -2358,6 +1896,10 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 		Collection<Connector> inEdges = jungGraph.getInEdges(owlService);
 		Collection<Connector> outEdges = jungGraph.getOutEdges(owlService);
 		Collection<Connector> subEdges = null;
+
+		for (OwlService input : jungGraph.getPredecessors(owlService)) {
+			connections = createInputEdges(input, nodes, connections);
+		}
 
 		for (OwlService output : jungGraph.getSuccessors(owlService)) {
 			connections = createOutputEdges(output, nodes, connections);
@@ -2439,6 +1981,52 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 			connection.getSource().getConnectedTo().add(connection.getDestination());
 		}
 		return nodes;
+	}
+
+	private List<MyNode> createInputNodes(OwlService input, List<MyNode> nodes) {
+		MyNode inputNode = new MyNode(input.toString(), input.toString(), input);
+		nodes.add(inputNode);
+		for (OwlService subinput : jungGraph.getPredecessors(input)) {
+			createInputNodes(subinput, nodes);
+		}
+		return nodes;
+	}
+
+	private List<MyConnection> createInputEdges(OwlService input, List<MyNode> nodes, List<MyConnection> connections) {
+		Collection<Connector> subEdges = null;
+		if (jungGraph.getInEdges(input) != null && jungGraph.getInEdges(input).size() != 0) {
+			subEdges = jungGraph.getInEdges(input);
+
+		}
+		if (subEdges != null) {
+			for (Connector con : subEdges) {
+				OwlService jungSource = (OwlService) con.getSource();
+				OwlService jungDest = (OwlService) con.getTarget();
+				MyNode source = null;
+				MyNode dest = null;
+
+				for (int j = 0; j < nodes.size(); j++) {
+					MyNode node = nodes.get(j);
+					if (((OwlService) node.getObject()).equals(jungSource)) {
+						source = node;
+					} else if (((OwlService) node.getObject()).equals(jungDest)) {
+						dest = node;
+					}
+				}
+
+				MyConnection connect = new MyConnection(source.toString() + dest.toString(), con.getCondition(), source,
+						dest);
+				source.getLinkedConnections().add(connect);
+				connections.add(connect);
+
+			}
+		}
+
+		for (OwlService subInput : jungGraph.getPredecessors(input)) {
+			createInputEdges(subInput, nodes, connections);
+		}
+
+		return connections;
 	}
 
 	private List<MyNode> createOutputNodes(OwlService output, List<MyNode> nodes) {
@@ -3093,6 +2681,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 
 	public void updateRightComposite(edu.uci.ics.jung.graph.Graph jungGraph) {
 
+		final Display display = Display.getCurrent();
 		final Graph graph = viewer.getGraphControl();
 		if (sc != null) {
 			sc.dispose();
@@ -3113,18 +2702,67 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 
 		// runWorkflowAction.setEnabled(false);
 
+		Listener inputListener = new Listener() {
+
+			@Override
+			public void handleEvent(Event event) {
+				TreeItem treeItem = (TreeItem) event.item;
+				final TreeColumn[] treeColumns = treeItem.getParent().getColumns();
+				//final Display display = Display.getCurrent();
+				display.syncExec(new Runnable() {
+
+					@Override
+					public void run() {
+						for (TreeColumn treeColumn : treeColumns)
+							treeColumn.pack();
+					}
+				});
+			}
+		};
 		// create inputs composite
 
 		rightComposite.setLayout(new GridLayout());
-		Composite inputsLabelComposite = new Composite(rightComposite, SWT.FILL);
 
-		inputsLabelComposite.setLayout(new GridLayout());
-		Label label = new Label(inputsLabelComposite, SWT.FILL);
-		label.setText("Workflow Inputs:");
-		label.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
-		label.setFont(JFaceResources.getFontRegistry().getBold(""));
-		inputsComposite = new Composite(rightComposite, SWT.FILL);
+		Composite inputsLabelComposite = new Composite(rightComposite, SWT.FILL);
+		inputsLabelComposite.setLayout(new GridLayout(1, false));
+		Label label1 = new Label(inputsLabelComposite, SWT.NONE);
+		label1.setText("Workflow Inputs:");
+		label1.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
+		label1.setFont(JFaceResources.getFontRegistry().getBold(""));
+		inputsComposite = new Tree(rightComposite, SWT.FILL | SWT.MULTI);
 		inputsComposite.setLayout(new GridLayout(2, false));
+		inputsTreeViewer = new TreeViewer(inputsComposite);
+		TreeViewerEditor.create(inputsTreeViewer, new ColumnViewerEditorActivationStrategy(inputsTreeViewer) {
+			protected boolean isEditorActivationEvent(ColumnViewerEditorActivationEvent event) {
+				return event.eventType == ColumnViewerEditorActivationEvent.MOUSE_CLICK_SELECTION;
+			}
+		}, ColumnViewerEditor.TABBING_VERTICAL);
+
+		columna = new TreeViewerColumn(inputsTreeViewer, SWT.NONE);
+		columna.getColumn().setWidth(200);
+		columna.getColumn().setText("Columna");
+		columna.getColumn().setResizable(true);
+		// column1.getColumn().pack();
+		columnb = new TreeViewerColumn(inputsTreeViewer, SWT.NONE);
+		columnb.getColumn().setText("Columnb");
+		columnb.getColumn().setWidth(300);
+		columnb.getColumn().setResizable(true);
+
+		// column2.getColumn().pack();
+		// get all outputs
+		Vector<Node> InputNodes = new Vector<Node>();
+
+		// Composite inputsLabelComposite = new Composite(rightComposite,
+		// SWT.FILL);
+		//
+		// inputsLabelComposite.setLayout(new GridLayout());
+		// Label label = new Label(inputsLabelComposite, SWT.FILL);
+		// label.setText("Workflow Inputs:");
+		// label.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false,
+		// false));
+		// label.setFont(JFaceResources.getFontRegistry().getBold(""));
+		// inputsComposite = new Composite(rightComposite, SWT.FILL);
+		// inputsComposite.setLayout(new GridLayout(2, false));
 		// get matched io
 		Object[] vertices1 = (Object[]) jungGraph.getVertices().toArray();
 		ArrayList<OwlService> matchedNodes = new ArrayList<OwlService>();
@@ -3138,48 +2776,121 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 		}
 
 		// get all inputs
+
 		Object[] vertices = (Object[]) jungGraph.getVertices().toArray();
 		for (int i = 0; i < vertices.length; i++) {
 			final OwlService node = (OwlService) vertices[i];
-
-			if (node.getType().contains("Property")) {
-				if (jungGraph.getInEdges(node).size() == 0) {
-
-					showInputs(node, matchedNodes, graph);
-
-				} else if ((jungGraph.getInEdges(node).size() == 1
-						&& ((OwlService) jungGraph.getPredecessors(node).toArray()[0]).getisMatchedIO())) {
-					showInputs(node, matchedNodes, graph);
-				}
-			}
-		}
-
-		// create UriParams composite
-
-		rightComposite.setLayout(new GridLayout());
-		Composite urisLabelComposite = new Composite(rightComposite, SWT.FILL);
-
-		urisLabelComposite.setLayout(new GridLayout());
-		Label label3 = new Label(urisLabelComposite, SWT.FILL);
-		label3.setText("Workflow URI Parameters:");
-		label3.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
-		label3.setFont(JFaceResources.getFontRegistry().getBold(""));
-		uriParamsComposite = new Composite(rightComposite, SWT.FILL);
-		uriParamsComposite.setLayout(new GridLayout(2, false));
-
-		// get all uriParams
-
-		for (int i = 0; i < vertices.length; i++) {
-			final OwlService node = (OwlService) vertices[i];
-
 			if (node.getType().contains("Action")) {
-				if (!node.getOperation().getUriParameters().isEmpty()) {
-					for (Argument arg : node.getOperation().getUriParameters()) {
-						showUriParams(arg);
+				Collection<OwlService> predecessors = (Collection<OwlService>) jungGraph.getPredecessors(node);
+				for (OwlService predecessor : predecessors) {
+					if (predecessor.getType().contains("Property")) {
+						showInputs(predecessor, null, InputNodes, jungGraph, matchedNodes);
+
 					}
 				}
 			}
 		}
+
+		inputsTreeViewer.getTree().setLayoutData(new GridData(GridData.FILL_BOTH));
+		inputsComposite.setSize(300, 200);
+		inputsTreeViewer.setContentProvider(new MyTreeContentProvider());
+
+		columna.setLabelProvider(new MyLabelProvider());
+
+		final TextCellEditor cellEditor = new MyTextCellEditor(inputsTreeViewer.getTree());
+		columnb.setEditingSupport(new EditingSupport(inputsTreeViewer) {
+
+			@Override
+			protected void setValue(Object element, Object value) {
+				((Node) element).setValue(value.toString());
+				getViewer().update(element, null);
+			}
+
+			@Override
+			protected Object getValue(Object element) {
+				return ((Node) element).getValue();
+			}
+
+			@Override
+			protected TextCellEditor getCellEditor(Object element) {
+				return cellEditor;
+			}
+
+			@Override
+			protected boolean canEdit(Object element) {
+				if (((Node) element).getOwlService().getArgument().getSubtypes().isEmpty())
+					return true;
+				else
+					return false;
+			}
+		});
+
+		inputsTreeViewer.setInput(InputNodes);
+		//inputsTreeViewer.expandAll();
+		inputsComposite.addListener(SWT.Expand, inputListener);
+
+		inputsTreeViewer.addSelectionChangedListener(new ISelectionChangedListener() {
+			public void selectionChanged(SelectionChangedEvent event) {
+				if (event.getSelection() instanceof IStructuredSelection) {
+					IStructuredSelection selection = (IStructuredSelection) event.getSelection();
+					if (selection.getFirstElement() != null) {
+						for (int i = 0; i < graph.getNodes().size(); i++) {
+							GraphNode graphNode = (GraphNode) graph.getNodes().get(i);
+							if (((OwlService) ((MyNode) graphNode.getData()).getObject())
+									.equals(((Node) selection.getFirstElement()).getOwlService())) {
+								graphNode.highlight();
+							} else
+								graphNode.unhighlight();
+
+						}
+					}
+
+				}
+			}
+		});
+
+		// for (int i = 0; i < vertices.length; i++) {
+		// final OwlService node = (OwlService) vertices[i];
+		//
+		// if (node.getType().contains("Property")) {
+		// if (jungGraph.getInEdges(node).size() == 0) {
+		//
+		// showInputs(node, matchedNodes, graph);
+		//
+		// } else if ((jungGraph.getInEdges(node).size() == 1
+		// && ((OwlService)
+		// jungGraph.getPredecessors(node).toArray()[0]).getisMatchedIO())) {
+		// showInputs(node, matchedNodes, graph);
+		// }
+		// }
+		// }
+
+		// create UriParams composite
+
+//		rightComposite.setLayout(new GridLayout());
+//		Composite urisLabelComposite = new Composite(rightComposite, SWT.FILL);
+//
+//		urisLabelComposite.setLayout(new GridLayout());
+//		Label label3 = new Label(urisLabelComposite, SWT.FILL);
+//		label3.setText("Workflow URI Parameters:");
+//		label3.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
+//		label3.setFont(JFaceResources.getFontRegistry().getBold(""));
+//		uriParamsComposite = new Composite(rightComposite, SWT.FILL);
+//		uriParamsComposite.setLayout(new GridLayout(2, false));
+
+		// get all uriParams
+
+//		for (int i = 0; i < vertices.length; i++) {
+//			final OwlService node = (OwlService) vertices[i];
+//
+//			if (node.getType().contains("Action")) {
+//				if (!node.getOperation().getUriParameters().isEmpty()) {
+//					for (Argument arg : node.getOperation().getUriParameters()) {
+//						showUriParams(arg);
+//					}
+//				}
+//			}
+//		}
 		// create authentication Params composite
 
 		rightComposite.setLayout(new GridLayout());
@@ -3206,7 +2917,26 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 				}
 			}
 		}
+		
+		
+		Listener outputListener = new Listener() {
 
+			@Override
+			public void handleEvent(Event event) {
+				TreeItem treeItem = (TreeItem) event.item;
+				final TreeColumn[] treeColumns = treeItem.getParent().getColumns();
+				
+				display.syncExec(new Runnable() {
+
+					@Override
+					public void run() {
+						for (TreeColumn treeColumn : treeColumns)
+							treeColumn.pack();
+					}
+				});
+			}
+		};
+		
 		// create outputs composite
 
 		Composite outputsLabelComposite = new Composite(rightComposite, SWT.FILL);
@@ -3244,34 +2974,17 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 			}
 		}
 
+		
 		treeViewer.getTree().setLayoutData(new GridData(GridData.FILL_BOTH));
 		outputsComposite.setSize(300, 200);
 		treeViewer.setContentProvider(new MyTreeContentProvider());
 
 		column1.setLabelProvider(new MyLabelProvider());
 		treeViewer.setInput(nodes);
-		// outputsComposite.setSize(300, nodes.size() * 10);
-		treeViewer.expandAll();
-
-		Listener listener = new Listener() {
-
-			@Override
-			public void handleEvent(Event event) {
-				TreeItem treeItem = (TreeItem) event.item;
-				final TreeColumn[] treeColumns = treeItem.getParent().getColumns();
-				final Display display = Display.getCurrent();
-				display.asyncExec(new Runnable() {
-
-					@Override
-					public void run() {
-						for (TreeColumn treeColumn : treeColumns)
-							treeColumn.pack();
-					}
-				});
-			}
-		};
-
-		outputsComposite.addListener(SWT.Expand, listener);
+//		// outputsComposite.setSize(300, nodes.size() * 10);
+		//treeViewer.expandAll();
+//		
+		outputsComposite.addListener(SWT.Expand, outputListener);
 
 		treeViewer.addSelectionChangedListener(new ISelectionChangedListener() {
 			public void selectionChanged(SelectionChangedEvent event) {
@@ -3292,7 +3005,8 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 				}
 			}
 		});
-
+		
+		
 		graph.update();
 		graph.redraw();
 
@@ -3370,144 +3084,125 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 		};
 	}
 
-	class Node {
-		private String name;
-		private String value;
-		private OwlService service;
-		private Value argument;
-		private Vector<Node> subCategories;
-		private Node parent;
+	public void showInputs(final Object arg, Node parent, Vector<Node> nodes,
+			edu.uci.ics.jung.graph.Graph<OwlService, Connector> graph, ArrayList<OwlService> matchedNodes) {
 
-		public Node(String name, Node parent, OwlService service, Value argument) {
-			if (service != null) {
-				this.name = name + " [" + service.getArgument().getType() + "]:";
-			} else if (argument != null) {
-				this.name = name + " [" + argument.getType() + "]:";
-			}
-			this.parent = parent;
-			this.service = service;
-			this.argument = argument;
-			if (argument != null) {
-				this.value = argument.getValue();
-			} else if (service != null) {
-				this.value = "";
-			}
-
-			if (parent != null)
-				parent.addSubCategory(this);
-		}
-
-		public Vector<Node> getSubCategories() {
-			return subCategories;
-		}
-
-		private void addSubCategory(Node subcategory) {
-			if (subCategories == null)
-				subCategories = new Vector<Node>();
-			if (!subCategories.contains(subcategory))
-				subCategories.add(subcategory);
-		}
-
-		public String getName() {
-			return name;
-		}
-
-		public String getValue() {
-			return value;
-		}
-
-		public OwlService getOwlService() {
-			return service;
-		}
-
-		public Value getArgument() {
-			return argument;
-		}
-
-		public Node getParent() {
-			return parent;
-		}
-	}
-
-	public void showInputs(final OwlService arg, ArrayList<OwlService> matchedNodes, final Graph graph) {
-
-		Label firstLabel = new Label(inputsComposite, SWT.NONE);
-		if (arg.getArgument().isRequired()) {
-			firstLabel.setText(arg.getName() + " [" + ((Argument) arg.getContent()).getType() + "]*" + ":");
-		} else {
-			firstLabel.setText(arg.getName() + " [" + ((Argument) arg.getContent()).getType() + "]" + ":");
-		}
-		firstLabel.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
-
-		Text firstText = new Text(inputsComposite, SWT.BORDER);
-		firstText.setText("");
-		firstText.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
-
-		for (OwlService matched : matchedNodes) {
-			if (arg.equals(matched)) {
-				firstText.setEditable(false);
+		String[] datatypes = new String[] { "string", "long", "int", "float", "double", "dateTime", "boolean" };
+		Node n = new Node(((OwlService) arg).getName().toString(), parent, (OwlService) arg, null);
+		// if it is native argument
+		if (arg instanceof Value) {
+		if (RAMLCaller.stringIsItemFromList(((Argument) arg).getType(), datatypes)) {
+			n.setValue("enter value");
+		}}
+		else{
+			if (RAMLCaller.stringIsItemFromList(((OwlService) arg).getArgument().getType(), datatypes)) {
+				n.setValue("enter value");
 			}
 		}
 
-		GridData data = new GridData();
-		data.horizontalAlignment = SWT.FILL;
-		data.grabExcessHorizontalSpace = true;
-		firstText.setLayoutData(data);
-		// listener for highlighting nodes in the graph
-		FocusListener focusListener = new FocusListener() {
-			public void focusGained(FocusEvent e) {
-				Text t = (Text) e.widget;
-				t.selectAll();
+		columnb.setLabelProvider(
 
-				// highlight node in graph
-				for (int i = 0; i < graph.getNodes().size(); i++) {
-					GraphNode graphNode = (GraphNode) graph.getNodes().get(i);
-					// System.out.println(graphNode);
-					if (((OwlService) ((MyNode) graphNode.getData()).getObject()).equals(arg)) {
-						System.out.println("Selection={"
-								+ ((OwlService) ((MyNode) graphNode.getData()).getObject()).getName().toString() + "}");
-						graphNode.highlight();
-					} else
-						graphNode.unhighlight();
+		createColumnLabelProvider());
+
+		if (!((OwlService) arg).getArgument().getSubtypes().isEmpty()) {
+			Collection<OwlService> predecessors = (Collection<OwlService>) jungGraph.getPredecessors((OwlService) arg);
+			for (OwlService predecessor : predecessors) {
+				if (predecessor.getType().contains("Property")) {
+					showInputs(predecessor, n, nodes, jungGraph, matchedNodes);
+
 				}
 			}
+		}
 
-			public void focusLost(FocusEvent e) {
-				for (int i = 0; i < graph.getNodes().size(); i++) {
-					GraphNode graphNode = (GraphNode) graph.getNodes().get(i);
-					// System.out.println(graphNode);
-					if (((OwlService) ((MyNode) graphNode.getData()).getObject()).equals(arg)) {
-						graphNode.unhighlight();
-						break;
-					}
-				}
-			}
-		};
-		firstText.addFocusListener(focusListener);
-		firstText.addKeyListener(new KeyListener() {
+		if (parent == null) {
+			nodes.add(n);
 
-			@Override
-			public void keyReleased(KeyEvent e) {
-				// check if all inputs are filled in
-				boolean allFilledIn = true;
-				for (int i = 0; i < inputsComposite.getChildren().length; i++) {
-					if (inputsComposite.getChildren()[i] instanceof Text)
-						if (((Text) inputsComposite.getChildren()[i]).getText().trim().equals(""))
-							allFilledIn = false;
-				}
-				// if (allFilledIn)
-				// runWorkflowAction.setEnabled(true);
-				// else
-				// runWorkflowAction.setEnabled(false);
-
-			}
-
-			@Override
-			public void keyPressed(KeyEvent e) {
-				// TODO Auto-generated method stub
-
-			}
-		});
+		}
+		// Label firstLabel = new Label(inputsComposite, SWT.NONE);
+		// if (arg.getArgument().isRequired()) {
+		// firstLabel.setText(arg.getName() + " [" + ((Argument)
+		// arg.getContent()).getType() + "]*" + ":");
+		// } else {
+		// firstLabel.setText(arg.getName() + " [" + ((Argument)
+		// arg.getContent()).getType() + "]" + ":");
+		// }
+		// firstLabel.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER,
+		// false, false));
+		//
+		// Text firstText = new Text(inputsComposite, SWT.BORDER);
+		// firstText.setText("");
+		// firstText.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true,
+		// false));
+		//
+		// for (OwlService matched : matchedNodes) {
+		// if (arg.equals(matched)) {
+		// firstText.setEditable(false);
+		// }
+		// }
+		//
+		// GridData data = new GridData();
+		// data.horizontalAlignment = SWT.FILL;
+		// data.grabExcessHorizontalSpace = true;
+		// firstText.setLayoutData(data);
+		// // listener for highlighting nodes in the graph
+		// FocusListener focusListener = new FocusListener() {
+		// public void focusGained(FocusEvent e) {
+		// Text t = (Text) e.widget;
+		// t.selectAll();
+		//
+		// // highlight node in graph
+		// for (int i = 0; i < graph.getNodes().size(); i++) {
+		// GraphNode graphNode = (GraphNode) graph.getNodes().get(i);
+		// // System.out.println(graphNode);
+		// if (((OwlService) ((MyNode)
+		// graphNode.getData()).getObject()).equals(arg)) {
+		// System.out.println("Selection={"
+		// + ((OwlService) ((MyNode)
+		// graphNode.getData()).getObject()).getName().toString() + "}");
+		// graphNode.highlight();
+		// } else
+		// graphNode.unhighlight();
+		// }
+		// }
+		//
+		// public void focusLost(FocusEvent e) {
+		// for (int i = 0; i < graph.getNodes().size(); i++) {
+		// GraphNode graphNode = (GraphNode) graph.getNodes().get(i);
+		// // System.out.println(graphNode);
+		// if (((OwlService) ((MyNode)
+		// graphNode.getData()).getObject()).equals(arg)) {
+		// graphNode.unhighlight();
+		// break;
+		// }
+		// }
+		// }
+		// };
+		// firstText.addFocusListener(focusListener);
+		// firstText.addKeyListener(new KeyListener() {
+		//
+		// @Override
+		// public void keyReleased(KeyEvent e) {
+		// // check if all inputs are filled in
+		// boolean allFilledIn = true;
+		// for (int i = 0; i < inputsComposite.getChildren().length; i++) {
+		// if (inputsComposite.getChildren()[i] instanceof Text)
+		// if (((Text)
+		// inputsComposite.getChildren()[i]).getText().trim().equals(""))
+		// allFilledIn = false;
+		// }
+		// // if (allFilledIn)
+		// // runWorkflowAction.setEnabled(true);
+		// // else
+		// // runWorkflowAction.setEnabled(false);
+		//
+		// }
+		//
+		// @Override
+		// public void keyPressed(KeyEvent e) {
+		// // TODO Auto-generated method stub
+		//
+		// }
+		// });
 
 	}
 
@@ -3621,18 +3316,18 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 
 	}
 
-	public void showUriParams(final Argument arg) {
-
-		Label firstLabel = new Label(uriParamsComposite, SWT.NONE);
-		firstLabel.setText(arg.getName() + " [" + arg.getType() + "]*" + ":");
-		firstLabel.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
-
-		Text firstText = new Text(uriParamsComposite, SWT.BORDER);
-		firstText.setText("");
-		firstText.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
-		firstText.setEditable(true);
-
-	}
+//	public void showUriParams(final Argument arg) {
+//
+//		Label firstLabel = new Label(uriParamsComposite, SWT.NONE);
+//		firstLabel.setText(arg.getName() + " [" + arg.getType() + "]*" + ":");
+//		firstLabel.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
+//
+//		Text firstText = new Text(uriParamsComposite, SWT.BORDER);
+//		firstText.setText("");
+//		firstText.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+//		firstText.setEditable(true);
+//
+//	}
 
 	public void unhighlightAllNodes() {
 		// unhighlight all nodes
@@ -3784,11 +3479,11 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 								}
 
 							}
-							if (!op.getUriParameters().isEmpty()) {
-								for (Argument arg : op.getUriParameters()) {
-									uriParamVariables.add((Value) arg);
-								}
-							}
+//							if (!op.getUriParameters().isEmpty()) {
+//								for (Argument arg : op.getUriParameters()) {
+//									uriParamVariables.add((Value) arg);
+//								}
+//							}
 							if (!op.getAuthenticationParameters().isEmpty()) {
 								for (Argument arg : op.getAuthenticationParameters()) {
 									authParamVariables.add((Value) arg);
@@ -3909,21 +3604,20 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 						return Status.CANCEL_STATUS;
 					// get input values
 					disp.syncExec(new Runnable() {
+						@SuppressWarnings("unchecked")
 						@Override
 						public void run() {
 							if (currentService == startingService) {
 								// fill inputs from right panel
 								for (int i = 0; i < inputVariables.size(); i++) {
 									Value var = inputVariables.get(i);
-
-									for (int j = 0; j < inputsComposite.getChildren().length; j++) {
-										if (inputsComposite.getChildren()[j] instanceof Label) {
-											Label label = (Label) inputsComposite.getChildren()[j];
-											if (label.getText().split("\\[")[0].trim()
-													.equals(var.getName().toString())) {
-												if (((Text) inputsComposite.getChildren()[j + 1]).isEnabled())
+									((Vector<Node>)columnb.getViewer().getInput()).size();
+									for (int j = 0; j < ((Vector<Node>)columnb.getViewer().getInput()).size(); j++) {
+										if (((Vector<Node>)columnb.getViewer().getInput()).get(j) instanceof Node) {
+											if (((Node)((Vector<Node>)columnb.getViewer().getInput()).get(j)).getName().split("\\[")[0].trim()
+												.equals(var.getName().toString())) {
 													var.setValue(
-															((Text) inputsComposite.getChildren()[j + 1]).getText());
+															((Node)((Vector<Node>)columnb.getViewer().getInput()).get(j)).getValue());
 											}
 										}
 									}
@@ -4231,162 +3925,6 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 			showOutputs(var, null, nodes, column2, graph);
 		}
 
-		// outputsComposite.setSize(300, list.size() * 50);
-
-		// String[] datatypes = new String[] { "string", "long", "int", "float",
-		// "double", "dateTime", "boolean" };
-		//
-		// for (int i = 0; i < list.size(); i++) {
-		// Value var = (Value) list.get(i);
-		// if (obj instanceof Tree) {
-		// for (int j = 0; j < ((Tree) obj).getItemCount(); j++) {
-		// if (((Tree) obj).getItem(j) instanceof TreeItem) {
-		// TreeItem item = (TreeItem) ((Tree) obj).getItem(j);
-		// if (item.getText().trim().equals(var.getName().toString())
-		// ||
-		// item.getText().split("\\[")[0].trim().equals(var.getName().toString()))
-		// {
-		// if (var.isArray() && RAMLCaller.stringIsItemFromList(var.getType(),
-		// datatypes)) {
-		// for (Argument element : var.getElements()) {
-		// TreeItem newItem = new TreeItem(item, SWT.NONE);
-		// newItem.setText(1, ((Value) element).getValue());
-		// }
-		// } else if (var.isArray() &&
-		// !RAMLCaller.stringIsItemFromList(var.getType(), datatypes)) {
-		// for (Argument element : var.getElements()) {
-		// TreeItem newItem = new TreeItem(item, SWT.NONE);
-		// newItem.setText(0, element.getName().toString());
-		// fillInOutputValues(var.getElements(), newItem);
-		// }
-		// if (var.getElements().isEmpty()) {
-		// for (Argument sub : var.getSubtypes()) {
-		// TreeItem newItem = new TreeItem(item, SWT.NONE);
-		// newItem.setText(0, sub.getName().toString());
-		// fillInOutputValues(var.getSubtypes(), newItem);
-		// }
-		// }
-		// } else if (!var.isArray() &&
-		// !RAMLCaller.stringIsItemFromList(var.getType(), datatypes)) {
-		// for (Argument sub : var.getSubtypes()) {
-		// TreeItem newItem = new TreeItem(item, SWT.NONE);
-		// newItem.setText(0, sub.getName().toString() + " [" + sub.getType() +
-		// "]:");
-		// fillInOutputValues(var.getSubtypes(), newItem);
-		// }
-		// } else {
-		// item.setText(1, ((Value) var).getValue());
-		// fillInOutputValues(var.getSubtypes(), item);
-		// }
-		// }
-		// }
-		// }
-		// } else if (obj instanceof TreeItem) {
-		// for (int j = 0; j < ((TreeItem) obj).getItemCount(); j++) {
-		// if (((TreeItem) obj).getItem(j) instanceof TreeItem) {
-		// TreeItem item = (TreeItem) ((TreeItem) obj).getItem(j);
-		// if (item.getText().trim().equals(var.getName().toString())
-		// ||
-		// item.getText().split("\\[")[0].trim().equals(var.getName().toString()))
-		// {
-		// if (var.isArray() && RAMLCaller.stringIsItemFromList(var.getType(),
-		// datatypes)) {
-		// for (Argument element : var.getElements()) {
-		// TreeItem newItem = new TreeItem(item, SWT.NONE);
-		// newItem.setText(1, ((Value) element).getValue());
-		// }
-		// } else if (var.isArray() &&
-		// !RAMLCaller.stringIsItemFromList(var.getType(), datatypes)) {
-		// for (Argument element : var.getElements()) {
-		// TreeItem newItem = new TreeItem(item, SWT.NONE);
-		// newItem.setText(0, element.getName().toString());
-		// fillInOutputValues(var.getElements(), newItem);
-		// }
-		// if (var.getElements().isEmpty()) {
-		// for (Argument sub : var.getSubtypes()) {
-		// TreeItem newItem = new TreeItem(item, SWT.NONE);
-		// newItem.setText(0, sub.getName().toString());
-		// fillInOutputValues(var.getSubtypes(), newItem);
-		// }
-		// }
-		// } else if (!var.isArray() &&
-		// !RAMLCaller.stringIsItemFromList(var.getType(), datatypes)) {
-		// for (Argument sub : var.getSubtypes()) {
-		// TreeItem newItem = new TreeItem(item, SWT.NONE);
-		// newItem.setText(0, sub.getName().toString() + " [" + sub.getType() +
-		// "]:");
-		// fillInOutputValues(var.getSubtypes(), newItem);
-		// }
-		// } else {
-		// item.setText(1, ((Value) var).getValue());
-		// fillInOutputValues(var.getSubtypes(), item);
-		// }
-		// }
-		// }
-		// }
-		// if (((TreeItem) obj).getItemCount() == 0) {
-		// TreeItem item = (TreeItem) ((TreeItem) obj);
-		// if (item.getText().trim().equals(var.getName().toString())
-		// ||
-		// item.getText().split("\\[")[0].trim().equals(var.getName().toString()))
-		// {
-		// if (var.isArray() && RAMLCaller.stringIsItemFromList(var.getType(),
-		// datatypes)) {
-		// for (Argument element : var.getElements()) {
-		// TreeItem newItem = new TreeItem(item, SWT.NONE);
-		// newItem.setText(1, ((Value) element).getValue());
-		// }
-		// } else if (var.isArray() &&
-		// !RAMLCaller.stringIsItemFromList(var.getType(), datatypes)) {
-		// for (Argument element : var.getElements()) {
-		// TreeItem newItem = new TreeItem(item, SWT.NONE);
-		// newItem.setText(0, element.getName().toString());
-		// fillInOutputValues(var.getElements(), newItem);
-		// }
-		// if (var.getElements().isEmpty()) {
-		// for (Argument sub : var.getSubtypes()) {
-		// TreeItem newItem = new TreeItem(item, SWT.NONE);
-		// newItem.setText(0, sub.getName().toString());
-		// fillInOutputValues(var.getSubtypes(), newItem);
-		// }
-		// }
-		// } else if (!var.isArray() &&
-		// !RAMLCaller.stringIsItemFromList(var.getType(), datatypes)) {
-		// for (Argument sub : var.getSubtypes()) {
-		// TreeItem newItem = new TreeItem(item, SWT.NONE);
-		// newItem.setText(0, sub.getName().toString() + " [" + sub.getType() +
-		// "]:");
-		// fillInOutputValues(var.getSubtypes(), newItem);
-		// }
-		// } else {
-		// item.setText(1, ((Value) var).getValue());
-		// fillInOutputValues(var.getSubtypes(), item);
-		// }
-		// }
-		// }
-		// }
-		//
-		// // fillInOutputValues(var.getSubtypes());
-		//
-		// }
-
-		// for (int i = 0; i < list.size(); i++) {
-		// Value var = (Value) list.get(i);
-		// for (int j = 0; j < outputsComposite.getChildren().length; j++) {
-		// if (outputsComposite.getChildren()[j] instanceof Label) {
-		// Label label = (Label) outputsComposite.getChildren()[j];
-		// if
-		// (label.getText().split("\\[")[0].trim().equals(var.getName().toString()))
-		// {
-		// ((Text) outputsComposite.getChildren()[j +
-		// 1]).setText(var.getValue());
-		// }
-		// }
-		// }
-		//
-		// fillInOutputValues(var.getSubtypes());
-		//
-		// }
 
 	}
 
@@ -4589,8 +4127,8 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 				getInputs().add(new Value(input));
 			for (Argument output : operation.getOutputs())
 				getOutputs().add(new Value(output));
-			for (Argument uriParam : operation.getUriParameters())
-				getUriParameters().add(new Value(uriParam));
+//			for (Argument uriParam : operation.getUriParameters())
+//				getUriParameters().add(new Value(uriParam));
 			for (Argument authParam : operation.getAuthenticationParameters())
 				getAuthenticationParameters().add(new Value(authParam));
 		}
@@ -5027,86 +4565,6 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 		}
 	}
 
-	public class MyTitleAreaDialog extends TitleAreaDialog {
-
-		private Text txtProjectName;
-		private String projectName;
-
-		public MyTitleAreaDialog(Shell parentShell) {
-			super(parentShell);
-		}
-
-		@Override
-		public void create() {
-			super.create();
-			setTitle("Name of the composite web service");
-			setMessage("Please enter a name for the new web service project", IMessageProvider.INFORMATION);
-		}
-
-		@Override
-		protected Control createDialogArea(Composite parent) {
-			Composite area = (Composite) super.createDialogArea(parent);
-			Composite container = new Composite(area, SWT.NONE);
-			container.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
-			GridLayout layout = new GridLayout(2, false);
-			container.setLayout(layout);
-
-			createProjectName(container);
-
-			return area;
-		}
-
-		@Override
-		protected void configureShell(Shell newShell) {
-			super.configureShell(newShell);
-
-			newShell.setText("Web service project name");
-		}
-
-		private void createProjectName(Composite container) {
-			Label lbtFirstName = new Label(container, SWT.NONE);
-			lbtFirstName.setText("Project Name");
-
-			GridData dataFirstName = new GridData();
-			dataFirstName.grabExcessHorizontalSpace = true;
-			dataFirstName.horizontalAlignment = GridData.FILL;
-
-			txtProjectName = new Text(container, SWT.BORDER);
-			txtProjectName.setLayoutData(dataFirstName);
-		}
-
-		private void setDialogLocation() {
-			Rectangle monitorArea = getShell().getDisplay().getPrimaryMonitor().getBounds();
-			Rectangle shellArea = getShell().getBounds();
-			int x = monitorArea.x + (monitorArea.width - shellArea.width) / 2;
-			int y = monitorArea.y + (monitorArea.height - shellArea.height) / 2;
-			getShell().setLocation(x, y);
-		}
-
-		@Override
-		protected boolean isResizable() {
-			return true;
-		}
-
-		// save content of the Text field because it gets disposed
-		// as soon as the Dialog closes
-		private void saveInput() {
-			projectName = txtProjectName.getText();
-
-		}
-
-		@Override
-		protected void okPressed() {
-			saveInput();
-			super.okPressed();
-		}
-
-		public String getProjectName() {
-			return projectName;
-		}
-
-	}
-
 	public edu.uci.ics.jung.graph.Graph<OwlService, Connector> loadWorkflowFile(File file) {
 
 		edu.uci.ics.jung.graph.Graph<OwlService, Connector> g = null;
@@ -5494,118 +4952,6 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 	}
 
 	/**
-	 * This class provides a facade for the "save" FileDialog class. If the
-	 * selected file already exists, the user is asked to confirm before
-	 * overwriting.
-	 */
-	public class SafeSaveDialog {
-		// The wrapped FileDialog
-		private FileDialog dlg;
-
-		/**
-		 * SafeSaveDialog constructor
-		 * 
-		 * @param shell
-		 *            the parent shell
-		 */
-		public SafeSaveDialog(Shell shell) {
-			dlg = new FileDialog(shell, SWT.SAVE);
-		}
-
-		public String open() {
-			// We store the selected file name in fileName
-			String fileName = null;
-
-			// The user has finished when one of the
-			// following happens:
-			// 1) The user dismisses the dialog by pressing Cancel
-			// 2) The selected file name does not exist
-			// 3) The user agrees to overwrite existing file
-			boolean done = false;
-
-			while (!done) {
-				// Open the File Dialog
-				fileName = dlg.open();
-				if (fileName == null) {
-					// User has cancelled, so quit and return
-					done = true;
-				} else {
-					// User has selected a file; see if it already exists
-					File file = new File(fileName);
-					if (file.exists()) {
-						// The file already exists; asks for confirmation
-						MessageBox mb = new MessageBox(dlg.getParent(), SWT.ICON_WARNING | SWT.YES | SWT.NO);
-
-						// We really should read this string from a
-						// resource bundle
-						mb.setMessage(fileName + " already exists. Do you want to replace it?");
-
-						// If they click Yes, we're done and we drop out. If
-						// they click No, we redisplay the File Dialog
-						done = mb.open() == SWT.YES;
-					} else {
-						// File does not exist, so drop out
-						done = true;
-					}
-				}
-			}
-			return fileName;
-		}
-
-		public String getFileName() {
-			return dlg.getFileName();
-		}
-
-		public String[] getFileNames() {
-			return dlg.getFileNames();
-		}
-
-		public String[] getFilterExtensions() {
-			return dlg.getFilterExtensions();
-		}
-
-		public String[] getFilterNames() {
-			return dlg.getFilterNames();
-		}
-
-		public String getFilterPath() {
-			return dlg.getFilterPath();
-		}
-
-		public void setFileName(String string) {
-			dlg.setFileName(string);
-		}
-
-		public void setFilterExtensions(String[] extensions) {
-			dlg.setFilterExtensions(extensions);
-		}
-
-		public void setFilterNames(String[] names) {
-			dlg.setFilterNames(names);
-		}
-
-		public void setFilterPath(String string) {
-			dlg.setFilterPath(string);
-		}
-
-		public Shell getParent() {
-			return dlg.getParent();
-		}
-
-		public int getStyle() {
-			return dlg.getStyle();
-		}
-
-		public String getText() {
-			return dlg.getText();
-		}
-
-		public void setText(String string) {
-			dlg.setText(string);
-		}
-	}
-
-	/**
 	 * <h1>saveWorkflow</h1> Saves the current workflow.Method is called by
 	 * pressing the appropriate button in the toolbar.
 	 */
@@ -5805,11 +5151,11 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 
 		// Trace user action
 		Activator.TRACE.trace("/debug/executeCommand", "Workflow is saved.");
-		
+
 		disp.syncExec(new Runnable() {
 
 			@Override
-			public void run() {		
+			public void run() {
 				MessageDialog.openInformation(disp.getActiveShell(), "Info", "Workflow is saved.");
 			}
 
@@ -6672,65 +6018,5 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 	public void setScaseProject(IProject project) {
 		scaseProject = project;
 	}
-
-	// // implements ISaveablePart
-	// @Override
-	// public void doSave(IProgressMonitor monitor) {
-	// try {
-	// final Display disp = Display.getCurrent();
-	// IStatus status = checkGraph(jungGraph, disp);
-	// if (status.getMessage().equalsIgnoreCase("OK")) {
-	// if (workflowFilePath.isEmpty()) {
-	// saveWorkflow(true);
-	// } else {
-	// saveWorkflow(false);
-	// }
-	// }
-	// setDirty(false);
-	// } catch (Exception e) {
-	// // TODO Auto-generated catch block
-	// e.printStackTrace();
-	// }
-	//
-	// }
-	//
-	// @Override
-	// public void doSaveAs() {
-	// try {
-	// final Display disp = Display.getCurrent();
-	// IStatus status = checkGraph(jungGraph, disp);
-	// if (status.getMessage().equalsIgnoreCase("OK")) {
-	// saveWorkflow(true);
-	// }
-	// setDirty(false);
-	// } catch (Exception e) {
-	// // TODO Auto-generated catch block
-	// e.printStackTrace();
-	// }
-	// }
-	//
-	// @Override
-	// public boolean isDirty() {
-	// // TODO Auto-generated method stub
-	// return isDirty;
-	//
-	// }
-	//
-	// @Override
-	// public boolean isSaveAsAllowed() {
-	// // TODO Auto-generated method stub
-	// return true;
-	// }
-	//
-	// @Override
-	// public boolean isSaveOnCloseNeeded() {
-	// // TODO Auto-generated method stub
-	// return false;
-	// }
-	//
-	// public void setDirty(boolean d) {
-	// this.isDirty = d;
-	// firePropertyChange(PROP_DIRTY);
-	// }
 
 }

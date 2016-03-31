@@ -122,7 +122,7 @@ public class Algorithm {
 					.split("\\s").length;
 			this.nameSimilarity = Similarity.similarity(selection.getOperationToReplace().getName(),
 					selection.getOriginalServiceOperation().getName());
-			if (!selection.getOperationToReplace().getAccessInfo().getDescription().isEmpty()) {
+			if (!selection.getOperationToReplace().getDescription().isEmpty()) {
 				// descriptionSimilarity =
 				// selection.getOperationToReplace().getAccessInfo().getDescription().get(0)
 				// .getDescription().split("\\s").length;
@@ -132,8 +132,8 @@ public class Algorithm {
 					// .getDescription().split("\\s").length;
 					this.nameSimilarity = Similarity
 							.similarity(
-									new ComparableName(selection.getOperationToReplace().getAccessInfo()
-											.getDescription().get(0).getDescription()),
+									new ComparableName(selection.getOperationToReplace()
+											.getDescription()),
 							selection.getOriginalServiceOperation().getName());
 				}
 

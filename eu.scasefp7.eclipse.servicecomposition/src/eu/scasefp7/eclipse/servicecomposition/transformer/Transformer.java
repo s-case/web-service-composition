@@ -265,40 +265,40 @@ public class Transformer {
 		if (op != null) {
 
 			for (Argument arg : op.getInputs()) {
-
-				OwlService argument = new OwlService(arg);
-				argument.getArgument().setOwlService(argument);
-				for (OwlService owlService : services) {
-					if (owlService.getName().getContent().equals(argument.getName().getContent())) {
-						if (owlService.getId() >= argument.getId()) {
-							argument.setId(owlService.getId() + 1);
-						}
-					}
-
-				}
-				graph.addVertex(argument);
-				graph.addEdge(new Connector(argument, service, ""), argument, service, EdgeType.DIRECTED);
-				arg.getParent().remove(op);
-				arg.getParent().add(op);
-
-				for (Argument sub : arg.getSubtypes()) {
-					OwlService subtype = new OwlService(sub);
-
-					for (OwlService owlService : services) {
-						if (owlService.getName().getContent().equals(subtype.getName().getContent())) {
-							if (owlService.getId() >= subtype.getId()) {
-								subtype.setId(owlService.getId() + 1);
-							}
-						}
-
-					}
-
-					graph.addVertex(subtype);
-					graph.addEdge(new Connector(subtype, argument, ""), subtype, argument, EdgeType.DIRECTED);
-					sub.getParent().remove(op);
-					sub.getParent().add(op);
-
-				}
+				addInputs(arg, service, op);
+//				OwlService argument = new OwlService(arg);
+//				argument.getArgument().setOwlService(argument);
+//				for (OwlService owlService : services) {
+//					if (owlService.getName().getContent().equals(argument.getName().getContent())) {
+//						if (owlService.getId() >= argument.getId()) {
+//							argument.setId(owlService.getId() + 1);
+//						}
+//					}
+//
+//				}
+//				graph.addVertex(argument);
+//				graph.addEdge(new Connector(argument, service, ""), argument, service, EdgeType.DIRECTED);
+//				arg.getParent().remove(op);
+//				arg.getParent().add(op);
+//
+//				for (Argument sub : arg.getSubtypes()) {
+//					OwlService subtype = new OwlService(sub);
+//
+//					for (OwlService owlService : services) {
+//						if (owlService.getName().getContent().equals(subtype.getName().getContent())) {
+//							if (owlService.getId() >= subtype.getId()) {
+//								subtype.setId(owlService.getId() + 1);
+//							}
+//						}
+//
+//					}
+//
+//					graph.addVertex(subtype);
+//					graph.addEdge(new Connector(subtype, argument, ""), subtype, argument, EdgeType.DIRECTED);
+//					sub.getParent().remove(op);
+//					sub.getParent().add(op);
+//
+//				}
 
 			}
 			for (Argument arg : op.getOutputs()) {
@@ -380,8 +380,15 @@ public class Transformer {
 
 		graph.addVertex(argument);
 		graph.addEdge(new Connector(argument, service, ""), argument, service, EdgeType.DIRECTED);
-		arg.getParent().remove(op);
-		arg.getParent().add(op);
+		if (!arg.getParent().contains(op)) {
+			arg.getParent().add(op);
+		}
+		if (service.getArgument() != null) {
+			for (int i = 0; i < service.getArgument().getParent().size(); i++) {
+				if (!arg.getParent().contains(service.getArgument().getParent().get(i)))
+					arg.getParent().add(service.getArgument().getParent().get(i));
+			}
+		}
 
 		if (arg.getSubtypes().size() > 0) {
 			for (Argument sub : arg.getSubtypes()) {

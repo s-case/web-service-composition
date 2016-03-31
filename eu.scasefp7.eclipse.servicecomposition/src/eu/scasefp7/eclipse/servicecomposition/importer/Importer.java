@@ -64,6 +64,7 @@ public abstract class Importer {
 	protected static DatatypeProperty isTypeOf;
 	protected static DatatypeProperty isArray;
 	protected static DatatypeProperty hasResourcePath;
+	protected static DatatypeProperty hasDescription;
 	protected static OntModel ontologyModel;
 
 	protected static HashMap<String, ApplicationDomain> domainList = new HashMap<String, ApplicationDomain>();
@@ -300,6 +301,7 @@ public abstract class Importer {
 		// operation parameters
 		protected ComparableName name;
 		protected ApplicationDomain domain = null;
+		protected String description = "";
 		protected ArrayList<Argument> outputs = new ArrayList<Argument>();
 		protected ArrayList<Argument> inputs = new ArrayList<Argument>();
 		//protected ArrayList<Argument> uriParameters = new ArrayList<Argument>();
@@ -338,7 +340,10 @@ public abstract class Importer {
 			if (ind.getPropertyValue(hasResourcePath) != null) {
 				resourcePath = ind.getPropertyValue(hasResourcePath).asLiteral().getString();
 			}
-
+			
+			if (ind.getPropertyValue(hasDescription) != null) {
+				description = ind.getPropertyValue(hasDescription).asLiteral().getString();
+			}
 			String crudVerb = "";
 			if (ind.getPropertyValue(hasCRUDVerb) != null) {
 				crudVerb = ind.getPropertyValue(hasCRUDVerb).asLiteral().getString();
@@ -784,6 +789,14 @@ public abstract class Importer {
 		public String getType() {
 			return type;
 		}
+		/**
+		 * <h1>getType()</h1>
+		 * 
+		 * @return the operation's description
+		 */
+		public String getDescription() {
+			return description;
+		}
 
 		/**
 		 * <h1>getDomain</h1>
@@ -995,6 +1008,9 @@ public abstract class Importer {
 		 * @param ioInd
 		 */
 		Argument(Operation operation, Individual typeInd, Individual ioInd) {
+			if (operation.getName().toString().contains("search")){
+				int a=1;
+			}
 			if (typeInd.getPropertyResourceValue(hasType) == null) {
 				// Native Object
 				if (ioInd.getPropertyValue(hasName) != null)
@@ -1007,7 +1023,7 @@ public abstract class Importer {
 				// Complex Object
 				if (ioInd.getPropertyValue(hasName) != null) {
 					String foundName = ioInd.getPropertyValue(hasName).asLiteral().getString().trim();
-					foundName = foundName.substring(0, 1).toLowerCase() + foundName.substring(1);// convert
+					//foundName = foundName.substring(0, 1).toLowerCase() + foundName.substring(1);// convert
 																									// first
 																									// letter
 																									// to

@@ -35,6 +35,7 @@ public class OwlImporter extends Importer{
 		ontologyModel = ModelFactory.createOntologyModel(OntModelSpec.OWL_DL_MEM_RDFS_INF, base);	
 		belongsToURL = ontologyModel.getDatatypeProperty(prefix + "belongsToURL");
 		hasResourcePath = ontologyModel.getDatatypeProperty(prefix + "hasResourcePath");
+		hasDescription = ontologyModel.getDatatypeProperty(prefix + "hasDescription");
 		belongsToWSType = ontologyModel.getDatatypeProperty(prefix + "belongsToWSType");
 		hasServiceDomain=ontologyModel.getObjectProperty(prefix + "hasServiceDomain");
 		belongsToUser = ontologyModel.getDatatypeProperty(prefix + "belongsToUser");

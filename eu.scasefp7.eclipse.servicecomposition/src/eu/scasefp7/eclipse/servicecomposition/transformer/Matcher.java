@@ -160,7 +160,7 @@ public class Matcher {
 		if (!operation.getAccessInfo().getDescription().isEmpty()) {
 			descriptionSimilarity = Similarity.similarity(
 					new ComparableName(
-							((Description) operation.getAccessInfo().getDescription().get(0)).getDescription()),
+							operation.getDescription()),
 					action.getName());
 			// double DescnumberOfWords=((Description)
 			// operation.getAccessInfo().getDescription().get(0)).getDescription().split("\\s").length;
@@ -225,7 +225,7 @@ public class Matcher {
 		double similarity = 0;
 		// similarity = BIAS + (operation.getMetadata() != null ?
 		// operation.getMetadata().getSimilarity(action) : 0);
-		if (operation.getType().equalsIgnoreCase("RESTful") && !operation.getAccessInfo().getDescription().isEmpty()) {
+		if (operation.getType().equalsIgnoreCase("RESTful") && !operation.getDescription().isEmpty()) {
 			DESCRIPTION_WEIGHT = 4.0;
 			NAME_SIMILARITY_WEIGHT = 1.0;
 		} else {
