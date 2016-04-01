@@ -184,7 +184,7 @@ public class RAMLCaller {
 				String USER_AGENT = "Mozilla/5.0";
 				// add header
 				post.setHeader("User-Agent", USER_AGENT);
-
+				post.setHeader("Content-Type", "application/x-www-form-urlencoded");
 				// List<NameValuePair> urlParameters = new
 				// ArrayList<NameValuePair>();
 				// Value val = null;
@@ -195,11 +195,15 @@ public class RAMLCaller {
 				// val.getValue()));
 				// }
 				//
+
+				//String request = "Journey={\"journeyLegs\":[ {\"transportType\":\"ECAR\", \"geoLocationPoints\":[ {\"latitude\":44.8500574, \"longitude\":13.8368621, \"eta\":0}, {\"latitude\":44.8500531, \"longitude\":13.8370427, \"eta\":2}] }, {\"transportType\":\"CAR\", \"geoLocationPoints\":[ {\"latitude\":44.8500531, \"longitude\":13.8370427, \"eta\":2}, {\"latitude\":44.8500574, \"longitude\":13.8368621, \"eta\":5}] }]}";
 				JSONObject obj = new JSONObject();
 				for (Argument input : bodyParams) {
 					obj = (JSONObject) createJson(input, obj);
 				}
-				post.setEntity(new StringEntity(obj.toString(), "UTF-8"));
+				String journey= "Journey=" + obj.toString();
+				post.setEntity(new StringEntity(journey, "UTF-8"));
+				//post.setEntity(new StringEntity(request, "UTF-8"));
 				// post.setEntity(new UrlEncodedFormEntity(urlParameters));
 
 				HttpResponse response = client.execute(post);
@@ -213,6 +217,7 @@ public class RAMLCaller {
 					resultPost.append(line);
 				}
 				result = resultPost.toString();
+				System.out.println(result);
 			} catch (MalformedURLException e) {
 
 				e.printStackTrace();
@@ -576,12 +581,25 @@ public class RAMLCaller {
 		} else if (input.isArray() && !stringIsItemFromList(input.getType(), datatypes)) {
 			JSONArray array = new JSONArray();
 			for (Value element : input.getElements()) {
-				JSONObject obj2 = new JSONObject();
-
+				if (element.isArray()){
+					JSONArray array2 = new JSONArray();
+					JSONObject obj2 = new JSONObject();
+					for (Value element2 : element.getElements()) {
+						obj2 = (JSONObject) createJson(element2, obj2);
+						array2.add(obj2);
+					}
+					((JSONArray) array).add(obj2);
+					
+				}else{
+				JSONObject obj3 = new JSONObject();
 				for (Argument subinput : input.getSubtypes()) {
-					obj2 = (JSONObject) createJson(subinput, obj2);
+					obj3 = (JSONObject) createJson(subinput, obj3);
 				}
-				((JSONArray) array).add(obj2);
+				((JSONArray) array).add(obj3);
+				}
+
+				
+				
 			}
 
 			((JSONObject) obj).put(input.getName().getContent().toString(), array);
