@@ -972,6 +972,7 @@ public abstract class Importer {
 		// if Argument isArray it has elements which are filled when the
 		// operation is called
 		private ArrayList<Value> elements = new ArrayList<Value>();
+		private ArrayList<Argument> hasMatchedInputs = new ArrayList<Argument>();
 		private ArrayList<Object> parent = new ArrayList<Object>();
 		private OwlService belongsToOwlService = null;
 		private Operation belongsToOperation;
@@ -1150,6 +1151,17 @@ public abstract class Importer {
 			return subtypes;
 		}
 
+		/**
+		 * <h1>getMatchedIO</h1>
+		 * 
+		 * @return a list of all IOs that are matched with this argument
+		 */
+		public ArrayList<Argument> getMatchedInputs() {
+			return hasMatchedInputs;
+		}
+		public void addMatchedInputs(Argument matched) {
+			this.hasMatchedInputs.add(matched);
+		}
 		public ArrayList<Value> getElements() {
 			return elements;
 		}

@@ -40,6 +40,9 @@ public class Value extends Argument{
 		for(Argument arg : variable.getSubtypes()){
 			getSubtypes().add(getValue(arg));
 		}
+		for(Argument arg : variable.getMatchedInputs()){
+			getMatchedInputs().add(getValue(arg));
+		}
 		for(Object arg : variable.getParent()){
 			getParent().add(arg);
 		}

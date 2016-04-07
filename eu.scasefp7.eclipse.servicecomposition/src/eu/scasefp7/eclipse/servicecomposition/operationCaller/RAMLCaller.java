@@ -98,12 +98,12 @@ public class RAMLCaller {
 			for (Argument input : queryParams) {
 				if (!inputList.isEmpty()) {
 					val = (Value) input;
-					if (!(val.getValue().isEmpty() && !input.isRequired())) {
+					if (!(val.getValue().isEmpty() && !input.isRequired()) && val.getValue() != "enter value") {
 						inputList += "&" + input.getName().toString() + "=" + val.getValue();
 					}
 				} else {
 					val = (Value) input;
-					if (!(val.getValue().isEmpty() && !input.isRequired())) {
+					if (!(val.getValue().isEmpty() && !input.isRequired()) && val.getValue() != "enter value") {
 						inputList += input.getName().toString() + "=" + val.getValue();
 					}
 				}
@@ -196,14 +196,23 @@ public class RAMLCaller {
 				// }
 				//
 
-				//String request = "Journey={\"journeyLegs\":[ {\"transportType\":\"ECAR\", \"geoLocationPoints\":[ {\"latitude\":44.8500574, \"longitude\":13.8368621, \"eta\":0}, {\"latitude\":44.8500531, \"longitude\":13.8370427, \"eta\":2}] }, {\"transportType\":\"CAR\", \"geoLocationPoints\":[ {\"latitude\":44.8500531, \"longitude\":13.8370427, \"eta\":2}, {\"latitude\":44.8500574, \"longitude\":13.8368621, \"eta\":5}] }]}";
+				// String request = "Journey={\"journeyLegs\":[
+				// {\"transportType\":\"ECAR\", \"geoLocationPoints\":[
+				// {\"latitude\":44.8500574, \"longitude\":13.8368621,
+				// \"eta\":0}, {\"latitude\":44.8500531,
+				// \"longitude\":13.8370427, \"eta\":2}] },
+				// {\"transportType\":\"CAR\", \"geoLocationPoints\":[
+				// {\"latitude\":44.8500531, \"longitude\":13.8370427,
+				// \"eta\":2}, {\"latitude\":44.8500574,
+				// \"longitude\":13.8368621, \"eta\":5}] }]}";
 				JSONObject obj = new JSONObject();
 				for (Argument input : bodyParams) {
 					obj = (JSONObject) createJson(input, obj);
 				}
-				String journey= "Journey=" + obj.toString();
-				post.setEntity(new StringEntity(journey, "UTF-8"));
-				//post.setEntity(new StringEntity(request, "UTF-8"));
+				// String journey= "Journey=" + obj.toString();
+				String entity = obj.toString();
+				post.setEntity(new StringEntity(entity, "UTF-8"));
+				// post.setEntity(new StringEntity(request, "UTF-8"));
 				// post.setEntity(new UrlEncodedFormEntity(urlParameters));
 
 				HttpResponse response = client.execute(post);
@@ -262,12 +271,22 @@ public class RAMLCaller {
 				// add header
 				put.setHeader("User-Agent", USER_AGENT);
 
-				List<NameValuePair> urlParameters = new ArrayList<NameValuePair>();
-				Value val = null;
+				// List<NameValuePair> urlParameters = new
+				// ArrayList<NameValuePair>();
+				// Value val = null;
+				// for (Argument input : bodyParams) {
+				// val = (Value) input;
+				// urlParameters.add(new
+				// BasicNameValuePair(input.getName().getContent().toString(),
+				// val.getValue()));
+				// }
+
+				JSONObject obj = new JSONObject();
 				for (Argument input : bodyParams) {
-					val = (Value) input;
-					urlParameters.add(new BasicNameValuePair(input.getName().getContent().toString(), val.getValue()));
+					obj = (JSONObject) createJson(input, obj);
 				}
+				// String journey= "Journey=" + obj.toString();
+				put.setEntity(new StringEntity(obj.toString(), "UTF-8"));
 
 				// // just for testing
 				// String content =
@@ -278,7 +297,7 @@ public class RAMLCaller {
 				// put.setEntity(entity);
 				// // end of test
 
-				put.setEntity(new UrlEncodedFormEntity(urlParameters));
+				// put.setEntity(new UrlEncodedFormEntity(urlParameters));
 
 				HttpResponse response = client.execute(put);
 				System.out.println("Response Code : " + response.getStatusLine().getStatusCode());
@@ -574,14 +593,15 @@ public class RAMLCaller {
 		if (input.isArray() && stringIsItemFromList(input.getType(), datatypes)) {
 			JSONArray array = new JSONArray();
 			for (Value element : input.getElements()) {
-				array.add(element.getValue());
+				if (element.getValue() != "enter value")
+					array.add(element.getValue());
 			}
 			((JSONObject) obj).put(input.getName().getContent().toString(), array);
 			// array of objects or arrays
 		} else if (input.isArray() && !stringIsItemFromList(input.getType(), datatypes)) {
 			JSONArray array = new JSONArray();
 			for (Value element : input.getElements()) {
-				if (element.isArray()){
+				if (element.isArray()) {
 					JSONArray array2 = new JSONArray();
 					JSONObject obj2 = new JSONObject();
 					for (Value element2 : element.getElements()) {
@@ -589,17 +609,15 @@ public class RAMLCaller {
 						array2.add(obj2);
 					}
 					((JSONArray) array).add(obj2);
-					
-				}else{
-				JSONObject obj3 = new JSONObject();
-				for (Argument subinput : input.getSubtypes()) {
-					obj3 = (JSONObject) createJson(subinput, obj3);
-				}
-				((JSONArray) array).add(obj3);
+
+				} else {
+					JSONObject obj3 = new JSONObject();
+					for (Argument subinput : input.getSubtypes()) {
+						obj3 = (JSONObject) createJson(subinput, obj3);
+					}
+					((JSONArray) array).add(obj3);
 				}
 
-				
-				
 			}
 
 			((JSONObject) obj).put(input.getName().getContent().toString(), array);
@@ -616,7 +634,8 @@ public class RAMLCaller {
 			if (input.getType().equalsIgnoreCase("String")) {
 				Value val = (Value) input;
 				if (obj instanceof JSONObject) {
-					((JSONObject) obj).put(input.getName().getContent().toString(), val.getValue());
+					if (val.getValue() != "enter value")
+						((JSONObject) obj).put(input.getName().getContent().toString(), val.getValue());
 				} else if (obj instanceof JSONArray) {
 					((JSONArray) obj).add(val.getValue());
 				}
@@ -624,7 +643,9 @@ public class RAMLCaller {
 			if (input.getType().equalsIgnoreCase("int")) {
 				Value val = (Value) input;
 				if (obj instanceof JSONObject) {
-					((JSONObject) obj).put(input.getName().getContent().toString(), Integer.parseInt(val.getValue()));
+					if (val.getValue() != "enter value")
+						((JSONObject) obj).put(input.getName().getContent().toString(),
+								Integer.parseInt(val.getValue()));
 				} else if (obj instanceof JSONArray) {
 					((JSONArray) obj).add(Integer.parseInt(val.getValue()));
 				}
@@ -632,7 +653,8 @@ public class RAMLCaller {
 			if (input.getType().equalsIgnoreCase("long")) {
 				Value val = (Value) input;
 				if (obj instanceof JSONObject) {
-					((JSONObject) obj).put(input.getName().getContent().toString(), Long.parseLong(val.getValue()));
+					if (val.getValue() != "enter value")
+						((JSONObject) obj).put(input.getName().getContent().toString(), Long.parseLong(val.getValue()));
 				} else if (obj instanceof JSONArray) {
 					((JSONArray) obj).add(Long.parseLong(val.getValue()));
 				}
@@ -640,8 +662,9 @@ public class RAMLCaller {
 			if (input.getType().equalsIgnoreCase("boolean")) {
 				Value val = (Value) input;
 				if (obj instanceof JSONObject) {
-					((JSONObject) obj).put(input.getName().getContent().toString(),
-							Boolean.parseBoolean(val.getValue()));
+					if (val.getValue() != "enter value")
+						((JSONObject) obj).put(input.getName().getContent().toString(),
+								Boolean.parseBoolean(val.getValue()));
 				} else if (obj instanceof JSONArray) {
 					((JSONArray) obj).add(Boolean.parseBoolean(val.getValue()));
 				}
@@ -649,7 +672,9 @@ public class RAMLCaller {
 			if (input.getType().equalsIgnoreCase("float")) {
 				Value val = (Value) input;
 				if (obj instanceof JSONObject) {
-					((JSONObject) obj).put(input.getName().getContent().toString(), Float.parseFloat(val.getValue()));
+					if (val.getValue() != "enter value")
+						((JSONObject) obj).put(input.getName().getContent().toString(),
+								Float.parseFloat(val.getValue()));
 				} else if (obj instanceof JSONArray) {
 					((JSONArray) obj).add(Float.parseFloat(val.getValue()));
 				}
@@ -657,7 +682,9 @@ public class RAMLCaller {
 			if (input.getType().equalsIgnoreCase("double")) {
 				Value val = (Value) input;
 				if (obj instanceof JSONObject) {
-					((JSONObject) obj).put(input.getName().getContent().toString(), Double.parseDouble(val.getValue()));
+					if (val.getValue() != "enter value")
+						((JSONObject) obj).put(input.getName().getContent().toString(),
+								Double.parseDouble(val.getValue()));
 				} else if (obj instanceof JSONArray) {
 					((JSONArray) obj).add(Double.parseDouble(val.getValue()));
 				}
