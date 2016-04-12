@@ -10,11 +10,11 @@ public class CallRestfulServiceCode {
 		// package declaration and imports
 		String code = "package " + packageName + ";\n\n" + "import " + packageName + ".WorkflowClass.Variable;\n";
 
-		code += "import java.io.BufferedReader;\nimport java.io.IOException;\nimport java.io.InputStreamReader;\nimport java.net.HttpURLConnection;\nimport java.net.MalformedURLException;\nimport java.net.URL;\nimport java.util.ArrayList;\nimport java.util.List;\nimport org.apache.commons.codec.binary.Base64;\nimport org.apache.http.HttpResponse;\nimport org.apache.http.NameValuePair;\nimport org.apache.http.client.HttpClient;\nimport org.apache.http.client.entity.UrlEncodedFormEntity;\nimport org.apache.http.client.methods.HttpPost;\nimport org.apache.http.client.methods.HttpPut;\nimport org.apache.http.impl.client.HttpClientBuilder;\nimport org.apache.http.message.BasicNameValuePair;\n";
+		code += "import java.io.BufferedReader;\nimport java.io.IOException;\nimport java.io.InputStreamReader;\nimport java.net.HttpURLConnection;\nimport java.net.MalformedURLException;\nimport java.net.URL;\nimport java.util.ArrayList;\nimport java.util.List;\nimport org.apache.commons.codec.binary.Base64;\nimport org.apache.http.HttpResponse;\nimport org.apache.http.NameValuePair;\nimport org.apache.http.client.HttpClient;\nimport org.apache.http.client.entity.UrlEncodedFormEntity;\nimport org.apache.http.client.methods.HttpPost;\nimport org.apache.http.client.methods.HttpPut;\nimport org.apache.http.entity.StringEntity;\nimport org.apache.http.impl.client.HttpClientBuilder;\nimport org.apache.http.message.BasicNameValuePair;\n";
 		// class declaration
 		code += "public class CallRESTfulService {\n";
 		// method
-		code += TAB + "public static String callService(String wsUrl, String crudVerb, ArrayList<Variable> inputs, boolean hasAuth, String auth){\n"
+		code += TAB + "public static String callService(String wsUrl, String crudVerb, ArrayList<Variable> inputs, String entity, boolean hasAuth, String auth){\n"
 				+ TAB + TAB + "String result = \"\";\n" + TAB + TAB + "String inputList = \"\";\n";
 		code += TAB + TAB + "if (!inputs.isEmpty()) {\n";
 		code += TAB + TAB + TAB + "for (Variable input : inputs) {\n";
@@ -55,17 +55,17 @@ public class CallRestfulServiceCode {
 		code += applyTab(3, catchExceptionCode(TAB), TAB);
 		code += TAB + TAB + "} else if (crudVerb.equalsIgnoreCase(\"post\")) {\n";
 		code += TAB + TAB + TAB + "try {\n";
-		code += TAB + TAB + TAB + TAB + "// Create connection\n" + TAB + TAB + TAB + TAB + "String url = wsUrl;\n" + TAB
+		code += TAB + TAB + TAB + TAB + "// Create connection\n" + TAB + TAB + TAB + TAB + "String url = (wsUrl + inputListGet).replaceAll(\" \", \"%20\");\n" + TAB
 				+ TAB + TAB + TAB + "System.out.println(\"Calling \" + url.toString());\n" + TAB + TAB + TAB + TAB
 				+ "HttpClient client = HttpClientBuilder.create().build();\n" + TAB + TAB + TAB + TAB
 				+ "HttpPost post = new HttpPost(url);\n" + TAB + TAB + TAB + TAB
 				+ "String USER_AGENT = \"Mozilla/5.0\";\n" + TAB + TAB + TAB + TAB + "// add header\n" + TAB + TAB + TAB
 				+ TAB + "post.setHeader(\"User-Agent\", USER_AGENT);\n" + TAB + TAB + TAB + TAB
-				+ "List<NameValuePair> urlParameters = new ArrayList<NameValuePair>();\n" + TAB + TAB + TAB + TAB
-				+ "for (Variable input : inputs) {\n";
-		code += TAB + TAB + TAB + TAB + TAB + "urlParameters.add(new BasicNameValuePair(input.name, input.value));\n";
-		code += TAB + TAB + TAB + TAB + "}\n";
-		code += TAB + TAB + TAB + TAB + "post.setEntity(new UrlEncodedFormEntity(urlParameters));\n";
+				+ "post.setHeader(\"Content-Type\", \"application/json\");\n" + TAB + TAB + TAB + TAB
+				+ "post.setEntity(new StringEntity(entity, \"UTF-8\"));\n";
+//		code += TAB + TAB + TAB + TAB + TAB + "urlParameters.add(new BasicNameValuePair(input.name, input.value));\n";
+//		code += TAB + TAB + TAB + TAB + "}\n";
+//		code += TAB + TAB + TAB + TAB + "post.setEntity(new UrlEncodedFormEntity(urlParameters));\n";
 		code += TAB + TAB + TAB + TAB + "HttpResponse response = client.execute(post);\n";
 		code += TAB + TAB + TAB + TAB
 				+ "System.out.println(\"Response Code : \" + response.getStatusLine().getStatusCode());\n";
@@ -82,7 +82,7 @@ public class CallRestfulServiceCode {
 		code += TAB + TAB + TAB + "URL url = null;\n";
 		code += TAB + TAB + TAB + "HttpURLConnection httpURLConnection = null;\n";
 		code += TAB + TAB + TAB + "try {\n";
-		code += TAB + TAB + TAB + TAB + "url = new URL(wsUrl);\n" + TAB + TAB + TAB + TAB
+		code += TAB + TAB + TAB + TAB + "url = new URL((wsUrl + inputListGet).replaceAll(\" \", \"%20\"));\n" + TAB + TAB + TAB + TAB
 				+ "System.out.println(\"Calling \" + url.toString());\n";
 		code += TAB + TAB + TAB + TAB + "httpURLConnection = (HttpURLConnection) url.openConnection();\n";
 		code += TAB + TAB + TAB + TAB
@@ -98,17 +98,17 @@ public class CallRestfulServiceCode {
 		code += TAB + TAB + "} else if (crudVerb.equalsIgnoreCase(\"put\")) {\n";
 		code += TAB + TAB + TAB + "try {\n";
 		code += TAB + TAB + TAB + TAB + "// Create connection\n";
-		code += TAB + TAB + TAB + TAB + "String url = wsUrl;\n";
+		code += TAB + TAB + TAB + TAB + "String url = (wsUrl + inputListGet).replaceAll(\" \", \"%20\");\n";
 		code += TAB + TAB + TAB + TAB + "HttpClient client = HttpClientBuilder.create().build();\n";
 		code += TAB + TAB + TAB + TAB + "HttpPut put = new HttpPut(url);\n";
 		code += TAB + TAB + TAB + TAB + "String USER_AGENT = \"Mozilla/5.0\";\n";
 		code += TAB + TAB + TAB + TAB + "// add header\n";
 		code += TAB + TAB + TAB + TAB + "put.setHeader(\"User-Agent\", USER_AGENT);\n";
-		code += TAB + TAB + TAB + TAB + "List<NameValuePair> urlParameters = new ArrayList<NameValuePair>();\n";
-		code += TAB + TAB + TAB + TAB + "for (Variable input : inputs) {\n";
-		code += TAB + TAB + TAB + TAB + TAB + "urlParameters.add(new BasicNameValuePair(input.name, input.value));\n";
-		code += TAB + TAB + TAB + TAB + "}\n";
-		code += TAB + TAB + TAB + TAB + "put.setEntity(new UrlEncodedFormEntity(urlParameters));\n";
+		code += TAB + TAB + TAB + TAB + "put.setEntity(new StringEntity(entity, \"UTF-8\"));\n";
+//		code += TAB + TAB + TAB + TAB + "for (Variable input : inputs) {\n";
+//		code += TAB + TAB + TAB + TAB + TAB + "urlParameters.add(new BasicNameValuePair(input.name, input.value));\n";
+//		code += TAB + TAB + TAB + TAB + "}\n";
+//		code += TAB + TAB + TAB + TAB + "put.setEntity(new UrlEncodedFormEntity(urlParameters));\n";
 		code += TAB + TAB + TAB + TAB + "HttpResponse response = client.execute(put);\n";
 		code += TAB + TAB + TAB + TAB
 				+ "System.out.println(\"Response Code : \" + response.getStatusLine().getStatusCode());\n";

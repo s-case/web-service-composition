@@ -780,9 +780,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 							}
 						}
 					}
-					if (!((OwlService) ((MyNode) graphNode.getData()).getObject()).getArgument().isArray()
-							&& ((OwlService) ((MyNode) graphNode.getData()).getObject()).getArgument().getSubtypes()
-									.isEmpty()
+					if (((OwlService) ((MyNode) graphNode.getData()).getObject()).getArgument().getSubtypes().isEmpty()
 					// && !isMemberOfArray
 					) {
 						list.add((OwlService) ((MyNode) graphNode.getData()).getObject());
@@ -806,9 +804,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 								.isEmpty()) {
 					String inputName = ((OwlService) ((MyNode) graphNode.getData()).getObject()).getName().toString();
 					// list.add(inputName);
-					if (!((OwlService) ((MyNode) graphNode.getData()).getObject()).getArgument().isArray()
-							&& ((OwlService) ((MyNode) graphNode.getData()).getObject()).getArgument().getSubtypes()
-									.isEmpty()
+					if (((OwlService) ((MyNode) graphNode.getData()).getObject()).getArgument().getSubtypes().isEmpty()
 					// && !isMemberOfArray
 					) {
 						list.add((OwlService) ((MyNode) graphNode.getData()).getObject());
@@ -1868,7 +1864,10 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 					}
 					if (!keep) {
 						((OwlService) ((MyNode) edge.getSource().getData()).getObject()).setisMatchedIO(false);
-						((OwlService) ((MyNode) edge.getSource().getData()).getObject()).getArgument().getMatchedInputs().remove(((OwlService) ((MyNode) edge.getDestination().getData()).getObject()).getArgument());
+						((OwlService) ((MyNode) edge.getSource().getData()).getObject()).getArgument()
+								.getMatchedInputs()
+								.remove(((OwlService) ((MyNode) edge.getDestination().getData()).getObject())
+										.getArgument());
 
 						// Style Node
 						ZestLabelProvider labelProvider = new ZestLabelProvider();
@@ -2876,7 +2875,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 
 			@Override
 			protected boolean canEdit(Object element) {
-				if (((Node) element).getOwlService().getArgument().getSubtypes().isEmpty())
+				if (((Node) element).getOwlService().getArgument().getSubtypes().isEmpty()&& !((Node) element).getOwlService().getisMatchedIO())
 					return true;
 				else
 					return false;
@@ -3084,7 +3083,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 		// // outputsComposite.setSize(300, nodes.size() * 10);
 		// treeViewer.expandAll();
 		//
-		
+
 		outputsComposite.addListener(SWT.Expand, outputListener);
 
 		treeViewer.addSelectionChangedListener(new ISelectionChangedListener() {
@@ -3288,24 +3287,27 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 
 			if (((OwlService) arg).getArgument().isArray()) {
 				Node subnode = new Node(((OwlService) arg).getName().toString() + "[0]", n, (OwlService) arg, null);
-				subnode.setValue("enter value");
+				
 				if (!((OwlService) arg).getArgument().getSubtypes().isEmpty()) {
-					Collection<OwlService> predecessors = (Collection<OwlService>) jungGraph
+					subnode.setValue("");
+					Collection<OwlService> predecessors = (Collection<OwlService>) graph
 							.getPredecessors((OwlService) arg);
 					for (OwlService predecessor : predecessors) {
 						if (predecessor.getType().contains("Property")) {
-							showInputs(predecessor, subnode, nodes, jungGraph, matchedNodes);
+							showInputs(predecessor, subnode, nodes, graph, matchedNodes);
 
 						}
 					}
+				}else{
+					subnode.setValue("enter value");
 				}
 			} else {
 				if (!((OwlService) arg).getArgument().getSubtypes().isEmpty()) {
-					Collection<OwlService> predecessors = (Collection<OwlService>) jungGraph
+					Collection<OwlService> predecessors = (Collection<OwlService>) graph
 							.getPredecessors((OwlService) arg);
 					for (OwlService predecessor : predecessors) {
 						if (predecessor.getType().contains("Property")) {
-							showInputs(predecessor, n, nodes, jungGraph, matchedNodes);
+							showInputs(predecessor, n, nodes, graph, matchedNodes);
 
 						}
 					}
@@ -3905,12 +3907,18 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 									public void run() {
 										fillInOutputValues(serviceOutputs, nodes, graph);
 										for (OwlService service : graph.getVertices()) {
-											if (service.getisMatchedIO() && !service.getArgument().getMatchedInputs().isEmpty()) {
-												// if (graph.getSuccessorCount(service) > 0)
+											if (service.getisMatchedIO()
+													&& !service.getArgument().getMatchedInputs().isEmpty()) {
+												// if
+												// (graph.getSuccessorCount(service)
+												// > 0)
 												// {
 												// for (OwlService successor :
-												// graph.getSuccessors(service)) {
-												// if (successor.getisMatchedIO()) {
+												// graph.getSuccessors(service))
+												// {
+												// if
+												// (successor.getisMatchedIO())
+												// {
 												boolean isMemberOfArray = false;
 
 												for (Object parent : service.getArgument().getParent()) {
@@ -3919,96 +3927,93 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 															isMemberOfArray = true;
 														}
 												}
+												//if predecessor is array
 												if (isMemberOfArray || service.getArgument().isArray()) {
 													OwlService initialArray = getInitialArray(service, graph);
-													
-													MatchOutputDialog dialog = new MatchOutputDialog(shell);
-													dialog.setDisp(disp);
-													dialog.setInitialArray((Value)initialArray.getArgument());
-													dialog.setGraph(graph);
-													dialog.create();
-													dialog.configureShell(shell);
-													dialog.setDialogLocation();
-													if (dialog.open() == Window.OK) {
-														String value = dialog.getValue();
-														for (Argument successor : service.getArgument().getMatchedInputs()) {
-															((Value) successor)
-																	.setValue(value);
-
+													boolean successorIsMemberOfArray = false;
+													for (Argument successor : service.getArgument()
+															.getMatchedInputs()) {
+														// for each successor
+														for (Object parent : successor.getParent()) {
+															if (parent instanceof Argument)
+																if (((Argument) parent).isArray()) {
+																	successorIsMemberOfArray = true;
+																}
 														}
 
-													} else {
-														return;
+														if (successorIsMemberOfArray) {
+															for (Value element : service.getArgument().getElements()) {
+
+															}
+														} else if (successor.isArray()) {
+															// successor is array
+															for (Value element : service.getArgument().getElements()) {
+																successor.getElements().add(element);
+															}
+														} else {
+
+															// successor is
+															// object
+															MatchOutputDialog dialog = new MatchOutputDialog(shell);
+															dialog.setDisp(disp);
+															dialog.setInitialArray((Value) initialArray.getArgument());
+															dialog.setGraph(graph);
+															dialog.create();
+															dialog.configureShell(shell);
+															dialog.setDialogLocation();
+															if (dialog.open() == Window.OK) {
+																String value = dialog.getValue();
+																
+																	((Value) successor).setValue(value);
+
+
+															} else {
+																return;
+															}
+														}
 													}
-														
-//													Vector<Node> arrayNodes = new Vector<Node>();
-//													TreeViewer v = new TreeViewer(new Shell(disp));
-//													
-//													TreeViewerColumn columni = new TreeViewerColumn(v, SWT.NONE);
-//													columni.getColumn().setWidth(200);
-//													columni.getColumn().setText("Columni");
-//													columni.getColumn().setResizable(true);
-//													TreeViewerColumn columnii = new TreeViewerColumn(v, SWT.NONE);
-//													columnii.getColumn().setText("Columnii");
-//													columnii.getColumn().setWidth(300);
-//													columnii.getColumn().setResizable(true);
-//													showOutputs(initialArray, null, arrayNodes, columnii, graph);
-//													v.setContentProvider(new MyTreeContentProvider());
-			//
-//													columni.setLabelProvider(new MyLabelProvider());
-//													v.setInput(arrayNodes);
-//													
-//													v.addSelectionChangedListener(new ISelectionChangedListener() {
-//														public void selectionChanged(SelectionChangedEvent event) {
-//															if (event.getSelection() instanceof IStructuredSelection) {
-//																IStructuredSelection selection = (IStructuredSelection) event.getSelection();
-//																if (selection.getFirstElement() != null) {
-//																	String value = ((Value)((Node) selection.getFirstElement()).getOwlService().getArgument()).getValue();
-//																	
-//																		for (Argument successor : service.getArgument().getMatchedInputs()) {
-//																			((Value) successor)
-//																					.setValue(value);
-			//
-//																		}
-			//
-//																	
-//																}
-			//
-//															}
-//														}
-//													});
+
+													//if predecessor is object
 												} else {
 													boolean successorIsMemberOfArray = false;
-
-													for (Object parent : service.getArgument().getParent()) {
-														if (parent instanceof Argument)
-															if (((Argument) parent).isArray()) {
-																successorIsMemberOfArray = true;
-															}
-													}
-														for (Argument successor : service.getArgument().getMatchedInputs()) {
-															if (successor.isArray()){
-																Argument in;
-																try {
-																	in = new Argument(successor.getName().toString() + "[0]", "", successor.isTypeOf(), false,
-																			successor.isNative(), successor.getSubtypes());
-																	in.setOwlService(successor.getOwlService());
-																	Value value = new Value(in);
-																	value.setValue(((Value) service.getArgument()).getValue());
-																	successor.getElements().add(0, value);
-																} catch (Exception e) {
-																	// TODO Auto-generated catch block
-																	e.printStackTrace();
+													for (Argument successor : service.getArgument()
+															.getMatchedInputs()) {
+														//for each successor
+														for (Object parent : successor.getParent()) {
+															if (parent instanceof Argument)
+																if (((Argument) parent).isArray()) {
+																	successorIsMemberOfArray = true;
 																}
-															}else if(successorIsMemberOfArray){
-																	
-																// TODO complex array
-															}else{
-															((Value) successor)
-																	.setValue(((Value) service.getArgument()).getValue());
-
-															}
 														}
+														
+														if (successor.isArray()) {
+															Argument in;
+															try {
+																in = new Argument(
+																		successor.getName().toString() + "[0]", "",
+																		successor.isTypeOf(), false,
+																		successor.isNative(), successor.getSubtypes());
+																in.setOwlService(successor.getOwlService());
+																Value value = new Value(in);
+																value.setValue(
+																		((Value) service.getArgument()).getValue());
+																successor.getElements().add(0, value);
+															} catch (Exception e) {
+																// TODO
+																// Auto-generated
+																// catch block
+																e.printStackTrace();
+															}
+														} else if (successorIsMemberOfArray) {
+
+															// TODO complex
+															// array
+														} else {
+															((Value) successor).setValue(
+																	((Value) service.getArgument()).getValue());
+
+														}
+													}
 
 												}
 											}
@@ -4018,116 +4023,139 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 							}
 
 							// Update matched variable values
-							
-//							for (OwlService service : graph.getVertices()) {
-//								if (service.getisMatchedIO() && !service.getArgument().getMatchedInputs().isEmpty()) {
-//									// if (graph.getSuccessorCount(service) > 0)
-//									// {
-//									// for (OwlService successor :
-//									// graph.getSuccessors(service)) {
-//									// if (successor.getisMatchedIO()) {
-//									boolean isMemberOfArray = false;
-//
-//									for (Object parent : service.getArgument().getParent()) {
-//										if (parent instanceof Argument)
-//											if (((Argument) parent).isArray()) {
-//												isMemberOfArray = true;
-//											}
-//									}
-//									if (isMemberOfArray || service.getArgument().isArray()) {
-//										OwlService initialArray = getInitialArray(service, graph);
-//										
-//										MatchOutputDialog dialog = new MatchOutputDialog(shell);
-//										dialog.setDisp(disp);
-//										dialog.setInitialArray(initialArray);
-//										dialog.setGraph(graph);
-//										dialog.create();
-//										dialog.configureShell(shell);
-//										dialog.setDialogLocation();
-//										if (dialog.open() == Window.OK) {
-//											String value = dialog.getValue();
-//											for (Argument successor : service.getArgument().getMatchedInputs()) {
-//												((Value) successor)
-//														.setValue(value);
-//
-//											}
-//
-//										} else {
-//											return;
-//										}
-//											
-////										Vector<Node> arrayNodes = new Vector<Node>();
-////										TreeViewer v = new TreeViewer(new Shell(disp));
-////										
-////										TreeViewerColumn columni = new TreeViewerColumn(v, SWT.NONE);
-////										columni.getColumn().setWidth(200);
-////										columni.getColumn().setText("Columni");
-////										columni.getColumn().setResizable(true);
-////										TreeViewerColumn columnii = new TreeViewerColumn(v, SWT.NONE);
-////										columnii.getColumn().setText("Columnii");
-////										columnii.getColumn().setWidth(300);
-////										columnii.getColumn().setResizable(true);
-////										showOutputs(initialArray, null, arrayNodes, columnii, graph);
-////										v.setContentProvider(new MyTreeContentProvider());
-////
-////										columni.setLabelProvider(new MyLabelProvider());
-////										v.setInput(arrayNodes);
-////										
-////										v.addSelectionChangedListener(new ISelectionChangedListener() {
-////											public void selectionChanged(SelectionChangedEvent event) {
-////												if (event.getSelection() instanceof IStructuredSelection) {
-////													IStructuredSelection selection = (IStructuredSelection) event.getSelection();
-////													if (selection.getFirstElement() != null) {
-////														String value = ((Value)((Node) selection.getFirstElement()).getOwlService().getArgument()).getValue();
-////														
-////															for (Argument successor : service.getArgument().getMatchedInputs()) {
-////																((Value) successor)
-////																		.setValue(value);
-////
-////															}
-////
-////														
-////													}
-////
-////												}
-////											}
-////										});
-//									} else {
-//										boolean successorIsMemberOfArray = false;
-//
-//										for (Object parent : service.getArgument().getParent()) {
-//											if (parent instanceof Argument)
-//												if (((Argument) parent).isArray()) {
-//													successorIsMemberOfArray = true;
-//												}
-//										}
-//											for (Argument successor : service.getArgument().getMatchedInputs()) {
-//												if (successor.isArray()){
-//													Argument in;
-//													try {
-//														in = new Argument(successor.getName().toString() + "[0]", "", successor.isTypeOf(), false,
-//																successor.isNative(), successor.getSubtypes());
-//														in.setOwlService(successor.getOwlService());
-//														Value value = new Value(in);
-//														value.setValue(((Value) service.getArgument()).getValue());
-//														successor.getElements().add(0, value);
-//													} catch (Exception e) {
-//														// TODO Auto-generated catch block
-//														e.printStackTrace();
-//													}
-//												}else if(successorIsMemberOfArray){
-//														
-//													// TODO complex array
-//												}else{
-//												((Value) successor)
-//														.setValue(((Value) service.getArgument()).getValue());
-//
-//												}
-//											}
-//
-//									}
-//								}
-//							}
+
+							// for (OwlService service : graph.getVertices()) {
+							// if (service.getisMatchedIO() &&
+							// !service.getArgument().getMatchedInputs().isEmpty())
+							// {
+							// // if (graph.getSuccessorCount(service) > 0)
+							// // {
+							// // for (OwlService successor :
+							// // graph.getSuccessors(service)) {
+							// // if (successor.getisMatchedIO()) {
+							// boolean isMemberOfArray = false;
+							//
+							// for (Object parent :
+							// service.getArgument().getParent()) {
+							// if (parent instanceof Argument)
+							// if (((Argument) parent).isArray()) {
+							// isMemberOfArray = true;
+							// }
+							// }
+							// if (isMemberOfArray ||
+							// service.getArgument().isArray()) {
+							// OwlService initialArray =
+							// getInitialArray(service, graph);
+							//
+							// MatchOutputDialog dialog = new
+							// MatchOutputDialog(shell);
+							// dialog.setDisp(disp);
+							// dialog.setInitialArray(initialArray);
+							// dialog.setGraph(graph);
+							// dialog.create();
+							// dialog.configureShell(shell);
+							// dialog.setDialogLocation();
+							// if (dialog.open() == Window.OK) {
+							// String value = dialog.getValue();
+							// for (Argument successor :
+							// service.getArgument().getMatchedInputs()) {
+							// ((Value) successor)
+							// .setValue(value);
+							//
+							// }
+							//
+							// } else {
+							// return;
+							// }
+							//
+							//// Vector<Node> arrayNodes = new Vector<Node>();
+							//// TreeViewer v = new TreeViewer(new Shell(disp));
+							////
+							//// TreeViewerColumn columni = new
+							// TreeViewerColumn(v, SWT.NONE);
+							//// columni.getColumn().setWidth(200);
+							//// columni.getColumn().setText("Columni");
+							//// columni.getColumn().setResizable(true);
+							//// TreeViewerColumn columnii = new
+							// TreeViewerColumn(v, SWT.NONE);
+							//// columnii.getColumn().setText("Columnii");
+							//// columnii.getColumn().setWidth(300);
+							//// columnii.getColumn().setResizable(true);
+							//// showOutputs(initialArray, null, arrayNodes,
+							// columnii, graph);
+							//// v.setContentProvider(new
+							// MyTreeContentProvider());
+							////
+							//// columni.setLabelProvider(new
+							// MyLabelProvider());
+							//// v.setInput(arrayNodes);
+							////
+							//// v.addSelectionChangedListener(new
+							// ISelectionChangedListener() {
+							//// public void
+							// selectionChanged(SelectionChangedEvent event) {
+							//// if (event.getSelection() instanceof
+							// IStructuredSelection) {
+							//// IStructuredSelection selection =
+							// (IStructuredSelection) event.getSelection();
+							//// if (selection.getFirstElement() != null) {
+							//// String value = ((Value)((Node)
+							// selection.getFirstElement()).getOwlService().getArgument()).getValue();
+							////
+							//// for (Argument successor :
+							// service.getArgument().getMatchedInputs()) {
+							//// ((Value) successor)
+							//// .setValue(value);
+							////
+							//// }
+							////
+							////
+							//// }
+							////
+							//// }
+							//// }
+							//// });
+							// } else {
+							// boolean successorIsMemberOfArray = false;
+							//
+							// for (Object parent :
+							// service.getArgument().getParent()) {
+							// if (parent instanceof Argument)
+							// if (((Argument) parent).isArray()) {
+							// successorIsMemberOfArray = true;
+							// }
+							// }
+							// for (Argument successor :
+							// service.getArgument().getMatchedInputs()) {
+							// if (successor.isArray()){
+							// Argument in;
+							// try {
+							// in = new Argument(successor.getName().toString()
+							// + "[0]", "", successor.isTypeOf(), false,
+							// successor.isNative(), successor.getSubtypes());
+							// in.setOwlService(successor.getOwlService());
+							// Value value = new Value(in);
+							// value.setValue(((Value)
+							// service.getArgument()).getValue());
+							// successor.getElements().add(0, value);
+							// } catch (Exception e) {
+							// // TODO Auto-generated catch block
+							// e.printStackTrace();
+							// }
+							// }else if(successorIsMemberOfArray){
+							//
+							// // TODO complex array
+							// }else{
+							// ((Value) successor)
+							// .setValue(((Value)
+							// service.getArgument()).getValue());
+							//
+							// }
+							// }
+							//
+							// }
+							// }
+							// }
 
 						}
 
@@ -4158,32 +4186,38 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 
 						currentService = checkCondition(currentService, possibleServices, previousServiceOutVariables);
 						// Update matched variable values 2
-//						if (currentService != null) {
-//							if (currentService.getOperation() != null) {
-//								for (OwlService service : graph.getVertices()) {
-//									boolean isMatched = false;
-//									for (int i = 0; i < currentService.getOperation().getInputs().size(); i++) {
-//										if (service.getArgument() != null) {
-//											for (OwlService successor : graph.getSuccessors(service)) {
-//												if (successor.getArgument() != null) {
-//													if (successor.getisMatchedIO() && service.getisMatchedIO()) {
-//														isMatched = true;
-//													}
-//													if (successor.getArgument()
-//															.getName().toString().equals(currentService.getOperation()
-//																	.getInputs().get(i).getName().toString())
-//															&& isMatched) {
-//														((Value) currentService.getOperation().getInputs().get(i))
-//																.setValue(((Value) service.getArgument()).getValue());
-//													}
-//												}
-//											}
-//
-//										}
-//									}
-//								}
-//							}
-//						}
+						// if (currentService != null) {
+						// if (currentService.getOperation() != null) {
+						// for (OwlService service : graph.getVertices()) {
+						// boolean isMatched = false;
+						// for (int i = 0; i <
+						// currentService.getOperation().getInputs().size();
+						// i++) {
+						// if (service.getArgument() != null) {
+						// for (OwlService successor :
+						// graph.getSuccessors(service)) {
+						// if (successor.getArgument() != null) {
+						// if (successor.getisMatchedIO() &&
+						// service.getisMatchedIO()) {
+						// isMatched = true;
+						// }
+						// if (successor.getArgument()
+						// .getName().toString().equals(currentService.getOperation()
+						// .getInputs().get(i).getName().toString())
+						// && isMatched) {
+						// ((Value)
+						// currentService.getOperation().getInputs().get(i))
+						// .setValue(((Value)
+						// service.getArgument()).getValue());
+						// }
+						// }
+						// }
+						//
+						// }
+						// }
+						// }
+						// }
+						// }
 
 						long stopTime = System.currentTimeMillis();
 						long elapsedTime = stopTime - startTime;
@@ -4203,7 +4237,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 							public void run() {
 								// fillInOutputValues(outputVariables);
 								treeViewer.setInput(nodes);
-								//treeViewer.expandAll();
+								// treeViewer.expandAll();
 								// rightComposite.update();
 								// rightComposite.redraw();
 								// destGraph.redraw();
@@ -4234,7 +4268,8 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 		return "";
 	}
 
-	private OwlService getInitialArray(OwlService matchedOutput, edu.uci.ics.jung.graph.Graph<OwlService, Connector> graph) {
+	private OwlService getInitialArray(OwlService matchedOutput,
+			edu.uci.ics.jung.graph.Graph<OwlService, Connector> graph) {
 		OwlService initialArray = matchedOutput;
 		for (OwlService predecessor : graph.getPredecessors(matchedOutput)) {
 			if (predecessor.getArgument() != null) {
@@ -4297,7 +4332,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 						in.setOwlService(var.getOwlService());
 						Value value = new Value(in);
 						// Value value = Value.getValue(out);
-						value.setValue(node.getSubCategories().get(k).toString());
+						value.setValue(node.getSubCategories().get(k).getValue());
 						var.getElements().add(value);
 					} catch (Exception e) {
 						// TODO Auto-generated catch block
@@ -4357,12 +4392,15 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 
 		} else if (!((Value) var).isArray() && !RAMLCaller.stringIsItemFromList(((Value) var).getType(), datatypes)) {
 
-			int k = 0;
-			for (Argument sub : var.getSubtypes()) {
+			for (int k = 0; k < node.getSubCategories().size(); k++) {
+				for (Argument sub : var.getSubtypes()) {
+					int index = node.getSubCategories().get(k).getName().toString().indexOf('[');
+					if (((Value) sub).getName().toString()
+							.equals(node.getSubCategories().get(k).getName().toString().substring(0, index - 1))) {
+						fillInInputValues((Value) sub, (Node) node.getSubCategories().get(k));
 
-				fillInInputValues((Value) sub, (Node) node.getSubCategories().get(k));
-				k++;
-
+					}
+				}
 			}
 
 		} else {
@@ -5721,10 +5759,14 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 
 						boolean hasRest = false;
 						boolean hasSoap = false;
+						boolean hasPost = false;
 						for (OwlService service : jungGraph.getVertices()) {
 							if (service.getOperation() != null) {
 								if (service.getOperation().getType().equalsIgnoreCase("Restful")) {
 									hasRest = true;
+									if (service.getOperation().getDomain().getCrudVerb().equalsIgnoreCase("post")) {
+										hasPost = true;
+									}
 								}
 								if (service.getOperation().getType().equalsIgnoreCase("soap")) {
 									hasSoap = true;
@@ -5827,7 +5869,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 							}
 						}
 						String restCode = RestfulCodeGenerator.generateRestfulCode(pack.getElementName(),
-								generator.getInputVariables(), generator.geturiParameters());
+								generator.getInputVariables(), generator.geturiParameters(), hasPost);
 						StringBuffer restBuffer = new StringBuffer();
 						restBuffer.append(restCode);
 						ICompilationUnit restClass = pack.createCompilationUnit("WebService.java",

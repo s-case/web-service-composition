@@ -357,6 +357,7 @@ public abstract class Importer {
 			if (ind.getPropertyValue(belongsToURL) != null) {
 				String domainName = ind.getPropertyValue(belongsToURL).asLiteral().getString();
 				domain = domainList.get(domainName);
+				domain = null;
 				if (!domainName.isEmpty() && domain == null) {
 					// throw new
 					// Exception("Domain "+domainName+" has not been declared");

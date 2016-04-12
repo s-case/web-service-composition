@@ -30,58 +30,84 @@ import eu.scasefp7.eclipse.servicecomposition.transformer.JungXMItoOwlTransform.
 public class RestfulCodeGenerator {
 
 	public static String generateRestfulCode(String packageName, ArrayList<OwlService> inputs,
-			ArrayList<Argument> uriParameters) {
+			ArrayList<Argument> uriParameters, boolean containsPost) {
 		String TAB = "    ";
 		String code = "package " + packageName + ";\n" + "import " + packageName + ".WorkflowClass;\n" + "import "
-				+ packageName + ".WorkflowClass.Response;\n";
+				+ packageName + ".WorkflowClass.Response;\n" + "import " + packageName + ".WorkflowClass.Request;\n";
 
-		code += "import javax.ws.rs.GET;\nimport javax.ws.rs.Path;\nimport javax.ws.rs.Produces;\nimport javax.ws.rs.QueryParam;\nimport javax.ws.rs.core.MediaType;\n";
+		code += "import javax.ws.rs.GET;\nimport javax.ws.rs.Consumes;\nimport javax.ws.rs.POST;\nimport javax.ws.rs.Path;\nimport javax.ws.rs.Produces;\nimport javax.ws.rs.QueryParam;\nimport javax.ws.rs.core.MediaType;\n";
 		code += "@Path(\"/result\")\n public class WebService {\n";
-		code += TAB + "@GET\n" + TAB + "@Path(\"/query\")\n" + TAB
-				+ "@Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})\n" + TAB
+		if (containsPost) {
+			code += TAB + "@POST\n" + TAB + "@Path(\"/query\")\n";
+			code += TAB + "@Consumes(MediaType.APPLICATION_JSON)\n";
+		} else {
+
+			code += TAB + "@GET\n" + TAB + "@Path(\"/query\")\n";
+		}
+		code += TAB + "@Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})\n" + TAB
 				+ "public Response generateResponse(";
 
 		String inputList = "";
-		for (OwlService input : inputs) {
 
-			if (!inputList.isEmpty())
-				inputList += ", ";
-			if (input.getArgument().getType().equals("String")) {
-				inputList += "@QueryParam(\"" + input.getName().getContent().replaceAll("[0123456789]", "") + "\") "
-						+ input.getArgument().getType() + " "
-						+ input.getName().getContent().replaceAll("[0123456789]", "");
-			} else if (input.getArgument().getType().equals("int")) {
-				inputList += "@QueryParam(\"" + input.getName().getContent().replaceAll("[0123456789]", "")
-						+ "\") Integer " + input.getName().getContent().replaceAll("[0123456789]", "");
-			} else {
-				String type = input.getArgument().getType();
-				inputList += "@QueryParam(\"" + input.getName().getContent().replaceAll("[0123456789]", "") + "\") "
-						+ type.substring(0, 1).toUpperCase() + type.substring(1) + " "
-						+ input.getName().getContent().replaceAll("[0123456789]", "");
+		for (OwlService input : inputs) {
+			if (input.getArgument().isTypeOf().equals("QueryParameter")
+					|| input.getArgument().isTypeOf().equals("URIParameter")) {
+				if (!inputList.isEmpty())
+					inputList += ", ";
+				if (input.getArgument().getType().equals("String")) {
+					inputList += "@QueryParam(\"" + input.getName().getContent().replaceAll("[0123456789]", "") + "\") "
+							+ input.getArgument().getType() + " "
+							+ input.getName().getContent().replaceAll("[0123456789]", "");
+				} else if (input.getArgument().getType().equals("int")) {
+					inputList += "@QueryParam(\"" + input.getName().getContent().replaceAll("[0123456789]", "")
+							+ "\") Integer " + input.getName().getContent().replaceAll("[0123456789]", "");
+				} else {
+					String type = input.getArgument().getType();
+					inputList += "@QueryParam(\"" + input.getName().getContent().replaceAll("[0123456789]", "") + "\") "
+							+ type.substring(0, 1).toUpperCase() + type.substring(1) + " "
+							+ input.getName().getContent().replaceAll("[0123456789]", "");
+				}
 			}
 
+			// for (Argument param : uriParameters) {
+			// if (!inputList.isEmpty())
+			// inputList += ", ";
+			// inputList += "@QueryParam(\"" +
+			// param.getName().getContent().replaceAll("[0123456789]", "") +
+			// "\") String "
+			// + param.getName().getContent().replaceAll("[0123456789]", "");
+			// }
 		}
-		for (Argument param : uriParameters) {
-			if (!inputList.isEmpty())
+		if (containsPost) {
+			if (!inputList.isEmpty()){
 				inputList += ", ";
-			inputList += "@QueryParam(\"" + param.getName().getContent().replaceAll("[0123456789]", "") + "\") String "
-					+ param.getName().getContent().replaceAll("[0123456789]", "");
+			}
+			inputList += "Request request";
 		}
 		code += inputList;
 		code += ") throws Exception {\n";
 		code += TAB + TAB + "WorkflowClass newClass = new WorkflowClass();\n" + TAB + TAB
 				+ "Response response = newClass.parseResponse(";
 		inputList = "";
+
 		for (OwlService input : inputs) {
+			if (input.getArgument().isTypeOf().equals("QueryParameter")
+					|| input.getArgument().isTypeOf().equals("URIParameter")) {
 			if (!inputList.isEmpty())
 				inputList += ", ";
 			inputList += input.getName().getContent().replaceAll("[0123456789]", "");
+			}
 		}
-		for (Argument param : uriParameters) {
-			if (!inputList.isEmpty())
-				inputList += ", ";
-			inputList += param.getName().getContent().replaceAll("[0123456789]", "");
+		if (containsPost) {
+			inputList += ", request";
 		}
+
+		// for (Argument param : uriParameters) {
+		// if (!inputList.isEmpty())
+		// inputList += ", ";
+		// inputList += param.getName().getContent().replaceAll("[0123456789]",
+		// "");
+		// }
 		code += inputList;
 		code += ");\n";
 		code += TAB + TAB + "return response;\n";
@@ -276,14 +302,14 @@ public class RestfulCodeGenerator {
 			failOnMissingWebXml.appendChild(doc.createTextNode("false"));
 			pluginConfiguration2.appendChild(failOnMissingWebXml);
 
-			//properties
+			// properties
 			Element properties = doc.createElement("properties");
 			rootElement.appendChild(properties);
 
 			Element project_build_sourceEncoding = doc.createElement("project.build.sourceEncoding");
 			project_build_sourceEncoding.appendChild(doc.createTextNode("UTF-8"));
 			properties.appendChild(project_build_sourceEncoding);
-			
+
 			// repositories
 			Element repositories = doc.createElement("repositories");
 			rootElement.appendChild(repositories);

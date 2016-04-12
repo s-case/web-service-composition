@@ -52,11 +52,14 @@ public class RestFunctionCodeNode extends CodeNode {
 	protected String generateInputSynchronizationCode(Operation operation, ArrayList<OwlService> allVariables) {
 
 		String ret = "";
+		ret += "Gson body = new Gson();\n";
+		ret += "String entity = body.toJson(" + operation.getName().toString() + "_request);\n";
 		ret += "ArrayList<Variable> inputs = new ArrayList<Variable>();\n";
 		for (Argument arg : operation.getInputs())
 			for (OwlService var : allVariables) {
 				if (var.getArgument().equals(arg)) {
-					ret += "inputs.add(" + var.getName().getContent().toString() + ");\n";
+					if (arg.isTypeOf().equals("QueryParameter"))
+						ret += "inputs.add(" + var.getName().getContent().toString() + ");\n";
 				}
 			}
 		return ret;
@@ -124,7 +127,7 @@ public class RestFunctionCodeNode extends CodeNode {
 			ret += "String auth=\"\";\n";
 		}
 
-		ret += "String result=CallRESTfulService.callService(wsUrl, crudVerb, inputs, hasAuth, auth);\n";
+		ret += "String result=CallRESTfulService.callService(wsUrl, crudVerb, inputs, entity, hasAuth, auth);\n";
 
 		return ret;
 	}

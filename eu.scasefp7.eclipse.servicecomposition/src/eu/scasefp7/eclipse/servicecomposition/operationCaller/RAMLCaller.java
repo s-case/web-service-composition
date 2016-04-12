@@ -184,7 +184,7 @@ public class RAMLCaller {
 				String USER_AGENT = "Mozilla/5.0";
 				// add header
 				post.setHeader("User-Agent", USER_AGENT);
-				post.setHeader("Content-Type", "application/x-www-form-urlencoded");
+				post.setHeader("Content-Type", "application/json");
 				// List<NameValuePair> urlParameters = new
 				// ArrayList<NameValuePair>();
 				// Value val = null;
@@ -216,8 +216,10 @@ public class RAMLCaller {
 				// post.setEntity(new UrlEncodedFormEntity(urlParameters));
 
 				HttpResponse response = client.execute(post);
-				System.out.println("Response Code : " + response.getStatusLine().getStatusCode());
-
+				//System.out.println("Response Code : " + response.getStatusLine().getStatusCode());
+				if (response.getStatusLine().getStatusCode() != 200) {
+					throw new RuntimeException("Failed : HTTP error code : " + response.getStatusLine().getStatusCode());
+				}
 				BufferedReader rd = new BufferedReader(new InputStreamReader(response.getEntity().getContent()));
 
 				StringBuffer resultPost = new StringBuffer();
@@ -593,8 +595,22 @@ public class RAMLCaller {
 		if (input.isArray() && stringIsItemFromList(input.getType(), datatypes)) {
 			JSONArray array = new JSONArray();
 			for (Value element : input.getElements()) {
-				if (element.getValue() != "enter value")
-					array.add(element.getValue());
+				if (element.getValue() != "enter value"){
+					if (input.getType().equalsIgnoreCase("String")) {
+						array.add(element.getValue());
+					}else if (input.getType().equalsIgnoreCase("int")) {
+						array.add(Integer.parseInt(element.getValue()));
+					}else if (input.getType().equalsIgnoreCase("long")) {
+						array.add(Long.parseLong(element.getValue()));
+					}else if (input.getType().equalsIgnoreCase("boolean")) {
+						array.add(Boolean.parseBoolean(element.getValue()));
+					}else if (input.getType().equalsIgnoreCase("float")) {
+						array.add(Float.parseFloat(element.getValue()));
+					}else if (input.getType().equalsIgnoreCase("double")) {
+						array.add(Double.parseDouble(element.getValue()));
+					}
+					
+				}
 			}
 			((JSONObject) obj).put(input.getName().getContent().toString(), array);
 			// array of objects or arrays

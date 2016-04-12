@@ -31,6 +31,9 @@ public class ConnectToMDEOntology {
 	public MDEOperation createObjects(String projectName, ArrayList<OwlService> inputs,
 			ArrayList<Argument> uriParameters, ArrayList<OwlService> outputs, final Graph<OwlService, Connector> graph) {
 		ArrayList<MDERepresentation> hasQueryParameters = new ArrayList<MDERepresentation>();
+		ArrayList<MDERepresentation> hasInput = new ArrayList<MDERepresentation>();
+		ArrayList<MDERepresentation> hasURIParameters = new ArrayList<MDERepresentation>();
+		
 		ArrayList<MDERepresentation> hasOutput = new ArrayList<MDERepresentation>();
 		// Query Parameters
 		for (OwlService input : inputs) {
@@ -45,7 +48,7 @@ public class ConnectToMDEOntology {
 				type = "Object";
 			}
 			
-			if (input.getArgument().getSubtypes().isEmpty()) {
+			if (input.getArgument().getSubtypes().isEmpty()&& input.getArgument().isTypeOf().equals("QueryParameter")) {
 				ArrayList<String> subNames = new ArrayList<String>();
 				subNames.add(input.getArgument().getType().toLowerCase());
 				MDERepresentation inputRepresentation = new MDERepresentation(false, !input.getArgument().isRequired(),
@@ -60,20 +63,20 @@ public class ConnectToMDEOntology {
 				}
 				MDERepresentation inputRepresentation = new MDERepresentation(false, !input.getArgument().isRequired(),
 						url, input.getName().getComparableForm(), type, null, subNames);
-				hasQueryParameters.add(inputRepresentation);
+				hasInput.add(inputRepresentation);
 			}
 		}
 
-		for (Argument uriParameter : uriParameters) {
-			String url = ((Operation) uriParameter.getBelongsToOperation()).getDomain().getURI();
-			if (((Operation) uriParameter.getBelongsToOperation()).getDomain().getResourcePath() != null) {
-				url = url + ((Operation) uriParameter.getBelongsToOperation()).getDomain().getResourcePath();
+		for (OwlService uriParameter : inputs) {
+			String url = ((Operation) uriParameter.getArgument().getBelongsToOperation()).getDomain().getURI();
+			if (((Operation) uriParameter.getArgument().getBelongsToOperation()).getDomain().getResourcePath() != null) {
+				url = url + ((Operation) uriParameter.getArgument().getBelongsToOperation()).getDomain().getResourcePath();
 			}
 			ArrayList<String> subNames = new ArrayList<String>();
 			subNames.add("string");
-			MDERepresentation inputRepresentation = new MDERepresentation(false, !uriParameter.isRequired(), url,
-					uriParameter.getName().getComparableForm(), "Primitive", null, subNames);
-			hasQueryParameters.add(inputRepresentation);
+			MDERepresentation inputRepresentation = new MDERepresentation(false, !uriParameter.getArgument().isRequired(), url,
+					uriParameter.getArgument().getName().getComparableForm(), "Primitive", null, subNames);
+			hasURIParameters.add(inputRepresentation);
 		}
 
 		// Outputs
@@ -109,8 +112,8 @@ public class ConnectToMDEOntology {
 		hasResponseType.add("JSON");
 		hasResponseType.add("SOAP");
 		String url = "http://109.231.127.61:8080/" + projectName + "-0.0.1-SNAPSHOT/";
-		operation = new MDEOperation(url, "RESTful", "GET", projectName, "rest/result/query", hasResponseType, null,
-				null, hasOutput, hasQueryParameters);
+		operation = new MDEOperation(url, "RESTful", "GET", projectName, "rest/result/query", hasResponseType, hasURIParameters,
+				hasInput, hasOutput, hasQueryParameters);
 
 		return operation;
 
