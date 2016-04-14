@@ -91,9 +91,9 @@ public abstract class CodeGenerator {
 		 * @return the code of the service
 		 * @throws Exception
 		 */
-		public String getCode(ArrayList<OwlService> allVariables) throws Exception {
+		public String getCode(ArrayList<OwlService> allVariables, boolean hasBodyInput) throws Exception {
 			if (updateCode)
-				updateCode(allVariables);
+				updateCode(allVariables, hasBodyInput);
 			return code;
 		}
 
@@ -118,12 +118,12 @@ public abstract class CodeGenerator {
 		 * @param allVariables
 		 * @throws Exception
 		 */
-		protected void updateCode(ArrayList<OwlService> allVariables) throws Exception {
+		protected void updateCode(ArrayList<OwlService> allVariables, boolean hasBodyInput) throws Exception {
 			Operation operation = service != null ? service.getOperation() : null;
 			code = "";
 			if (operation != null) {
 				code += "//call service: " + operation.getName().getContent() + "\n";
-				code += generateInputSynchronizationCode(operation, allVariables);
+				code += generateInputSynchronizationCode(operation, allVariables, hasBodyInput);
 				code += generateOperationCode(operation, allVariables);
 				code += generateOutputSynchronizationCode(operation, allVariables);
 			}
@@ -149,7 +149,7 @@ public abstract class CodeGenerator {
 		 * @param allVariables
 		 * @return the generated code
 		 */
-		protected String generateInputSynchronizationCode(Operation operation, ArrayList<OwlService> allVariables) {
+		protected String generateInputSynchronizationCode(Operation operation, ArrayList<OwlService> allVariables, boolean hasBodyInput) {
 			// create synchronization with other variables
 			String finalizeCommands = "";
 			String inputName = "";
@@ -287,7 +287,7 @@ public abstract class CodeGenerator {
 		 * @return generates
 		 * @throws Exception
 		 */
-		public String createFunctionCode(Graph<OwlService, Connector> graph,ArrayList<OwlService> allVariables)
+		public String createFunctionCode(Graph<OwlService, Connector> graph,ArrayList<OwlService> allVariables, boolean hasBodyInput)
 				throws Exception {
 			throw new Exception("CodeNode cannot create function code.Use a FunctionCodeNode instance instead.");
 		}

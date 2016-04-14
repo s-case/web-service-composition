@@ -67,10 +67,10 @@ public class FunctionCodeNode extends CodeNode {
 	}
 
 	@Override
-	protected String generateInputSynchronizationCode(Operation operation, ArrayList<OwlService> allVariables) {
+	protected String generateInputSynchronizationCode(Operation operation, ArrayList<OwlService> allVariables, boolean hasBodyInput) {
 		// return a dummy Python call
 		if (operation.getDomain().isLocal())
-			return super.generateInputSynchronizationCode(operation, allVariables);
+			return super.generateInputSynchronizationCode(operation, allVariables, hasBodyInput);
 		String ret = "CallWSDLService service =new CallWSDLService();";
 		ret += "WSOperation wsOperation = service.domainOperation(\"" + operation.getName().toString() + "\", \""
 				+ operation.getDomain().getURI() + "\");\n";
@@ -161,7 +161,7 @@ public class FunctionCodeNode extends CodeNode {
 	protected String generateOutputSynchronizationCode(Operation operation,ArrayList<OwlService> allVariables) {
 		// return a dummy Python call
 		if (operation.getDomain().isLocal())
-			return super.generateInputSynchronizationCode(operation, allVariables);
+			return super.generateInputSynchronizationCode(operation, allVariables, false);
 		String ret = "";
 		String varArguments="";
 		String varInstance ="";
@@ -224,14 +224,14 @@ public class FunctionCodeNode extends CodeNode {
 	}
 
 	@Override
-	public String createFunctionCode(Graph<OwlService, Connector> graph,ArrayList<OwlService> allVariables)
+	public String createFunctionCode(Graph<OwlService, Connector> graph,ArrayList<OwlService> allVariables, boolean hasBodyInput)
 			throws Exception {
 		if (service == null || service.getArgument() != null)
 			return "";
 		String tabIndent = getTab();
 		applyTab();
 		String code = tabIndent + "protected String " + codeGenerator.getFunctionName(service) + "()  throws Exception"
-				+ "{\n" + getCode(allVariables);
+				+ "{\n" + getCode(allVariables, false);
 		boolean hardReturn = false;
 		for (OwlService next : graph.getSuccessors(service))
 			if (next.getArgument() == null && !next.getName().isEmpty()) {

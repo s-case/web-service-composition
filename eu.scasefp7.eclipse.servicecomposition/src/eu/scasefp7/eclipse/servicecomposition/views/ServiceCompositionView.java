@@ -108,6 +108,7 @@ import org.eclipse.jface.viewers.ColumnViewerEditorActivationStrategy;
 import org.eclipse.jface.viewers.EditingSupport;
 import org.eclipse.jface.viewers.ILabelProvider;
 import org.eclipse.jface.viewers.ILabelProviderListener;
+import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.viewers.ISelectionProvider;
 import org.eclipse.jface.viewers.IStructuredSelection;
@@ -116,6 +117,7 @@ import org.eclipse.jface.viewers.LabelProvider;
 import org.eclipse.jface.viewers.SelectionChangedEvent;
 import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.jface.viewers.TextCellEditor;
+import org.eclipse.jface.viewers.TreeSelection;
 import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.jface.viewers.TreeViewerColumn;
 import org.eclipse.jface.viewers.TreeViewerEditor;
@@ -365,7 +367,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 	private GraphNode selectedGraphNode;
 	private Point point;
 	// input composite selection
-	private IStructuredSelection inputSelection;
+	private ISelection inputSelection;
 	// code generation object
 	private NonLinearCodeGenerator generator;
 	// property to denote file is not saved
@@ -2875,7 +2877,8 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 
 			@Override
 			protected boolean canEdit(Object element) {
-				if (((Node) element).getOwlService().getArgument().getSubtypes().isEmpty()&& !((Node) element).getOwlService().getisMatchedIO())
+				if (((Node) element).getOwlService().getArgument().getSubtypes().isEmpty()
+						&& !((Node) element).getOwlService().getisMatchedIO())
 					return true;
 				else
 					return false;
@@ -2889,9 +2892,9 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 			public void run() {
 
 				try {
-					int length = ((Node) inputSelection.getFirstElement()).getSubCategories().size();
-					addTreeNode(((Node) inputSelection.getFirstElement()).getOwlService(),
-							((Node) inputSelection.getFirstElement()), length);
+					int length = ((Node) ((TreeSelection)inputSelection).getFirstElement()).getSubCategories().size();
+					addTreeNode(((Node) ((TreeSelection)inputSelection).getFirstElement()).getOwlService(),
+							((Node) ((TreeSelection)inputSelection).getFirstElement()), length);
 					// Updating the display in the view
 					inputsTreeViewer.setInput(InputNodes);
 				} catch (Exception e) {
@@ -2908,14 +2911,14 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 
 			@Override
 			public void menuAboutToShow(IMenuManager manager) {
-				inputSelection = inputsTreeViewer.getStructuredSelection();
+				inputSelection = inputsTreeViewer.getSelection();
 
 				if (!inputSelection.isEmpty()) {
-					if (((Node) inputSelection.getFirstElement()).getOwlService().getArgument().isArray()
-							&& ((Node) inputSelection.getFirstElement()).getName().toString().replaceAll("[^\\d.]", "")
+					if (((Node) ((TreeSelection)inputSelection).getFirstElement()).getOwlService().getArgument().isArray()
+							&& ((Node) ((TreeSelection)inputSelection).getFirstElement()).getName().toString().replaceAll("[^\\d.]", "")
 									.isEmpty()) {
 						a.setText("Add new element for "
-								+ ((Node) inputSelection.getFirstElement()).getName().toString());
+								+ ((Node) ((TreeSelection)inputSelection).getFirstElement()).getName().toString());
 						a.setToolTipText("Right click to add new element");
 						a.setEnabled(true);
 						mgr.add(a);
@@ -3287,7 +3290,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 
 			if (((OwlService) arg).getArgument().isArray()) {
 				Node subnode = new Node(((OwlService) arg).getName().toString() + "[0]", n, (OwlService) arg, null);
-				
+
 				if (!((OwlService) arg).getArgument().getSubtypes().isEmpty()) {
 					subnode.setValue("");
 					Collection<OwlService> predecessors = (Collection<OwlService>) graph
@@ -3298,8 +3301,12 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 
 						}
 					}
-				}else{
-					subnode.setValue("enter value");
+				} else {
+					if (matchedNodes.contains(arg)) {
+						subnode.setValue("matched");
+					} else {
+						subnode.setValue("enter value");
+					}
 				}
 			} else {
 				if (!((OwlService) arg).getArgument().getSubtypes().isEmpty()) {
@@ -3312,7 +3319,11 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 						}
 					}
 				} else {
-					n.setValue("enter value");
+					if (matchedNodes.contains(arg)) {
+						n.setValue("matched");
+					} else {
+						n.setValue("enter value");
+					}
 				}
 			}
 
@@ -3927,7 +3938,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 															isMemberOfArray = true;
 														}
 												}
-												//if predecessor is array
+												// if predecessor is array
 												if (isMemberOfArray || service.getArgument().isArray()) {
 													OwlService initialArray = getInitialArray(service, graph);
 													boolean successorIsMemberOfArray = false;
@@ -3946,7 +3957,8 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 
 															}
 														} else if (successor.isArray()) {
-															// successor is array
+															// successor is
+															// array
 															for (Value element : service.getArgument().getElements()) {
 																successor.getElements().add(element);
 															}
@@ -3963,9 +3975,8 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 															dialog.setDialogLocation();
 															if (dialog.open() == Window.OK) {
 																String value = dialog.getValue();
-																
-																	((Value) successor).setValue(value);
 
+																((Value) successor).setValue(value);
 
 															} else {
 																return;
@@ -3973,19 +3984,19 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 														}
 													}
 
-													//if predecessor is object
+													// if predecessor is object
 												} else {
 													boolean successorIsMemberOfArray = false;
 													for (Argument successor : service.getArgument()
 															.getMatchedInputs()) {
-														//for each successor
+														// for each successor
 														for (Object parent : successor.getParent()) {
 															if (parent instanceof Argument)
 																if (((Argument) parent).isArray()) {
 																	successorIsMemberOfArray = true;
 																}
 														}
-														
+
 														if (successor.isArray()) {
 															Argument in;
 															try {

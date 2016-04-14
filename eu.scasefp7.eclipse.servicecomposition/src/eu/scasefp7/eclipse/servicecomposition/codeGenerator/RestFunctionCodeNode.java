@@ -27,14 +27,14 @@ public class RestFunctionCodeNode extends CodeNode {
 	}
 
 	@Override
-	public String createFunctionCode(Graph<OwlService, Connector> graph, ArrayList<OwlService> allVariables)
-			throws Exception {
+	public String createFunctionCode(Graph<OwlService, Connector> graph, ArrayList<OwlService> allVariables,
+			boolean hasBodyInput) throws Exception {
 		if (service == null || service.getArgument() != null)
 			return "";
 		String tabIndent = getTab();
 		applyTab();
 		String code = tabIndent + "protected String " + codeGenerator.getFunctionName(service) + "()  throws Exception"
-				+ "{\n" + getCode(allVariables);
+				+ "{\n" + getCode(allVariables, hasBodyInput);
 		for (OwlService next : graph.getSuccessors(service)) {
 			if (next.getArgument() == null && !next.getName().isEmpty()) {
 				code += tabIndent + TAB + "return \"" + codeGenerator.getFunctionName(next) + "\";\n";
@@ -49,11 +49,16 @@ public class RestFunctionCodeNode extends CodeNode {
 	}
 
 	@Override
-	protected String generateInputSynchronizationCode(Operation operation, ArrayList<OwlService> allVariables) {
+	protected String generateInputSynchronizationCode(Operation operation, ArrayList<OwlService> allVariables,
+			boolean hasBodyInput) {
 
 		String ret = "";
 		ret += "Gson body = new Gson();\n";
-		ret += "String entity = body.toJson(" + operation.getName().toString() + "_request);\n";
+		if (hasBodyInput) {
+			ret += "String entity = body.toJson(" + operation.getName().toString() + "_request);\n";
+		} else {
+			ret += "String entity = \"\";\n";
+		}
 		ret += "ArrayList<Variable> inputs = new ArrayList<Variable>();\n";
 		for (Argument arg : operation.getInputs())
 			for (OwlService var : allVariables) {

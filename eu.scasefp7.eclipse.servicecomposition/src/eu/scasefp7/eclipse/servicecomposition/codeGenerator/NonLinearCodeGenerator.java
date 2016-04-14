@@ -220,7 +220,7 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 					if (service.getOperation().getType().equalsIgnoreCase("RESTful")) {
 						CodeNode code = RestFunctionCodeNode.createInstance(service, this);
 						code.applyTab();
-						functionCode += code.createFunctionCode(graph, allVariables);
+						functionCode += code.createFunctionCode(graph, allVariables, hasBodyInput);
 						// for (Argument arg : uriParameters) {
 						// declaredVariables += TAB + "private Variable " +
 						// arg.getName().getContent().toString()
@@ -234,13 +234,13 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 							|| service.getOperation().getDomain().isLocal()) {
 						CodeNode code = FunctionCodeNode.createInstance(service, this);
 						code.applyTab();
-						functionCode += code.createFunctionCode(graph, allVariables);
+						functionCode += code.createFunctionCode(graph, allVariables, false);
 						wsdlServiceExists = true;
 					}
 				} else {
 					CodeNode code = FunctionCodeNode.createInstance(service, this);
 					code.applyTab();
-					functionCode += code.createFunctionCode(graph, allVariables);
+					functionCode += code.createFunctionCode(graph, allVariables, false);
 				}
 
 			}
@@ -282,8 +282,9 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 			// if (op.getOperation().getType().equalsIgnoreCase("RESTful")) {
 			declaredVariables += TAB + "private " + op.getName().getContent() + "Response " + op.getName().getContent()
 					+ "_response = new " + op.getName().getContent() + "Response();\n";
-			declaredVariables += TAB + "private " + op.getName().getContent() + "Request " + op.getName().getContent()
-					+ "_request = new " + op.getName().getContent() + "Request();\n";
+			if (hasBodyInput)
+				declaredVariables += TAB + "private " + op.getName().getContent() + "Request "
+						+ op.getName().getContent() + "_request = new " + op.getName().getContent() + "Request();\n";
 			// }
 			operationResponseObjects += TAB + TAB + "public static class " + op.getName().getContent() + "Response {\n";
 
@@ -515,21 +516,23 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 
 		// create request class instance
 		String requestClassDeclaration = "";
-		for (OwlService input : inputVariables) {
-			boolean existsInOutputs = false;
-			if (!input.getArgument().getSubtypes().isEmpty()) {
-				for (OwlService output : outputVariables) {
-					if ((output.getName().getComparableForm().equals(input.getName().getComparableForm())
-							&& output.getArgument().getType().equals(input.getArgument().getType()))) {
-						existsInOutputs = true;
+		if (hasBodyInput) {
+			for (OwlService input : inputVariables) {
+				boolean existsInOutputs = false;
+				if (!input.getArgument().getSubtypes().isEmpty()) {
+					for (OwlService output : outputVariables) {
+						if ((output.getName().getComparableForm().equals(input.getName().getComparableForm())
+								&& output.getArgument().getType().equals(input.getArgument().getType()))) {
+							existsInOutputs = true;
+						}
+					}
+					if (!existsInOutputs) {
+						requestClassDeclaration += generateResultObjects(input.getArgument());
 					}
 				}
-				if (!existsInOutputs) {
-					requestClassDeclaration += generateResultObjects(input.getArgument());
-				}
 			}
+			requestClassDeclaration += operationRequestObjects;
 		}
-		requestClassDeclaration += operationRequestObjects;
 		// for (Argument param : uriParameters) {
 		// if (!declaredInputs.isEmpty())
 		// declaredInputs += ", ";
@@ -710,164 +713,175 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 		String requestObjectDeclaration = "";
 
 		if (!inputVariables.isEmpty()) {
+			if (hasBodyInput) {
+				String requestObjectName = "request";
 
-			String requestObjectName = "request";
+				requestClassName = "Request";
+				String requestClassConstractor1 = TAB + TAB + "public Request() {\n";
+				String requestClassConstractor2 = TAB + TAB + "public Request(";
+				String constractorVars = "";
+				String constractorVarsBody = "";
 
-			requestClassName = "Request";
-			String requestClassConstractor1 = TAB + TAB + "public Request() {\n";
-			String requestClassConstractor2 = TAB + TAB + "public Request(";
-			String constractorVars = "";
-			String constractorVarsBody = "";
-
-			requestClassDeclaration += TAB + "@XmlRootElement(name = \"Request\")\n" + TAB + "public static class "
-					+ requestClassName + "{\n";
-			for (OwlService arg : inputVariables) {
-				// String name
-				// =arg.getArgument().getBelongsToOperation().getName().getContent()
-				// ;
-				// constractorInstanceInputVars += TAB + TAB + name + "_request"
-				// ;
-				// constractorInstanceInputVars+= " = new " + name +
-				// "Request(request.get" +
-				// arg.getName().toString().replaceAll("[0123456789]", "") +
-				// "());\n";
-				if (arg.getArgument().isTypeOf().equals("BodyParameter")) {
-					if (!constractorVars.isEmpty()) {
-						constractorVars += ", ";
-					}
-					constractorVarsBody += TAB + TAB + TAB + "this."
-							+ arg.getName().getContent().replaceAll("[0123456789]", "") + " = "
-							+ arg.getName().getContent().replaceAll("[0123456789]", "") + ";\n";
-					String type = arg.getArgument().getType();
-					if (arg.getArgument().getSubtypes().isEmpty() && !arg.getArgument().isArray()) {
-						constractorVars += "" + type + " " + arg.getName().getContent().replaceAll("[0123456789]", "");
-						requestClassDeclaration += TAB + TAB + "private " + type + " "
+				requestClassDeclaration += TAB + "@XmlRootElement(name = \"Request\")\n" + TAB + "public static class "
+						+ requestClassName + "{\n";
+				for (OwlService arg : inputVariables) {
+					// String name
+					// =arg.getArgument().getBelongsToOperation().getName().getContent()
+					// ;
+					// constractorInstanceInputVars += TAB + TAB + name +
+					// "_request"
+					// ;
+					// constractorInstanceInputVars+= " = new " + name +
+					// "Request(request.get" +
+					// arg.getName().toString().replaceAll("[0123456789]", "") +
+					// "());\n";
+					if (arg.getArgument().isTypeOf().equals("BodyParameter")) {
+						if (!constractorVars.isEmpty()) {
+							constractorVars += ", ";
+						}
+						constractorVarsBody += TAB + TAB + TAB + "this."
+								+ arg.getName().getContent().replaceAll("[0123456789]", "") + " = "
 								+ arg.getName().getContent().replaceAll("[0123456789]", "") + ";\n";
-						// requestClassConstractor1 += TAB + TAB + TAB + "this."
-						// +
-						// arg.getName().getContent().replaceAll("[0123456789]",
-						// "") + ";\n";
-					} else if (arg.getArgument().isArray()
-							&& RAMLCaller.stringIsItemFromList(arg.getArgument().getType(), datatypes)) {
-						if (type.equals("int")) {
-							type = "Integer";
-						} else {
-							type = type.substring(0, 1).toUpperCase() + type.substring(1);
-						}
-						constractorVars += "ArrayList <" + type + "> "
-								+ arg.getName().getContent().replaceAll("[0123456789]", "");
-						requestClassDeclaration += TAB + TAB + "private ArrayList <" + type + "> "
-								+ arg.getName().getContent().replaceAll("[0123456789]", "") + " = new ArrayList<" + type
-								+ ">();\n";
-						requestClassConstractor1 += TAB + TAB + TAB + "this."
-								+ arg.getName().getContent().replaceAll("[0123456789]", "") + " = new ArrayList<" + type
-								+ ">();\n";
-					} else if (arg.getArgument().isArray()
-							&& !RAMLCaller.stringIsItemFromList(arg.getArgument().getType(), datatypes)) {
-						constractorVars += "ArrayList <" + type.substring(0, 1).toUpperCase() + type.substring(1) + "> "
-								+ arg.getName().getContent().replaceAll("[0123456789]", "");
-						requestClassDeclaration += TAB + TAB + "private ArrayList <"
-								+ type.substring(0, 1).toUpperCase() + type.substring(1) + "> "
-								+ arg.getName().getContent().replaceAll("[0123456789]", "") + " = new ArrayList<"
-								+ type.substring(0, 1).toUpperCase() + type.substring(1) + ">();\n";
-						requestClassConstractor1 += TAB + TAB + TAB + "this."
-								+ arg.getName().getContent().replaceAll("[0123456789]", "") + " = new ArrayList<"
-								+ type.substring(0, 1).toUpperCase() + type.substring(1) + ">();\n";
+						String type = arg.getArgument().getType();
+						if (arg.getArgument().getSubtypes().isEmpty() && !arg.getArgument().isArray()) {
+							constractorVars += "" + type + " "
+									+ arg.getName().getContent().replaceAll("[0123456789]", "");
+							requestClassDeclaration += TAB + TAB + "private " + type + " "
+									+ arg.getName().getContent().replaceAll("[0123456789]", "") + ";\n";
+							// requestClassConstractor1 += TAB + TAB + TAB +
+							// "this."
+							// +
+							// arg.getName().getContent().replaceAll("[0123456789]",
+							// "") + ";\n";
+						} else if (arg.getArgument().isArray()
+								&& RAMLCaller.stringIsItemFromList(arg.getArgument().getType(), datatypes)) {
+							if (type.equals("int")) {
+								type = "Integer";
+							} else {
+								type = type.substring(0, 1).toUpperCase() + type.substring(1);
+							}
+							constractorVars += "ArrayList <" + type + "> "
+									+ arg.getName().getContent().replaceAll("[0123456789]", "");
+							requestClassDeclaration += TAB + TAB + "private ArrayList <" + type + "> "
+									+ arg.getName().getContent().replaceAll("[0123456789]", "") + " = new ArrayList<"
+									+ type + ">();\n";
+							requestClassConstractor1 += TAB + TAB + TAB + "this."
+									+ arg.getName().getContent().replaceAll("[0123456789]", "") + " = new ArrayList<"
+									+ type + ">();\n";
+						} else if (arg.getArgument().isArray()
+								&& !RAMLCaller.stringIsItemFromList(arg.getArgument().getType(), datatypes)) {
+							constractorVars += "ArrayList <" + type.substring(0, 1).toUpperCase() + type.substring(1)
+									+ "> " + arg.getName().getContent().replaceAll("[0123456789]", "");
+							requestClassDeclaration += TAB + TAB + "private ArrayList <"
+									+ type.substring(0, 1).toUpperCase() + type.substring(1) + "> "
+									+ arg.getName().getContent().replaceAll("[0123456789]", "") + " = new ArrayList<"
+									+ type.substring(0, 1).toUpperCase() + type.substring(1) + ">();\n";
+							requestClassConstractor1 += TAB + TAB + TAB + "this."
+									+ arg.getName().getContent().replaceAll("[0123456789]", "") + " = new ArrayList<"
+									+ type.substring(0, 1).toUpperCase() + type.substring(1) + ">();\n";
 
-					} else if (!arg.getArgument().isArray() && !arg.getArgument().getSubtypes().isEmpty()) {
-						constractorVars += type.substring(0, 1).toUpperCase() + type.substring(1) + " "
-								+ arg.getName().getContent().replaceAll("[0123456789]", "");
-						requestClassDeclaration += TAB + TAB + "private " + type.substring(0, 1).toUpperCase()
-								+ type.substring(1) + " " + arg.getName().getContent().replaceAll("[0123456789]", "")
-								+ " = new " + type.substring(0, 1).toUpperCase() + type.substring(1) + "();\n";
-						requestClassConstractor1 += TAB + TAB + TAB + "this."
-								+ arg.getName().getContent().replaceAll("[0123456789]", "") + " = new "
-								+ type.substring(0, 1).toUpperCase() + type.substring(1) + "();\n";
+						} else if (!arg.getArgument().isArray() && !arg.getArgument().getSubtypes().isEmpty()) {
+							constractorVars += type.substring(0, 1).toUpperCase() + type.substring(1) + " "
+									+ arg.getName().getContent().replaceAll("[0123456789]", "");
+							requestClassDeclaration += TAB + TAB + "private " + type.substring(0, 1).toUpperCase()
+									+ type.substring(1) + " "
+									+ arg.getName().getContent().replaceAll("[0123456789]", "") + " = new "
+									+ type.substring(0, 1).toUpperCase() + type.substring(1) + "();\n";
+							requestClassConstractor1 += TAB + TAB + TAB + "this."
+									+ arg.getName().getContent().replaceAll("[0123456789]", "") + " = new "
+									+ type.substring(0, 1).toUpperCase() + type.substring(1) + "();\n";
+						}
 					}
 				}
-			}
-			String requestClassInstance = "";
-			requestClassDeclaration += "\n\n";
-			requestClassConstractor1 += TAB + TAB + "}\n\n";
-			requestClassDeclaration += requestClassConstractor1;
-			requestClassConstractor2 += constractorVars;
-			requestClassConstractor2 += ") {\n";
-			requestClassConstractor2 += constractorVarsBody;
-			requestClassConstractor2 += "}\n";
-			requestClassDeclaration += requestClassConstractor2;
-			// requestClassInstance += constractorInstanceVars;
-			// requestClassInstance += ");\n";
+				String requestClassInstance = "";
+				requestClassDeclaration += "\n\n";
+				requestClassConstractor1 += TAB + TAB + "}\n\n";
+				requestClassDeclaration += requestClassConstractor1;
+				requestClassConstractor2 += constractorVars;
+				requestClassConstractor2 += ") {\n";
+				requestClassConstractor2 += constractorVarsBody;
+				requestClassConstractor2 += "}\n";
+				requestClassDeclaration += requestClassConstractor2;
+				// requestClassInstance += constractorInstanceVars;
+				// requestClassInstance += ");\n";
 
-			for (OwlService arg : inputVariables) {
-				if (arg.getArgument().isTypeOf().equals("BodyParameter")) {
-					String type = arg.getArgument().getType();
-					if (arg.getArgument().getSubtypes().isEmpty() && !arg.getArgument().isArray()) {
-						requestClassDeclaration += TAB + TAB + "public void set"
-								+ arg.getName().getContent().replaceAll("[0123456789]", "") + "(" + type + " "
-								+ arg.getName().getContent().replaceAll("[0123456789]", "") + ") {\n" + TAB + TAB + TAB
-								+ "this." + arg.getName().getContent().replaceAll("[0123456789]", "") + " = "
-								+ arg.getName().getContent().replaceAll("[0123456789]", "") + ";\n" + TAB + TAB + "}\n";
-						requestClassDeclaration += TAB + TAB + "@XmlElement\n" + TAB + TAB + "public " + type + " get"
-								+ arg.getName().getContent().replaceAll("[0123456789]", "") + "() {\n" + TAB + TAB + TAB
-								+ "return " + arg.getName().getContent().replaceAll("[0123456789]", "") + ";\n" + TAB
-								+ TAB + "}\n";
-					} else if (arg.getArgument().isArray()
-							&& RAMLCaller.stringIsItemFromList(arg.getArgument().getType(), datatypes)) {
-						if (type.equals("int")) {
-							type = "Integer";
-						} else {
-							type = type.substring(0, 1).toUpperCase() + type.substring(1);
+				for (OwlService arg : inputVariables) {
+					if (arg.getArgument().isTypeOf().equals("BodyParameter")) {
+						String type = arg.getArgument().getType();
+						if (arg.getArgument().getSubtypes().isEmpty() && !arg.getArgument().isArray()) {
+							requestClassDeclaration += TAB + TAB + "public void set"
+									+ arg.getName().getContent().replaceAll("[0123456789]", "") + "(" + type + " "
+									+ arg.getName().getContent().replaceAll("[0123456789]", "") + ") {\n" + TAB + TAB
+									+ TAB + "this." + arg.getName().getContent().replaceAll("[0123456789]", "") + " = "
+									+ arg.getName().getContent().replaceAll("[0123456789]", "") + ";\n" + TAB + TAB
+									+ "}\n";
+							requestClassDeclaration += TAB + TAB + "@XmlElement\n" + TAB + TAB + "public " + type
+									+ " get" + arg.getName().getContent().replaceAll("[0123456789]", "") + "() {\n"
+									+ TAB + TAB + TAB + "return "
+									+ arg.getName().getContent().replaceAll("[0123456789]", "") + ";\n" + TAB + TAB
+									+ "}\n";
+						} else if (arg.getArgument().isArray()
+								&& RAMLCaller.stringIsItemFromList(arg.getArgument().getType(), datatypes)) {
+							if (type.equals("int")) {
+								type = "Integer";
+							} else {
+								type = type.substring(0, 1).toUpperCase() + type.substring(1);
+							}
+							requestClassDeclaration += TAB + TAB + "public void set"
+									+ arg.getName().getContent().replaceAll("[0123456789]", "") + "(ArrayList<" + type
+									+ "> " + arg.getName().getContent().replaceAll("[0123456789]", "") + ") {\n" + TAB
+									+ TAB + TAB + "this." + arg.getName().getContent() + " = "
+									+ arg.getName().getContent().replaceAll("[0123456789]", "") + ";\n" + TAB + TAB
+									+ "}\n";
+							requestClassDeclaration += TAB + TAB + "@XmlElement\n" + TAB + TAB + "public ArrayList<"
+									+ type + "> get" + arg.getName().getContent().replaceAll("[0123456789]", "")
+									+ "() {\n" + TAB + TAB + TAB + "return "
+									+ arg.getName().getContent().replaceAll("[0123456789]", "") + ";\n" + TAB + TAB
+									+ "}\n";
+						} else if (arg.getArgument().isArray()
+								&& !RAMLCaller.stringIsItemFromList(arg.getArgument().getType(), datatypes)) {
+
+							requestClassDeclaration += TAB + TAB + "public void set"
+									+ arg.getName().getContent().replaceAll("[0123456789]", "") + "(ArrayList<"
+									+ type.substring(0, 1).toUpperCase() + type.substring(1) + "> "
+									+ arg.getName().getContent().replaceAll("[0123456789]", "") + ") {\n" + TAB + TAB
+									+ TAB + "this." + arg.getName().getContent().replaceAll("[0123456789]", "") + " = "
+									+ arg.getName().getContent().replaceAll("[0123456789]", "") + ";\n" + TAB + TAB
+									+ "}\n";
+							requestClassDeclaration += TAB + TAB + "@XmlElement\n" + TAB + TAB + "public ArrayList<"
+									+ type.substring(0, 1).toUpperCase() + type.substring(1) + "> get"
+									+ arg.getName().getContent().replaceAll("[0123456789]", "") + "() {\n" + TAB + TAB
+									+ TAB + "return " + arg.getName().getContent().replaceAll("[0123456789]", "")
+									+ ";\n" + TAB + TAB + "}\n";
+						} else if (!arg.getArgument().isArray() && !arg.getArgument().getSubtypes().isEmpty()) {
+							requestClassDeclaration += TAB + TAB + "public void set"
+									+ arg.getName().getContent().replaceAll("[0123456789]", "") + "("
+									+ type.substring(0, 1).toUpperCase() + type.substring(1) + " "
+									+ arg.getName().getContent().replaceAll("[0123456789]", "") + ") {\n" + TAB + TAB
+									+ TAB + "this." + arg.getName().getContent().replaceAll("[0123456789]", "") + " = "
+									+ arg.getName().getContent().replaceAll("[0123456789]", "") + ";\n" + TAB + TAB
+									+ "}\n";
+							requestClassDeclaration += TAB + TAB + "@XmlElement\n" + TAB + TAB + "public "
+									+ type.substring(0, 1).toUpperCase() + type.substring(1) + " get"
+									+ arg.getName().getContent().replaceAll("[0123456789]", "") + "() {\n" + TAB + TAB
+									+ TAB + "return " + arg.getName().getContent().replaceAll("[0123456789]", "")
+									+ ";\n" + TAB + TAB + "}\n";
 						}
-						requestClassDeclaration += TAB + TAB + "public void set"
-								+ arg.getName().getContent().replaceAll("[0123456789]", "") + "(ArrayList<" + type
-								+ "> " + arg.getName().getContent().replaceAll("[0123456789]", "") + ") {\n" + TAB + TAB
-								+ TAB + "this." + arg.getName().getContent() + " = "
-								+ arg.getName().getContent().replaceAll("[0123456789]", "") + ";\n" + TAB + TAB + "}\n";
-						requestClassDeclaration += TAB + TAB + "@XmlElement\n" + TAB + TAB + "public ArrayList<" + type
-								+ "> get" + arg.getName().getContent().replaceAll("[0123456789]", "") + "() {\n" + TAB
-								+ TAB + TAB + "return " + arg.getName().getContent().replaceAll("[0123456789]", "")
-								+ ";\n" + TAB + TAB + "}\n";
-					} else if (arg.getArgument().isArray()
-							&& !RAMLCaller.stringIsItemFromList(arg.getArgument().getType(), datatypes)) {
-
-						requestClassDeclaration += TAB + TAB + "public void set"
-								+ arg.getName().getContent().replaceAll("[0123456789]", "") + "(ArrayList<"
-								+ type.substring(0, 1).toUpperCase() + type.substring(1) + "> "
-								+ arg.getName().getContent().replaceAll("[0123456789]", "") + ") {\n" + TAB + TAB + TAB
-								+ "this." + arg.getName().getContent().replaceAll("[0123456789]", "") + " = "
-								+ arg.getName().getContent().replaceAll("[0123456789]", "") + ";\n" + TAB + TAB + "}\n";
-						requestClassDeclaration += TAB + TAB + "@XmlElement\n" + TAB + TAB + "public ArrayList<"
-								+ type.substring(0, 1).toUpperCase() + type.substring(1) + "> get"
-								+ arg.getName().getContent().replaceAll("[0123456789]", "") + "() {\n" + TAB + TAB + TAB
-								+ "return " + arg.getName().getContent().replaceAll("[0123456789]", "") + ";\n" + TAB
-								+ TAB + "}\n";
-					} else if (!arg.getArgument().isArray() && !arg.getArgument().getSubtypes().isEmpty()) {
-						requestClassDeclaration += TAB + TAB + "public void set"
-								+ arg.getName().getContent().replaceAll("[0123456789]", "") + "("
-								+ type.substring(0, 1).toUpperCase() + type.substring(1) + " "
-								+ arg.getName().getContent().replaceAll("[0123456789]", "") + ") {\n" + TAB + TAB + TAB
-								+ "this." + arg.getName().getContent().replaceAll("[0123456789]", "") + " = "
-								+ arg.getName().getContent().replaceAll("[0123456789]", "") + ";\n" + TAB + TAB + "}\n";
-						requestClassDeclaration += TAB + TAB + "@XmlElement\n" + TAB + TAB + "public "
-								+ type.substring(0, 1).toUpperCase() + type.substring(1) + " get"
-								+ arg.getName().getContent().replaceAll("[0123456789]", "") + "() {\n" + TAB + TAB + TAB
-								+ "return " + arg.getName().getContent().replaceAll("[0123456789]", "") + ";\n" + TAB
-								+ TAB + "}\n";
 					}
 				}
+				requestClassDeclaration += TAB + "}\n\n";
+
+				requestObjectDeclaration = TAB + TAB + "//create class instance to be returned\n";
+				requestObjectDeclaration += requestClassInstance;
 			}
-			requestClassDeclaration += TAB + "}\n\n";
-
-			requestObjectDeclaration = TAB + TAB + "//create class instance to be returned\n";
-			requestObjectDeclaration += requestClassInstance;
-
 		}
 
 		// create result class declaration
 		declaredInputs = TAB + "public " + resultClassName + " " + "parseResponse" + "(" + declaredInputs
 				+ ") throws Exception{\n";
 		declaredInputs += TAB + TAB + "//assign inputs to variables\n";
-		declaredInputs += TAB + TAB + constractorInstanceInputVars;
+		if (hasBodyInput)
+			declaredInputs += constractorInstanceInputVars;
 		for (OwlService arg : inputVariables) {
 			if (arg.getArgument().isTypeOf().equals("QueryParameter")) {
 				String type = arg.getArgument().getType();

@@ -31,9 +31,18 @@ public class RestfulCodeGenerator {
 
 	public static String generateRestfulCode(String packageName, ArrayList<OwlService> inputs,
 			ArrayList<Argument> uriParameters, boolean containsPost) {
+
+		boolean hasBodyInput = false;
+		for (OwlService input : inputs) {
+			if (input.getArgument().isTypeOf().equals("BodyParameter")) {
+				hasBodyInput = true;
+			}
+		}
 		String TAB = "    ";
 		String code = "package " + packageName + ";\n" + "import " + packageName + ".WorkflowClass;\n" + "import "
-				+ packageName + ".WorkflowClass.Response;\n" + "import " + packageName + ".WorkflowClass.Request;\n";
+				+ packageName + ".WorkflowClass.Response;\n";
+		if (hasBodyInput)
+			code += "import " + packageName + ".WorkflowClass.Request;\n";
 
 		code += "import javax.ws.rs.GET;\nimport javax.ws.rs.Consumes;\nimport javax.ws.rs.POST;\nimport javax.ws.rs.Path;\nimport javax.ws.rs.Produces;\nimport javax.ws.rs.QueryParam;\nimport javax.ws.rs.core.MediaType;\n";
 		code += "@Path(\"/result\")\n public class WebService {\n";
@@ -79,7 +88,7 @@ public class RestfulCodeGenerator {
 			// }
 		}
 		if (containsPost) {
-			if (!inputList.isEmpty()){
+			if (!inputList.isEmpty()) {
 				inputList += ", ";
 			}
 			inputList += "Request request";
@@ -93,9 +102,9 @@ public class RestfulCodeGenerator {
 		for (OwlService input : inputs) {
 			if (input.getArgument().isTypeOf().equals("QueryParameter")
 					|| input.getArgument().isTypeOf().equals("URIParameter")) {
-			if (!inputList.isEmpty())
-				inputList += ", ";
-			inputList += input.getName().getContent().replaceAll("[0123456789]", "");
+				if (!inputList.isEmpty())
+					inputList += ", ";
+				inputList += input.getName().getContent().replaceAll("[0123456789]", "");
 			}
 		}
 		if (containsPost) {
