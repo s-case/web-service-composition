@@ -1288,7 +1288,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 				if (option == "matchinput") {
 					// Add link to Jung Graph (the edge should be from an output
 					// to an input)
-					service.getArgument().addMatchedInputs(source.getArgument());
+
 					jungGraph.addEdge(new Connector(service, source, ""), service, source, EdgeType.DIRECTED);
 
 					Graph graph = viewer.getGraphControl();
@@ -1309,8 +1309,10 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 							graphConnection.setData(connectionData);
 
 							source.setisMatchedIO(true);
+
 							OwlService destination = (OwlService) ((MyNode) graphNode.getData()).getObject();
 							destination.setisMatchedIO(true);
+							service.getArgument().addMatchedInputs(source.getArgument());
 
 							ZestLabelProvider labelProvider = new ZestLabelProvider();
 							labelProvider.selfStyleNode((MyNode) graphNode.getData(), graphNode);
@@ -1325,7 +1327,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 				if (option == "matchoutput") {
 					// Add link to Jung Graph (the edge should be from an output
 					// to an input)
-					source.getArgument().addMatchedInputs(service.getArgument());
+
 					jungGraph.addEdge(new Connector(source, service, ""), source, service, EdgeType.DIRECTED);
 
 					Graph graph = viewer.getGraphControl();
@@ -1346,8 +1348,10 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 							graphConnection.setData(connectionData);
 
 							source.setisMatchedIO(true);
+
 							OwlService destination = (OwlService) ((MyNode) graphNode.getData()).getObject();
 							destination.setisMatchedIO(true);
+							source.getArgument().addMatchedInputs(service.getArgument());
 
 							ZestLabelProvider labelProvider = new ZestLabelProvider();
 							labelProvider.selfStyleNode((MyNode) graphNode.getData(), graphNode);
@@ -2892,9 +2896,9 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 			public void run() {
 
 				try {
-					int length = ((Node) ((TreeSelection)inputSelection).getFirstElement()).getSubCategories().size();
-					addTreeNode(((Node) ((TreeSelection)inputSelection).getFirstElement()).getOwlService(),
-							((Node) ((TreeSelection)inputSelection).getFirstElement()), length);
+					int length = ((Node) ((TreeSelection) inputSelection).getFirstElement()).getSubCategories().size();
+					addTreeNode(((Node) ((TreeSelection) inputSelection).getFirstElement()).getOwlService(),
+							((Node) ((TreeSelection) inputSelection).getFirstElement()), length);
 					// Updating the display in the view
 					inputsTreeViewer.setInput(InputNodes);
 				} catch (Exception e) {
@@ -2914,11 +2918,12 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 				inputSelection = inputsTreeViewer.getSelection();
 
 				if (!inputSelection.isEmpty()) {
-					if (((Node) ((TreeSelection)inputSelection).getFirstElement()).getOwlService().getArgument().isArray()
-							&& ((Node) ((TreeSelection)inputSelection).getFirstElement()).getName().toString().replaceAll("[^\\d.]", "")
-									.isEmpty()) {
+					if (((Node) ((TreeSelection) inputSelection).getFirstElement()).getOwlService().getArgument()
+							.isArray()
+							&& ((Node) ((TreeSelection) inputSelection).getFirstElement()).getName().toString()
+									.replaceAll("[^\\d.]", "").isEmpty()) {
 						a.setText("Add new element for "
-								+ ((Node) ((TreeSelection)inputSelection).getFirstElement()).getName().toString());
+								+ ((Node) ((TreeSelection) inputSelection).getFirstElement()).getName().toString());
 						a.setToolTipText("Right click to add new element");
 						a.setEnabled(true);
 						mgr.add(a);
@@ -3536,6 +3541,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 							OwlService created = new OwlService(service);
 							created.getArgument().setOwlService(created);
 							Value value = new Value(service.getArgument());
+							value.getElements().clear();
 							// Value value =
 							// (Value.getValue(service.getArgument()));
 							// Clear old values
@@ -3590,24 +3596,24 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 						if (op != null) {
 							remainingOperations.add(service);
 							for (Argument arg : op.getInputs()) {
-								if (!allVariables.contains(arg))
-									allVariables.add((Value) arg);
-								if (!inputVariables.contains(arg))
-									inputVariables.add((Value) arg);
+								// if (!allVariables.contains(arg))
+								allVariables.add((Value) arg);
+								// if (!inputVariables.contains(arg))
+								inputVariables.add((Value) arg);
 								for (Argument sub : arg.getSubtypes()) {
-									if (!allVariables.contains(sub)) {
-										allVariables.add((Value) sub);
-									}
+									// if (!allVariables.contains(sub)) {
+									allVariables.add((Value) sub);
+									// }
 									getSubtypes(subinputVariables, sub, false);
 								}
 							}
 							for (Argument arg : op.getOutputs()) {
-								if (!allVariables.contains(arg)) {
-									allVariables.add((Value) arg);
-								}
-								if (!outputVariables.contains(arg)) {
-									outputVariables.add((Value) arg);
-								}
+								// if (!allVariables.contains(arg)) {
+								allVariables.add((Value) arg);
+								// }
+								// if (!outputVariables.contains(arg)) {
+								outputVariables.add((Value) arg);
+								// }
 
 								System.out.println("OUTPUT DETECTED\t " + arg);
 								for (Argument sub : arg.getSubtypes()) {
@@ -3753,8 +3759,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 									for (int j = 0; j < ((Vector<Node>) columnb.getViewer().getInput()).size(); j++) {
 										if (((Vector<Node>) columnb.getViewer().getInput()).get(j) instanceof Node) {
 											if (((Node) ((Vector<Node>) columnb.getViewer().getInput()).get(j))
-													.getName().split("\\[")[0].trim()
-															.equals(var.getName().toString())) {
+													.getOwlService().equals(var.getOwlService())) {
 												Node node = ((Node) ((Vector<Node>) columnb.getViewer().getInput())
 														.get(j));
 												fillInInputValues(var, node);
@@ -3917,19 +3922,28 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 									@Override
 									public void run() {
 										fillInOutputValues(serviceOutputs, nodes, graph);
+										OwlService array = null;
+										for (Argument arg : serviceOutputs) {
+											for (OwlService service : graph.getVertices()) {
+												if (service.equals(((Value) arg).getOwlService())
+												// &&
+												// RAMLCaller.stringIsItemFromList(((Value)
+												// arg).getType(), datatypes)
+												) {
+													try {
+														service.setContent((Value) arg);
+													} catch (Exception e) {
+														Activator.log("Error setting outputs content", e);
+														e.printStackTrace();
+													}
+												}
+											}
+										}
+										
 										for (OwlService service : graph.getVertices()) {
 											if (service.getisMatchedIO()
-													&& !service.getArgument().getMatchedInputs().isEmpty()) {
-												// if
-												// (graph.getSuccessorCount(service)
-												// > 0)
-												// {
-												// for (OwlService successor :
-												// graph.getSuccessors(service))
-												// {
-												// if
-												// (successor.getisMatchedIO())
-												// {
+													&& !service.getArgument().getMatchedInputs().isEmpty()&& service.getArgument().getBelongsToOperation().getName().toString().equals(currentService.getOperation().getName().toString())) {
+
 												boolean isMemberOfArray = false;
 
 												for (Object parent : service.getArgument().getParent()) {
@@ -3940,7 +3954,18 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 												}
 												// if predecessor is array
 												if (isMemberOfArray || service.getArgument().isArray()) {
-													OwlService initialArray = getInitialArray(service, graph);
+													OwlService initialArray = getInitialArray(service, graph, false);
+													int subNum = 0;
+													for (Argument sub : initialArray.getArgument().getSubtypes()) {
+														if (sub.getOwlService().getisMatchedIO())
+															subNum++;
+													}
+													boolean arrayIsMatched = false;
+
+													if (subNum == initialArray.getArgument().getSubtypes().size()) {
+														arrayIsMatched = true;
+
+													}
 													boolean successorIsMemberOfArray = false;
 													for (Argument successor : service.getArgument()
 															.getMatchedInputs()) {
@@ -3951,10 +3976,38 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 																	successorIsMemberOfArray = true;
 																}
 														}
-
+														OwlService successorMatched = null;
+														for (OwlService suc : graph.getSuccessors(service)) {
+															successorMatched = suc;
+														}
+														// if successor is also
+														// member of array
 														if (successorIsMemberOfArray) {
-															for (Value element : service.getArgument().getElements()) {
-
+															OwlService successorInitialArray = getInitialArray(
+																	successorMatched, graph, true);
+															//clear matched elements
+														ArrayList<Argument> in = successorInitialArray.getArgument().getBelongsToOperation().getInputs();
+														
+															int i = 0;
+															if (arrayIsMatched && array != initialArray) {
+																for (Value element : initialArray.getArgument()
+																		.getElements()) {
+																	Value value = new Value(element);
+																	value.setOwlService(successorInitialArray
+																			.getArgument().getOwlService());
+																	value.setName(successorInitialArray.getArgument()
+																			.getType() + "[" + i + "]");
+																	successorInitialArray.getArgument().getElements()
+																			.add(value);
+																	for (Argument input : inputVariables){
+																		if (input.getOwlService().equals(successorInitialArray))
+																			input.getElements().remove(input.getElements().get(0));
+																			input.getElements().add(value);
+																	}
+																	
+																	i++;
+																}
+																array = initialArray;
 															}
 														} else if (successor.isArray()) {
 															// successor is
@@ -4279,18 +4332,32 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 		return "";
 	}
 
-	private OwlService getInitialArray(OwlService matchedOutput,
-			edu.uci.ics.jung.graph.Graph<OwlService, Connector> graph) {
-		OwlService initialArray = matchedOutput;
-		for (OwlService predecessor : graph.getPredecessors(matchedOutput)) {
-			if (predecessor.getArgument() != null) {
-				if (predecessor.getArgument().isArray()) {
-					initialArray = getInitialArray(predecessor, graph);
+	private OwlService getInitialArray(OwlService matchedVar, edu.uci.ics.jung.graph.Graph<OwlService, Connector> graph,
+			boolean isSuccessor) {
+		OwlService initialArray = matchedVar;
+		if (isSuccessor) {
+			for (OwlService successor : graph.getSuccessors(matchedVar)) {
+				if (successor.getArgument() != null) {
+					if (successor.getArgument().isArray()) {
+						initialArray = getInitialArray(successor, graph, false);
+					} else {
+						break;
+					}
 				} else {
 					break;
 				}
-			} else {
-				break;
+			}
+		} else {
+			for (OwlService predecessor : graph.getPredecessors(matchedVar)) {
+				if (predecessor.getArgument() != null) {
+					if (predecessor.getArgument().isArray()) {
+						initialArray = getInitialArray(predecessor, graph, false);
+					} else {
+						break;
+					}
+				} else {
+					break;
+				}
 			}
 		}
 		return initialArray;
@@ -4340,6 +4407,9 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 					try {
 						in = new Argument(var.getName().toString() + "[" + k + "]", "", var.isTypeOf(), false,
 								var.isNative(), var.getSubtypes());
+						for (Argument arg : var.getMatchedInputs()) {
+							in.getMatchedInputs().add(arg);
+						}
 						in.setOwlService(var.getOwlService());
 						Value value = new Value(in);
 						// Value value = Value.getValue(out);

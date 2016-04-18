@@ -22,6 +22,7 @@ import com.hp.hpl.jena.rdf.model.Resource;
 
 import eu.scasefp7.eclipse.servicecomposition.Activator;
 import eu.scasefp7.eclipse.servicecomposition.codeInterpreter.Value;
+import eu.scasefp7.eclipse.servicecomposition.importer.Importer.Argument;
 import eu.scasefp7.eclipse.servicecomposition.operation.ipr.CommercialCostSchema;
 import eu.scasefp7.eclipse.servicecomposition.operation.ipr.Country;
 import eu.scasefp7.eclipse.servicecomposition.operation.ipr.Description;
@@ -1071,6 +1072,10 @@ public abstract class Importer {
 			for (Argument sub : prototype.getSubtypes()) {
 				Argument arg = new Argument(sub);
 				subtypes.add(arg);
+			}
+			for (Argument matched : prototype.getMatchedInputs()){
+				Argument arg = new Argument(matched);
+				hasMatchedInputs.add(arg);
 			}
 			// subtypes = prototype.subtypes;
 			parent.addAll(prototype.parent);

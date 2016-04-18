@@ -40,6 +40,9 @@ public class Value extends Argument{
 		for(Argument arg : variable.getSubtypes()){
 			getSubtypes().add(getValue(arg));
 		}
+		for(Argument arg : variable.getElements()){
+			getElements().add(getValue(arg));
+		}
 		for(Argument arg : variable.getMatchedInputs()){
 			getMatchedInputs().add(getValue(arg));
 		}
@@ -47,6 +50,7 @@ public class Value extends Argument{
 			getParent().add(arg);
 		}
 		setOwlService(variable.getOwlService());
+		setBelongsToOperation(variable.getBelongsToOperation());
 	}
 	/**
 	 * <h1>getValue</h1>

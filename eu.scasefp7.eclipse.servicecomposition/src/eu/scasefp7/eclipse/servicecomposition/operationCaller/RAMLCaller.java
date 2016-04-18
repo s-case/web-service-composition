@@ -449,7 +449,6 @@ public class RAMLCaller {
 					}
 					output.getElements().add(value);
 				}
-
 				// if it is an object but not an array
 			} else if (!output.isArray() && !stringIsItemFromList(output.getType(), datatypes)) {
 				if (((JSONObject) json).containsKey(output.getName().toString())) {
