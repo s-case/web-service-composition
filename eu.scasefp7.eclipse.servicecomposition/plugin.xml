@@ -112,7 +112,7 @@
       </component>
    </extension>
 
-   <extension point="org.eclipse.ui.commands">
+   <!-- <extension point="org.eclipse.ui.commands">
       <category id="eu.scasefp7.eclipse.servicecomposition.commands.category" name="ServiceComposition Commands Category"/>
       <command categoryId="eu.scasefp7.eclipse.servicecomposition.commands.category" id="eu.scasefp7.eclipse.servicecomposition.commands.exportToOntology" name="Export to ontology"/>
       <command categoryId="eu.scasefp7.eclipse.servicecomposition.commands.category" id="eu.scasefp7.eclipse.servicecomposition.commands.exportAllToOntology" name="Export all compositions to ontology"/>
@@ -160,7 +160,7 @@
                   </visibleWhen>
             </command>
       </menuContribution>
-   </extension>
+   </extension> -->
 
 
 </plugin>
