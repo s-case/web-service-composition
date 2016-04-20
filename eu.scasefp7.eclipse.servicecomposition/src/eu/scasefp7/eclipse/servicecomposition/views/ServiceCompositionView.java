@@ -230,6 +230,7 @@ import edu.uci.ics.jung.io.graphml.HyperEdgeMetadata;
 import edu.uci.ics.jung.io.graphml.NodeMetadata;
 import eu.scasefp7.eclipse.servicecomposition.operationCaller.RAMLCaller;
 import eu.scasefp7.eclipse.core.ontology.LinkedOntologyAPI;
+import eu.scasefp7.eclipse.core.ontology.OntologyHelpers;
 import eu.scasefp7.eclipse.servicecomposition.Activator;
 import eu.scasefp7.eclipse.servicecomposition.codeGenerator.CallRestfulServiceCode;
 import eu.scasefp7.eclipse.servicecomposition.codeGenerator.CallWSDLServiceCode;
@@ -6452,12 +6453,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 											if (selectedItem.equals("Update Linked Ontology")) {
 												ConnectToMDEOntology.writeToOntology(scaseProject,
 														gGenerator.getOperation());
-
-												final IFile file = ResourcesPlugin.getWorkspace().getRoot()
-														.getFileForLocation(Path.fromOSString(ResourcesPlugin
-																.getWorkspace().getRoot().getLocation().toString() + "/"
-																+ scaseProject.getName() + "/LinkedOntology.owl"));
-												if (file != null) {
+												if (OntologyHelpers.projectHasLinkedOntology(scaseProject)) {
 													disp.syncExec(new Runnable() {
 														@Override
 														public void run() {
