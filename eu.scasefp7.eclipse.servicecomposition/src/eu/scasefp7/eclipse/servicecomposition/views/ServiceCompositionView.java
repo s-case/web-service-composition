@@ -5150,6 +5150,11 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 
 	}
 
+	public static edu.uci.ics.jung.graph.Graph<OwlService, Connector> readFile(IFile file, ArrayList<Operation> operations) {
+		File jFile = new File(file.getRawLocation().toPortableString());
+		return new ServiceCompositionView().readFile(jFile, operations);
+	}
+
 	private edu.uci.ics.jung.graph.Graph<OwlService, Connector> readFile(File file, ArrayList<Operation> operations) {
 		edu.uci.ics.jung.graph.Graph<OwlService, Connector> g = null;
 		HashMap<String, OwlService> nodes = new HashMap<String, OwlService>();
