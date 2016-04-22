@@ -1,28 +1,29 @@
 package eu.scasefp7.eclipse.servicecomposition.handlers;
 
-import java.util.ArrayList;
+import java.io.File;
+import java.io.IOException;
 import java.util.List;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 
 import org.eclipse.core.commands.ExecutionEvent;
 import org.eclipse.core.commands.ExecutionException;
 import org.eclipse.core.resources.IFile;
-import org.eclipse.core.resources.ResourcesPlugin;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.ui.handlers.HandlerUtil;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.xml.sax.SAXException;
 
-import edu.uci.ics.jung.graph.Graph;
-import eu.scasefp7.eclipse.servicecomposition.Activator;
 import eu.scasefp7.eclipse.servicecomposition.codeGenerator.ConnectToMDEOntology;
 import eu.scasefp7.eclipse.servicecomposition.codeGenerator.MDEOperation;
-import eu.scasefp7.eclipse.servicecomposition.codeGenerator.NonLinearCodeGenerator;
-import eu.scasefp7.eclipse.servicecomposition.importer.Importer.Operation;
-import eu.scasefp7.eclipse.servicecomposition.importer.JungXMIImporter.Connector;
-import eu.scasefp7.eclipse.servicecomposition.tester.Algorithm;
-import eu.scasefp7.eclipse.servicecomposition.transformer.JungXMItoOwlTransform.OwlService;
-import eu.scasefp7.eclipse.servicecomposition.views.ServiceCompositionView;
 
 /**
  * A command handler for exporting all the instances to the linked ontology.
@@ -61,19 +62,40 @@ public class ExportToOntologyHandler extends ProjectAwareHandler {
 	}
 
 	protected void instantiateOntology(IFile file) {
-		try {
-			Algorithm.init();
-			ArrayList<Operation> operations = Algorithm.importServices(ResourcesPlugin.getWorkspace().getRoot()
-					.getLocation().toString()
-					+ "/.metadata/.plugins/eu.scasefp7.servicecomposition/ontology/WS.owl");
-			Graph<OwlService, Connector> jungGraph = ServiceCompositionView.readFile(file, operations);
-			NonLinearCodeGenerator gGenerator = new NonLinearCodeGenerator();
-			gGenerator.generateCode(jungGraph, "workflow", false, file.getProject().getName());
-			MDEOperation operation = gGenerator.getOperation();
-			ConnectToMDEOntology.writeToOntology(file.getProject(), operation);
-		} catch (Exception e) {
-			Activator.log("Error when instantiating the linked ontology using sc file", e);
+		// TODO: Write code to open the file and get its MDEOperation
+		// Note that the file has the format org.eclipse.core.resources.IFile
+		// To open it in the java.io.File format, you can call this:
+		//File jFile = new File(file.getRawLocation().toPortableString());
+		
+		Document doc = getXMIDocOfFile(file);
+		if (doc != null) {
+			
 		}
+		
+		MDEOperation operation = null;
+		operation = ConnectToMDEOntology.createMDEOperation(doc);
+		// Write to the ontology
+		ConnectToMDEOntology.writeToOntology(file.getProject(), operation);
 	}
+	
+	/**
+	 * Returns the XML document of a file.
+	 * 
+	 * @param file the file of which the XML document is returned.
+	 * @return the XML document of the file, or null if there is a parsing error.
+	 */
+	private Document getXMIDocOfFile(IFile file) {
+		Document doc = null;
+		try {
+			DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
+			DocumentBuilder docBuilder = docFactory.newDocumentBuilder();
+
+			doc = docBuilder.parse(file.getContents());
+		} catch (ParserConfigurationException | SAXException | IOException | CoreException e) {
+			e.printStackTrace();
+		}
+		return doc;
+	}
+
 
 }

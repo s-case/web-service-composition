@@ -1,5 +1,6 @@
 package eu.scasefp7.eclipse.servicecomposition.codeGenerator;
 
+import eu.scasefp7.eclipse.servicecomposition.codeInterpreter.Value;
 import eu.scasefp7.eclipse.servicecomposition.importer.Importer.Argument;
 import eu.scasefp7.eclipse.servicecomposition.importer.Importer.Operation;
 import eu.scasefp7.eclipse.servicecomposition.importer.JungXMIImporter.Connector;
@@ -7,6 +8,7 @@ import eu.scasefp7.eclipse.servicecomposition.importer.JungXMIImporter.Service;
 import eu.scasefp7.eclipse.servicecomposition.operationCaller.RAMLCaller;
 import eu.scasefp7.eclipse.servicecomposition.repository.WSOntology;
 import eu.scasefp7.eclipse.servicecomposition.transformer.PathFinding;
+import eu.scasefp7.eclipse.servicecomposition.views.ServiceCompositionView;
 import eu.scasefp7.eclipse.servicecomposition.transformer.JungXMItoOwlTransform.OwlService;
 
 import java.io.StringReader;
@@ -966,7 +968,53 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 
 		declaredInputs += TAB + TAB + TAB + "//update matchedIO variable values\n";
 
+		
 		for (OwlService matchedOutput : matchedOutputs) {
+			boolean isMemberOfArray = false;
+
+			for (Object parent : matchedOutput.getArgument().getParent()) {
+				if (parent instanceof Argument)
+					if (((Argument) parent).isArray()) {
+						isMemberOfArray = true;
+					}
+			}
+			if (isMemberOfArray || matchedOutput.getArgument().isArray()) {
+				OwlService initialArray = ServiceCompositionView.getInitialArray(matchedOutput, graph, false);
+				int subNum = 0;
+				for (Argument sub : initialArray.getArgument().getSubtypes()) {
+					if (sub.getOwlService().getisMatchedIO())
+						subNum++;
+				}
+				boolean arrayIsMatched = false;
+
+				if (subNum == initialArray.getArgument().getSubtypes().size()) {
+					arrayIsMatched = true;
+
+				}
+				if (arrayIsMatched){
+					for (OwlService matchedInput : graph.getSuccessors(matchedOutput)) {
+						boolean successorIsMemberOfArray = false;
+						for (Object parent : matchedInput.getArgument().getParent()) {
+							if (parent instanceof Argument)
+								if (((Argument) parent).isArray()) {
+									successorIsMemberOfArray = true;
+								}
+						}
+						if (successorIsMemberOfArray) {
+							OwlService successorInitialArray = ServiceCompositionView.getInitialArray(
+									matchedInput, graph, true);
+							//clear matched elements
+						ArrayList<Argument> in = successorInitialArray.getArgument().getBelongsToOperation().getInputs();
+						
+							int i = 0;
+//							if (arrayIsMatched && array != initialArray) {
+//								String ret = ".get" + matchedOutput.getName().getContent().replaceAll("[0123456789]", "") + "()";
+//								array = initialArray;
+//							}
+						} 
+					}
+				}
+			}else{
 			for (OwlService matchedInput : graph.getSuccessors(matchedOutput)) {
 				// if
 				// (matchedInput.getArgument().getBelongsToOperation().getType().equalsIgnoreCase("SOAP"))
@@ -982,6 +1030,7 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 						+ matchedOutput.getArgument().getBelongsToOperation().getName() + "_response" + ret + ";\n";
 				// }
 
+			}
 			}
 		}
 		declaredInputs += TAB + TAB + TAB + "}\n";
@@ -1007,7 +1056,11 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 				+ variableClassDeclaration + functionCode + declaredInputs + requestObjectDeclaration
 				+ resultObjectDeclaration + TAB + "}\n}";
 
-		operation = instance.createObjects(ProjectName, inputVariables, uriParameters, outputVariables, graph);
+		String crudVerb="GET";
+		if (hasBodyInput){
+			crudVerb = "POST";
+		}
+		operation = instance.createObjects(ProjectName, inputVariables, uriParameters, outputVariables, crudVerb, graph);
 
 		return returnCode;
 	}

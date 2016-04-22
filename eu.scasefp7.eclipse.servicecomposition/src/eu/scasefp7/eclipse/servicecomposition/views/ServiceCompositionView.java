@@ -230,7 +230,6 @@ import edu.uci.ics.jung.io.graphml.HyperEdgeMetadata;
 import edu.uci.ics.jung.io.graphml.NodeMetadata;
 import eu.scasefp7.eclipse.servicecomposition.operationCaller.RAMLCaller;
 import eu.scasefp7.eclipse.core.ontology.LinkedOntologyAPI;
-import eu.scasefp7.eclipse.core.ontology.OntologyHelpers;
 import eu.scasefp7.eclipse.servicecomposition.Activator;
 import eu.scasefp7.eclipse.servicecomposition.codeGenerator.CallRestfulServiceCode;
 import eu.scasefp7.eclipse.servicecomposition.codeGenerator.CallWSDLServiceCode;
@@ -3940,10 +3939,13 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 												}
 											}
 										}
-										
+
 										for (OwlService service : graph.getVertices()) {
 											if (service.getisMatchedIO()
-													&& !service.getArgument().getMatchedInputs().isEmpty()&& service.getArgument().getBelongsToOperation().getName().toString().equals(currentService.getOperation().getName().toString())) {
+													&& !service.getArgument().getMatchedInputs().isEmpty()
+													&& service.getArgument().getBelongsToOperation().getName()
+															.toString().equals(currentService.getOperation().getName()
+																	.toString())) {
 
 												boolean isMemberOfArray = false;
 
@@ -3986,9 +3988,11 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 														if (successorIsMemberOfArray) {
 															OwlService successorInitialArray = getInitialArray(
 																	successorMatched, graph, true);
-															//clear matched elements
-														ArrayList<Argument> in = successorInitialArray.getArgument().getBelongsToOperation().getInputs();
-														
+															// clear matched
+															// elements
+															ArrayList<Argument> in = successorInitialArray.getArgument()
+																	.getBelongsToOperation().getInputs();
+
 															int i = 0;
 															if (arrayIsMatched && array != initialArray) {
 																for (Value element : initialArray.getArgument()
@@ -4000,12 +4004,14 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 																			.getType() + "[" + i + "]");
 																	successorInitialArray.getArgument().getElements()
 																			.add(value);
-																	for (Argument input : inputVariables){
-																		if (input.getOwlService().equals(successorInitialArray))
-																			input.getElements().remove(input.getElements().get(0));
-																			input.getElements().add(value);
+																	for (Argument input : inputVariables) {
+																		if (input.getOwlService()
+																				.equals(successorInitialArray))
+																			input.getElements()
+																					.remove(input.getElements().get(0));
+																		input.getElements().add(value);
 																	}
-																	
+
 																	i++;
 																}
 																array = initialArray;
@@ -4333,8 +4339,8 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 		return "";
 	}
 
-	private OwlService getInitialArray(OwlService matchedVar, edu.uci.ics.jung.graph.Graph<OwlService, Connector> graph,
-			boolean isSuccessor) {
+	public static OwlService getInitialArray(OwlService matchedVar,
+			edu.uci.ics.jung.graph.Graph<OwlService, Connector> graph, boolean isSuccessor) {
 		OwlService initialArray = matchedVar;
 		if (isSuccessor) {
 			for (OwlService successor : graph.getSuccessors(matchedVar)) {
@@ -5150,11 +5156,6 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 
 	}
 
-	public static edu.uci.ics.jung.graph.Graph<OwlService, Connector> readFile(IFile file, ArrayList<Operation> operations) {
-		File jFile = new File(file.getRawLocation().toPortableString());
-		return new ServiceCompositionView().readFile(jFile, operations);
-	}
-
 	private edu.uci.ics.jung.graph.Graph<OwlService, Connector> readFile(File file, ArrayList<Operation> operations) {
 		edu.uci.ics.jung.graph.Graph<OwlService, Connector> g = null;
 		HashMap<String, OwlService> nodes = new HashMap<String, OwlService>();
@@ -5485,38 +5486,42 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 		if (selected != null) {
 			workflowFilePath = selected;
 			File file = new File(selected);
-			final Display disp = Display.getCurrent();
-			Job OpenWorkflowJob = new Job("Open workflow..") {
-				@Override
-				protected IStatus run(IProgressMonitor monitor) {
-					monitor.beginTask("Loading operations...", IProgressMonitor.UNKNOWN);
-
-					try {
-
-						edu.uci.ics.jung.graph.Graph<OwlService, Connector> graph = loadWorkflowFile(file);
-						if (graph != null) {
-							disp.syncExec(new Runnable() {
-								public void run() {
-									setJungGraph(graph);
-									addGraphInZest(graph);
-									updateRightComposite(graph);
-								}
-							});
-						}
-						setSavedWorkflow(true);
-						setStoryboardFile(null);
-						monitor.done();
-						return Status.OK_STATUS;
-					} catch (Exception ex) {
-						ex.printStackTrace();
-						return Status.CANCEL_STATUS;
-					} finally {
-						monitor.done();
-					}
-				}
-			};
-			OpenWorkflowJob.schedule();
+			openWorkflowJob(file);
 		}
+	}
+
+	public void openWorkflowJob(File file) {
+		final Display disp = Display.getCurrent();
+		Job OpenWorkflowJob = new Job("Open workflow..") {
+			@Override
+			protected IStatus run(IProgressMonitor monitor) {
+				monitor.beginTask("Loading operations...", IProgressMonitor.UNKNOWN);
+
+				try {
+
+					edu.uci.ics.jung.graph.Graph<OwlService, Connector> graph = loadWorkflowFile(file);
+					if (graph != null) {
+						disp.syncExec(new Runnable() {
+							public void run() {
+								setJungGraph(graph);
+								addGraphInZest(graph);
+								updateRightComposite(graph);
+							}
+						});
+					}
+					setSavedWorkflow(true);
+					setStoryboardFile(null);
+					monitor.done();
+					return Status.OK_STATUS;
+				} catch (Exception ex) {
+					ex.printStackTrace();
+					return Status.CANCEL_STATUS;
+				} finally {
+					monitor.done();
+				}
+			}
+		};
+		OpenWorkflowJob.schedule();
 	}
 
 	/**
@@ -6350,6 +6355,8 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 
 		final Shell shell = new Shell();
 		final Display disp = Display.getCurrent();
+		String XMLpath = ResourcesPlugin.getWorkspace().getRoot().getLocation().toString() + "/" + scaseProject.getName()
+		+ "/compositions/";
 		createWarFileJob = new Job("Uploading..") {
 			@Override
 			protected IStatus run(IProgressMonitor monitor) {
@@ -6402,7 +6409,11 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 						return Status.CANCEL_STATUS;
 					if (webServiceExistsOnServer()) {
 
-						String[] elements = { "Update YouREST (beta)", "Update Linked Ontology" };
+						// create .cservice file
+						
+						ConnectToMDEOntology.writeToXMLFile(scaseProject, gGenerator.getOperation(), XMLpath);
+						// update YouRest
+						String[] elements = { "Update YouREST (beta)" };
 
 						ListSelectionDialog dialog = new ListSelectionDialog(shell, elements,
 								ArrayContentProvider.getInstance(), new LabelProvider(), "selection message");
@@ -6455,21 +6466,32 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 													return;
 												}
 											}
-											if (selectedItem.equals("Update Linked Ontology")) {
-												ConnectToMDEOntology.writeToOntology(scaseProject,
-														gGenerator.getOperation());
-												if (OntologyHelpers.projectHasLinkedOntology(scaseProject)) {
-													disp.syncExec(new Runnable() {
-														@Override
-														public void run() {
-															MessageDialog.openInformation(disp.getActiveShell(), "Info",
-																	"LinkedOntology.owl file is created under the project "
-																			+ scaseProject.getName());
-														}
-													});
-
-												}
-											}
+											// if (selectedItem.equals("Update
+											// Linked Ontology")) {
+											// ConnectToMDEOntology.writeToOntology(scaseProject,
+											// gGenerator.getOperation());
+											//
+											// final IFile file =
+											// ResourcesPlugin.getWorkspace().getRoot()
+											// .getFileForLocation(Path.fromOSString(ResourcesPlugin
+											// .getWorkspace().getRoot().getLocation().toString()
+											// + "/"
+											// + scaseProject.getName() +
+											// "/LinkedOntology.owl"));
+											// if (file != null) {
+											// disp.syncExec(new Runnable() {
+											// @Override
+											// public void run() {
+											// MessageDialog.openInformation(disp.getActiveShell(),
+											// "Info",
+											// "LinkedOntology.owl file is
+											// created under the project "
+											// + scaseProject.getName());
+											// }
+											// });
+											//
+											// }
+											// }
 										}
 									} catch (Exception e) {
 										e.printStackTrace();
@@ -6584,6 +6606,14 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 
 	public void setScaseProject(IProject project) {
 		scaseProject = project;
+	}
+
+	public IProject getScaseProject() {
+		return scaseProject;
+	}
+
+	public NonLinearCodeGenerator getGenerator() {
+		return gGenerator;
 	}
 
 }
