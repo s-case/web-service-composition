@@ -69,6 +69,7 @@ import org.eclipse.core.runtime.MultiStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Platform;
+import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.draw2d.IFigure;
@@ -6434,8 +6435,21 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 					if (scaseProject == null) {
 						return Status.CANCEL_STATUS;
 					}
-					String XMLpath = ResourcesPlugin.getWorkspace().getRoot().getLocation().toString() + "/"
-							+ scaseProject.getName() + "/compositions/";
+
+					String compositionsFolderLocation = null;
+					try {
+						compositionsFolderLocation = scaseProject.getPersistentProperty(new QualifiedName("",
+								"eu.scasefp7.eclipse.core.ui.compFolder"));
+					} catch (CoreException e) {
+						Activator.log("Error retrieving project property (compositions folder location)", e);
+					}
+					String XMLpath = scaseProject.getLocation().toPortableString() + "/";
+					if (compositionsFolderLocation != null) {
+						if (scaseProject.findMember(new Path(compositionsFolderLocation)).exists())
+							XMLpath = scaseProject.findMember(new Path(compositionsFolderLocation)).getLocation()
+									.toPortableString();
+					}
+
 					File basedir = new File(pomPath);
 					IProgressMonitor monitor2 = new NullProgressMonitor();
 					IMaven maven = MavenPlugin.getMaven();
