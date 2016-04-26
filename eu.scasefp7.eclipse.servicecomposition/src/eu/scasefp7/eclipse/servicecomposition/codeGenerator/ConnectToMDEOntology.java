@@ -53,47 +53,53 @@ public class ConnectToMDEOntology {
 		ArrayList<MDERepresentation> hasURIParameters = new ArrayList<MDERepresentation>();
 
 		ArrayList<MDERepresentation> hasOutput = new ArrayList<MDERepresentation>();
-		// Query Parameters
+		// Query, URI and Input Parameters
+		//removed .replaceAll("[0123456789]", "")
 		for (OwlService input : inputs) {
-			String url = ((Operation) input.getArgument().getBelongsToOperation()).getDomain().getURI();
-			if (((Operation) input.getArgument().getBelongsToOperation()).getDomain().getResourcePath() != null) {
-				url = url + ((Operation) input.getArgument().getBelongsToOperation()).getDomain().getResourcePath();
-			}
-			String type = "Primitive";
-			if (input.getArgument().isArray()) {
-				type = "Array";
-			} else if (!input.getArgument().isArray()
-					&& !RAMLCaller.stringIsItemFromList(input.getArgument().getType(), datatypes)) {
-				type = "Object";
-			}
-
-			if (input.getArgument().getSubtypes().isEmpty()
-					&& input.getArgument().isTypeOf().equals("QueryParameter")) {
-				ArrayList<String> subNames = new ArrayList<String>();
-				subNames.add(input.getArgument().getType().toLowerCase());
-				MDERepresentation inputRepresentation = new MDERepresentation(false, !input.getArgument().isRequired(),
-						url, input.getName().getContent().replaceAll("[0123456789]", ""), type, null, subNames);
-				hasQueryParameters.add(inputRepresentation);
-			} else if (input.getArgument().getSubtypes().isEmpty()
-					&& input.getArgument().isTypeOf().equals("URIParameter")) {
-				ArrayList<String> subNames = new ArrayList<String>();
-				subNames.add("string");
-				MDERepresentation inputRepresentation = new MDERepresentation(false, !input.getArgument().isRequired(),
-						url, input.getArgument().getName().getContent().replaceAll("[0123456789]", ""), "Primitive",
-						null, subNames);
-				hasQueryParameters.add(inputRepresentation);
-			} else {
-
-				ArrayList<String> subNames = new ArrayList<String>();
-				ArrayList<MDERepresentation> hasSubs = new ArrayList<MDERepresentation>();
-				for (OwlService sub : graph.getPredecessors(input)) {
-					hasSubs.add(addSubtypes(sub, graph, hasSubs, true));
-					subNames.add(sub.getName().getContent().replaceAll("[0123456789]", ""));
+			if (!input.getisMatchedIO()) {
+				String url = ((Operation) input.getArgument().getBelongsToOperation()).getDomain().getURI();
+				if (((Operation) input.getArgument().getBelongsToOperation()).getDomain().getResourcePath() != null) {
+					url = url + ((Operation) input.getArgument().getBelongsToOperation()).getDomain().getResourcePath();
+				}
+				String type = "Primitive";
+				if (input.getArgument().isArray()) {
+					type = "Array";
+				} else if (!input.getArgument().isArray()
+						&& !RAMLCaller.stringIsItemFromList(input.getArgument().getType(), datatypes)) {
+					type = "Object";
 				}
 
-				MDERepresentation inputRepresentation = new MDERepresentation(false, !input.getArgument().isRequired(),
-						url, input.getName().getContent().replaceAll("[0123456789]", ""), type, hasSubs, subNames);
-				hasInput.add(inputRepresentation);
+				if (input.getArgument().getSubtypes().isEmpty()
+						&& input.getArgument().isTypeOf().equals("QueryParameter")) {
+					ArrayList<String> subNames = new ArrayList<String>();
+					subNames.add(input.getArgument().getType().toLowerCase());
+					MDERepresentation inputRepresentation = new MDERepresentation(false,
+							!input.getArgument().isRequired(), url,
+							input.getName().getContent(), type, null, subNames);
+					hasQueryParameters.add(inputRepresentation);
+				} else if (input.getArgument().getSubtypes().isEmpty()
+						&& input.getArgument().isTypeOf().equals("URIParameter")) {
+					ArrayList<String> subNames = new ArrayList<String>();
+					subNames.add("string");
+					MDERepresentation inputRepresentation = new MDERepresentation(false,
+							!input.getArgument().isRequired(), url,
+							input.getArgument().getName().getContent(), "Primitive",
+							null, subNames);
+					hasQueryParameters.add(inputRepresentation);
+				} else {
+
+					ArrayList<String> subNames = new ArrayList<String>();
+					ArrayList<MDERepresentation> hasSubs = new ArrayList<MDERepresentation>();
+					for (OwlService sub : graph.getPredecessors(input)) {
+						hasSubs.add(addSubtypes(sub, graph, hasSubs, true));
+						subNames.add(sub.getName().getContent());
+					}
+
+					MDERepresentation inputRepresentation = new MDERepresentation(false,
+							!input.getArgument().isRequired(), url,
+							input.getName().getContent(), type, hasSubs, subNames);
+					hasInput.add(inputRepresentation);
+				}
 			}
 		}
 
@@ -116,6 +122,7 @@ public class ConnectToMDEOntology {
 		// }
 
 		// Outputs
+		//removed .replaceAll("[0123456789]", "")
 		for (OwlService output : outputs) {
 			String url = ((Operation) output.getArgument().getBelongsToOperation()).getDomain().getURI();
 			String type = "Primitive";
@@ -130,18 +137,18 @@ public class ConnectToMDEOntology {
 				subNames.add(output.getArgument().getType().toLowerCase());
 				MDERepresentation outputRepresentation = new MDERepresentation(false,
 						!output.getArgument().isRequired(), url,
-						output.getName().getContent().replaceAll("[0123456789]", ""), type, null, subNames);
+						output.getName().getContent(), type, null, subNames);
 				hasOutput.add(outputRepresentation);
 			} else {
 				ArrayList<String> subNames = new ArrayList<String>();
 				ArrayList<MDERepresentation> hasSubs = new ArrayList<MDERepresentation>();
 				for (OwlService sub : graph.getSuccessors(output)) {
 					hasSubs.add(addSubtypes(sub, graph, hasSubs, false));
-					subNames.add(sub.getName().getContent().replaceAll("[0123456789]", ""));
+					subNames.add(sub.getName().getContent());
 				}
 				MDERepresentation outputRepresentation = new MDERepresentation(false,
 						!output.getArgument().isRequired(), url,
-						output.getName().getContent().replaceAll("[0123456789]", ""), type, hasSubs, subNames);
+						output.getName().getContent(), type, hasSubs, subNames);
 				hasOutput.add(outputRepresentation);
 
 			}
@@ -173,7 +180,6 @@ public class ConnectToMDEOntology {
 		// parse ProjectName
 		Node root = doc.getDocumentElement();
 		String projectName = root.getAttributes().getNamedItem("name").getNodeValue();
-		
 
 		NodeList operationList = doc.getElementsByTagName("operation");
 		NodeList queryList = doc.getElementsByTagName("queryParameters");
@@ -245,10 +251,9 @@ public class ConnectToMDEOntology {
 						Node elementNode = elementsList.item(temp5);
 						if (elementNode.getNodeType() == Node.ELEMENT_NODE) {
 							ArrayList<MDERepresentation> subElements = getSubElements(elementNode);
-							
+
 							subNames.add(subElements.get(0).getHasName());
-							
-							
+
 							hasInput.add(subElements.get(0));
 						}
 					}
@@ -269,9 +274,9 @@ public class ConnectToMDEOntology {
 						Node elementNode = elementsList.item(temp7);
 						if (elementNode.getNodeType() == Node.ELEMENT_NODE) {
 							ArrayList<MDERepresentation> subElements = getSubElements(elementNode);
-							
+
 							subNames.add(subElements.get(0).getHasName());
-							
+
 							hasOutput.add(subElements.get(0));
 						}
 					}
@@ -287,32 +292,31 @@ public class ConnectToMDEOntology {
 	}
 
 	private static ArrayList<MDERepresentation> getSubElements(Node parentNode) {
-		
+
 		ArrayList<MDERepresentation> elements = new ArrayList<MDERepresentation>();
 		ArrayList<MDERepresentation> subElements = new ArrayList<MDERepresentation>();
-		//points
+		// points
 		if (parentNode.hasChildNodes()) {
 			NodeList elementsList = parentNode.getChildNodes();
 			for (int temp = 1; temp < elementsList.getLength(); temp++) {
-				//has elements
+				// has elements
 				Node hasElementNode = elementsList.item(temp);
 				if (hasElementNode.getNodeType() == Node.ELEMENT_NODE) {
 					if (hasElementNode.hasChildNodes()) {
 						NodeList eList = hasElementNode.getChildNodes();
 						for (int temp2 = 0; temp2 < eList.getLength(); temp2++) {
-							//pointId,pointName
+							// pointId,pointName
 							Node elementNode = eList.item(temp2);
 							if (elementNode.getNodeType() == Node.ELEMENT_NODE) {
 								ArrayList<MDERepresentation> subsubElements = new ArrayList<MDERepresentation>();
-								
+
 								if (elementNode.hasChildNodes()) {
 									subsubElements = getSubElements(elementNode);
 								}
-								
+
 								subElements.add(subsubElements.get(0));
-								
-								
-							}else if (RAMLCaller.stringContainsItemFromList(elementNode.getNodeValue(), datatypes)){
+
+							} else if (RAMLCaller.stringContainsItemFromList(elementNode.getNodeValue(), datatypes)) {
 								ArrayList<String> subsubNames = new ArrayList<String>();
 								Element hasElement = (Element) hasElementNode;
 								subsubNames.add(elementNode.getNodeValue());
@@ -325,24 +329,24 @@ public class ConnectToMDEOntology {
 								return subElements;
 							}
 						}
-				}
-						ArrayList<String> subNames = new ArrayList<String>();
-						for (MDERepresentation rep : subElements) {
-							subNames.add(rep.getHasName());
-						}
-						MDERepresentation representation;
-						
-							representation = new MDERepresentation(
-									Boolean.parseBoolean(((Element) parentNode).getAttribute("isAuthToken")),
-									Boolean.parseBoolean(((Element) parentNode).getAttribute("isOptional")),
-									((Element) parentNode).getAttribute("belongsToURL"), ((Element) parentNode).getNodeName(),
-									((Element) parentNode).getAttribute("type"), subElements, subNames);
-						
-						elements.add(representation);
 					}
+					ArrayList<String> subNames = new ArrayList<String>();
+					for (MDERepresentation rep : subElements) {
+						subNames.add(rep.getHasName());
+					}
+					MDERepresentation representation;
+
+					representation = new MDERepresentation(
+							Boolean.parseBoolean(((Element) parentNode).getAttribute("isAuthToken")),
+							Boolean.parseBoolean(((Element) parentNode).getAttribute("isOptional")),
+							((Element) parentNode).getAttribute("belongsToURL"), ((Element) parentNode).getNodeName(),
+							((Element) parentNode).getAttribute("type"), subElements, subNames);
+
+					elements.add(representation);
 				}
 			}
-		
+		}
+
 		return elements;
 	}
 
