@@ -124,7 +124,7 @@
    			<with variable="selection">
     			<iterate ifEmpty="false">
      				<adapt type="org.eclipse.core.resources.IResource">
-         				<test property="org.eclipse.core.resources.name" value="*.sc" />
+         				<test property="org.eclipse.core.resources.name" value="*.cservice" />
         			</adapt>
     			</iterate>
            </with>
@@ -140,7 +140,7 @@
 				           <with variable="activeMenuSelection">
 				            <iterate ifEmpty="false">
 				             <adapt type="org.eclipse.core.resources.IResource">
-				               <test property="org.eclipse.core.resources.name" value="*sc" />
+				               <test property="org.eclipse.core.resources.name" value="*cservice" />
 				             </adapt>
 				            </iterate>
 				           </with>
@@ -153,7 +153,7 @@
 				           <with variable="activeMenuSelection">
 				            <iterate ifEmpty="false">
 				             <adapt type="org.eclipse.core.resources.IResource">
-				               <test property="org.eclipse.core.resources.name" value="*sc" />
+				               <test property="org.eclipse.core.resources.name" value="*cservice" />
 				             </adapt>
 				            </iterate>
 				           </with>

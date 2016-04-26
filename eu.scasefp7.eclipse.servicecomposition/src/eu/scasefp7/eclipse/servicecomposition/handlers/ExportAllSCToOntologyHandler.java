@@ -32,7 +32,7 @@ public class ExportAllSCToOntologyHandler extends ExportToOntologyHandler {
 			IStructuredSelection structuredSelection = (IStructuredSelection) selection;
 			List<Object> selectionList = structuredSelection.toList();
 			IProject project = getProjectOfSelectionList(selectionList);
-			ArrayList<IFile> files = getFilesOfProject(project, "sc");
+			ArrayList<IFile> files = getFilesOfProject(project, "cservice");
 			// Iterate over the selected files
 			for (IFile file : files) {
 				if (file != null) {

@@ -61,8 +61,8 @@ public class Matcher {
 
 	public static double getMaxWeight(boolean isRestfulWithDescription) {
 		if (isRestfulWithDescription) {
-			DESCRIPTION_WEIGHT = 4.0;
-			NAME_SIMILARITY_WEIGHT = 1.0;
+			DESCRIPTION_WEIGHT = 3.0;
+			NAME_SIMILARITY_WEIGHT = 2.0;
 		} else {
 			DESCRIPTION_WEIGHT = 1.0;
 			NAME_SIMILARITY_WEIGHT = 4.0;
@@ -150,18 +150,29 @@ public class Matcher {
 			if (!found)
 				return 0;
 		}
-
+		if (operation.getName().toString().contains("cumulative") 
+				|| operation.getName().toString().contains("apihosts")
+				) {
+			int a = 1;
+		}
 		double nameSimilarity = Similarity.similarity(action.getName(), operation.getName());
 		double numberOfWords = action.getName().getComparableForm().split("\\s").length;
 		// double numberOfWords =
 		// operation.getName().getComparableForm().split("\\s").length;
 		nameSimilarity = nameSimilarity / numberOfWords;
 		double descriptionSimilarity = 0;
-		if (!operation.getAccessInfo().getDescription().isEmpty()) {
-			descriptionSimilarity = Similarity.similarity(
-					new ComparableName(
-							operation.getDescription()),
-					action.getName());
+		ArrayList<String> description = new ArrayList<String>();
+		String noDublicatesDesc = "";
+		if (!operation.getDescription().isEmpty()) {
+			substring(operation.getDescription(), description);
+
+			for (String desc : description) {
+				noDublicatesDesc += desc + " ";
+			}
+		}
+
+		if (!operation.getDescription().isEmpty()) {
+			descriptionSimilarity = Similarity.similarity(new ComparableName(noDublicatesDesc), action.getName());
 			// double DescnumberOfWords=((Description)
 			// operation.getAccessInfo().getDescription().get(0)).getDescription().split("\\s").length;
 			descriptionSimilarity = descriptionSimilarity / numberOfWords;
@@ -186,12 +197,12 @@ public class Matcher {
 					break;
 				}
 			}
-//			for (Importer.Argument possibleArgument : possibleOutputs) {
-//				if (hasSame(arg, possibleArgument)) {
-//					inputToInputSimilarity += 1.0 / operation.getInputs().size();
-//					break;
-//				}
-//			}
+			// for (Importer.Argument possibleArgument : possibleOutputs) {
+			// if (hasSame(arg, possibleArgument)) {
+			// inputToInputSimilarity += 1.0 / operation.getInputs().size();
+			// break;
+			// }
+			// }
 		}
 		ArrayList<Argument> nativeOutputs = new ArrayList<Argument>();
 		for (Argument out : operation.getOutputs()) {
@@ -201,12 +212,11 @@ public class Matcher {
 		for (Importer.Argument arg : nativeOutputs) {
 			for (Importer.Argument possibleArgument : possibleOutputs) {
 
-				
-					if (hasSame(arg, possibleArgument)) {
-						//outputSimilarity += 1.0 / operation.getOutputs().size();
-						outputSimilarity += 1.0 / possibleOutputs.size();
-						break;
-					}
+				if (hasSame(arg, possibleArgument)) {
+					// outputSimilarity += 1.0 / operation.getOutputs().size();
+					outputSimilarity += 1.0 / possibleOutputs.size();
+					break;
+				}
 
 			}
 		}
@@ -226,8 +236,8 @@ public class Matcher {
 		// similarity = BIAS + (operation.getMetadata() != null ?
 		// operation.getMetadata().getSimilarity(action) : 0);
 		if (operation.getType().equalsIgnoreCase("RESTful") && !operation.getDescription().isEmpty()) {
-			DESCRIPTION_WEIGHT = 4.0;
-			NAME_SIMILARITY_WEIGHT = 1.0;
+			DESCRIPTION_WEIGHT = 3.0;
+			NAME_SIMILARITY_WEIGHT = 2.0;
 		} else {
 			NAME_SIMILARITY_WEIGHT = 4.0;
 			DESCRIPTION_WEIGHT = 1.0;
@@ -245,6 +255,43 @@ public class Matcher {
 		similarity = similarity / (DESCRIPTION_WEIGHT + POSSIBLE_INPUT_WEIGHT + MANDATORY_INPUT_WEIGHT
 				+ OUTPUT_TO_INPUT_WEIGHT + NAME_SIMILARITY_WEIGHT);
 		return similarity;
+	}
+
+	/**
+	 * Separates a string into different strings every time " " character occurs
+	 * and puts the strings in a list.
+	 * 
+	 * @param s:
+	 *            the initial string
+	 * @param list:
+	 *            the empty list
+	 * @return the list with the string values
+	 */
+	public static ArrayList<String> substring(String s, ArrayList<String> list) {
+		int previousOccurance = 0;
+		int counter = 0;
+		for (int i = 0; i < s.length(); i++) {
+			if (s.charAt(i) == ' ') {
+				counter++;
+				if (counter > 1 && previousOccurance < i) {
+					String part = s.substring(previousOccurance + 1, i);
+					if (!list.contains(part)) {
+						list.add(part);
+					}
+				} else if (counter == 1) {
+					String part = s.substring(previousOccurance, i);
+					if (!list.contains(part)) {
+						list.add(part);
+					}
+				}
+				previousOccurance = i;
+			}
+		}
+		String addString = s.substring(previousOccurance + 1, s.length());
+		if (!list.contains(addString))
+			list.add(addString);
+
+		return list;
 	}
 
 	/**
@@ -327,7 +374,7 @@ public class Matcher {
 		for (int i = 0; i < allOutputs.size(); i++) {
 
 			double nameSimilarity = Similarity.similarity(allOutputs.get(i).getName(), input.getName());
-			nameSimilarity=nameSimilarity/allOutputs.get(i).getName().getComparableForm().split("\\s").length;
+			nameSimilarity = nameSimilarity / allOutputs.get(i).getName().getComparableForm().split("\\s").length;
 			variableServiceSimilarities.add(i, nameSimilarity);
 		}
 
@@ -350,10 +397,8 @@ public class Matcher {
 			}
 		}
 
-		
-			theLinkedVariable = outputMax;
-			inputContent.addParent(newParent);
-		
+		theLinkedVariable = outputMax;
+		inputContent.addParent(newParent);
 
 		return theLinkedVariable;
 	}
@@ -368,43 +413,47 @@ public class Matcher {
 	 * @return the merged variable
 	 * @throws Exception
 	 *             if variables cannot be marged (this should never occur when
-//	 *             using <code>getSameVariableInstances</code>)
-//	 */
-//	public static Importer.Argument mergeVariables(ArrayList<Importer.Argument> variables) throws Exception {
-//		String name = "";
-//		String type = "";
-//		boolean isArray = false;
-//		boolean isNative = true;
-//		ArrayList<Importer.Argument> subtypes = new ArrayList<Importer.Argument>();
-//		ArrayList<Object> classInstanceList = new ArrayList<Object>();
-//		for (Importer.Argument arg : variables) {
-//			if (arg != null) {// && common(classInstanceList,
-//								// arg.getParent()).isEmpty()){
-//				if (name.isEmpty())
-//					name = arg.getName().toString();
-//				// else if(!name.equals(arg.getName()))
-//				// throw new
-//				// Exception("Cannot merge variables due to different non-empty
-//				// variable names: "+name+", "+arg.getName());
-//				if (type.isEmpty())
-//					type = arg.getType();
-//				else if (!arg.getType().isEmpty() && !type.equals(arg.getType()))
-//					throw new Exception("Cannot merge variables due to different non-empty variable types: " + type
-//							+ ", " + arg.getType());
-//				isArray = isArray || arg.isArray();
-//				isNative = isNative && arg.isNative();
-//				addToArray(classInstanceList, arg.getParent());
-//				for (Argument sub : arg.getSubtypes())
-//					if (!subtypes.contains(sub))
-//						subtypes.add(sub);
-//			}
-//		}
-//		if (type.isEmpty())
-//			type = Importer.stringType;
-//		Argument arg = new Importer.Argument(name, type, isArray, isNative, subtypes);
-//		addToArray(arg.getParent(), classInstanceList);
-//		return arg;
-//	}
+	 *             // * using <code>getSameVariableInstances</code>) //
+	 */
+	// public static Importer.Argument
+	// mergeVariables(ArrayList<Importer.Argument> variables) throws Exception {
+	// String name = "";
+	// String type = "";
+	// boolean isArray = false;
+	// boolean isNative = true;
+	// ArrayList<Importer.Argument> subtypes = new
+	// ArrayList<Importer.Argument>();
+	// ArrayList<Object> classInstanceList = new ArrayList<Object>();
+	// for (Importer.Argument arg : variables) {
+	// if (arg != null) {// && common(classInstanceList,
+	// // arg.getParent()).isEmpty()){
+	// if (name.isEmpty())
+	// name = arg.getName().toString();
+	// // else if(!name.equals(arg.getName()))
+	// // throw new
+	// // Exception("Cannot merge variables due to different non-empty
+	// // variable names: "+name+", "+arg.getName());
+	// if (type.isEmpty())
+	// type = arg.getType();
+	// else if (!arg.getType().isEmpty() && !type.equals(arg.getType()))
+	// throw new Exception("Cannot merge variables due to different non-empty
+	// variable types: " + type
+	// + ", " + arg.getType());
+	// isArray = isArray || arg.isArray();
+	// isNative = isNative && arg.isNative();
+	// addToArray(classInstanceList, arg.getParent());
+	// for (Argument sub : arg.getSubtypes())
+	// if (!subtypes.contains(sub))
+	// subtypes.add(sub);
+	// }
+	// }
+	// if (type.isEmpty())
+	// type = Importer.stringType;
+	// Argument arg = new Importer.Argument(name, type, isArray, isNative,
+	// subtypes);
+	// addToArray(arg.getParent(), classInstanceList);
+	// return arg;
+	// }
 
 	/**
 	 * <h1>createCommonVariable</h1> Calls <code>createCommonVariable</code> for
@@ -414,15 +463,17 @@ public class Matcher {
 	 * @return an OwlService which contains the merged variable
 	 * @throws Exception
 	 */
-//	public static OwlService createCommonVariable(ArrayList<OwlService> variableServices) throws Exception {
-//		ArrayList<Importer.Argument> variables = new ArrayList<Importer.Argument>();
-//		for (OwlService variableService : variableServices) {
-//			Importer.Argument arg = variableService.getArgument();
-//			if (arg != null)
-//				variables.add(arg);
-//		}
-//		return new OwlService(mergeVariables(variables));
-//	}
+	// public static OwlService createCommonVariable(ArrayList<OwlService>
+	// variableServices) throws Exception {
+	// ArrayList<Importer.Argument> variables = new
+	// ArrayList<Importer.Argument>();
+	// for (OwlService variableService : variableServices) {
+	// Importer.Argument arg = variableService.getArgument();
+	// if (arg != null)
+	// variables.add(arg);
+	// }
+	// return new OwlService(mergeVariables(variables));
+	// }
 
 	/**
 	 * <h1>mergeVariables</h1> Easier call for <code>mergeVariables</code> for
@@ -433,20 +484,22 @@ public class Matcher {
 	 * @return
 	 * @throws Exception
 	 */
-//	public static Importer.Argument mergeVariables(Importer.Argument var0, Importer.Argument var1) throws Exception {
-//		ArrayList<Importer.Argument> variables = new ArrayList<Importer.Argument>();
-//		variables.add(var0);
-//		variables.add(var1);
-//		return mergeVariables(variables);
-//	}
+	// public static Importer.Argument mergeVariables(Importer.Argument var0,
+	// Importer.Argument var1) throws Exception {
+	// ArrayList<Importer.Argument> variables = new
+	// ArrayList<Importer.Argument>();
+	// variables.add(var0);
+	// variables.add(var1);
+	// return mergeVariables(variables);
+	// }
 	private static void getNative(Argument output, ArrayList<Argument> nativeOutputs) {
-		if (output.isNative()&& !output.isArray()) {
+		if (output.isNative() && !output.isArray()) {
 			nativeOutputs.add(output);
 		}
-		if (!output.isArray()){
-		for (Argument sub : output.getSubtypes()) {
-			getNative(sub, nativeOutputs);
-		}
+		if (!output.isArray()) {
+			for (Argument sub : output.getSubtypes()) {
+				getNative(sub, nativeOutputs);
+			}
 		}
 	}
 }

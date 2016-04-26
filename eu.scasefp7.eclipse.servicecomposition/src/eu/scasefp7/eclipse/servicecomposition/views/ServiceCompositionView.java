@@ -70,6 +70,7 @@ import org.eclipse.core.runtime.MultiStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Platform;
+import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.draw2d.IFigure;
@@ -182,6 +183,7 @@ import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.ISaveablePart;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.PlatformUI;
+import org.eclipse.ui.dialogs.ContainerSelectionDialog;
 import org.eclipse.ui.dialogs.ElementListSelectionDialog;
 import org.eclipse.ui.internal.util.BundleUtility;
 import org.eclipse.ui.part.ViewPart;
@@ -271,6 +273,7 @@ import eu.scasefp7.eclipse.servicecomposition.ui.RenameConditionDialog;
 import eu.scasefp7.eclipse.servicecomposition.ui.RenameEdgeConditionDialog;
 import eu.scasefp7.eclipse.servicecomposition.ui.ResourceFileSelectionDialog;
 import eu.scasefp7.eclipse.servicecomposition.ui.SafeSaveDialog;
+import eu.scasefp7.eclipse.servicecomposition.ui.SelectScaseProjectDialog;
 import eu.scasefp7.eclipse.servicecomposition.ui.TreeDialog;
 
 /**
@@ -6350,6 +6353,67 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 	// }
 	// }
 	//
+
+	private IStatus getXMLPath(Shell shell, Display disp) {
+		String scasePath = "";
+		if (scaseProject == null) {
+			disp.syncExec(new Runnable() {
+
+				@Override
+				public void run() {
+					SelectScaseProjectDialog dialog = new SelectScaseProjectDialog(shell, null, true,
+							"Select an S-CASE project for the .cservice file:");
+
+					dialog.setTitle("Project Selection");
+
+					dialog.open();
+					final Object[] selections = dialog.getResult();
+					if (selections == null) {
+						disp.syncExec(new Runnable() {
+
+							@Override
+							public void run() {
+								MessageDialog.openInformation(disp.getActiveShell(), "Error occured",
+										"Please select or create an S-CASE project first.");
+							}
+
+						});
+						return;
+					}
+					String scaseProjectName = ((Path) dialog.getResult()[0]).segments()[0];
+					scaseProject = ResourcesPlugin.getWorkspace().getRoot().getProject(scaseProjectName);
+					try {
+						if (!scaseProject.getDescription().hasNature("eu.scasefp7.eclipse.core.scaseNature")) {
+							disp.syncExec(new Runnable() {
+
+								@Override
+								public void run() {
+									MessageDialog.openInformation(disp.getActiveShell(), "Error occured",
+											"The project you selected is not an S-CASE project! Please try again!");
+									scaseProject = null;
+									
+								}
+
+							});
+							return;
+						}
+						
+
+					} catch (CoreException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+				}
+			});
+			if (scaseProject == null) {
+				return Status.CANCEL_STATUS;
+			}
+
+		}
+
+		return Status.OK_STATUS;
+	}
+
 	/**
 	 * Runs maven -clean/install command which builds the project and installs
 	 * artifact to the local repository
@@ -6358,8 +6422,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 
 		final Shell shell = new Shell();
 		final Display disp = Display.getCurrent();
-		String XMLpath = ResourcesPlugin.getWorkspace().getRoot().getLocation().toString() + "/" + scaseProject.getName()
-		+ "/compositions/";
+
 		createWarFileJob = new Job("Uploading..") {
 			@Override
 			protected IStatus run(IProgressMonitor monitor) {
@@ -6367,6 +6430,28 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 						IProgressMonitor.UNKNOWN);
 
 				try {
+
+					IStatus s = getXMLPath(shell, disp);
+					if (s.equals(Status.CANCEL_STATUS))
+						return Status.CANCEL_STATUS;
+
+					if (scaseProject == null) {
+						return Status.CANCEL_STATUS;
+					}
+
+					String compositionsFolderLocation = null;
+					try {
+						compositionsFolderLocation = scaseProject.getPersistentProperty(new QualifiedName("",
+								"eu.scasefp7.eclipse.core.ui.compFolder"));
+					} catch (CoreException e) {
+						Activator.log("Error retrieving project property (compositions folder location)", e);
+					}
+					String XMLpath = scaseProject.getLocation().toPortableString() + "/";
+					if (compositionsFolderLocation != null) {
+						if (scaseProject.findMember(new Path(compositionsFolderLocation)).exists())
+							XMLpath = scaseProject.findMember(new Path(compositionsFolderLocation)).getLocation()
+									.toPortableString();
+					}
 
 					File basedir = new File(pomPath);
 					IProgressMonitor monitor2 = new NullProgressMonitor();
@@ -6413,7 +6498,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 					if (webServiceExistsOnServer()) {
 
 						// create .cservice file
-						
+
 						ConnectToMDEOntology.writeToXMLFile(scaseProject, gGenerator.getOperation(), XMLpath);
 						// update YouRest
 						String[] elements = { "Update YouREST (beta)" };
