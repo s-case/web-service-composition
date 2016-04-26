@@ -59,8 +59,8 @@ public class RestfulCodeGenerator {
 		String inputList = "";
 
 		for (OwlService input : inputs) {
-			if (input.getArgument().isTypeOf().equals("QueryParameter")
-					|| input.getArgument().isTypeOf().equals("URIParameter")) {
+			if ((input.getArgument().isTypeOf().equals("QueryParameter")
+					|| input.getArgument().isTypeOf().equals("URIParameter"))&& !input.getisMatchedIO()) {
 				if (!inputList.isEmpty())
 					inputList += ", ";
 				if (input.getArgument().getType().equals("String")) {
@@ -100,8 +100,8 @@ public class RestfulCodeGenerator {
 		inputList = "";
 
 		for (OwlService input : inputs) {
-			if (input.getArgument().isTypeOf().equals("QueryParameter")
-					|| input.getArgument().isTypeOf().equals("URIParameter")) {
+			if ((input.getArgument().isTypeOf().equals("QueryParameter")
+					|| input.getArgument().isTypeOf().equals("URIParameter")) && !input.getisMatchedIO()) {
 				if (!inputList.isEmpty())
 					inputList += ", ";
 				inputList += input.getName().getContent().replaceAll("[0123456789]", "");
