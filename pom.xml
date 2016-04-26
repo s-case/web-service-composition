@@ -67,6 +67,9 @@
             <artifactId>eu.scasefp7.eclipse.core</artifactId>
             <version>1.1.1-SNAPSHOT</version>
         </dependency>
+       
+        
+        
     </dependencies>
 	
 	<build>

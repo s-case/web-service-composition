@@ -16,6 +16,7 @@ import java.io.PrintWriter;
 import java.io.Writer;
 import java.net.Authenticator;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.PasswordAuthentication;
 import java.net.ProtocolException;
 import java.net.URL;
@@ -217,6 +218,7 @@ import com.jcraft.jsch.ChannelSftp;
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.Session;
 
+
 import edu.uci.ics.jung.graph.DirectedSparseGraph;
 import edu.uci.ics.jung.graph.SparseMultigraph;
 import edu.uci.ics.jung.graph.UndirectedSparseGraph;
@@ -247,6 +249,7 @@ import eu.scasefp7.eclipse.servicecomposition.importer.Importer.Operation;
 import eu.scasefp7.eclipse.servicecomposition.importer.JungXMIImporter.Connector;
 import eu.scasefp7.eclipse.servicecomposition.importer.JungXMIImporter.Service;
 import eu.scasefp7.eclipse.servicecomposition.operationCaller.WSDLCaller;
+import eu.scasefp7.eclipse.servicecomposition.repository.ApplicationDomain;
 import eu.scasefp7.eclipse.servicecomposition.repository.RepositoryClient;
 import eu.scasefp7.eclipse.servicecomposition.repository.WSOntology;
 import eu.scasefp7.eclipse.servicecomposition.tester.Algorithm;
@@ -6439,11 +6442,30 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 											if (selectedItem.equals("Update YouREST (beta)")) {
 												// upload to WS ontology
 												// get application domain
+												WSOntology ws = new WSOntology();
+												List<ApplicationDomain> domains=ws.getAllDomainForMenu();
+												Display display = new Display();
+												Shell shell = new Shell(display);
+												shell.setText("Select Application domain");
+												shell.setLayout(new GridLayout(2, false));
+												new Label(shell, SWT.NONE).setText("Icon:");
+											    final Combo doms = new Combo(shell, SWT.DROP_DOWN | SWT.READ_ONLY);
+											    for (int i = 0;i< domains.size();  i++)
+											    	doms.add(domains.get(i).toString());
+											    doms.select(0);
+												shell.pack();
+											    shell.open();
+											    while (!shell.isDisposed()) {
+											      if (!display.readAndDispatch()) {
+											    	  display.sleep();
+											      }
+											    }
+											    disp.dispose();
 												// TODO it should not be
 												// hardcoded!!!!!!!!
 												String applicationDomainURI = "http://www.scasefp7.eu/wsOntology.owl#BusinessDomain";
 												try {
-													WSOntology ws = new WSOntology();
+													
 													ws.createNewWSOperation(generator.getOperation().getHasName(),
 															generator.getInputVariables(), generator.getUriParameters(),
 															generator.getOutputVariables(),
@@ -6615,5 +6637,5 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 	public NonLinearCodeGenerator getGenerator() {
 		return gGenerator;
 	}
-
+	
 }
