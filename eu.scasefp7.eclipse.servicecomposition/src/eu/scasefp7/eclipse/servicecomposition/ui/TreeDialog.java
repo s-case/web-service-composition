@@ -79,7 +79,7 @@ public class TreeDialog extends Dialog {
 		column1.getColumn().setText("Attribute");
 		column1.getColumn().setWidth(200);
 		column1.getColumn().setResizable(true);
-		TreeViewerColumn column2 = new TreeViewerColumn(tree, SWT.RIGHT);
+		TreeViewerColumn column2 = new TreeViewerColumn(tree, SWT.LEFT);
 		column2.getColumn().setText("Value");
 		column2.getColumn().setWidth(200);
 		column2.getColumn().setResizable(true);

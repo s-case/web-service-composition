@@ -16,6 +16,7 @@ import java.io.PrintWriter;
 import java.io.Writer;
 import java.net.Authenticator;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.PasswordAuthentication;
 import java.net.ProtocolException;
 import java.net.URL;
@@ -69,6 +70,7 @@ import org.eclipse.core.runtime.MultiStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Platform;
+import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.draw2d.IFigure;
@@ -218,6 +220,7 @@ import com.jcraft.jsch.ChannelSftp;
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.Session;
 
+
 import edu.uci.ics.jung.graph.DirectedSparseGraph;
 import edu.uci.ics.jung.graph.SparseMultigraph;
 import edu.uci.ics.jung.graph.UndirectedSparseGraph;
@@ -248,6 +251,7 @@ import eu.scasefp7.eclipse.servicecomposition.importer.Importer.Operation;
 import eu.scasefp7.eclipse.servicecomposition.importer.JungXMIImporter.Connector;
 import eu.scasefp7.eclipse.servicecomposition.importer.JungXMIImporter.Service;
 import eu.scasefp7.eclipse.servicecomposition.operationCaller.WSDLCaller;
+import eu.scasefp7.eclipse.servicecomposition.repository.ApplicationDomain;
 import eu.scasefp7.eclipse.servicecomposition.repository.RepositoryClient;
 import eu.scasefp7.eclipse.servicecomposition.repository.WSOntology;
 import eu.scasefp7.eclipse.servicecomposition.tester.Algorithm;
@@ -374,6 +378,9 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 	private NonLinearCodeGenerator generator;
 	// property to denote file is not saved
 	private boolean isDirty = false;
+	//application domain that a sc belongs to
+	private String applicationDomainURI="";
+	
 
 	public void createPartControl(Composite parent) {
 
@@ -3123,7 +3130,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 		sc.redraw();
 		this.rightComposite.update();
 		this.rightComposite.redraw();
-
+		inputsLabelComposite.redraw();
 		sashForm.update();
 		sashForm.redraw();
 		sashForm.layout(true);
@@ -5754,7 +5761,8 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 		dialog.setDialogLocation();
 		if (dialog.open() == Window.OK) {
 			System.out.println(dialog.getProjectName());
-			projectName = dialog.getProjectName().trim();
+			projectName = dialog.getProjectName().trim();			
+			applicationDomainURI=dialog.getApplicationDomainURI();
 		} else {
 			return;
 		}
@@ -6418,7 +6426,8 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 
 		final Shell shell = new Shell();
 		final Display disp = Display.getCurrent();
-
+		
+		
 		createWarFileJob = new Job("Uploading..") {
 			@Override
 			protected IStatus run(IProgressMonitor monitor) {
@@ -6434,8 +6443,21 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 					if (scaseProject == null) {
 						return Status.CANCEL_STATUS;
 					}
-					String XMLpath = ResourcesPlugin.getWorkspace().getRoot().getLocation().toString() + "/"
-							+ scaseProject.getName() + "/compositions/";
+
+					String compositionsFolderLocation = null;
+					try {
+						compositionsFolderLocation = scaseProject.getPersistentProperty(new QualifiedName("",
+								"eu.scasefp7.eclipse.core.ui.compFolder"));
+					} catch (CoreException e) {
+						Activator.log("Error retrieving project property (compositions folder location)", e);
+					}
+					String XMLpath = scaseProject.getLocation().toPortableString() + "/";
+					if (compositionsFolderLocation != null) {
+						if (scaseProject.findMember(new Path(compositionsFolderLocation)).exists())
+							XMLpath = scaseProject.findMember(new Path(compositionsFolderLocation)).getLocation()
+									.toPortableString();
+					}
+
 					File basedir = new File(pomPath);
 					IProgressMonitor monitor2 = new NullProgressMonitor();
 					IMaven maven = MavenPlugin.getMaven();
@@ -6510,9 +6532,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 											if (selectedItem.equals("Update YouREST (beta)")) {
 												// upload to WS ontology
 												// get application domain
-												// TODO it should not be
-												// hardcoded!!!!!!!!
-												String applicationDomainURI = "http://www.scasefp7.eu/wsOntology.owl#BusinessDomain";
+												
 												try {
 													WSOntology ws = new WSOntology();
 													ws.createNewWSOperation(generator.getOperation().getHasName(),
@@ -6686,5 +6706,5 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 	public NonLinearCodeGenerator getGenerator() {
 		return gGenerator;
 	}
-
+	
 }

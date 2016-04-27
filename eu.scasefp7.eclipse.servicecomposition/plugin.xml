@@ -132,7 +132,7 @@
       </handler>
       <handler class="eu.scasefp7.eclipse.servicecomposition.handlers.ExportAllSCToOntologyHandler" commandId="eu.scasefp7.eclipse.servicecomposition.commands.exportAllToOntology"/>
    </extension>
-   <extension
+   <!-- <extension
          point="org.eclipse.ui.menus">
       <menuContribution locationURI="popup:org.eclipse.ui.popup.any">
             <command commandId="eu.scasefp7.eclipse.servicecomposition.commands.exportToOntology" id="eu.scasefp7.eclipse.servicecomposition.menus.exportToOntology" icon="icons/sample.gif">
@@ -160,7 +160,7 @@
                   </visibleWhen>
             </command>
       </menuContribution>
-   </extension>
+   </extension> -->
 
 
 </plugin>

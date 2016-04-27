@@ -7,6 +7,7 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Random;
 import java.util.Set;
 
@@ -67,6 +68,32 @@ public class WSOntology {
 
 			}
 		}
+	}
+	
+
+	public List<ApplicationDomain> getAllDomainForMenu() {
+		List<ApplicationDomain> res = new ArrayList<ApplicationDomain>();
+		ApplicationDomain dom;
+		OntClass cl = ontologyModel.getOntClass(NS + "ApplicationDomains");
+		List list = cl.listInstances().toList();
+		for (int i = 0; i < list.size(); i++) {
+			IndividualImpl ind = (IndividualImpl) list.get(i);
+			dom = new ApplicationDomain();
+			dom.setUri(ind.getURI());
+			dom.setName(getOperationNameFromURI(ind.getURI()));
+			res.add(dom);
+		}
+		return res;
+	}
+
+	public String getOperationNameFromURI(String uri) {
+		IndividualImpl ind = (IndividualImpl) ontologyModel.getIndividual(uri);
+		DatatypeProperty prop = ontologyModel.getDatatypeProperty(NS
+				+ "hasName");
+		if (ind.getPropertyValue(prop) != null) {
+			return ind.getPropertyValue(prop).asLiteral().getString();
+		}
+		return "";
 	}
 
 	public void createNewWSOperation(String projectName, ArrayList<OwlService> inputs,
