@@ -3130,7 +3130,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 		sc.redraw();
 		this.rightComposite.update();
 		this.rightComposite.redraw();
-
+		inputsLabelComposite.redraw();
 		sashForm.update();
 		sashForm.redraw();
 		sashForm.layout(true);
