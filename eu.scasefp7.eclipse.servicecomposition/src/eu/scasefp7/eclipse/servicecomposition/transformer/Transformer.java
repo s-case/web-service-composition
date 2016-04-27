@@ -731,7 +731,9 @@ public class Transformer {
 				}
 				for (int i = possibleOutputs.size() - 1; i >= 0; i--)
 					for (OwlService service : graph.getVertices())
-						if (service.getArgument() == possibleOutputs.get(i) && graph.getPredecessorCount(service) > 0) {
+						if (service.getArgument() == possibleOutputs.get(i) && service.getisMatchedIO()
+						//graph.getPredecessorCount(service) > 0
+						) {
 							possibleOutputs.remove(i);
 							break;
 						}
@@ -753,7 +755,7 @@ public class Transformer {
 							break;
 						}
 					}
-//					if (operation.getName().toString().equals("ResolveIP")){
+//					if (operation.getName().toString().contains("apihost")){
 //						int a=1;
 //					}
 					double match = Matcher.match(dummyService, operation, mandatoryArguments, possibleArguments,
