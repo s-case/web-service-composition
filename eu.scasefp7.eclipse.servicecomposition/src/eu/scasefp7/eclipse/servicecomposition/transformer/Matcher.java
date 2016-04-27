@@ -150,11 +150,7 @@ public class Matcher {
 			if (!found)
 				return 0;
 		}
-		if (operation.getName().toString().contains("cumulative") 
-				|| operation.getName().toString().contains("apihosts")
-				) {
-			int a = 1;
-		}
+
 		double nameSimilarity = Similarity.similarity(action.getName(), operation.getName());
 		double numberOfWords = action.getName().getComparableForm().split("\\s").length;
 		// double numberOfWords =
@@ -306,7 +302,7 @@ public class Matcher {
 		return (arg0.getType().isEmpty() || arg1.getType().isEmpty()
 				|| (arg0.getType().equals(arg1.getType()) && arg0.isArray() == arg1.isArray()))
 				&& (arg0.getName().isEmpty() || arg1.getName().isEmpty()
-						|| Similarity.similarity(arg0.getName(), arg1.getName()) >= VARIABLE_SIMILARITY_THRESHOLD);
+						|| Similarity.similarity(arg0.getName(), arg1.getName())/(Math.max(arg0.getName().getComparableForm().split("\\s").length, arg1.getName().getComparableForm().split("\\s").length)) >= VARIABLE_SIMILARITY_THRESHOLD);
 	}
 
 	/**
@@ -374,7 +370,7 @@ public class Matcher {
 		for (int i = 0; i < allOutputs.size(); i++) {
 
 			double nameSimilarity = Similarity.similarity(allOutputs.get(i).getName(), input.getName());
-			nameSimilarity = nameSimilarity / allOutputs.get(i).getName().getComparableForm().split("\\s").length;
+			nameSimilarity = nameSimilarity / Math.max(allOutputs.get(i).getName().getComparableForm().split("\\s").length,input.getName().getComparableForm().split("\\s").length);
 			variableServiceSimilarities.add(i, nameSimilarity);
 		}
 

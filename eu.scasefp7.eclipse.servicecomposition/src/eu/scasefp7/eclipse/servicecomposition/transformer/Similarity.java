@@ -31,7 +31,15 @@ public class Similarity {
 		public ComparableName(String name) {
 			name = name.trim();
 			this.content = name;
-			comparable = name.replaceAll("(.)([A-Z])([a-z])", "$1 $2$3").toLowerCase();
+//			comparable = name.replaceAll("(.)([A-Z])([a-z])", "$1 $2$3").toLowerCase();
+			comparable = name.replaceAll(
+				      String.format("%s|%s|%s",
+				    	         "(?<=[A-Z])(?=[A-Z][a-z])",
+				    	         "(?<=[^A-Z])(?=[A-Z])",
+				    	         "(?<=[A-Za-z])(?=[^A-Za-z])"
+				    	      ),
+				    	      " "
+				    	   ).toLowerCase();
 			comparable = comparable.replaceAll("\\_", " ").replaceAll("\\-", " ").replaceAll("\\s+", " ").trim();
 			String[] bag = comparable.split("\\s");
 			String comparable = "";
