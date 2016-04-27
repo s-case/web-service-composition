@@ -381,7 +381,7 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 					if (!vars.isEmpty()) {
 						vars += ", ";
 					}
-					vars += "request.get" + input.getName().toString().replaceAll("[0123456789]", "") + "()";
+					vars += "request.get" + input.getName().getContent() + "()";
 
 					String subType = input.getType();
 					if (!operationRequestConstructorVars.isEmpty()) {
@@ -496,7 +496,7 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 		String declaredInputs = "";
 		for (OwlService input : inputVariables) {
 			if ((input.getArgument().isTypeOf().equals("QueryParameter")
-					|| input.getArgument().isTypeOf().equals("URIParameter"))&& !input.getisMatchedIO()) {
+					|| input.getArgument().isTypeOf().equals("URIParameter")) && !input.getisMatchedIO()) {
 				if (!declaredInputs.isEmpty())
 					declaredInputs += ", ";
 				if (input.getArgument().getType() == "") {
@@ -521,11 +521,30 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 		if (hasBodyInput) {
 			for (OwlService input : inputVariables) {
 				boolean existsInOutputs = false;
+
 				if (!input.getArgument().getSubtypes().isEmpty()) {
 					for (OwlService output : outputVariables) {
 						if ((output.getName().getComparableForm().equals(input.getName().getComparableForm())
 								&& output.getArgument().getType().equals(input.getArgument().getType()))) {
-							existsInOutputs = true;
+							int subs = 0;
+							for (Argument subIn : input.getArgument().getSubtypes()) {
+								boolean hasSub = false;
+								for (Argument subOut : output.getArgument().getSubtypes()) {
+									if ((subOut.getName().getComparableForm()
+											.equals(subIn.getName().getComparableForm())
+											&& subOut.getType().equals(subIn.getType()))) {
+										hasSub = true;
+										break;
+									}
+								}
+								if (hasSub) {
+									subs++;
+								}
+							}
+							if (subs == output.getArgument().getSubtypes().size()) {
+								existsInOutputs = true;
+								break;
+							}
 						}
 					}
 					if (!existsInOutputs) {
@@ -550,11 +569,48 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 		String resultClassName = "void";
 		String resultClassDeclaration = "";
 		String resultObjectDeclaration = "";
-		// ArrayList<OwlService> resultVariables = new ArrayList<OwlService>();
+		ArrayList<OwlService> resultVariables = new ArrayList<OwlService>();
 		for (OwlService output : outputVariables) {
+			resultVariables.add(output);
+		}
+		for (OwlService output : outputVariables) {
+			//boolean existsInOutputs = false;
+			
 			if (!output.getArgument().getSubtypes().isEmpty()) {
-				resultClassDeclaration += generateResultObjects(output.getArgument());
+				for (OwlService input : resultVariables) {
+					if ((input.getName().getComparableForm().equals(output.getName().getComparableForm())
+							&& input.getArgument().getType().equals(output.getArgument().getType()))&& !input.equals(output)) {
+						int subs = 0;
+						for (Argument subIn : input.getArgument().getSubtypes()) {
+							boolean hasSub = false;
+							for (Argument subOut : output.getArgument().getSubtypes()) {
+								if ((subOut.getName().getComparableForm()
+										.equals(subIn.getName().getComparableForm())
+										&& subOut.getType().equals(subIn.getType()))) {
+									hasSub = true;
+									break;
+								}
+							}
+							if (hasSub) {
+								subs++;
+							}
+						}
+						if (subs == output.getArgument().getSubtypes().size()) {
+							
+							resultVariables.remove(output);
+							break;
+						}
+					}
+				}
+//				if (!existsInOutputs ) {
+//					requestClassDeclaration += generateResultObjects(output.getArgument());
+					
+//				}
 			}
+			
+		}
+		for (OwlService output : resultVariables){
+			requestClassDeclaration += generateResultObjects(output.getArgument());
 		}
 		resultClassDeclaration += operationResponseObjects;
 
@@ -576,7 +632,7 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 					+ resultClassName + "(";
 			resultClassDeclaration += TAB + "@XmlRootElement(name = \"Response\")\n" + TAB + "public static class "
 					+ resultClassName + "{\n";
-			//remove .replaceAll("[0123456789]", "") for duplicate vars
+			// remove .replaceAll("[0123456789]", "") for duplicate vars
 			for (OwlService arg : outputVariables) {
 				if (!constractorInstanceVars.isEmpty()) {
 					constractorInstanceVars += ", ";
@@ -586,14 +642,12 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 				if (!constractorVars.isEmpty()) {
 					constractorVars += ", ";
 				}
-				constractorVarsBody += TAB + TAB + TAB + "this."
-						+ arg.getName().getContent() + " = "
+				constractorVarsBody += TAB + TAB + TAB + "this." + arg.getName().getContent() + " = "
 						+ arg.getName().getContent() + ";\n";
 				String type = arg.getArgument().getType();
 				if (arg.getArgument().getSubtypes().isEmpty() && !arg.getArgument().isArray()) {
 					constractorVars += "" + type + " " + arg.getName().getContent();
-					resultClassDeclaration += TAB + TAB + "private " + type + " "
-							+ arg.getName().getContent() + ";\n";
+					resultClassDeclaration += TAB + TAB + "private " + type + " " + arg.getName().getContent() + ";\n";
 					// resultClassConstractor1 += TAB + TAB + TAB + "this."
 					// + arg.getName().getContent().replaceAll("[0123456789]",
 					// "") + ";\n";
@@ -605,33 +659,28 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 					} else {
 						type = type.substring(0, 1).toUpperCase() + type.substring(1);
 					}
-					constractorVars += "ArrayList <" + type + "> "
-							+ arg.getName().getContent();
+					constractorVars += "ArrayList <" + type + "> " + arg.getName().getContent();
 					resultClassDeclaration += TAB + TAB + "private ArrayList <" + type + "> "
-							+ arg.getName().getContent() + " = new ArrayList<" + type
-							+ ">();\n";
-					resultClassConstractor1 += TAB + TAB + TAB + "this."
-							+ arg.getName().getContent() + " = new ArrayList<" + type
-							+ ">();\n";
+							+ arg.getName().getContent() + " = new ArrayList<" + type + ">();\n";
+					resultClassConstractor1 += TAB + TAB + TAB + "this." + arg.getName().getContent()
+							+ " = new ArrayList<" + type + ">();\n";
 				} else if (arg.getArgument().isArray()
 						&& !RAMLCaller.stringIsItemFromList(arg.getArgument().getType(), datatypes)) {
 					constractorVars += "ArrayList <" + type.substring(0, 1).toUpperCase() + type.substring(1) + "> "
 							+ arg.getName().getContent();
 					resultClassDeclaration += TAB + TAB + "private ArrayList <" + type.substring(0, 1).toUpperCase()
-							+ type.substring(1) + "> " + arg.getName().getContent()
-							+ " = new ArrayList<" + type.substring(0, 1).toUpperCase() + type.substring(1) + ">();\n";
-					resultClassConstractor1 += TAB + TAB + TAB + "this."
-							+ arg.getName().getContent() + " = new ArrayList<"
+							+ type.substring(1) + "> " + arg.getName().getContent() + " = new ArrayList<"
 							+ type.substring(0, 1).toUpperCase() + type.substring(1) + ">();\n";
+					resultClassConstractor1 += TAB + TAB + TAB + "this." + arg.getName().getContent()
+							+ " = new ArrayList<" + type.substring(0, 1).toUpperCase() + type.substring(1) + ">();\n";
 
 				} else if (!arg.getArgument().isArray() && !arg.getArgument().getSubtypes().isEmpty()) {
 					constractorVars += type.substring(0, 1).toUpperCase() + type.substring(1) + " "
 							+ arg.getName().getContent();
 					resultClassDeclaration += TAB + TAB + "private " + type.substring(0, 1).toUpperCase()
-							+ type.substring(1) + " " + arg.getName().getContent()
-							+ " = new " + type.substring(0, 1).toUpperCase() + type.substring(1) + "();\n";
-					resultClassConstractor1 += TAB + TAB + TAB + "this."
-							+ arg.getName().getContent() + " = new "
+							+ type.substring(1) + " " + arg.getName().getContent() + " = new "
+							+ type.substring(0, 1).toUpperCase() + type.substring(1) + "();\n";
+					resultClassConstractor1 += TAB + TAB + TAB + "this." + arg.getName().getContent() + " = new "
 							+ type.substring(0, 1).toUpperCase() + type.substring(1) + "();\n";
 				}
 
@@ -651,15 +700,13 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 			for (OwlService arg : outputVariables) {
 				String type = arg.getArgument().getType();
 				if (arg.getArgument().getSubtypes().isEmpty() && !arg.getArgument().isArray()) {
-					resultClassDeclaration += TAB + TAB + "public void set"
-							+ arg.getName().getContent() + "(" + type + " "
-							+ arg.getName().getContent().replaceAll("[0123456789]", "") + ") {\n" + TAB + TAB + TAB
-							+ "this." + arg.getName().getContent() + " = "
+					resultClassDeclaration += TAB + TAB + "public void set" + arg.getName().getContent() + "(" + type
+							+ " " + arg.getName().getContent().replaceAll("[0123456789]", "") + ") {\n" + TAB + TAB
+							+ TAB + "this." + arg.getName().getContent() + " = "
 							+ arg.getName().getContent().replaceAll("[0123456789]", "") + ";\n" + TAB + TAB + "}\n";
 					resultClassDeclaration += TAB + TAB + "@XmlElement\n" + TAB + TAB + "public " + type + " get"
-							+ arg.getName().getContent() + "() {\n" + TAB + TAB + TAB
-							+ "return " + arg.getName().getContent() + ";\n" + TAB + TAB
-							+ "}\n";
+							+ arg.getName().getContent() + "() {\n" + TAB + TAB + TAB + "return "
+							+ arg.getName().getContent() + ";\n" + TAB + TAB + "}\n";
 				} else if (arg.getArgument().isArray()
 						&& RAMLCaller.stringIsItemFromList(arg.getArgument().getType(), datatypes)) {
 					if (type.equals("int")) {
@@ -667,41 +714,35 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 					} else {
 						type = type.substring(0, 1).toUpperCase() + type.substring(1);
 					}
-					resultClassDeclaration += TAB + TAB + "public void set"
-							+ arg.getName().getContent() + "(ArrayList<" + type + "> "
-							+ arg.getName().getContent().replaceAll("[0123456789]", "") + ") {\n" + TAB + TAB + TAB
-							+ "this." + arg.getName().getContent() + " = "
+					resultClassDeclaration += TAB + TAB + "public void set" + arg.getName().getContent() + "(ArrayList<"
+							+ type + "> " + arg.getName().getContent().replaceAll("[0123456789]", "") + ") {\n" + TAB
+							+ TAB + TAB + "this." + arg.getName().getContent() + " = "
 							+ arg.getName().getContent().replaceAll("[0123456789]", "") + ";\n" + TAB + TAB + "}\n";
 					resultClassDeclaration += TAB + TAB + "@XmlElement\n" + TAB + TAB + "public ArrayList<" + type
-							+ "> get" + arg.getName().getContent() + "() {\n" + TAB + TAB
-							+ TAB + "return " + arg.getName().getContent() + ";\n" + TAB
-							+ TAB + "}\n";
+							+ "> get" + arg.getName().getContent() + "() {\n" + TAB + TAB + TAB + "return "
+							+ arg.getName().getContent() + ";\n" + TAB + TAB + "}\n";
 				} else if (arg.getArgument().isArray()
 						&& !RAMLCaller.stringIsItemFromList(arg.getArgument().getType(), datatypes)) {
 
-					resultClassDeclaration += TAB + TAB + "public void set"
-							+ arg.getName().getContent() + "(ArrayList<"
+					resultClassDeclaration += TAB + TAB + "public void set" + arg.getName().getContent() + "(ArrayList<"
 							+ type.substring(0, 1).toUpperCase() + type.substring(1) + "> "
 							+ arg.getName().getContent().replaceAll("[0123456789]", "") + ") {\n" + TAB + TAB + TAB
 							+ "this." + arg.getName().getContent() + " = "
 							+ arg.getName().getContent().replaceAll("[0123456789]", "") + ";\n" + TAB + TAB + "}\n";
 					resultClassDeclaration += TAB + TAB + "@XmlElement\n" + TAB + TAB + "public ArrayList<"
 							+ type.substring(0, 1).toUpperCase() + type.substring(1) + "> get"
-							+ arg.getName().getContent() + "() {\n" + TAB + TAB + TAB
-							+ "return " + arg.getName().getContent() + ";\n" + TAB + TAB
-							+ "}\n";
+							+ arg.getName().getContent() + "() {\n" + TAB + TAB + TAB + "return "
+							+ arg.getName().getContent() + ";\n" + TAB + TAB + "}\n";
 				} else if (!arg.getArgument().isArray() && !arg.getArgument().getSubtypes().isEmpty()) {
-					resultClassDeclaration += TAB + TAB + "public void set"
-							+ arg.getName().getContent() + "("
+					resultClassDeclaration += TAB + TAB + "public void set" + arg.getName().getContent() + "("
 							+ type.substring(0, 1).toUpperCase() + type.substring(1) + " "
 							+ arg.getName().getContent().replaceAll("[0123456789]", "") + ") {\n" + TAB + TAB + TAB
 							+ "this." + arg.getName().getContent() + " = "
 							+ arg.getName().getContent().replaceAll("[0123456789]", "") + ";\n" + TAB + TAB + "}\n";
 					resultClassDeclaration += TAB + TAB + "@XmlElement\n" + TAB + TAB + "public "
 							+ type.substring(0, 1).toUpperCase() + type.substring(1) + " get"
-							+ arg.getName().getContent() + "() {\n" + TAB + TAB + TAB
-							+ "return " + arg.getName().getContent() + ";\n" + TAB + TAB
-							+ "}\n";
+							+ arg.getName().getContent() + "() {\n" + TAB + TAB + TAB + "return "
+							+ arg.getName().getContent() + ";\n" + TAB + TAB + "}\n";
 				}
 			}
 
@@ -742,15 +783,13 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 						if (!constractorVars.isEmpty()) {
 							constractorVars += ", ";
 						}
-						constractorVarsBody += TAB + TAB + TAB + "this."
-								+ arg.getName().getContent()+ " = "
-								+ arg.getName().getContent().replaceAll("[0123456789]", "") + ";\n";
+						constractorVarsBody += TAB + TAB + TAB + "this." + arg.getName().getContent() + " = "
+								+ arg.getName().getContent() + ";\n";
 						String type = arg.getArgument().getType();
 						if (arg.getArgument().getSubtypes().isEmpty() && !arg.getArgument().isArray()) {
-							constractorVars += "" + type + " "
-									+ arg.getName().getContent();
-							requestClassDeclaration += TAB + TAB + "private " + type + " "
-									+ arg.getName().getContent() + ";\n";
+							constractorVars += "" + type + " " + arg.getName().getContent();
+							requestClassDeclaration += TAB + TAB + "private " + type + " " + arg.getName().getContent()
+									+ ";\n";
 							// requestClassConstractor1 += TAB + TAB + TAB +
 							// "this."
 							// +
@@ -763,14 +802,11 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 							} else {
 								type = type.substring(0, 1).toUpperCase() + type.substring(1);
 							}
-							constractorVars += "ArrayList <" + type + "> "
-									+ arg.getName().getContent();
+							constractorVars += "ArrayList <" + type + "> " + arg.getName().getContent();
 							requestClassDeclaration += TAB + TAB + "private ArrayList <" + type + "> "
-									+ arg.getName().getContent() + " = new ArrayList<"
-									+ type + ">();\n";
-							requestClassConstractor1 += TAB + TAB + TAB + "this."
-									+ arg.getName().getContent() + " = new ArrayList<"
-									+ type + ">();\n";
+									+ arg.getName().getContent() + " = new ArrayList<" + type + ">();\n";
+							requestClassConstractor1 += TAB + TAB + TAB + "this." + arg.getName().getContent()
+									+ " = new ArrayList<" + type + ">();\n";
 						} else if (arg.getArgument().isArray()
 								&& !RAMLCaller.stringIsItemFromList(arg.getArgument().getType(), datatypes)) {
 							constractorVars += "ArrayList <" + type.substring(0, 1).toUpperCase() + type.substring(1)
@@ -779,20 +815,18 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 									+ type.substring(0, 1).toUpperCase() + type.substring(1) + "> "
 									+ arg.getName().getContent() + " = new ArrayList<"
 									+ type.substring(0, 1).toUpperCase() + type.substring(1) + ">();\n";
-							requestClassConstractor1 += TAB + TAB + TAB + "this."
-									+ arg.getName().getContent() + " = new ArrayList<"
-									+ type.substring(0, 1).toUpperCase() + type.substring(1) + ">();\n";
+							requestClassConstractor1 += TAB + TAB + TAB + "this." + arg.getName().getContent()
+									+ " = new ArrayList<" + type.substring(0, 1).toUpperCase() + type.substring(1)
+									+ ">();\n";
 
 						} else if (!arg.getArgument().isArray() && !arg.getArgument().getSubtypes().isEmpty()) {
 							constractorVars += type.substring(0, 1).toUpperCase() + type.substring(1) + " "
 									+ arg.getName().getContent();
 							requestClassDeclaration += TAB + TAB + "private " + type.substring(0, 1).toUpperCase()
-									+ type.substring(1) + " "
-									+ arg.getName().getContent() + " = new "
+									+ type.substring(1) + " " + arg.getName().getContent() + " = new "
 									+ type.substring(0, 1).toUpperCase() + type.substring(1) + "();\n";
-							requestClassConstractor1 += TAB + TAB + TAB + "this."
-									+ arg.getName().getContent() + " = new "
-									+ type.substring(0, 1).toUpperCase() + type.substring(1) + "();\n";
+							requestClassConstractor1 += TAB + TAB + TAB + "this." + arg.getName().getContent()
+									+ " = new " + type.substring(0, 1).toUpperCase() + type.substring(1) + "();\n";
 						}
 					}
 				}
@@ -812,17 +846,14 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 					if (arg.getArgument().isTypeOf().equals("BodyParameter")) {
 						String type = arg.getArgument().getType();
 						if (arg.getArgument().getSubtypes().isEmpty() && !arg.getArgument().isArray()) {
-							requestClassDeclaration += TAB + TAB + "public void set"
-									+ arg.getName().getContent() + "(" + type + " "
-									+ arg.getName().getContent().replaceAll("[0123456789]", "") + ") {\n" + TAB + TAB
-									+ TAB + "this." + arg.getName().getContent() + " = "
+							requestClassDeclaration += TAB + TAB + "public void set" + arg.getName().getContent() + "("
+									+ type + " " + arg.getName().getContent().replaceAll("[0123456789]", "") + ") {\n"
+									+ TAB + TAB + TAB + "this." + arg.getName().getContent() + " = "
 									+ arg.getName().getContent().replaceAll("[0123456789]", "") + ";\n" + TAB + TAB
 									+ "}\n";
 							requestClassDeclaration += TAB + TAB + "@XmlElement\n" + TAB + TAB + "public " + type
-									+ " get" + arg.getName().getContent() + "() {\n"
-									+ TAB + TAB + TAB + "return "
-									+ arg.getName().getContent() + ";\n" + TAB + TAB
-									+ "}\n";
+									+ " get" + arg.getName().getContent() + "() {\n" + TAB + TAB + TAB + "return "
+									+ arg.getName().getContent() + ";\n" + TAB + TAB + "}\n";
 						} else if (arg.getArgument().isArray()
 								&& RAMLCaller.stringIsItemFromList(arg.getArgument().getType(), datatypes)) {
 							if (type.equals("int")) {
@@ -830,35 +861,30 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 							} else {
 								type = type.substring(0, 1).toUpperCase() + type.substring(1);
 							}
-							requestClassDeclaration += TAB + TAB + "public void set"
-									+ arg.getName().getContent()+ "(ArrayList<" + type
-									+ "> " + arg.getName().getContent().replaceAll("[0123456789]", "") + ") {\n" + TAB
-									+ TAB + TAB + "this." + arg.getName().getContent() + " = "
+							requestClassDeclaration += TAB + TAB + "public void set" + arg.getName().getContent()
+									+ "(ArrayList<" + type + "> "
+									+ arg.getName().getContent().replaceAll("[0123456789]", "") + ") {\n" + TAB + TAB
+									+ TAB + "this." + arg.getName().getContent() + " = "
 									+ arg.getName().getContent().replaceAll("[0123456789]", "") + ";\n" + TAB + TAB
 									+ "}\n";
 							requestClassDeclaration += TAB + TAB + "@XmlElement\n" + TAB + TAB + "public ArrayList<"
-									+ type + "> get" + arg.getName().getContent()
-									+ "() {\n" + TAB + TAB + TAB + "return "
-									+ arg.getName().getContent() + ";\n" + TAB + TAB
-									+ "}\n";
+									+ type + "> get" + arg.getName().getContent() + "() {\n" + TAB + TAB + TAB
+									+ "return " + arg.getName().getContent() + ";\n" + TAB + TAB + "}\n";
 						} else if (arg.getArgument().isArray()
 								&& !RAMLCaller.stringIsItemFromList(arg.getArgument().getType(), datatypes)) {
 
-							requestClassDeclaration += TAB + TAB + "public void set"
-									+ arg.getName().getContent() + "(ArrayList<"
-									+ type.substring(0, 1).toUpperCase() + type.substring(1) + "> "
+							requestClassDeclaration += TAB + TAB + "public void set" + arg.getName().getContent()
+									+ "(ArrayList<" + type.substring(0, 1).toUpperCase() + type.substring(1) + "> "
 									+ arg.getName().getContent().replaceAll("[0123456789]", "") + ") {\n" + TAB + TAB
 									+ TAB + "this." + arg.getName().getContent() + " = "
 									+ arg.getName().getContent().replaceAll("[0123456789]", "") + ";\n" + TAB + TAB
 									+ "}\n";
 							requestClassDeclaration += TAB + TAB + "@XmlElement\n" + TAB + TAB + "public ArrayList<"
 									+ type.substring(0, 1).toUpperCase() + type.substring(1) + "> get"
-									+ arg.getName().getContent() + "() {\n" + TAB + TAB
-									+ TAB + "return " + arg.getName().getContent()
-									+ ";\n" + TAB + TAB + "}\n";
+									+ arg.getName().getContent() + "() {\n" + TAB + TAB + TAB + "return "
+									+ arg.getName().getContent() + ";\n" + TAB + TAB + "}\n";
 						} else if (!arg.getArgument().isArray() && !arg.getArgument().getSubtypes().isEmpty()) {
-							requestClassDeclaration += TAB + TAB + "public void set"
-									+ arg.getName().getContent() + "("
+							requestClassDeclaration += TAB + TAB + "public void set" + arg.getName().getContent() + "("
 									+ type.substring(0, 1).toUpperCase() + type.substring(1) + " "
 									+ arg.getName().getContent().replaceAll("[0123456789]", "") + ") {\n" + TAB + TAB
 									+ TAB + "this." + arg.getName().getContent() + " = "
@@ -866,9 +892,8 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 									+ "}\n";
 							requestClassDeclaration += TAB + TAB + "@XmlElement\n" + TAB + TAB + "public "
 									+ type.substring(0, 1).toUpperCase() + type.substring(1) + " get"
-									+ arg.getName().getContent() + "() {\n" + TAB + TAB
-									+ TAB + "return " + arg.getName().getContent()
-									+ ";\n" + TAB + TAB + "}\n";
+									+ arg.getName().getContent() + "() {\n" + TAB + TAB + TAB + "return "
+									+ arg.getName().getContent() + ";\n" + TAB + TAB + "}\n";
 						}
 					}
 				}
@@ -886,7 +911,7 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 		if (hasBodyInput)
 			declaredInputs += constractorInstanceInputVars;
 		for (OwlService arg : inputVariables) {
-			if (arg.getArgument().isTypeOf().equals("QueryParameter")&& !arg.getisMatchedIO()) {
+			if (arg.getArgument().isTypeOf().equals("QueryParameter") && !arg.getisMatchedIO()) {
 				String type = arg.getArgument().getType();
 
 				declaredInputs += TAB + TAB + "if (" + arg.getName().getContent() + " == null) {\n";
@@ -909,7 +934,7 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 		}
 		declaredInputs += TAB + TAB + "//assign uri parameters to variables\n";
 		for (OwlService param : inputVariables) {
-			if (param.getArgument().isTypeOf().equals("URIParameter")&& !param.getisMatchedIO()) {
+			if (param.getArgument().isTypeOf().equals("URIParameter") && !param.getisMatchedIO()) {
 				declaredInputs += TAB + TAB + "if (" + param.getName().getContent() + " == null) {\n";
 				declaredInputs += TAB + TAB + TAB + "this." + param.getName().getContent() + ".value" + " =\"\";\n";
 				declaredInputs += TAB + TAB + "} else {\n";
@@ -969,7 +994,6 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 
 		declaredInputs += TAB + TAB + TAB + "//update matchedIO variable values\n";
 
-		
 		for (OwlService matchedOutput : matchedOutputs) {
 			boolean isMemberOfArray = false;
 
@@ -992,7 +1016,7 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 					arrayIsMatched = true;
 
 				}
-				if (arrayIsMatched){
+				if (arrayIsMatched) {
 					for (OwlService matchedInput : graph.getSuccessors(matchedOutput)) {
 						boolean successorIsMemberOfArray = false;
 						for (Object parent : matchedInput.getArgument().getParent()) {
@@ -1002,49 +1026,56 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 								}
 						}
 						if (successorIsMemberOfArray) {
-							OwlService successorInitialArray = ServiceCompositionView.getInitialArray(
-									matchedInput, graph, true);
-							//clear matched elements
-						ArrayList<Argument> in = successorInitialArray.getArgument().getBelongsToOperation().getInputs();
-						
+							OwlService successorInitialArray = ServiceCompositionView.getInitialArray(matchedInput,
+									graph, true);
+							// clear matched elements
+							ArrayList<Argument> in = successorInitialArray.getArgument().getBelongsToOperation()
+									.getInputs();
+
 							int i = 0;
-//							if (arrayIsMatched && array != initialArray) {
-//								String ret = ".get" + matchedOutput.getName().getContent().replaceAll("[0123456789]", "") + "()";
-//								array = initialArray;
-//							}
-						} 
+							// if (arrayIsMatched && array != initialArray) {
+							// String ret = ".get" +
+							// matchedOutput.getName().getContent().replaceAll("[0123456789]",
+							// "") + "()";
+							// array = initialArray;
+							// }
+						}
 					}
 				}
-			}else{
-			for (OwlService matchedInput : graph.getSuccessors(matchedOutput)) {
-				// if
-				// (matchedInput.getArgument().getBelongsToOperation().getType().equalsIgnoreCase("SOAP"))
-				// {
-				// declaredInputs += TAB + TAB + TAB +
-				// matchedInput.getName().getContent().toString() + ".value = "
-				// + matchedOutput.getName().getContent().toString() +
-				// ".value;\n";
-				// } else {
-				String ret = ".get" + matchedOutput.getName().getContent().replaceAll("[0123456789]", "") + "()";
-				ret = roadToSub(matchedOutput, graph, ret);
-				String type = matchedOutput.getArgument().getType();
-				if (type.equalsIgnoreCase("String")) {
-					declaredInputs += TAB + TAB + TAB + "this." + matchedInput.getName().getContent().toString() + ".value = "
-							+ matchedOutput.getArgument().getBelongsToOperation().getName() + "_response" + ret + ";\n";
+			} else {
+				for (OwlService matchedInput : graph.getSuccessors(matchedOutput)) {
+					// if
+					// (matchedInput.getArgument().getBelongsToOperation().getType().equalsIgnoreCase("SOAP"))
+					// {
+					// declaredInputs += TAB + TAB + TAB +
+					// matchedInput.getName().getContent().toString() + ".value
+					// = "
+					// + matchedOutput.getName().getContent().toString() +
+					// ".value;\n";
+					// } else {
+					String ret = ".get" + matchedOutput.getName().getContent().replaceAll("[0123456789]", "") + "()";
+					ret = roadToSub(matchedOutput, graph, ret);
+					String type = matchedOutput.getArgument().getType();
+					if (type.equalsIgnoreCase("String")) {
+						declaredInputs += TAB + TAB + TAB + "this." + matchedInput.getName().getContent().toString()
+								+ ".value = " + matchedOutput.getArgument().getBelongsToOperation().getName()
+								+ "_response" + ret + ";\n";
 
-				} else if (type.equalsIgnoreCase("int")) {
-					declaredInputs += TAB + TAB + TAB + "this." + matchedInput.getName().getContent().toString() + ".value = "
-							+ " = Integer.toString(" + matchedOutput.getArgument().getBelongsToOperation().getName() + "_response" + ret + ");\n";
-				} else {
-					declaredInputs += TAB + TAB + TAB + "this." + matchedInput.getName().getContent().toString() + ".value = "
-							+ type.substring(0, 1).toUpperCase() + type.substring(1) + ".toString("
-							+ matchedOutput.getArgument().getBelongsToOperation().getName() + "_response" + ret  + ");\n";
+					} else if (type.equalsIgnoreCase("int")) {
+						declaredInputs += TAB + TAB + TAB + "this." + matchedInput.getName().getContent().toString()
+								+ ".value = " + " = Integer.toString("
+								+ matchedOutput.getArgument().getBelongsToOperation().getName() + "_response" + ret
+								+ ");\n";
+					} else {
+						declaredInputs += TAB + TAB + TAB + "this." + matchedInput.getName().getContent().toString()
+								+ ".value = " + type.substring(0, 1).toUpperCase() + type.substring(1) + ".toString("
+								+ matchedOutput.getArgument().getBelongsToOperation().getName() + "_response" + ret
+								+ ");\n";
+					}
+
+					// }
+
 				}
-				
-				
-				// }
-
-			}
 			}
 		}
 		declaredInputs += TAB + TAB + TAB + "}\n";
@@ -1070,11 +1101,12 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 				+ variableClassDeclaration + functionCode + declaredInputs + requestObjectDeclaration
 				+ resultObjectDeclaration + TAB + "}\n}";
 
-		String crudVerb="GET";
-		if (hasBodyInput){
+		String crudVerb = "GET";
+		if (hasBodyInput) {
 			crudVerb = "POST";
 		}
-		operation = instance.createObjects(ProjectName, inputVariables, uriParameters, outputVariables, crudVerb, graph);
+		operation = instance.createObjects(ProjectName, inputVariables, uriParameters, outputVariables, crudVerb,
+				graph);
 
 		return returnCode;
 	}
