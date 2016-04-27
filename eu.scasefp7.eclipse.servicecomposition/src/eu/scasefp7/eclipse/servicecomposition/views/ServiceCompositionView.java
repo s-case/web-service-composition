@@ -378,6 +378,9 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 	private NonLinearCodeGenerator generator;
 	// property to denote file is not saved
 	private boolean isDirty = false;
+	//application domain that a sc belongs to
+	private String applicationDomainURI="";
+	
 
 	public void createPartControl(Composite parent) {
 
@@ -5758,7 +5761,8 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 		dialog.setDialogLocation();
 		if (dialog.open() == Window.OK) {
 			System.out.println(dialog.getProjectName());
-			projectName = dialog.getProjectName().trim();
+			projectName = dialog.getProjectName().trim();			
+			applicationDomainURI=dialog.getApplicationDomainURI();
 		} else {
 			return;
 		}
@@ -6422,7 +6426,8 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 
 		final Shell shell = new Shell();
 		final Display disp = Display.getCurrent();
-
+		
+		
 		createWarFileJob = new Job("Uploading..") {
 			@Override
 			protected IStatus run(IProgressMonitor monitor) {
@@ -6527,30 +6532,9 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 											if (selectedItem.equals("Update YouREST (beta)")) {
 												// upload to WS ontology
 												// get application domain
-												WSOntology ws = new WSOntology();
-												List<ApplicationDomain> domains=ws.getAllDomainForMenu();
-												Display display = new Display();
-												Shell shell = new Shell(display);
-												shell.setText("Select Application domain");
-												shell.setLayout(new GridLayout(2, false));
-												new Label(shell, SWT.NONE).setText("Icon:");
-											    final Combo doms = new Combo(shell, SWT.DROP_DOWN | SWT.READ_ONLY);
-											    for (int i = 0;i< domains.size();  i++)
-											    	doms.add(domains.get(i).toString());
-											    doms.select(0);
-												shell.pack();
-											    shell.open();
-											    while (!shell.isDisposed()) {
-											      if (!display.readAndDispatch()) {
-											    	  display.sleep();
-											      }
-											    }
-											    disp.dispose();
-												// TODO it should not be
-												// hardcoded!!!!!!!!
-												String applicationDomainURI = "http://www.scasefp7.eu/wsOntology.owl#BusinessDomain";
+												
 												try {
-													
+													WSOntology ws = new WSOntology();
 													ws.createNewWSOperation(generator.getOperation().getHasName(),
 															generator.getInputVariables(), generator.getUriParameters(),
 															generator.getOutputVariables(),
