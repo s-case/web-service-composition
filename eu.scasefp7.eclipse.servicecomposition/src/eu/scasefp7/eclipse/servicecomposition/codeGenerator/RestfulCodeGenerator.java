@@ -64,17 +64,17 @@ public class RestfulCodeGenerator {
 				if (!inputList.isEmpty())
 					inputList += ", ";
 				if (input.getArgument().getType().equals("String")) {
-					inputList += "@QueryParam(\"" + input.getName().getContent().replaceAll("[0123456789]", "") + "\") "
+					inputList += "@QueryParam(\"" + input.getName().getContent() + "\") "
 							+ input.getArgument().getType() + " "
-							+ input.getName().getContent().replaceAll("[0123456789]", "");
+							+ input.getName().getContent();
 				} else if (input.getArgument().getType().equals("int")) {
-					inputList += "@QueryParam(\"" + input.getName().getContent().replaceAll("[0123456789]", "")
-							+ "\") Integer " + input.getName().getContent().replaceAll("[0123456789]", "");
+					inputList += "@QueryParam(\"" + input.getName().getContent()
+							+ "\") Integer " + input.getName().getContent();
 				} else {
 					String type = input.getArgument().getType();
-					inputList += "@QueryParam(\"" + input.getName().getContent().replaceAll("[0123456789]", "") + "\") "
+					inputList += "@QueryParam(\"" + input.getName().getContent() + "\") "
 							+ type.substring(0, 1).toUpperCase() + type.substring(1) + " "
-							+ input.getName().getContent().replaceAll("[0123456789]", "");
+							+ input.getName().getContent();
 				}
 			}
 
@@ -104,7 +104,7 @@ public class RestfulCodeGenerator {
 					|| input.getArgument().isTypeOf().equals("URIParameter")) && !input.getisMatchedIO()) {
 				if (!inputList.isEmpty())
 					inputList += ", ";
-				inputList += input.getName().getContent().replaceAll("[0123456789]", "");
+				inputList += input.getName().getContent();
 			}
 		}
 		if (containsPost) {

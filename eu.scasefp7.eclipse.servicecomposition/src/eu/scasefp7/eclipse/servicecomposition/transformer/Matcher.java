@@ -374,11 +374,11 @@ public class Matcher {
 		for (int i = 0; i < allOutputs.size(); i++) {
 
 			double nameSimilarity = Similarity.similarity(allOutputs.get(i).getName(), input.getName());
-<<<<<<< HEAD
+
 			nameSimilarity = nameSimilarity / allOutputs.get(i).getName().getComparableForm().split("\\s").length;
-=======
+
 			nameSimilarity = nameSimilarity / Math.max(allOutputs.get(i).getName().getComparableForm().split("\\s").length,input.getName().getComparableForm().split("\\s").length);
->>>>>>> ab8844cbc8c12059d3ecda03940f0080be7f136e
+
 			variableServiceSimilarities.add(i, nameSimilarity);
 		}
 
