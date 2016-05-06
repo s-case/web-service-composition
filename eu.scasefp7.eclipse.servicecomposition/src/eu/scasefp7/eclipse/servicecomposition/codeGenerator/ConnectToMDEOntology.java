@@ -1,5 +1,7 @@
 package eu.scasefp7.eclipse.servicecomposition.codeGenerator;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -15,7 +17,11 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
+import org.eclipse.core.resources.IContainer;
+import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.Path;
 import org.w3c.dom.Attr;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -417,7 +423,7 @@ public class ConnectToMDEOntology {
 		linkedOntology.close();
 	}
 
-	public static void writeToXMLFile(IProject project, MDEOperation operation, String path) {
+	public static void writeToXMLFile(IProject project, MDEOperation operation, IContainer container) {
 		DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
 		DocumentBuilder docBuilder;
 		try {
@@ -504,16 +510,22 @@ public class ConnectToMDEOntology {
 			transformer.setOutputProperty(OutputKeys.INDENT, "yes");
 			transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
 			DOMSource source = new DOMSource(doc);
-			StreamResult result = new StreamResult(new File(path + operation.getHasName() + ".cservice"));
+			ByteArrayOutputStream baos = new ByteArrayOutputStream();
+			StreamResult result = new StreamResult(baos);
 
 			// Output to console for testing
 			// StreamResult result2 = new StreamResult(System.out);
 
 			transformer.transform(source, result);
+			IFile file = container.getFile(new Path(operation.getHasName() + ".cservice"));
+			if (!file.exists())
+				file.create(new ByteArrayInputStream(baos.toByteArray()), true, null);
+			else
+				file.setContents(new ByteArrayInputStream(baos.toByteArray()), true, false, null);
 
 			System.out.println(".cservice file generated!");
 
-		} catch (ParserConfigurationException | TransformerException e) {
+		} catch (ParserConfigurationException | TransformerException | CoreException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}

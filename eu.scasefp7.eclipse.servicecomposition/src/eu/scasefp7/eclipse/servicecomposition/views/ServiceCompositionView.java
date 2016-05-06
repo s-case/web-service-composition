@@ -6451,11 +6451,11 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 					} catch (CoreException e) {
 						Activator.log("Error retrieving project property (compositions folder location)", e);
 					}
-					String XMLpath = scaseProject.getLocation().toPortableString() + "/";
+					org.eclipse.core.resources.IContainer container = scaseProject;
 					if (compositionsFolderLocation != null) {
 						if (scaseProject.findMember(new Path(compositionsFolderLocation)).exists())
-							XMLpath = scaseProject.findMember(new Path(compositionsFolderLocation)).getLocation()
-									.toPortableString();
+							container = (org.eclipse.core.resources.IContainer) scaseProject.findMember(new Path(
+									compositionsFolderLocation));
 					}
 
 					File basedir = new File(pomPath);
@@ -6504,7 +6504,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 
 						// create .cservice file
 
-						ConnectToMDEOntology.writeToXMLFile(scaseProject, gGenerator.getOperation(), XMLpath);
+						ConnectToMDEOntology.writeToXMLFile(scaseProject, gGenerator.getOperation(), container);
 						// update YouRest
 						String[] elements = { "Update YouREST (beta)" };
 
