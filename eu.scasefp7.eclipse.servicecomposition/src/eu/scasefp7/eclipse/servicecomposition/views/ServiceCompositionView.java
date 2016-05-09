@@ -5287,7 +5287,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 				if (arg.getArgument() != null) {
 					for (Argument argument : arguments) {
 						if (argument.getName().toString().equals(arg.getArgument().getName().toString())
-								&& argument.getType().equals(arg.getArgument().getType())
+								&& argument.getBelongsToOperation().getName().toString().equals(arg.getArgument().getBelongsToOperation().getName().toString())
 								&& Boolean.toString(argument.isArray())
 										.equals(Boolean.toString(arg.getArgument().isArray()))
 								&& Boolean.toString(argument.isNative())
