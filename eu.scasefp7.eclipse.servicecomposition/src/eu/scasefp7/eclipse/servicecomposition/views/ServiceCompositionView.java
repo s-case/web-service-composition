@@ -5784,14 +5784,14 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 			IProject existingProject = ResourcesPlugin.getWorkspace().getRoot().getProject(projectName.trim());
 			if (existingProject.exists() || nameExists) {
 				shell = new Shell();
-				boolean result = MessageDialog.openConfirm(shell, "Project already exists",
+				boolean result = MessageDialog.openQuestion(shell, "Project already exists",
 						"A project with this name already exists. Would you like to replace it?");
 
 				if (result) {
-					// OK Button selected
+					// Yes Button selected
 					existingProject.delete(true, false, monitor);
 				} else {
-					// Cancel Button selected
+					// No Button selected
 					return;
 				}
 
@@ -6474,12 +6474,12 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 					if (exists) {
 						disp.syncExec(new Runnable() {
 							public void run() {
-								boolean answer = MessageDialog.openConfirm(shell,
+								boolean answer = MessageDialog.openQuestion(shell,
 										"Web service already exists on server",
 										"A web service with this name already exists. Would you like to update it?");
 
 								if (answer) {
-									// OK Button selected
+									// Yes Button selected
 									try {
 										IStatus status = uploadOnServer(monitor);
 										if (status.equals(Status.CANCEL_STATUS))
@@ -6506,16 +6506,16 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 
 						ConnectToMDEOntology.writeToXMLFile(scaseProject, gGenerator.getOperation(), container);
 						// update YouRest
-						String[] elements = { "Update YouREST (beta)" };
+						//String[] elements = { "Update YouREST (beta)" };
 
-						ListSelectionDialog dialog = new ListSelectionDialog(shell, elements,
-								ArrayContentProvider.getInstance(), new LabelProvider(), "selection message");
+						//ListSelectionDialog dialog = new ListSelectionDialog(shell, elements,
+						//		ArrayContentProvider.getInstance(), new LabelProvider(), "selection message");
 
-						dialog.setTitle("Upload is complete!");
-						dialog.setMessage("The web service was deployed successfully on server!\n"
-								+ "Base URI: http://109.231.127.61:8080/" + currentProject.getName()
-								+ "-0.0.1-SNAPSHOT/\n" + "Resource Path: rest/result/query\n\n"
-								+ "Would you like to update YouREST platform and Linked Ontology with the composite web service?");
+						//dialog.setTitle("Upload is complete!");
+						//dialog.setMessage("The web service was deployed successfully on server!\n"
+						//		+ "Base URI: http://109.231.127.61:8080/" + currentProject.getName()
+						//		+ "-0.0.1-SNAPSHOT/\n" + "Resource Path: rest/result/query\n\n"
+						//		+ "Would you like to update YouREST platform and Linked Ontology with the composite web service?");
 
 						// dialog.setInitialSelections(new Object []{"Update
 						// Linked Ontology"});
@@ -6524,12 +6524,18 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 						disp.syncExec(new Runnable() {
 							@Override
 							public void run() {
-								if (dialog.open() == Window.OK) {
+								//if (dialog.open() == Window.OK) {
+								if (MessageDialog.openQuestion(shell,
+										"Upload is complete!",
+										"The web service was deployed successfully on server!\n"
+										+ "Base URI: http://109.231.127.61:8080/" + currentProject.getName()
+										+ "-0.0.1-SNAPSHOT/\n" + "Resource Path: rest/result/query\n\n"
+										+ "Would you like to update YouREST platform with the composite web service?")) {
 									try {
-										Object[] results = dialog.getResult();
+										//Object[] results = dialog.getResult();
 
-										for (Object selectedItem : results) {
-											if (selectedItem.equals("Update YouREST (beta)")) {
+										//for (Object selectedItem : results) {
+											//if (selectedItem.equals("Update YouREST (beta)")) {
 												// upload to WS ontology
 												// get application domain
 												
@@ -6556,7 +6562,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 													});
 													return;
 												}
-											}
+											//}
 											// if (selectedItem.equals("Update
 											// Linked Ontology")) {
 											// ConnectToMDEOntology.writeToOntology(scaseProject,
@@ -6583,7 +6589,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 											//
 											// }
 											// }
-										}
+										//}
 									} catch (Exception e) {
 										e.printStackTrace();
 									}
