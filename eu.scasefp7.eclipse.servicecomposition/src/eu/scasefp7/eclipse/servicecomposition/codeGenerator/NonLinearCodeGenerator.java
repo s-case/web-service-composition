@@ -1133,7 +1133,7 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 		
 		String type = output.getType();
 		String ObjectClasses = "\n";
-		if (!output.getSubtypes().isEmpty() || output.isArray()) {
+		if (!output.getSubtypes().isEmpty()) {
 			for (Argument object : classObjects){
 				if ((output.getName().getComparableForm().equals(object.getName().getComparableForm())
 						&& output.getType().equals(object.getType()))) {

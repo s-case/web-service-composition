@@ -58,6 +58,7 @@ public class Matcher {
 	public static double NAME_SIMILARITY_THRESHOLD = 0;
 	private static double DESCRIPTION_WEIGHT = 3;
 	private static double VARIABLE_MATCHING_THRESHOLD = 0.5;
+	private static ArrayList<String> ignoreNames = new ArrayList<String>();
 
 	public static double getMaxWeight(boolean isRestfulWithDescription) {
 		if (isRestfulWithDescription) {
@@ -98,6 +99,9 @@ public class Matcher {
 			VARIABLE_SIMILARITY_THRESHOLD = Double
 					.parseDouble(prop.getProperty("matcher.VARIABLE_SIMILARITY_THRESHOLD"));
 			DESCRIPTION_WEIGHT = Double.parseDouble(prop.getProperty("metadata.DESCRIPTION_WEIGHT"));
+			ignoreNames.add("a");
+			ignoreNames.add("the");
+			ignoreNames.add("of");
 		} catch (Exception e) {
 			System.err.println("Error occured while trying to load matcher settings from " + propFileName);
 		}
@@ -150,16 +154,14 @@ public class Matcher {
 			if (!found)
 				return 0;
 		}
-		if (operation.getName().toString().contains("cumulative") 
-				|| operation.getName().toString().contains("apihosts")
-				) {
-			int a = 1;
-		}
 		double nameSimilarity = Similarity.similarity(action.getName(), operation.getName());
 		double numberOfWords = action.getName().getComparableForm().split("\\s").length;
+		if (nameSimilarity > numberOfWords) {
+			nameSimilarity = numberOfWords;
+		}
 		// double numberOfWords =
 		// operation.getName().getComparableForm().split("\\s").length;
-		nameSimilarity = nameSimilarity / numberOfWords;
+		// nameSimilarity = nameSimilarity / numberOfWords;
 		double descriptionSimilarity = 0;
 		ArrayList<String> description = new ArrayList<String>();
 		String noDublicatesDesc = "";
@@ -167,7 +169,8 @@ public class Matcher {
 			substring(operation.getDescription(), description);
 
 			for (String desc : description) {
-				noDublicatesDesc += desc + " ";
+				if (!ignoreNames.contains(desc))
+					noDublicatesDesc += desc + " ";
 			}
 		}
 
@@ -175,7 +178,10 @@ public class Matcher {
 			descriptionSimilarity = Similarity.similarity(new ComparableName(noDublicatesDesc), action.getName());
 			// double DescnumberOfWords=((Description)
 			// operation.getAccessInfo().getDescription().get(0)).getDescription().split("\\s").length;
-			descriptionSimilarity = descriptionSimilarity / numberOfWords;
+			// descriptionSimilarity = descriptionSimilarity / numberOfWords;
+		}
+		if (descriptionSimilarity > numberOfWords) {
+			descriptionSimilarity = numberOfWords;
 		}
 
 		if (!action.getName().isEmpty() && nameSimilarity < NAME_SIMILARITY_THRESHOLD)
@@ -252,8 +258,8 @@ public class Matcher {
 		// System.out.println("\""+action.toString()+"\" compared with
 		// \""+operation.toString()+"\" (Weight: "+similarity+")");
 
-		similarity = similarity / (DESCRIPTION_WEIGHT + POSSIBLE_INPUT_WEIGHT + MANDATORY_INPUT_WEIGHT
-				+ OUTPUT_TO_INPUT_WEIGHT + NAME_SIMILARITY_WEIGHT);
+		similarity = similarity / (DESCRIPTION_WEIGHT * numberOfWords + POSSIBLE_INPUT_WEIGHT + MANDATORY_INPUT_WEIGHT
+				+ OUTPUT_TO_INPUT_WEIGHT + NAME_SIMILARITY_WEIGHT * numberOfWords);
 		return similarity;
 	}
 
@@ -306,7 +312,9 @@ public class Matcher {
 		return (arg0.getType().isEmpty() || arg1.getType().isEmpty()
 				|| (arg0.getType().equals(arg1.getType()) && arg0.isArray() == arg1.isArray()))
 				&& (arg0.getName().isEmpty() || arg1.getName().isEmpty()
-						|| Similarity.similarity(arg0.getName(), arg1.getName())/(Math.max(arg0.getName().getComparableForm().split("\\s").length, arg1.getName().getComparableForm().split("\\s").length)) >= VARIABLE_SIMILARITY_THRESHOLD);
+						|| Similarity.similarity(arg0.getName(), arg1.getName())
+								/ (Math.max(arg0.getName().getComparableForm().split("\\s").length, arg1.getName()
+										.getComparableForm().split("\\s").length)) >= VARIABLE_SIMILARITY_THRESHOLD);
 	}
 
 	/**
@@ -377,7 +385,9 @@ public class Matcher {
 
 			nameSimilarity = nameSimilarity / allOutputs.get(i).getName().getComparableForm().split("\\s").length;
 
-			nameSimilarity = nameSimilarity / Math.max(allOutputs.get(i).getName().getComparableForm().split("\\s").length,input.getName().getComparableForm().split("\\s").length);
+			nameSimilarity = nameSimilarity
+					/ Math.max(allOutputs.get(i).getName().getComparableForm().split("\\s").length,
+							input.getName().getComparableForm().split("\\s").length);
 
 			variableServiceSimilarities.add(i, nameSimilarity);
 		}

@@ -31,7 +31,7 @@ import eu.scasefp7.eclipse.servicecomposition.importer.Importer.Argument;
 import eu.scasefp7.eclipse.servicecomposition.transformer.JungXMItoOwlTransform.OwlService;
 
 public class WSOntology {
-	//uris of the ontology file
+	// uris of the ontology file
 	private String SOURCE = "http://www.scasefp7.eu/wsOntology.owl";
 	private String NS = SOURCE + "#";
 
@@ -69,7 +69,6 @@ public class WSOntology {
 			}
 		}
 	}
-	
 
 	public List<ApplicationDomain> getAllDomainForMenu() {
 		List<ApplicationDomain> res = new ArrayList<ApplicationDomain>();
@@ -88,8 +87,7 @@ public class WSOntology {
 
 	public String getOperationNameFromURI(String uri) {
 		IndividualImpl ind = (IndividualImpl) ontologyModel.getIndividual(uri);
-		DatatypeProperty prop = ontologyModel.getDatatypeProperty(NS
-				+ "hasName");
+		DatatypeProperty prop = ontologyModel.getDatatypeProperty(NS + "hasName");
 		if (ind.getPropertyValue(prop) != null) {
 			return ind.getPropertyValue(prop).asLiteral().getString();
 		}
@@ -163,34 +161,36 @@ public class WSOntology {
 		DatatypeProperty isArray = ontologyModel.getDatatypeProperty(NS + "isArray");
 
 		for (int i = 0; i < inputs.size(); i++) {
-			String name = inputs.get(i).getArgument().getName().toString();
-			name = changeUri(name);
-			// check if concept already exists
-			IndividualImpl nativeObjectInd = null;
-			IndividualImpl noInd = (IndividualImpl) ontologyModel.createIndividual(NS + name, conceptClass);
-			uris.add(noInd.getURI().toLowerCase());
-			// create has name prop
-			noInd.addProperty(hasName, inputs.get(i).getArgument().getName().getContent());
-			// create is Required prop
-			noInd.addProperty(isRequired, String.valueOf(inputs.get(i).getArgument().isRequired()));
+			if (!inputs.get(i).getisMatchedIO()) {
+				String name = inputs.get(i).getArgument().getName().toString();
+				name = changeUri(name);
+				// check if concept already exists
+				IndividualImpl nativeObjectInd = null;
+				IndividualImpl noInd = (IndividualImpl) ontologyModel.createIndividual(NS + name, conceptClass);
+				uris.add(noInd.getURI().toLowerCase());
+				// create has name prop
+				noInd.addProperty(hasName, inputs.get(i).getArgument().getName().getContent());
+				// create is Required prop
+				noInd.addProperty(isRequired, String.valueOf(inputs.get(i).getArgument().isRequired()));
 
-			// create has type prop
-			String type = inputs.get(i).getArgument().getType();
-			Iterator it = datatypeClass.listInstances();
-			String uri = "";
-			IndividualImpl datatypeInd = null;
-			while (it.hasNext()) {
-				datatypeInd = (IndividualImpl) it.next();
-				if (datatypeInd.getLocalName().equalsIgnoreCase(type)) {
-					uri = datatypeInd.getURI();
-					break;
+				// create has type prop
+				String type = inputs.get(i).getArgument().getType();
+				Iterator it = datatypeClass.listInstances();
+				String uri = "";
+				IndividualImpl datatypeInd = null;
+				while (it.hasNext()) {
+					datatypeInd = (IndividualImpl) it.next();
+					if (datatypeInd.getLocalName().equalsIgnoreCase(type)) {
+						uri = datatypeInd.getURI();
+						break;
+					}
 				}
+				if (datatypeInd != null) {
+					ObjectProperty hasType = ontologyModel.getObjectProperty(NS + "hasType");
+					noInd.addProperty(hasType, datatypeInd);
+				}
+				operInd.addProperty(hasInput, noInd);
 			}
-			if (datatypeInd != null) {
-				ObjectProperty hasType = ontologyModel.getObjectProperty(NS + "hasType");
-				noInd.addProperty(hasType, datatypeInd);
-			}
-			operInd.addProperty(hasInput, noInd);
 		}
 		for (int i = 0; i < uriParameters.size(); i++) {
 			String name = uriParameters.get(i).getName().toString();
