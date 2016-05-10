@@ -216,9 +216,11 @@ public class RAMLCaller {
 				// post.setEntity(new UrlEncodedFormEntity(urlParameters));
 
 				HttpResponse response = client.execute(post);
-				//System.out.println("Response Code : " + response.getStatusLine().getStatusCode());
+				// System.out.println("Response Code : " +
+				// response.getStatusLine().getStatusCode());
 				if (response.getStatusLine().getStatusCode() != 200) {
-					throw new RuntimeException("Failed : HTTP error code : " + response.getStatusLine().getStatusCode());
+					throw new RuntimeException(
+							"Failed : HTTP error code : " + response.getStatusLine().getStatusCode());
 				}
 				BufferedReader rd = new BufferedReader(new InputStreamReader(response.getEntity().getContent()));
 
@@ -391,76 +393,85 @@ public class RAMLCaller {
 				}
 				// if it is an array of arrays or array of objects
 			} else if (output.isArray() && !stringIsItemFromList(output.getType(), datatypes)) {
-				JSONArray array = (JSONArray) ((JSONObject) json).get(output.getType());
-				for (int i = 0; i < array.size(); i++) {
-					// create and add site[0]element, device[0]
-					Argument out = new Argument(output);
-					out.setOwlService(output.getOwlService());
-					out.setName(output.getType() + "[" + i + "]");
-					Value value = new Value(out);
+				if (((JSONObject) json).get(output.getType()) instanceof JSONArray) {
+					JSONArray array = (JSONArray) ((JSONObject) json).get(output.getType());
+					for (int i = 0; i < array.size(); i++) {
+						// create and add site[0]element, device[0]
+						Argument out = new Argument(output);
+						out.setOwlService(output.getOwlService());
+						out.setName(output.getType() + "[" + i + "]");
+						Value value = new Value(out);
 
-					for (Argument sub : output.getSubtypes()) {
-						if (sub.isArray()) {
-							JSONArray array2 = (JSONArray) ((JSONObject) array.get(i)).get(sub.getName().toString());
-							// if (output.getType().equals(sub.getType())){
-							// create device[], metrics[]
-							Argument out1 = new Argument(sub);
-							out1.setOwlService(sub.getOwlService());
-							out1.setName(sub.getName().toString());
-							Value value2 = new Value(out1);
-							parseJson(value2, (JSONObject) array.get(i));
+						for (Argument sub : output.getSubtypes()) {
+							if (sub.isArray()) {
+								JSONArray array2 = (JSONArray) ((JSONObject) array.get(i))
+										.get(sub.getName().toString());
+								// if (output.getType().equals(sub.getType())){
+								// create device[], metrics[]
+								Argument out1 = new Argument(sub);
+								out1.setOwlService(sub.getOwlService());
+								out1.setName(sub.getName().toString());
+								Value value2 = new Value(out1);
+								parseJson(value2, (JSONObject) array.get(i));
 
-							// add device[] metrics[]
-							value.getElements().add(value2);
+								// add device[] metrics[]
+								value.getElements().add(value2);
 
-							// }else{
-							// //create device,metrics
-							// Argument out1 = new Argument(sub);
-							// out1.setOwlService(sub.getOwlService());
-							// out1.setName(sub.getName().toString());
-							// Value value1 = new Value(out1);
-							// //add device, metrics
-							// value.getElements().add(value1);
-							// //create device[0],[1], metrics[0],[1]
-							// Argument out2 = new Argument(sub);
-							// out2.setOwlService(sub.getOwlService());
-							// out2.setName(sub.getName().toString());
-							// Value value2 = new Value(out2);
-							//
-							//
-							// parseJson(value2, (JSONObject) array.get(i));
-							//
-							// //add device[0],[1], metrics[0],[1]
-							// value1.getElements().add(value2);
-							// }
-						} else {
+								// }else{
+								// //create device,metrics
+								// Argument out1 = new Argument(sub);
+								// out1.setOwlService(sub.getOwlService());
+								// out1.setName(sub.getName().toString());
+								// Value value1 = new Value(out1);
+								// //add device, metrics
+								// value.getElements().add(value1);
+								// //create device[0],[1], metrics[0],[1]
+								// Argument out2 = new Argument(sub);
+								// out2.setOwlService(sub.getOwlService());
+								// out2.setName(sub.getName().toString());
+								// Value value2 = new Value(out2);
+								//
+								//
+								// parseJson(value2, (JSONObject) array.get(i));
+								//
+								// //add device[0],[1], metrics[0],[1]
+								// value1.getElements().add(value2);
+								// }
+							} else {
 
-							// create device
-							Argument out1 = new Argument(sub);
-							out1.setOwlService(sub.getOwlService());
-							out1.setName(sub.getName().toString());
-							Value value1 = new Value(out1);
-							JSONObject object = (JSONObject) array.get(i);
+								// create device
+								Argument out1 = new Argument(sub);
+								out1.setOwlService(sub.getOwlService());
+								out1.setName(sub.getName().toString());
+								Value value1 = new Value(out1);
+								JSONObject object = (JSONObject) array.get(i);
 
-							parseJson(value1, (object));
+								parseJson(value1, (object));
 
-							value.getElements().add(value1);
+								value.getElements().add(value1);
+							}
 						}
+						output.getElements().add(value);
 					}
-					output.getElements().add(value);
+				}else {
+					output.setIsArray(false);
+					parseJson(output, json);
 				}
 				// if it is an object but not an array
 			} else if (!output.isArray() && !stringIsItemFromList(output.getType(), datatypes)) {
-				if (((JSONObject) json).containsKey(output.getName().toString())) {
+				if (((JSONObject) json).containsKey(output.getName().toString()) && !(((JSONObject) json).get(output.getName().toString()) instanceof JSONArray)) {
 					JSONObject object = (JSONObject) ((JSONObject) json).get(output.getName().toString());
 
 					for (Argument sub : output.getSubtypes()) {
 
-						if (object.containsKey(sub.getName().toString())) {
+						if (object!=null && object.containsKey(sub.getName().toString())) {
 							parseJson(sub, object);
 						}
 
 					}
+				}else if ((((JSONObject) json).get(output.getName().toString()) instanceof JSONArray)){
+					output.setIsArray(true);
+					parseJson(output, json);
 				}
 
 			} else {
@@ -594,21 +605,21 @@ public class RAMLCaller {
 		if (input.isArray() && stringIsItemFromList(input.getType(), datatypes)) {
 			JSONArray array = new JSONArray();
 			for (Value element : input.getElements()) {
-				if (element.getValue() != "enter value" && element.getValue() != "matched"){
+				if (element.getValue() != "enter value" && element.getValue() != "matched") {
 					if (input.getType().equalsIgnoreCase("String")) {
 						array.add(element.getValue());
-					}else if (input.getType().equalsIgnoreCase("int")) {
+					} else if (input.getType().equalsIgnoreCase("int")) {
 						array.add(Integer.parseInt(element.getValue()));
-					}else if (input.getType().equalsIgnoreCase("long")) {
+					} else if (input.getType().equalsIgnoreCase("long")) {
 						array.add(Long.parseLong(element.getValue()));
-					}else if (input.getType().equalsIgnoreCase("boolean")) {
+					} else if (input.getType().equalsIgnoreCase("boolean")) {
 						array.add(Boolean.parseBoolean(element.getValue()));
-					}else if (input.getType().equalsIgnoreCase("float")) {
+					} else if (input.getType().equalsIgnoreCase("float")) {
 						array.add(Float.parseFloat(element.getValue()));
-					}else if (input.getType().equalsIgnoreCase("double")) {
+					} else if (input.getType().equalsIgnoreCase("double")) {
 						array.add(Double.parseDouble(element.getValue()));
 					}
-					
+
 				}
 			}
 			((JSONObject) obj).put(input.getName().getContent().toString(), array);

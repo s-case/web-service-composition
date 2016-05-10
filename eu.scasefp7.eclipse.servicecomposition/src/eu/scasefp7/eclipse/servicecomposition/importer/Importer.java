@@ -332,7 +332,6 @@ public abstract class Importer {
 		Operation(Individual ind) throws Exception {
 			// load basic properties
 			name = new ComparableName(ind.getPropertyValue(hasName).asLiteral().getString());
-
 			// SOAP or RESTful
 			if (ind.getPropertyValue(belongsToWSType) != null) {
 				type = ind.getPropertyValue(belongsToWSType).asLiteral().getString();
@@ -1124,6 +1123,9 @@ public abstract class Importer {
 		 */
 		public boolean isArray() {
 			return isArray;
+		}
+		public void setIsArray(boolean isArray){
+			this.isArray = isArray;
 		}
 
 		/**
