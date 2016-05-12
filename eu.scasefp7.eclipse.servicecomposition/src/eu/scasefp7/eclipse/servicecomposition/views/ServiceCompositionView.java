@@ -3503,14 +3503,18 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 						}
 					});
 					Properties prop = new Properties();
-					String propFileName = "matcher.properties";
-					Bundle bundle = Platform.getBundle(Activator.PLUGIN_ID);
-					URL fileURL = bundle.getEntry(propFileName);
+					String propFileName = "/matcher.properties";
+					//Bundle bundle = Platform.getBundle(Activator.PLUGIN_ID);
+					//URL fileURL = bundle.getEntry(propFileName);
+					URL fileURL = new URL("platform:/plugin/" + Activator.PLUGIN_ID + propFileName);
 
 					try {
-						File file = new File(FileLocator.resolve(fileURL).toURI());
-						InputStream inputStream = new FileInputStream(file);
+						InputStream inputStream = fileURL.openConnection().getInputStream();
 						prop.load(inputStream);
+						
+//						File file = new File(FileLocator.resolve(fileURL).toURI());
+//						InputStream inputStream = new FileInputStream(file);
+//						prop.load(inputStream);
 						VARIABLE_NAME_SIMILARITY_THRESHOLD = Double
 								.parseDouble(prop.getProperty("interpreter.VARIABLE_NAME_SIMILARITY_THRESHOLD"));
 						MAX_DISTANCE_BETWEEN_SOLUTIONS = Double
@@ -4015,10 +4019,11 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 																			.add(value);
 																	for (Argument input : inputVariables) {
 																		if (input.getOwlService()
-																				.equals(successorInitialArray))
+																				.equals(successorInitialArray)){
 																			input.getElements()
 																					.remove(input.getElements().get(0));
 																		input.getElements().add(value);
+																		}
 																	}
 
 																	i++;
