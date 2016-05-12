@@ -460,6 +460,12 @@ public class Algorithm {
 			// the graph
 			Transformer transformer = new Transformer(JungXMItoOwlTransform.createOwlGraph(xmiGraph, true));
 			correctStepProbability.clear();
+			int numOfActions = 0;
+			for (OwlService service : transformer.getGraph().getVertices()){
+				if (service.getOperation()!= null){
+					numOfActions++;
+				}
+			}
 			boolean noReplacements = false;
 			// run the algorithm
 			while (true) {
@@ -549,10 +555,12 @@ public class Algorithm {
 			if (!noReplacements) {
 				transformer.createLinkedVariableGraph();
 
+				int counter = 0;
 				while (true) {
 
 					OwlService replacedOperation = transformer.placeSingleLinkingOperation(candidateOperations);
-					if (replacedOperation == null)
+					// added interlock to avoid infinite loops (counter)
+					if (replacedOperation == null || counter>numOfActions*3)
 						break;
 
 					// Moved down in order to be executed only if op is not
@@ -598,7 +606,7 @@ public class Algorithm {
 					// candidateOperations.remove(replacedOperation.getOperation());
 				}
 
-				transformer.createLinkedVariableGraph();
+				//transformer.createLinkedVariableGraph();
 
 				// Calculate and print total cost
 				String perUsage = costPerUsage.calculateWorkflowCost(" per usage");
