@@ -200,6 +200,7 @@ public class Transformer {
 
 	public static double REPLACE_NAME_SIMILARITY_THRESHOLD = 0;
 	private static boolean IGNORE_ASSIGNED_POSSIBLE_OUTPUTS = false;
+	private static HashMap<Operation, Integer> sequenceMap = new HashMap<Operation, Integer>();
 
 	/**
 	 * <h1>loadProperties</h1> Loads matching properties from the file
@@ -464,6 +465,7 @@ public class Transformer {
 		// OwlService>();
 		graph = prototype;
 
+		HashMap<OwlService, OwlService> connections = new HashMap<OwlService, OwlService>();
 		ArrayList<OwlService> allServices = new ArrayList<OwlService>(prototype.getVertices());
 		ArrayList<OwlService> Inputs = new ArrayList<OwlService>();
 		ArrayList<OwlService> Outputs = new ArrayList<OwlService>();
@@ -474,6 +476,9 @@ public class Transformer {
 				} else if (graph.getOutEdges(service).toArray().length == 0) {
 					Outputs.add(service);
 				}
+			} else if (service.getType().contains("EndNode")){
+				sequenceMap.clear();
+				getSourcesCategorized(service, graph);
 			}
 
 		}
@@ -483,19 +488,51 @@ public class Transformer {
 		for (OwlService in : Inputs) {
 			OwlService sameVariable = Matcher.getSameVariableInstances(in, Outputs);
 
-			if (sameVariable != null) {
+			if (sameVariable != null 
+					&& sequenceMap.get(sameVariable.getArgument().getBelongsToOperation())> sequenceMap.get(in.getArgument().getBelongsToOperation())
+							) {
 				OwlService source = sameVariable;
 				OwlService target = in;
-
-				if ((graph.findEdge(source, target) == null)) {
-					source.setisMatchedIO(true);
-					target.setisMatchedIO(true);
-					graph.addEdge(new Connector(source, target, ""), source, target, EdgeType.DIRECTED);
-
+				boolean ignoreConnection = false;
+				if (connections.containsKey(source)){
+					if (connections.get(source).getArgument().getBelongsToOperation().equals(target.getArgument().getBelongsToOperation())){
+						OwlService oldTarget = connections.get(source);
+						double similarity1 = Similarity.similarity(oldTarget.getArgument().getName(), source.getName()) / oldTarget.getArgument().getName().getComparableForm().split("\\s").length;
+						double similarity2 = Similarity.similarity(target.getName(), source.getName())/ target.getName().getComparableForm().split("\\s").length;
+						if (similarity1<similarity2){
+						
+							connections.replace(source, oldTarget, target);
+						}
+						ignoreConnection=true;
+					}
 				}
+				if (!ignoreConnection){
+				connections.put(source, target);
+				}
+				
+				
+				
 
 			}
 		}
+		
+		Iterator it = connections.entrySet().iterator();
+		   //for each action
+			while (it.hasNext()) {
+		        Map.Entry pair = (Map.Entry)it.next();
+		        OwlService source = (OwlService)pair.getKey();
+		        OwlService target = (OwlService)pair.getValue();
+		        
+		        if ((graph.findEdge(source, target) == null)) {
+					source.setisMatchedIO(true);
+					target.setisMatchedIO(true);
+					source.getArgument().getMatchedInputs().add(target.getArgument());
+					graph.addEdge(new Connector(source, target, ""), source, target, EdgeType.DIRECTED);
+
+				}
+		        
+		        it.remove(); // avoids a ConcurrentModificationException
+	    }
 
 		this.graph = graph;
 	}
@@ -530,6 +567,38 @@ public class Transformer {
 		return sources;
 	}
 
+	/**
+	 * 
+	 * @param service: the End Node
+	 * @param graph
+	 * @return
+	 */
+	private static void getSourcesCategorized(OwlService service, Graph<OwlService, Connector> graph) {
+		ArrayList<OwlService> sources = new ArrayList<OwlService>();
+		sources.add(service);// prevents most loops from being falsely detected
+		int num =0;
+		int addCount = 1;
+		while (addCount != 0) {
+			//addCount = 0;
+			int n = sources.size();
+			for (int i = 0; i < n; i++) {
+				if (graph.getPredecessors(sources.get(i)) != null) {
+					for (OwlService preService : graph.getPredecessors(sources.get(i))){
+						if (!sources.contains(preService) && (preService.getOperation()!=null || preService.getType().equals("Condition"))){
+							sources.add(preService);
+							sequenceMap.put(preService.getOperation(), num);
+							num++;
+						}
+						if (preService.getType().equals("StartNode")){
+							addCount = 0;
+						}
+					}
+				}
+			}
+		}
+		sources.remove(service);
+	}
+	
 	/**
 	 * <h1>getDerived</h1> Finds all OwlServices that are affected by a given
 	 * service. Uses only directed edges.
@@ -727,7 +796,10 @@ public class Transformer {
 				for (OwlService nextService : nextServices) {
 					Operation nextOperation = nextService.getOperation();
 					if (nextOperation != null)
-						possibleOutputs.addAll(nextOperation.getInputs());
+						for (Argument in : nextOperation.getInputs()) {
+							getNative(in, possibleOutputs);
+						}
+						//possibleOutputs.addAll(nextOperation.getInputs());
 				}
 				for (int i = possibleOutputs.size() - 1; i >= 0; i--)
 					for (OwlService service : graph.getVertices())
@@ -755,9 +827,9 @@ public class Transformer {
 							break;
 						}
 					}
-//					if (operation.getName().toString().contains("apihost")){
-//						int a=1;
-//					}
+					if (operation.getName().toString().contains("BookDetails")){
+						int a=1;
+					}
 					double match = Matcher.match(dummyService, operation, mandatoryArguments, possibleArguments,
 							possibleOutputs, -1);
 //					if (match > 0)
@@ -814,7 +886,11 @@ public class Transformer {
 							}
 						}
 					}
-					if (targetConnector != null && (targetOperation.getInputs().size() <= matched)) {
+					ArrayList<Argument> nativeInputs = new ArrayList<Argument>();
+					for (Argument in : targetOperation.getInputs()){
+						getNative(in, nativeInputs);
+					}
+					if (targetConnector != null && (nativeInputs.size() <= matched)) {
 						found=true;
 						break;
 					}
@@ -850,10 +926,10 @@ public class Transformer {
 	}
 
 	private void getNative(Argument output, ArrayList<Argument> nativeOutputs) {
-		if (output.isNative() && !output.isArray()) {
+		if (output.isNative()) {
 			nativeOutputs.add(output);
 		}
-		if (!output.isArray()) {
+		else {
 			for (Argument sub : output.getSubtypes()) {
 				getNative(sub, nativeOutputs);
 			}

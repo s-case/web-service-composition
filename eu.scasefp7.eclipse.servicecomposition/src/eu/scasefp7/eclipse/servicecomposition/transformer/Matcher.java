@@ -215,9 +215,9 @@ public class Matcher {
 			getNative(out, nativeOutputs);
 		}
 		double outputSimilarity = 0;
-		for (Importer.Argument arg : nativeOutputs) {
+		
 			for (Importer.Argument possibleArgument : possibleOutputs) {
-
+				for (Importer.Argument arg : nativeOutputs) {
 				if (hasSame(arg, possibleArgument)) {
 					// outputSimilarity += 1.0 / operation.getOutputs().size();
 					outputSimilarity += 1.0 / possibleOutputs.size();
@@ -385,9 +385,9 @@ public class Matcher {
 
 			nameSimilarity = nameSimilarity / allOutputs.get(i).getName().getComparableForm().split("\\s").length;
 
-			nameSimilarity = nameSimilarity
-					/ Math.max(allOutputs.get(i).getName().getComparableForm().split("\\s").length,
-							input.getName().getComparableForm().split("\\s").length);
+//			nameSimilarity = nameSimilarity
+//					/ Math.max(allOutputs.get(i).getName().getComparableForm().split("\\s").length,
+//							input.getName().getComparableForm().split("\\s").length);
 
 			variableServiceSimilarities.add(i, nameSimilarity);
 		}
