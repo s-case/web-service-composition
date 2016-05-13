@@ -220,7 +220,6 @@ import com.jcraft.jsch.ChannelSftp;
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.Session;
 
-
 import edu.uci.ics.jung.graph.DirectedSparseGraph;
 import edu.uci.ics.jung.graph.SparseMultigraph;
 import edu.uci.ics.jung.graph.UndirectedSparseGraph;
@@ -378,9 +377,8 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 	private NonLinearCodeGenerator generator;
 	// property to denote file is not saved
 	private boolean isDirty = false;
-	//application domain that a sc belongs to
-	private String applicationDomainURI="";
-	
+	// application domain that a sc belongs to
+	private String applicationDomainURI = "";
 
 	public void createPartControl(Composite parent) {
 
@@ -802,7 +800,13 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 			String option = "matchinput";
 			SelectionWindowNode(list, option);
 
-		} else if (node.getSourceConnections().size() == 0) {
+		} else
+			if (node.getSourceConnections().size() == 0
+					|| (node.getSourceConnections().size() != 0
+							&& ((OwlService) ((MyNode) node.getData()).getObject())
+									.getisMatchedIO()
+					&& ((OwlService) ((MyNode) ((GraphNode) ((GraphConnection) node.getSourceConnections().get(0))
+							.getDestination()).getData()).getObject()).getisMatchedIO())) {
 			// System.out.println("Node is an output");
 			Graph graph = viewer.getGraphControl();
 			for (int j = 0; j < graph.getNodes().size(); j++) {
@@ -3504,17 +3508,18 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 					});
 					Properties prop = new Properties();
 					String propFileName = "/matcher.properties";
-					//Bundle bundle = Platform.getBundle(Activator.PLUGIN_ID);
-					//URL fileURL = bundle.getEntry(propFileName);
+					// Bundle bundle = Platform.getBundle(Activator.PLUGIN_ID);
+					// URL fileURL = bundle.getEntry(propFileName);
 					URL fileURL = new URL("platform:/plugin/" + Activator.PLUGIN_ID + propFileName);
 
 					try {
 						InputStream inputStream = fileURL.openConnection().getInputStream();
 						prop.load(inputStream);
-						
-//						File file = new File(FileLocator.resolve(fileURL).toURI());
-//						InputStream inputStream = new FileInputStream(file);
-//						prop.load(inputStream);
+
+						// File file = new
+						// File(FileLocator.resolve(fileURL).toURI());
+						// InputStream inputStream = new FileInputStream(file);
+						// prop.load(inputStream);
 						VARIABLE_NAME_SIMILARITY_THRESHOLD = Double
 								.parseDouble(prop.getProperty("interpreter.VARIABLE_NAME_SIMILARITY_THRESHOLD"));
 						MAX_DISTANCE_BETWEEN_SOLUTIONS = Double
@@ -4019,10 +4024,10 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 																			.add(value);
 																	for (Argument input : inputVariables) {
 																		if (input.getOwlService()
-																				.equals(successorInitialArray)){
+																				.equals(successorInitialArray)) {
 																			input.getElements()
 																					.remove(input.getElements().get(0));
-																		input.getElements().add(value);
+																			input.getElements().add(value);
 																		}
 																	}
 
@@ -4042,15 +4047,22 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 															// object
 															MatchOutputDialog dialog = new MatchOutputDialog(shell);
 															dialog.setDisp(disp);
-															dialog.setInitialArray((Value) initialArray.getArgument());
-															dialog.setGraph(graph);
+															dialog.setArrayNodes(nodes);
+															dialog.setName(successor.getName().toString());
 															dialog.create();
 															dialog.configureShell(shell);
 															dialog.setDialogLocation();
 															if (dialog.open() == Window.OK) {
 																String value = dialog.getValue();
-
 																((Value) successor).setValue(value);
+																for (Argument input : inputVariables) {
+																	if (input.getOwlService()
+																			.equals(successor.getOwlService())) {
+																		
+																		((Value)input).setValue(value);
+																	}
+																}
+																
 
 															} else {
 																return;
@@ -5292,7 +5304,8 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 				if (arg.getArgument() != null) {
 					for (Argument argument : arguments) {
 						if (argument.getName().toString().equals(arg.getArgument().getName().toString())
-								&& argument.getBelongsToOperation().getName().toString().equals(arg.getArgument().getBelongsToOperation().getName().toString())
+								&& argument.getBelongsToOperation().getName().toString()
+										.equals(arg.getArgument().getBelongsToOperation().getName().toString())
 								&& Boolean.toString(argument.isArray())
 										.equals(Boolean.toString(arg.getArgument().isArray()))
 								&& Boolean.toString(argument.isNative())
@@ -5766,8 +5779,8 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 		dialog.setDialogLocation();
 		if (dialog.open() == Window.OK) {
 			System.out.println(dialog.getProjectName());
-			projectName = dialog.getProjectName().trim();			
-			applicationDomainURI=dialog.getApplicationDomainURI();
+			projectName = dialog.getProjectName().trim();
+			applicationDomainURI = dialog.getApplicationDomainURI();
 		} else {
 			return;
 		}
@@ -6400,13 +6413,12 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 									MessageDialog.openInformation(disp.getActiveShell(), "Error occured",
 											"The project you selected is not an S-CASE project! Please try again!");
 									scaseProject = null;
-									
+
 								}
 
 							});
 							return;
 						}
-						
 
 					} catch (CoreException e) {
 						// TODO Auto-generated catch block
@@ -6431,8 +6443,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 
 		final Shell shell = new Shell();
 		final Display disp = Display.getCurrent();
-		
-		
+
 		createWarFileJob = new Job("Uploading..") {
 			@Override
 			protected IStatus run(IProgressMonitor monitor) {
@@ -6451,16 +6462,16 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 
 					String compositionsFolderLocation = null;
 					try {
-						compositionsFolderLocation = scaseProject.getPersistentProperty(new QualifiedName("",
-								"eu.scasefp7.eclipse.core.ui.compFolder"));
+						compositionsFolderLocation = scaseProject
+								.getPersistentProperty(new QualifiedName("", "eu.scasefp7.eclipse.core.ui.compFolder"));
 					} catch (CoreException e) {
 						Activator.log("Error retrieving project property (compositions folder location)", e);
 					}
 					org.eclipse.core.resources.IContainer container = scaseProject;
 					if (compositionsFolderLocation != null) {
 						if (scaseProject.findMember(new Path(compositionsFolderLocation)).exists())
-							container = (org.eclipse.core.resources.IContainer) scaseProject.findMember(new Path(
-									compositionsFolderLocation));
+							container = (org.eclipse.core.resources.IContainer) scaseProject
+									.findMember(new Path(compositionsFolderLocation));
 					}
 
 					File basedir = new File(pomPath);
@@ -6511,16 +6522,22 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 
 						ConnectToMDEOntology.writeToXMLFile(scaseProject, gGenerator.getOperation(), container);
 						// update YouRest
-						//String[] elements = { "Update YouREST (beta)" };
+						// String[] elements = { "Update YouREST (beta)" };
 
-						//ListSelectionDialog dialog = new ListSelectionDialog(shell, elements,
-						//		ArrayContentProvider.getInstance(), new LabelProvider(), "selection message");
+						// ListSelectionDialog dialog = new
+						// ListSelectionDialog(shell, elements,
+						// ArrayContentProvider.getInstance(), new
+						// LabelProvider(), "selection message");
 
-						//dialog.setTitle("Upload is complete!");
-						//dialog.setMessage("The web service was deployed successfully on server!\n"
-						//		+ "Base URI: http://109.231.127.61:8080/" + currentProject.getName()
-						//		+ "-0.0.1-SNAPSHOT/\n" + "Resource Path: rest/result/query\n\n"
-						//		+ "Would you like to update YouREST platform and Linked Ontology with the composite web service?");
+						// dialog.setTitle("Upload is complete!");
+						// dialog.setMessage("The web service was deployed
+						// successfully on server!\n"
+						// + "Base URI: http://109.231.127.61:8080/" +
+						// currentProject.getName()
+						// + "-0.0.1-SNAPSHOT/\n" + "Resource Path:
+						// rest/result/query\n\n"
+						// + "Would you like to update YouREST platform and
+						// Linked Ontology with the composite web service?");
 
 						// dialog.setInitialSelections(new Object []{"Update
 						// Linked Ontology"});
@@ -6529,72 +6546,71 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 						disp.syncExec(new Runnable() {
 							@Override
 							public void run() {
-								//if (dialog.open() == Window.OK) {
-								if (MessageDialog.openQuestion(shell,
-										"Upload is complete!",
+								// if (dialog.open() == Window.OK) {
+								if (MessageDialog.openQuestion(shell, "Upload is complete!",
 										"The web service was deployed successfully on server!\n"
-										+ "Base URI: http://109.231.127.61:8080/" + currentProject.getName()
-										+ "-0.0.1-SNAPSHOT/\n" + "Resource Path: rest/result/query\n\n"
-										+ "Would you like to update YouREST platform with the composite web service?")) {
+												+ "Base URI: http://109.231.127.61:8080/" + currentProject.getName()
+												+ "-0.0.1-SNAPSHOT/\n" + "Resource Path: rest/result/query\n\n"
+												+ "Would you like to update YouREST platform with the composite web service?")) {
 									try {
-										//Object[] results = dialog.getResult();
+										// Object[] results =
+										// dialog.getResult();
 
-										//for (Object selectedItem : results) {
-											//if (selectedItem.equals("Update YouREST (beta)")) {
-												// upload to WS ontology
-												// get application domain
-												
-												try {
-													WSOntology ws = new WSOntology();
-													ws.createNewWSOperation(generator.getOperation().getHasName(),
-															generator.getInputVariables(), generator.getUriParameters(),
-															generator.getOutputVariables(),
-															generator.getOperation().getBelongsToURL(),
-															applicationDomainURI);
-													ws.saveToOWL();
-													RepositoryClient cl = new RepositoryClient();
-													cl.uploadOntology();
-												} catch (Exception e) {
-													disp.syncExec(new Runnable() {
-														@Override
-														public void run() {
-															MessageDialog.openError(shell,
-																	"YouREST could not be update!",
-																	"Due to an error, YouREST could not be updated with project "
-																			+ currentProject.getName());
+										// for (Object selectedItem : results) {
+										// if (selectedItem.equals("Update
+										// YouREST (beta)")) {
+										// upload to WS ontology
+										// get application domain
 
-														}
-													});
-													return;
+										try {
+											WSOntology ws = new WSOntology();
+											ws.createNewWSOperation(generator.getOperation().getHasName(),
+													generator.getInputVariables(), generator.getUriParameters(),
+													generator.getOutputVariables(),
+													generator.getOperation().getBelongsToURL(), applicationDomainURI);
+											ws.saveToOWL();
+											RepositoryClient cl = new RepositoryClient();
+											cl.uploadOntology();
+										} catch (Exception e) {
+											disp.syncExec(new Runnable() {
+												@Override
+												public void run() {
+													MessageDialog.openError(shell, "YouREST could not be update!",
+															"Due to an error, YouREST could not be updated with project "
+																	+ currentProject.getName());
+
 												}
-											//}
-											// if (selectedItem.equals("Update
-											// Linked Ontology")) {
-											// ConnectToMDEOntology.writeToOntology(scaseProject,
-											// gGenerator.getOperation());
-											//
-											// final IFile file =
-											// ResourcesPlugin.getWorkspace().getRoot()
-											// .getFileForLocation(Path.fromOSString(ResourcesPlugin
-											// .getWorkspace().getRoot().getLocation().toString()
-											// + "/"
-											// + scaseProject.getName() +
-											// "/LinkedOntology.owl"));
-											// if (file != null) {
-											// disp.syncExec(new Runnable() {
-											// @Override
-											// public void run() {
-											// MessageDialog.openInformation(disp.getActiveShell(),
-											// "Info",
-											// "LinkedOntology.owl file is
-											// created under the project "
-											// + scaseProject.getName());
-											// }
-											// });
-											//
-											// }
-											// }
-										//}
+											});
+											return;
+										}
+										// }
+										// if (selectedItem.equals("Update
+										// Linked Ontology")) {
+										// ConnectToMDEOntology.writeToOntology(scaseProject,
+										// gGenerator.getOperation());
+										//
+										// final IFile file =
+										// ResourcesPlugin.getWorkspace().getRoot()
+										// .getFileForLocation(Path.fromOSString(ResourcesPlugin
+										// .getWorkspace().getRoot().getLocation().toString()
+										// + "/"
+										// + scaseProject.getName() +
+										// "/LinkedOntology.owl"));
+										// if (file != null) {
+										// disp.syncExec(new Runnable() {
+										// @Override
+										// public void run() {
+										// MessageDialog.openInformation(disp.getActiveShell(),
+										// "Info",
+										// "LinkedOntology.owl file is
+										// created under the project "
+										// + scaseProject.getName());
+										// }
+										// });
+										//
+										// }
+										// }
+										// }
 									} catch (Exception e) {
 										e.printStackTrace();
 									}
@@ -6717,5 +6733,5 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 	public NonLinearCodeGenerator getGenerator() {
 		return gGenerator;
 	}
-	
+
 }

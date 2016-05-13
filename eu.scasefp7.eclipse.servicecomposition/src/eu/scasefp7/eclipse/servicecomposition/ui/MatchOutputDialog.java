@@ -38,25 +38,25 @@ import eu.scasefp7.eclipse.servicecomposition.views.ServiceCompositionView;
 
 
 public class MatchOutputDialog extends Dialog {
-	private Value initialArray;
+	
 	private Vector<Node> arrayNodes = new Vector<Node>();
 	private String value;
-	private edu.uci.ics.jung.graph.Graph<OwlService, Connector> graph;
 	private Display disp;
+	private String varName = "";
 
 	public MatchOutputDialog(Shell parentShell) {
 		super(parentShell);
 	}
 
-	public void setInitialArray(Value initialArray) {
-		this.initialArray = initialArray;
+	
+	public void setArrayNodes(Vector<Node> arrayNodes) {
+		this.arrayNodes = arrayNodes;
 	}
-
 	public String getValue() {
 		return value;
 	}
-	public void setGraph(edu.uci.ics.jung.graph.Graph<OwlService, Connector> graph) {
-		this.graph = graph;
+	public void setName(String name) {
+		this.varName = name;
 	}
 	public void setDisp(Display disp) {
 		this.disp = disp;
@@ -80,10 +80,10 @@ public class MatchOutputDialog extends Dialog {
 		columnii.getColumn().setText("Columnii");
 		columnii.getColumn().setWidth(300);
 		columnii.getColumn().setResizable(true);
-		ServiceCompositionView.showOutputs(initialArray, null, arrayNodes, columnii, graph);
 		tree.setContentProvider(new MyTreeContentProvider());
 
 		columni.setLabelProvider(new MyLabelProvider());
+		columnii.setLabelProvider(createColumnLabelProvider());
 		tree.setInput(arrayNodes);
 		
 		tree.addSelectionChangedListener(new ISelectionChangedListener() {
@@ -134,7 +134,7 @@ public class MatchOutputDialog extends Dialog {
 	@Override
 	public void configureShell(Shell newShell) {
 		super.configureShell(newShell);
-		newShell.setText("Choose output value to be matched");
+		newShell.setText("Choose output value to be matched with \"" + varName + "\" input variable");
 	}
 
 	public void setDialogLocation() {
