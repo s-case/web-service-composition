@@ -1043,6 +1043,29 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 							// }
 						}
 					}
+				} else {
+					for (OwlService matchedInput : graph.getSuccessors(matchedOutput)) {
+						String ret = ".get" + matchedOutput.getName().getContent().replaceAll("[0123456789]", "")
+								+ "()";
+						ret = roadToSub(initialArray, matchedOutput, graph, ret);
+						String type = matchedOutput.getArgument().getType();
+						if (type.equalsIgnoreCase("String")) {
+							declaredInputs += TAB + TAB + TAB + "this." + matchedInput.getName().getContent().toString()
+									+ ".value = " + matchedOutput.getArgument().getBelongsToOperation().getName()
+									+ "_response" + ret + ";\n";
+
+						} else if (type.equalsIgnoreCase("int")) {
+							declaredInputs += TAB + TAB + TAB + "this." + matchedInput.getName().getContent().toString()
+									+ ".value = " + " = Integer.toString("
+									+ matchedOutput.getArgument().getBelongsToOperation().getName() + "_response" + ret
+									+ ");\n";
+						} else {
+							declaredInputs += TAB + TAB + TAB + "this." + matchedInput.getName().getContent().toString()
+									+ ".value = " + type.substring(0, 1).toUpperCase() + type.substring(1)
+									+ ".toString(" + matchedOutput.getArgument().getBelongsToOperation().getName()
+									+ "_response" + ret + ");\n";
+						}
+					}
 				}
 			} else {
 				for (OwlService matchedInput : graph.getSuccessors(matchedOutput)) {
@@ -1056,7 +1079,7 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 					// ".value;\n";
 					// } else {
 					String ret = ".get" + matchedOutput.getName().getContent().replaceAll("[0123456789]", "") + "()";
-					ret = roadToSub(matchedOutput, graph, ret);
+					ret = roadToSub(null, matchedOutput, graph, ret);
 					String type = matchedOutput.getArgument().getType();
 					if (type.equalsIgnoreCase("String")) {
 						declaredInputs += TAB + TAB + TAB + "this." + matchedInput.getName().getContent().toString()
@@ -1130,11 +1153,11 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 	}
 
 	private String generateResultObjects(Argument output, ArrayList<Argument> classObjects) {
-		
+
 		String type = output.getType();
 		String ObjectClasses = "\n";
 		if (!output.getSubtypes().isEmpty()) {
-			for (Argument object : classObjects){
+			for (Argument object : classObjects) {
 				if ((output.getName().getComparableForm().equals(object.getName().getComparableForm())
 						&& output.getType().equals(object.getType()))) {
 					return ObjectClasses;
@@ -1237,11 +1260,15 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 
 	}
 
-	private String roadToSub(OwlService sub, Graph<OwlService, Connector> graph, String ret) {
+	private String roadToSub(OwlService initialArray, OwlService sub, Graph<OwlService, Connector> graph, String ret) {
 		for (OwlService service : graph.getPredecessors(sub)) {
 			if (service.getArgument() != null) {
-				ret = ".get" + service.getName().getContent().replaceAll("[0123456789]", "") + "()" + ret;
-				ret = roadToSub(service, graph, ret);
+				if (initialArray!= null && service.equals(initialArray)) {
+					ret = ".get" + service.getName().getContent().replaceAll("[0123456789]", "") + "().get(0)" + ret;
+				} else {
+					ret = ".get" + service.getName().getContent().replaceAll("[0123456789]", "") + "()" + ret;
+				}
+				ret = roadToSub(initialArray, service, graph, ret);
 			} else {
 				return ret;
 			}
