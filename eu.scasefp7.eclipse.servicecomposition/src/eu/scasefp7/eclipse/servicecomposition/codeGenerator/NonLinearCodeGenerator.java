@@ -1045,26 +1045,32 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 					}
 				} else {
 					for (OwlService matchedInput : graph.getSuccessors(matchedOutput)) {
+						String array = "";
 						String ret = ".get" + matchedOutput.getName().getContent().replaceAll("[0123456789]", "")
 								+ "()";
 						ret = roadToSub(initialArray, matchedOutput, graph, ret);
+						int index = ret.indexOf(".get(0)");
+						array = ret.substring(0, index);
 						String type = matchedOutput.getArgument().getType();
+						declaredInputs += TAB+ TAB + TAB + "if (!" + matchedOutput.getArgument().getBelongsToOperation().getName()
+								+ "_response" + array + ".isEmpty()){\n";
 						if (type.equalsIgnoreCase("String")) {
-							declaredInputs += TAB + TAB + TAB + "this." + matchedInput.getName().getContent().toString()
+							declaredInputs += TAB+ TAB + TAB + TAB + "this." + matchedInput.getName().getContent().toString()
 									+ ".value = " + matchedOutput.getArgument().getBelongsToOperation().getName()
 									+ "_response" + ret + ";\n";
 
 						} else if (type.equalsIgnoreCase("int")) {
-							declaredInputs += TAB + TAB + TAB + "this." + matchedInput.getName().getContent().toString()
+							declaredInputs += TAB + TAB + TAB + TAB + "this." + matchedInput.getName().getContent().toString()
 									+ ".value = " + " = Integer.toString("
 									+ matchedOutput.getArgument().getBelongsToOperation().getName() + "_response" + ret
 									+ ");\n";
 						} else {
-							declaredInputs += TAB + TAB + TAB + "this." + matchedInput.getName().getContent().toString()
+							declaredInputs += TAB + TAB + TAB + TAB + "this." + matchedInput.getName().getContent().toString()
 									+ ".value = " + type.substring(0, 1).toUpperCase() + type.substring(1)
 									+ ".toString(" + matchedOutput.getArgument().getBelongsToOperation().getName()
 									+ "_response" + ret + ");\n";
 						}
+						declaredInputs += TAB + TAB + TAB + "}\n";
 					}
 				}
 			} else {
