@@ -96,17 +96,17 @@ public class RAMLCaller {
 			// inputList = "?";
 			Value val = null;
 			for (Argument input : queryParams) {
-				if (!inputList.isEmpty()) {
-					val = (Value) input;
-					if (!(val.getValue().isEmpty() && !input.isRequired()) && val.getValue() != "enter value") {
-						inputList += "&" + input.getName().toString() + "=" + val.getValue();
+				val = (Value) input;
+				if (!(val.getValue().isEmpty() && !input.isRequired()) && val.getValue() != "enter value") {
+					if (!inputList.isEmpty()) {
+
+						inputList += "&";
+
 					}
-				} else {
-					val = (Value) input;
-					if (!(val.getValue().isEmpty() && !input.isRequired()) && val.getValue() != "enter value") {
-						inputList += input.getName().toString() + "=" + val.getValue();
-					}
+
+					inputList += input.getName().toString() + "=" + val.getValue();
 				}
+
 			}
 		}
 
@@ -453,23 +453,24 @@ public class RAMLCaller {
 						}
 						output.getElements().add(value);
 					}
-				}else {
+				} else {
 					output.setIsArray(false);
 					parseJson(output, json);
 				}
 				// if it is an object but not an array
 			} else if (!output.isArray() && !stringIsItemFromList(output.getType(), datatypes)) {
-				if (((JSONObject) json).containsKey(output.getName().toString()) && !(((JSONObject) json).get(output.getName().toString()) instanceof JSONArray)) {
+				if (((JSONObject) json).containsKey(output.getName().toString())
+						&& !(((JSONObject) json).get(output.getName().toString()) instanceof JSONArray)) {
 					JSONObject object = (JSONObject) ((JSONObject) json).get(output.getName().toString());
 
 					for (Argument sub : output.getSubtypes()) {
 
-						if (object!=null && object.containsKey(sub.getName().toString())) {
+						if (object != null && object.containsKey(sub.getName().toString())) {
 							parseJson(sub, object);
 						}
 
 					}
-				}else if ((((JSONObject) json).get(output.getName().toString()) instanceof JSONArray)){
+				} else if ((((JSONObject) json).get(output.getName().toString()) instanceof JSONArray)) {
 					output.setIsArray(true);
 					parseJson(output, json);
 				}
