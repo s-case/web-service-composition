@@ -91,7 +91,7 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 		for (OwlService service : graph.getVertices()) {
 			for (OwlService service2 : graph.getVertices()) {
 				if (service.getName().getContent().toString()
-						.equalsIgnoreCase(service2.getName().getContent().toString()) && !service.equals(service2)
+						.equals(service2.getName().getContent().toString()) && !service.equals(service2)
 						&& service.getName().getContent().toString() != "") {
 					service2.getName().setContent(service.getName().getContent().toString() + service2.getId());
 				}
