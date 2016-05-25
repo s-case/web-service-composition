@@ -488,7 +488,7 @@ public class Transformer {
 		for (OwlService in : Inputs) {
 			OwlService sameVariable = Matcher.getSameVariableInstances(in, Outputs);
 
-			if (sameVariable != null 
+			if (sameVariable != null && in.getArgument().getBelongsToOperation()!=null
 					&& sequenceMap.get(sameVariable.getArgument().getBelongsToOperation())> sequenceMap.get(in.getArgument().getBelongsToOperation())
 							) {
 				OwlService source = sameVariable;
@@ -826,9 +826,6 @@ public class Transformer {
 						if (target.getInputs().size()==matchedTargetInputs){
 							break;
 						}
-					}
-					if (operation.getName().toString().contains("BookDetails")){
-						int a=1;
 					}
 					double match = Matcher.match(dummyService, operation, mandatoryArguments, possibleArguments,
 							possibleOutputs, -1);

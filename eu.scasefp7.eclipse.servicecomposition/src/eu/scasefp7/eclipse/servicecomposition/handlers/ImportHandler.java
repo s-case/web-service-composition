@@ -163,7 +163,7 @@ public class ImportHandler extends AbstractHandler {
 							boolean propertyExists = false;
 							for (OwlService property : services) {
 								if (property.getArgument() != null) {
-									if (property.getArgument().getParent().isEmpty()) {
+									if (property.getArgument().getBelongsToOperation()==null) {
 										propertyExists = true;
 										for (OwlService operation : graph.getSuccessors(property)) {
 											if (operation.getOperation() != null) {

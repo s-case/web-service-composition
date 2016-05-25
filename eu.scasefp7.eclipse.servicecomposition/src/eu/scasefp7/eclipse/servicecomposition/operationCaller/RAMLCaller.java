@@ -15,10 +15,15 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.security.GeneralSecurityException;
+import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.List;
 
 import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
@@ -116,6 +121,13 @@ public class RAMLCaller {
 			inputListGet = "?" + inputList;
 		}
 
+		//////only for eng services////////
+		////////test/////////////
+		if (wsUrl.startsWith("https://foreman.res.eng.it")){
+			byPassCert();
+		}
+		
+		
 		String result = "";
 		if (ramlOperation.getDomain().getCrudVerb().equalsIgnoreCase("get")) {
 			HttpURLConnection conn = null;
@@ -185,6 +197,15 @@ public class RAMLCaller {
 				// add header
 				post.setHeader("User-Agent", USER_AGENT);
 				post.setHeader("Content-Type", "application/json");
+				if (ramlOperation.getDomain().getSecurityScheme() != null) {
+					if (ramlOperation.getDomain().getSecurityScheme().equalsIgnoreCase("Basic Authentication")) {
+						Base64 b = new Base64();
+						String username = ((Value) ramlOperation.getAuthenticationParameters().get(0)).getValue();
+						String password = ((Value) ramlOperation.getAuthenticationParameters().get(1)).getValue();
+						String encoding = b.encodeAsString(new String(username + ":" + password).getBytes());
+						post.setHeader("Authorization", "Basic " + encoding);
+					}
+				}
 				// List<NameValuePair> urlParameters = new
 				// ArrayList<NameValuePair>();
 				// Value val = null;
@@ -254,6 +275,15 @@ public class RAMLCaller {
 				httpURLConnection = (HttpURLConnection) url.openConnection();
 				httpURLConnection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
 				httpURLConnection.setRequestMethod("DELETE");
+				if (ramlOperation.getDomain().getSecurityScheme() != null) {
+					if (ramlOperation.getDomain().getSecurityScheme().equalsIgnoreCase("Basic Authentication")) {
+						Base64 b = new Base64();
+						String username = ((Value) ramlOperation.getAuthenticationParameters().get(0)).getValue();
+						String password = ((Value) ramlOperation.getAuthenticationParameters().get(1)).getValue();
+						String encoding = b.encodeAsString(new String(username + ":" + password).getBytes());
+						httpURLConnection.setRequestProperty("Authorization", "Basic " + encoding);
+					}
+				}
 				System.out.println(httpURLConnection.getResponseCode());
 			} catch (IOException exception) {
 				exception.printStackTrace();
@@ -491,7 +521,7 @@ public class RAMLCaller {
 				// ((Value) output).setValue(Integer.toString(value));
 				// }
 				if (output.getType().equalsIgnoreCase("long") || output.getType().equalsIgnoreCase("int")) {
-					long value = (long) ((JSONObject) json).get(output.getName().toString());
+					long value = (long) ((JSONObject) json).get(output.getName().toString());	
 					((Value) output).setValue(Long.toString(value));
 				}
 				if (output.getType().equalsIgnoreCase("boolean")) {
@@ -725,6 +755,37 @@ public class RAMLCaller {
 		//
 		// String jsonText = out.toString();
 		return obj;
+	}
+	
+	
+	private void byPassCert(){
+		// Create a trust manager that does not validate certificate chains
+		TrustManager[] trustAllCerts = new TrustManager[] { 
+		    new X509TrustManager() {     
+		        public java.security.cert.X509Certificate[] getAcceptedIssuers() { 
+		            return new X509Certificate[0];
+		        } 
+		        public void checkClientTrusted( 
+		            java.security.cert.X509Certificate[] certs, String authType) {
+		            } 
+		        public void checkServerTrusted( 
+		            java.security.cert.X509Certificate[] certs, String authType) {
+		        }
+		    } 
+		}; 
+
+		// Install the all-trusting trust manager
+		try {
+		    SSLContext sc = SSLContext.getInstance("SSL"); 
+		    sc.init(null, trustAllCerts, new java.security.SecureRandom()); 
+		    HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
+		} catch (GeneralSecurityException e) {
+		} 
+		// Now you can access an https URL without having the certificate in the truststore
+		try { 
+		    URL url = new URL("https://hostname/index.html"); 
+		} catch (MalformedURLException e) {
+		} 
 	}
 
 }
