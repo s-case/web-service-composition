@@ -3135,8 +3135,6 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 		
 		inputsLabelComposite.redraw();
 		outputsLabelComposite.redraw();
-		treeViewer.getTree().update();
-		inputsTreeViewer.getTree().update();
 		this.rightComposite.update();
 		this.rightComposite.redraw();
 		sc.update();
@@ -3144,7 +3142,6 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 		sashForm.update();
 		sashForm.redraw();
 		sashForm.layout(true);
-		Display.getCurrent().update();
 		this.showBusy(false);
 	}
 
@@ -4115,6 +4112,13 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 														} else {
 															((Value) successor).setValue(
 																	((Value) service.getArgument()).getValue());
+															for (Argument input : inputVariables) {
+																if (input.getOwlService()
+																		.equals(successor.getOwlService())) {
+																	
+																	((Value)input).setValue(((Value) service.getArgument()).getValue());
+																}
+															}
 
 														}
 													}
@@ -6493,7 +6497,9 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 					MavenExecutionResult result = maven.execute(request, monitor2);
 					// war file is generated with the second execution
 					MavenExecutionResult result2 = maven.execute(request, monitor2);
-					boolean exists = webServiceExistsOnServer();
+					//boolean exists = webServiceExistsOnServer();
+					UploadCompositeService newUpload = new UploadCompositeService();
+					boolean exists = newUpload.exists(projectName + "-0.0.1-SNAPSHOT.war");
 					if (exists) {
 						disp.syncExec(new Runnable() {
 							public void run() {
@@ -6504,8 +6510,9 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 								if (answer) {
 									// Yes Button selected
 									try {
-										IStatus status = uploadOnServer(monitor);
-										if (status.equals(Status.CANCEL_STATUS))
+										newUpload.upload(ResourcesPlugin.getWorkspace().getRoot().getLocation().toString() + "/" + projectName
+												+ "/target/" + projectName + "-0.0.1-SNAPSHOT.war", monitor);
+										if (newUpload.getUploadStatus() == 1)
 											return;
 									} catch (Exception e) {
 										// TODO Auto-generated catch block
@@ -6516,14 +6523,15 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 						});
 
 					} else {
-						IStatus status = uploadOnServer(monitor);
-						if (status.equals(Status.CANCEL_STATUS))
+						newUpload.upload(ResourcesPlugin.getWorkspace().getRoot().getLocation().toString() + "/" + projectName
+								+ "/target/" + projectName + "-0.0.1-SNAPSHOT.war", monitor);
+						if (newUpload.getUploadStatus() == 1)
 							return Status.CANCEL_STATUS;
 					}
 					// check if user has cancelled
 					if (monitor.isCanceled())
 						return Status.CANCEL_STATUS;
-					if (webServiceExistsOnServer()) {
+					if (newUpload.getUploadStatus() == 200) {
 
 						// create .cservice file
 
@@ -6632,7 +6640,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 							@Override
 							public void run() {
 								MessageDialog.openInformation(disp.getActiveShell(), "Error occured",
-										"Web service could not be deployed on server. Please contact the server administrator.");
+										"Web service could not be deployed on server. Please contact the server administrator.\nError code: " + newUpload.getUploadStatus());
 							}
 						});
 						return Status.CANCEL_STATUS;
