@@ -30,7 +30,10 @@ Require-Bundle: org.eclipse.ui,
  eu.scasefp7.eclipse.core;bundle-version="[1.0.0,2.0.0)",
  org.eclipse.jst.ejb.ui;bundle-version="1.1.900",
  org.eclipse.wst.jsdt.web.ui;bundle-version="1.0.800",
- net.sf.jung.io;bundle-version="2.0.1"
+ net.sf.jung.io;bundle-version="2.0.1",
+ javax.ws.rs-api;bundle-version="2.0.1",
+ org.glassfish.jersey.core.jersey-client;bundle-version="2.22.2",
+ org.glassfish.jersey.media.jersey-media-multipart;bundle-version="2.22.2"
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Bundle-ActivationPolicy: lazy
 Export-Package: eu.scasefp7.eclipse.servicecomposition,
