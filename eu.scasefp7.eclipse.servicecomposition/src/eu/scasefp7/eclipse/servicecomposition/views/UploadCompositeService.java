@@ -31,7 +31,7 @@ public class UploadCompositeService {
 
 		String responseString = webTarget.request("text/plain").get(String.class);
 		System.out.println(responseString);
-		if (responseString == "true") {
+		if (responseString.equals("true")) {
 			return true;
 		}
 		return false;

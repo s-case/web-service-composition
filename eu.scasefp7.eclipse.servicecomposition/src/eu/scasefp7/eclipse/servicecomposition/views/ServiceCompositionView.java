@@ -6635,6 +6635,8 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 							}
 						});
 
+					} else if (newUpload.getUploadStatus() == 0){
+						return Status.CANCEL_STATUS;
 					} else {
 						disp.syncExec(new Runnable() {
 							@Override
