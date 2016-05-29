@@ -305,7 +305,8 @@ public abstract class Importer {
 		protected String description = "";
 		protected ArrayList<Argument> outputs = new ArrayList<Argument>();
 		protected ArrayList<Argument> inputs = new ArrayList<Argument>();
-		//protected ArrayList<Argument> uriParameters = new ArrayList<Argument>();
+		// protected ArrayList<Argument> uriParameters = new
+		// ArrayList<Argument>();
 		protected ArrayList<Argument> authenticationParameters = new ArrayList<Argument>();
 		protected ArrayList<Operation> realOperations = new ArrayList<Operation>();
 		protected ServiceAccessInfoForUsers accessInfo = new ServiceAccessInfoForUsers();
@@ -340,7 +341,7 @@ public abstract class Importer {
 			if (ind.getPropertyValue(hasResourcePath) != null) {
 				resourcePath = ind.getPropertyValue(hasResourcePath).asLiteral().getString();
 			}
-			
+
 			if (ind.getPropertyValue(hasDescription) != null) {
 				description = ind.getPropertyValue(hasDescription).asLiteral().getString();
 			}
@@ -686,7 +687,7 @@ public abstract class Importer {
 			domain = null;
 			outputs.clear();
 			inputs.clear();
-			//uriParameters.clear();
+			// uriParameters.clear();
 			authenticationParameters.clear();
 			realOperations.clear();
 		}
@@ -709,7 +710,7 @@ public abstract class Importer {
 			isPrototype = prototype.isPrototype;
 			outputs.addAll(prototype.outputs);
 			inputs.addAll(prototype.inputs);
-			//uriParameters.addAll(prototype.uriParameters);
+			// uriParameters.addAll(prototype.uriParameters);
 			authenticationParameters.addAll(prototype.authenticationParameters);
 			realOperations.addAll(prototype.realOperations);
 		}
@@ -735,7 +736,21 @@ public abstract class Importer {
 					if (ioInd.getPropertyResourceValue(hasType) != null) {
 						Individual typeInd = (Individual) ontologyModel
 								.getIndividual(ioInd.getPropertyResourceValue(hasType).getURI());
-						vec.add(new Argument(this, typeInd, ioInd));
+						boolean exists = false;
+						if (ioInd.getPropertyValue(hasName).asLiteral().getString().contains("event")){
+							int a =0;
+						}
+						for (Argument arg : vec) {
+							if ((arg.getName().toString()
+									.equals(ioInd.getPropertyValue(hasName).asLiteral().getString())
+									&& arg.getType().equals(ioInd.getPropertyValue(hasName).asLiteral().getString()))) {
+								exists = true;
+								arg.setObjectOrArray(true);
+							}
+						}
+						if (!exists) {
+							vec.add(new Argument(this, typeInd, ioInd));
+						}
 					}
 				}
 			}
@@ -790,6 +805,7 @@ public abstract class Importer {
 		public String getType() {
 			return type;
 		}
+
 		/**
 		 * <h1>getType()</h1>
 		 * 
@@ -826,9 +842,9 @@ public abstract class Importer {
 			return outputs;
 		}
 
-//		public ArrayList<Argument> getUriParameters() {
-//			return uriParameters;
-//		}
+		// public ArrayList<Argument> getUriParameters() {
+		// return uriParameters;
+		// }
 
 		public ArrayList<Argument> getAuthenticationParameters() {
 			return authenticationParameters;
@@ -864,8 +880,8 @@ public abstract class Importer {
 				op.domain = domain;
 			if (op.inputs.isEmpty())
 				op.inputs.addAll(inputs);
-//			if (op.uriParameters.isEmpty())
-//				op.uriParameters.addAll(uriParameters);
+			// if (op.uriParameters.isEmpty())
+			// op.uriParameters.addAll(uriParameters);
 			if (op.authenticationParameters.isEmpty())
 				op.authenticationParameters.addAll(authenticationParameters);
 			if (op.outputs.isEmpty())
@@ -904,11 +920,11 @@ public abstract class Importer {
 				ins += arg.toString();
 			}
 			String uris = "";
-//			for (Argument arg : uriParameters) {
-//				if (!uris.isEmpty())
-//					uris += ", ";
-//				uris += arg.toString();
-//			}
+			// for (Argument arg : uriParameters) {
+			// if (!uris.isEmpty())
+			// uris += ", ";
+			// uris += arg.toString();
+			// }
 			String outs = "";
 			for (Argument arg : outputs) {
 				if (!outs.isEmpty())
@@ -978,6 +994,7 @@ public abstract class Importer {
 		private OwlService belongsToOwlService = null;
 		private Operation belongsToOperation;
 		private boolean isRequired = true;
+		private boolean objectOrArray = false;
 
 		/**
 		 * Generates an argument by its attribute.
@@ -1010,8 +1027,8 @@ public abstract class Importer {
 		 * @param ioInd
 		 */
 		Argument(Operation operation, Individual typeInd, Individual ioInd) {
-			if (operation.getName().toString().contains("search")){
-				int a=1;
+			if (operation.getName().toString().contains("search")) {
+				int a = 1;
 			}
 			if (typeInd.getPropertyResourceValue(hasType) == null) {
 				// Native Object
@@ -1025,11 +1042,12 @@ public abstract class Importer {
 				// Complex Object
 				if (ioInd.getPropertyValue(hasName) != null) {
 					String foundName = ioInd.getPropertyValue(hasName).asLiteral().getString().trim();
-					//foundName = foundName.substring(0, 1).toLowerCase() + foundName.substring(1);// convert
-																									// first
-																									// letter
-																									// to
-																									// lowercase
+					// foundName = foundName.substring(0, 1).toLowerCase() +
+					// foundName.substring(1);// convert
+					// first
+					// letter
+					// to
+					// lowercase
 					name = new ComparableName(foundName);
 					type = ioInd.getPropertyValue(hasName).asLiteral().getString().trim();
 				}
@@ -1072,7 +1090,7 @@ public abstract class Importer {
 				Argument arg = new Argument(sub);
 				subtypes.add(arg);
 			}
-			for (Argument matched : prototype.getMatchedInputs()){
+			for (Argument matched : prototype.getMatchedInputs()) {
 				Argument arg = new Argument(matched);
 				hasMatchedInputs.add(arg);
 			}
@@ -1124,7 +1142,8 @@ public abstract class Importer {
 		public boolean isArray() {
 			return isArray;
 		}
-		public void setIsArray(boolean isArray){
+
+		public void setIsArray(boolean isArray) {
 			this.isArray = isArray;
 		}
 
@@ -1139,6 +1158,23 @@ public abstract class Importer {
 
 		public void setIsRequired(boolean isRequired) {
 			this.isRequired = isRequired;
+		}
+		/**
+		 * <h1>getObjectOrArray</h1>
+		 * 
+		 * @return true if the argument returns either an array or an object.
+		 * Applies for output arguments.
+		 */
+		public boolean getObjectOrArray() {
+			return objectOrArray;
+		}
+
+		/**
+		 * <h1>setObjectOrArray</h1>
+		 * @param objectOrArray: true if the argument returns either an array or an object.
+		 */
+		public void setObjectOrArray(boolean objectOrArray) {
+			this.objectOrArray = objectOrArray;
 		}
 
 		/**
@@ -1167,9 +1203,11 @@ public abstract class Importer {
 		public ArrayList<Argument> getMatchedInputs() {
 			return hasMatchedInputs;
 		}
+
 		public void addMatchedInputs(Argument matched) {
 			this.hasMatchedInputs.add(matched);
 		}
+
 		public ArrayList<Value> getElements() {
 			return elements;
 		}

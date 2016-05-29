@@ -1169,8 +1169,16 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 					return ObjectClasses;
 				}
 			}
-			ObjectClasses += TAB + "public static class " + type.substring(0, 1).toUpperCase() + type.substring(1)
-					+ " {\n";
+			String deserializer = "";
+			// if output is either array or object
+			if (output.getObjectOrArray()){
+				deserializer = TAB + "public static class " + type.substring(0, 1).toUpperCase() + type.substring(1) + "Deserializer implements JsonDeserializer<" + type.substring(0, 1).toUpperCase() + type.substring(1) + "> {\n";
+				deserializer += TAB + TAB + "\n" + TAB + TAB + "@Override\n";
+				deserializer += TAB + TAB + "public " + type.substring(0, 1).toUpperCase() + type.substring(1) + " deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context)throws JsonParseException {\n";
+				
+			}
+			
+			
 			String VarDeclaration = "";
 			String ConstractorClasses = "";
 			ConstractorClasses += TAB + TAB + type.substring(0, 1).toUpperCase() + type.substring(1) + "(){\n";
@@ -1178,10 +1186,27 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 			ConstractorClasses += TAB + TAB + type.substring(0, 1).toUpperCase() + type.substring(1) + "(";
 			String constractorVars = "";
 			String getSet = "\n\n";
+			String deserializerBody = "";
+			
 			for (Argument sub : output.getSubtypes()) {
 				String subType = sub.getType();
 				if (!constractorVars.isEmpty()) {
 					constractorVars += ", ";
+				}
+				if (output.getObjectOrArray()){
+					VarDeclaration += TAB + TAB + "@SerializedName(\""+ sub.getName().getContent() +"\")\n";
+					deserializerBody += TAB + TAB + "ArrayList<" + subType.substring(0, 1).toUpperCase()
+							+ subType.substring(1) + "> " + type + "List = new ArrayList<" + subType.substring(0, 1).toUpperCase()
+							+ subType.substring(1) + ">();\n";
+					deserializerBody += TAB + TAB + "try {\n" + TAB + TAB + TAB + "Type " + subType + "Type = new TypeToken<" + subType.substring(0, 1).toUpperCase()
+							+ subType.substring(1) + "[]>() {}.getType();\n";
+					deserializerBody += TAB + TAB + TAB + subType.substring(0, 1).toUpperCase()
+							+ subType.substring(1) + "[] " + subType + "Table = new Gson().fromJson(json.getAsJsonObject().getAsJsonArray(\"" + subType + "\"), " + subType + "Type);\n";
+					deserializerBody += TAB + TAB + TAB + "for (Event event : eventTable){\n";
+					deserializerBody += TAB + TAB + TAB + TAB + "eventsList.add(event);\n" + TAB + TAB + TAB + "}\n";
+					deserializerBody += TAB + TAB + "} catch (Exception e) {\n" + TAB + TAB + TAB + "Event child = context.deserialize(json.getAsJsonObject(), Event.class);\n" + TAB + TAB + TAB + "eventsList.add(child);\n" + TAB + TAB + "}\n";
+					deserializerBody += TAB + TAB + "Events events = new Events(eventsList);\n" + TAB + TAB + "return events;\n";
+					deserializerBody += TAB + TAB + "}\n" + TAB + "}\n";
 				}
 				if (sub.getSubtypes().isEmpty() && !sub.isArray()) {
 					VarDeclaration += TAB + TAB + "private " + subType + " " + sub.getName().getContent() + ";\n";
@@ -1193,7 +1218,7 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 					getSet += TAB + TAB + "@XmlElement\n" + TAB + TAB + "public " + subType + " get"
 							+ sub.getName().getContent() + "() {\n" + TAB + TAB + TAB + "return "
 							+ sub.getName().getContent() + ";\n" + TAB + TAB + "}\n";
-				} else if (sub.isArray() && RAMLCaller.stringIsItemFromList(sub.getType(), datatypes)) {
+				} else if (sub.isArray() && RAMLCaller.stringIsItemFromList(sub.getType(), datatypes) || output.getObjectOrArray()) {
 					if (subType.equals("int")) {
 						subType = "Integer";
 					} else {
@@ -1242,7 +1267,11 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 				}
 
 			}
+			
 			VarDeclaration += "\n\n";
+			ObjectClasses += deserializer + deserializerBody ;
+			ObjectClasses += TAB + "public static class " + type.substring(0, 1).toUpperCase() + type.substring(1)
+			+ " {\n";
 			ObjectClasses += VarDeclaration;
 			ConstractorClasses += constractorVars + "){\n";
 			for (Argument sub : output.getSubtypes()) {

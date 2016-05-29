@@ -74,7 +74,19 @@ public class RestFunctionCodeNode extends CodeNode {
 	protected String generateOutputSynchronizationCode(Operation operation, ArrayList<OwlService> allVariables) {
 
 		String ret = "";
-		ret += "Gson gson = new Gson();\n";
+		String var = "";
+		for (OwlService variable : allVariables){
+			if (variable.getArgument().getObjectOrArray()){
+				String type = variable.getArgument().getName().toString();
+				var+= "gsonBuilder.registerTypeAdapter(" + type.substring(0, 1).toUpperCase() + type.substring(1) + ".class, new " + type.substring(0, 1).toUpperCase() + type.substring(1) + "Deserializer());\n";
+			}
+		}
+		
+		ret += "GsonBuilder gsonBuilder = new GsonBuilder();\n" + var
+				+ "Gson gson = gsonBuilder.create();\n";
+		
+		//ret += "Gson gson = new Gson();\n";
+		
 		ret += operation.getName().toString() + "_response = gson.fromJson(result, " + operation.getName().toString()
 				+ "Response.class);\n";
 		// ret += "ArrayList<Variable> outputs = new ArrayList<Variable>();\n";
