@@ -1204,7 +1204,7 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 							+ subType.substring(1) + "[] " + subType + "Table = new Gson().fromJson(json.getAsJsonObject().getAsJsonArray(\"" + subType + "\"), " + subType + "Type);\n";
 					deserializerBody += TAB + TAB + TAB + "for (Event event : eventTable){\n";
 					deserializerBody += TAB + TAB + TAB + TAB + "eventsList.add(event);\n" + TAB + TAB + TAB + "}\n";
-					deserializerBody += TAB + TAB + "} catch (Exception e) {\n" + TAB + TAB + TAB + "Event child = context.deserialize(json.getAsJsonObject(), Event.class);\n" + TAB + TAB + TAB + "eventsList.add(child);\n" + TAB + TAB + "}\n";
+					deserializerBody += TAB + TAB + "} catch (Exception e) {\n" + TAB + TAB + TAB + "Event child = context.deserialize(json.getAsJsonObject().getAsJsonObject(\"" + subType + "\"), Event.class);\n" + TAB + TAB + TAB + "eventsList.add(child);\n" + TAB + TAB + "}\n";
 					deserializerBody += TAB + TAB + "Events events = new Events(eventsList);\n" + TAB + TAB + "return events;\n";
 					deserializerBody += TAB + TAB + "}\n" + TAB + "}\n";
 				}
