@@ -96,7 +96,7 @@ public class WSOntology {
 
 	public void createNewWSOperation(String projectName, ArrayList<OwlService> inputs,
 			ArrayList<Argument> uriParameters, ArrayList<OwlService> resultVariables, String serviceURL,
-			String applicationDomainURI) {
+			String applicationDomainURI, String crudVerb) {
 		String str = "";
 
 		str = projectName.replace(" ", "_").replaceAll("[^\\p{L}\\p{Nd}]", "");
@@ -123,7 +123,7 @@ public class WSOntology {
 		operInd.addProperty(hasResourcePath, "rest/result/query");
 		// add crud operation
 		DatatypeProperty hasCRUDVerb = ontologyModel.getDatatypeProperty(NS + "hasCRUDVerb");
-		operInd.addProperty(hasCRUDVerb, "GET");
+		operInd.addProperty(hasCRUDVerb, crudVerb);
 		DatatypeProperty belongsToWSType = ontologyModel.getDatatypeProperty(NS + "belongsToWSType");
 		operInd.addProperty(belongsToWSType, "RESTful");
 		DatatypeProperty hasResponseType = ontologyModel.getDatatypeProperty(NS + "hasResponseType");
@@ -138,7 +138,7 @@ public class WSOntology {
 				serviceAccessInfoClass);
 		uris.add(accessInd.getURI().toLowerCase());
 		DatatypeProperty hasDescription = ontologyModel.getDatatypeProperty(NS + "hasDescription");
-		String description = "Get";
+		String description = "";
 		for (String s : projectName.split("(?<!(^|[A-Z]))(?=[A-Z])|(?<!^)(?=[A-Z][a-z])")) {
 			description = description + " " + s;
 		}
@@ -156,7 +156,7 @@ public class WSOntology {
 		ObjectProperty hasInput = ontologyModel.getObjectProperty(NS + "hasInput");
 		OntClass conceptClass = ontologyModel.getOntClass(NS + "Concept");
 		OntClass datatypeClass = ontologyModel.getOntClass(NS + "Datatype");
-
+		DatatypeProperty isTypeOf = ontologyModel.getDatatypeProperty(NS + "isTypeOf");
 		DatatypeProperty isRequired = ontologyModel.getDatatypeProperty(NS + "isRequired");
 		DatatypeProperty isArray = ontologyModel.getDatatypeProperty(NS + "isArray");
 
@@ -172,7 +172,12 @@ public class WSOntology {
 				noInd.addProperty(hasName, inputs.get(i).getArgument().getName().getContent());
 				// create is Required prop
 				noInd.addProperty(isRequired, String.valueOf(inputs.get(i).getArgument().isRequired()));
-
+				// create has isTypeOf prop
+				if (inputs.get(i).getArgument().isTypeOf().equals("BodyParameter")) {
+					noInd.addProperty(isTypeOf, "BodyParameter");
+				} else {
+					noInd.addProperty(isTypeOf, "QueryParameter");
+				}
 				// create has type prop
 				String type = inputs.get(i).getArgument().getType();
 				Iterator it = datatypeClass.listInstances();
@@ -192,35 +197,40 @@ public class WSOntology {
 				operInd.addProperty(hasInput, noInd);
 			}
 		}
-		for (int i = 0; i < uriParameters.size(); i++) {
-			String name = uriParameters.get(i).getName().toString();
-			name = changeUri(name);
-			// check if concept already exists
-			IndividualImpl nativeObjectInd = null;
-			IndividualImpl noInd = (IndividualImpl) ontologyModel.createIndividual(NS + name, conceptClass);
-			uris.add(noInd.getURI().toLowerCase());
-			// create has name prop
-			noInd.addProperty(hasName, uriParameters.get(i).getName().getContent());
-			// create is Required prop
-			noInd.addProperty(isRequired, String.valueOf(uriParameters.get(i).isRequired()));
-			// create has type prop
-			String type = uriParameters.get(i).getType();
-			Iterator it = datatypeClass.listInstances();
-			String uri = "";
-			IndividualImpl datatypeInd = null;
-			while (it.hasNext()) {
-				datatypeInd = (IndividualImpl) it.next();
-				if (datatypeInd.getLocalName().equalsIgnoreCase(type)) {
-					uri = datatypeInd.getURI();
-					break;
-				}
-			}
-			if (datatypeInd != null) {
-				ObjectProperty hasType = ontologyModel.getObjectProperty(NS + "hasType");
-				noInd.addProperty(hasType, datatypeInd);
-			}
-			operInd.addProperty(hasInput, noInd);
-		}
+		// commented since uri params are considered as inputs now
+		// for (int i = 0; i < uriParameters.size(); i++) {
+		// String name = uriParameters.get(i).getName().toString();
+		// name = changeUri(name);
+		// // check if concept already exists
+		// IndividualImpl nativeObjectInd = null;
+		// IndividualImpl noInd = (IndividualImpl)
+		// ontologyModel.createIndividual(NS + name, conceptClass);
+		// uris.add(noInd.getURI().toLowerCase());
+		// // create has name prop
+		// noInd.addProperty(hasName,
+		// uriParameters.get(i).getName().getContent());
+		// // create is Required prop
+		// noInd.addProperty(isRequired,
+		// String.valueOf(uriParameters.get(i).isRequired()));
+		// // create has type prop
+		// String type = uriParameters.get(i).getType();
+		// Iterator it = datatypeClass.listInstances();
+		// String uri = "";
+		// IndividualImpl datatypeInd = null;
+		// while (it.hasNext()) {
+		// datatypeInd = (IndividualImpl) it.next();
+		// if (datatypeInd.getLocalName().equalsIgnoreCase(type)) {
+		// uri = datatypeInd.getURI();
+		// break;
+		// }
+		// }
+		// if (datatypeInd != null) {
+		// ObjectProperty hasType = ontologyModel.getObjectProperty(NS +
+		// "hasType");
+		// noInd.addProperty(hasType, datatypeInd);
+		// }
+		// operInd.addProperty(hasInput, noInd);
+		// }
 		ObjectProperty hasOutput = ontologyModel.getObjectProperty(NS + "hasOutput");
 		createOutputs(hasOutput, operInd, resultVariables);
 	}

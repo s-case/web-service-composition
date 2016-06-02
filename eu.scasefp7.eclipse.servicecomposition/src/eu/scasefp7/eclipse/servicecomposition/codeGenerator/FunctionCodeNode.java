@@ -72,7 +72,7 @@ public class FunctionCodeNode extends CodeNode {
 		// return a dummy Python call
 		if (operation.getDomain().isLocal())
 			return super.generateInputSynchronizationCode(operation, allVariables, hasBodyInput);
-		String ret = "CallWSDLService service =new CallWSDLService();";
+		String ret = "CallWSDLService service =new CallWSDLService();\n";
 		ret += "WSOperation wsOperation = service.domainOperation(\"" + operation.getName().toString() + "\", \""
 				+ operation.getDomain().getURI() + "\");\n";
 		for (Argument arg : operation.getInputs())
@@ -196,7 +196,9 @@ public class FunctionCodeNode extends CodeNode {
 				}
 			}
 		}
-		varInstance += varArguments + ");\n";
+		if (!varArguments.isEmpty()) {
+			varInstance += varArguments + ");\n";
+		}
 		ret += "if (result.getResponseHasNativeOrComplexObjects().get(0) instanceof NativeObject && operationOutputs.size() > 1) {\n";
 		ret += TAB
 				+ "String xmlString = ((NativeObject) ((InvocationResult) result).getResponseHasNativeOrComplexObjects().get(0)).getHasValue();\n"
@@ -368,20 +370,24 @@ public class FunctionCodeNode extends CodeNode {
 		return code;
 	}
 
-	public static String generateImports(boolean restServiceExists, boolean wsdlServiceExists) {
+	public static String generateImports(boolean restServiceExists, boolean hasDeserializer,
+			boolean wsdlServiceExists) {
 
 		String imports = "";
 		if (restServiceExists) {
-			imports += "import com.google.gson.Gson;\n" + "import com.google.gson.GsonBuilder;\n"
-					+ "import com.google.gson.JsonDeserializationContext;\n"
-					+ "import com.google.gson.JsonDeserializer;\n" + "import com.google.gson.JsonElement;\n"
-					+ "import com.google.gson.JsonParseException;\n"
-					+ "import com.google.gson.annotations.SerializedName;\n"
-					+ "import com.google.gson.reflect.TypeToken;\n" + "import java.lang.reflect.Type;\n";
+			imports += "import com.google.gson.Gson;\n" + "import com.google.gson.GsonBuilder;\n";
+			if (hasDeserializer) {
+				imports += "import com.google.gson.JsonDeserializationContext;\n"
+						+ "import com.google.gson.JsonDeserializer;\n" + "import com.google.gson.JsonElement;\n"
+						+ "import com.google.gson.JsonParseException;\n"
+						+ "import com.google.gson.annotations.SerializedName;\n"
+						+ "import com.google.gson.reflect.TypeToken;\n" + "import java.lang.reflect.Type;\n";
+			}
 		}
 		if (wsdlServiceExists) {
-			imports += "import gr.iti.wsdl.wsdlToolkit.ITIWSDLParser;\n"
-					+ "import gr.iti.wsdl.wsdlToolkit.InvocationResult;\n"
+			imports += 
+					//"import gr.iti.wsdl.wsdlToolkit.ITIWSDLParser;\n"
+					"import gr.iti.wsdl.wsdlToolkit.InvocationResult;\n"
 					+ "import gr.iti.wsdl.wsdlToolkit.NativeObject;\n"
 					+ "import gr.iti.wsdl.wsdlToolkit.ComplexObject;\n"
 					+ "import gr.iti.wsdl.wsdlToolkit.ParsedWSDLDefinition;\n"

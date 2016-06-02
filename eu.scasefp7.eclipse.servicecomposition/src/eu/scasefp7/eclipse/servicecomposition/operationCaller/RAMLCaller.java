@@ -90,6 +90,9 @@ public class RAMLCaller {
 			Value val = null;
 			for (Argument arg : uriParams) {
 				val = (Value) arg;
+				if (val.getValue().equals("matched")){
+					val.setValue("");
+				}
 				wsUrl = wsUrl.replace("{" + arg.getName().toString() + "}", val.getValue());
 			}
 
@@ -108,7 +111,9 @@ public class RAMLCaller {
 						inputList += "&";
 
 					}
-
+					if (val.getValue().equals("matched")){
+						val.setValue("");
+					}
 					inputList += input.getName().toString() + "=" + val.getValue();
 				}
 

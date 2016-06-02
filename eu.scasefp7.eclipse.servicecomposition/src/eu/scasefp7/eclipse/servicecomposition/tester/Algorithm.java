@@ -580,7 +580,7 @@ public class Algorithm {
 					case "per month":
 						costPerMonth.calculateCost(currency, replacedOperation);
 						break;
-					case "per  year":
+					case "per year":
 						costPerYear.calculateCost(currency, replacedOperation);
 						break;
 					case "unlimited":
@@ -604,6 +604,7 @@ public class Algorithm {
 
 					transformer.createLinkedVariableGraph();
 					// candidateOperations.remove(replacedOperation.getOperation());
+					counter++;
 				}
 
 				//transformer.createLinkedVariableGraph();

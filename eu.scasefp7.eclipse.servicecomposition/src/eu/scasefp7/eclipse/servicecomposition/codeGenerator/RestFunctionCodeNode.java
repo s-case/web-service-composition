@@ -53,8 +53,9 @@ public class RestFunctionCodeNode extends CodeNode {
 			boolean hasBodyInput) {
 
 		String ret = "";
-		ret += "Gson body = new Gson();\n";
+		
 		if (hasBodyInput) {
+			ret += "Gson body = new Gson();\n";
 			ret += "String entity = body.toJson(" + operation.getName().toString() + "_request);\n";
 		} else {
 			ret += "String entity = \"\";\n";

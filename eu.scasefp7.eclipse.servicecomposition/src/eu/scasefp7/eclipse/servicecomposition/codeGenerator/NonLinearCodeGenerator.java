@@ -66,6 +66,8 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 	String[] datatypes = new String[] { "string", "long", "int", "float", "double", "dateTime", "boolean" };
 
 	HashMap<OwlService, OwlService> map = new HashMap<OwlService, OwlService>();
+	
+	boolean hasDeserializer = false;
 
 	public String generateCode(final Graph<OwlService, Connector> jungGraph, String functionName,
 			boolean addConnectionsToGraph, String ProjectName) throws Exception {
@@ -499,7 +501,7 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 		String declaredInputs = "";
 		for (OwlService input : inputVariables) {
 			if ((input.getArgument().isTypeOf().equals("QueryParameter")
-					|| input.getArgument().isTypeOf().equals("URIParameter")) && !input.getisMatchedIO()) {
+					|| input.getArgument().isTypeOf().equals("URIParameter") || input.getArgument().isTypeOf().equals("")) && !input.getisMatchedIO()) {
 				if (!declaredInputs.isEmpty())
 					declaredInputs += ", ";
 				if (input.getArgument().getType() == "") {
@@ -916,7 +918,7 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 		if (hasBodyInput)
 			declaredInputs += constractorInstanceInputVars;
 		for (OwlService arg : inputVariables) {
-			if (arg.getArgument().isTypeOf().equals("QueryParameter") && !arg.getisMatchedIO()) {
+			if ((arg.getArgument().isTypeOf().equals("QueryParameter") || arg.getArgument().isTypeOf().equals("")) && !arg.getisMatchedIO()) {
 				String type = arg.getArgument().getType();
 
 				declaredInputs += TAB + TAB + "if (" + arg.getName().getContent() + " == null) {\n";
@@ -1166,7 +1168,7 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 
 		// return code
 		String returnCode = "";
-		returnCode = FunctionCodeNode.generateImports(restServiceExists, wsdlServiceExists) + "\npublic class "
+		returnCode = FunctionCodeNode.generateImports(restServiceExists, hasDeserializer, wsdlServiceExists) + "\npublic class "
 				+ createdClassName + "{\n" + TAB;
 
 		returnCode += declaredVariables + "\n" + requestClassDeclaration + resultClassDeclaration
@@ -1219,7 +1221,7 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 				deserializer += TAB + TAB + "\n" + TAB + TAB + "@Override\n";
 				deserializer += TAB + TAB + "public " + type.substring(0, 1).toUpperCase() + type.substring(1)
 						+ " deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context)throws JsonParseException {\n";
-
+				hasDeserializer = true;
 			}
 
 			String VarDeclaration = "";

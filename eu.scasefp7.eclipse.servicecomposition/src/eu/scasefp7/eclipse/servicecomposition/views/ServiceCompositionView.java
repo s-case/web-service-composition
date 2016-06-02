@@ -3099,15 +3099,15 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 		treeViewer.getTree().setLayoutData(new GridData(GridData.FILL_BOTH));
 		outputsComposite.setSize(300, 200);
 		treeViewer.setContentProvider(new MyTreeContentProvider());
-//
+
 		column1.setLabelProvider(new MyLabelProvider());
 		column2.setLabelProvider(createColumnLabelProvider());
 		treeViewer.setInput(nodes);
 		// // outputsComposite.setSize(300, nodes.size() * 10);
-		// treeViewer.expandAll();
+		//treeViewer.expandAll();
 		//
 
-	//	outputsComposite.addListener(SWT.Expand, outputListener);
+		outputsComposite.addListener(SWT.Expand, outputListener);
 
 		treeViewer.addSelectionChangedListener(new ISelectionChangedListener() {
 			public void selectionChanged(SelectionChangedEvent event) {
@@ -3132,69 +3132,24 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 		graph.update();
 		graph.redraw();
 
-		
 		inputsLabelComposite.redraw();
 		outputsLabelComposite.redraw();
-		this.rightComposite.update();
-		this.rightComposite.redraw();
+		treeViewer.refresh();
+		inputsTreeViewer.refresh();
+		outputsComposite.redraw();
+		inputsComposite.redraw();
+		rightComposite.update();
+		rightComposite.redraw();
 		sc.update();
 		sc.redraw();
+		
+		
 		sashForm.update();
 		sashForm.redraw();
 		sashForm.layout(true);
 		this.showBusy(false);
 	}
 
-	public class MyLabelProvider extends ColumnLabelProvider implements ILabelProvider {
-		public String getText(Object element) {
-			return ((Node) element).getName();
-		}
-
-		public Image getImage(Object arg0) {
-			return null;
-		}
-
-		public void addListener(ILabelProviderListener arg0) {
-		}
-
-		public void dispose() {
-		}
-
-		public boolean isLabelProperty(Object arg0, String arg1) {
-			return false;
-		}
-
-		public void removeListener(ILabelProviderListener arg0) {
-		}
-	}
-
-	public class MyTreeContentProvider implements ITreeContentProvider {
-		public Object[] getChildren(Object parentElement) {
-			Vector<Node> subcats = ((Node) parentElement).getSubCategories();
-			return subcats == null ? new Object[0] : subcats.toArray();
-		}
-
-		public Object getParent(Object element) {
-			return ((Node) element).getParent();
-		}
-
-		public boolean hasChildren(Object element) {
-			return ((Node) element).getSubCategories() != null;
-		}
-
-		public Object[] getElements(Object inputElement) {
-			if (inputElement != null && inputElement instanceof Vector) {
-				return ((Vector<Node>) inputElement).toArray();
-			}
-			return new Object[0];
-		}
-
-		public void dispose() {
-		}
-
-		public void inputChanged(Viewer viewer, Object oldInput, Object newInput) {
-		}
-	}
 
 	private static ColumnLabelProvider createColumnLabelProvider() {
 		return new ColumnLabelProvider() {
@@ -6582,7 +6537,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 											ws.createNewWSOperation(generator.getOperation().getHasName(),
 													generator.getInputVariables(), generator.getUriParameters(),
 													generator.getOutputVariables(),
-													generator.getOperation().getBelongsToURL(), applicationDomainURI);
+													generator.getOperation().getBelongsToURL(), applicationDomainURI, generator.getOperation().getHasCRUDVerb());
 											ws.saveToOWL();
 											RepositoryClient cl = new RepositoryClient();
 											cl.uploadOntology();
