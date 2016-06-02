@@ -69,16 +69,19 @@ public class MatchOutputDialog extends Dialog {
 	@Override
 	protected Control createDialogArea(Composite parent) {
 		Composite container = (Composite) super.createDialogArea(parent);
-		
+		container.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true, 1, 1));
+		container.setSize(200, 200);
 
 		TreeViewer tree = new TreeViewer(container, SWT.BORDER | SWT.H_SCROLL | SWT.V_SCROLL);
+		tree.getTree().setLayoutData(new GridData(GridData.FILL_BOTH));
+		tree.getTree().setSize(200, 150);
 		TreeViewerColumn columni = new TreeViewerColumn(tree, SWT.NONE);
 		columni.getColumn().setWidth(200);
 		columni.getColumn().setText("Columni");
 		columni.getColumn().setResizable(true);
 		TreeViewerColumn columnii = new TreeViewerColumn(tree, SWT.NONE);
 		columnii.getColumn().setText("Columnii");
-		columnii.getColumn().setWidth(300);
+		columnii.getColumn().setWidth(200);
 		columnii.getColumn().setResizable(true);
 		tree.setContentProvider(new MyTreeContentProvider());
 
@@ -135,6 +138,7 @@ public class MatchOutputDialog extends Dialog {
 	public void configureShell(Shell newShell) {
 		super.configureShell(newShell);
 		newShell.setText("Choose output value to be matched with \"" + varName + "\" input variable");
+		newShell.setMinimumSize(200, 200);
 	}
 
 	public void setDialogLocation() {
