@@ -140,8 +140,19 @@ public class ZestLabelProvider extends LabelProvider implements ISelfStyleProvid
 			layout.setMinorAlignment(3);
 			tooltip.setLayoutManager(new FlowLayout(false));
 			if (((OwlService) ((MyNode) node.getData()).getObject()).getOperation().getDomain() != null) {
-				tooltip.add(new Label("Action: " + node.getText() + "\nBase URI: "
-						+ ((OwlService) ((MyNode) node.getData()).getObject()).getOperation().getDomain().getURI()));
+				if (((OwlService) ((MyNode) node.getData()).getObject()).getOperation().getDescription() != null) {
+					tooltip.add(
+							new Label("Operation: " + node.getText() + "\nBase URI: "
+									+ ((OwlService) ((MyNode) node.getData()).getObject()).getOperation().getDomain()
+											.getURI()
+									+ "\nDescription: " + ((OwlService) ((MyNode) node.getData()).getObject())
+											.getOperation().getDescription()));
+				} else {
+					tooltip.add(new Label("Operation: " + node.getText() + "\nBase URI: "
+							+ ((OwlService) ((MyNode) node.getData()).getObject()).getOperation().getDomain()
+									.getURI()));
+				}
+
 			}
 			node.setTooltip(tooltip);
 		}
