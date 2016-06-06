@@ -221,6 +221,7 @@ public class Matcher {
 				if (hasSame(arg, possibleArgument)) {
 					// outputSimilarity += 1.0 / operation.getOutputs().size();
 					outputSimilarity += 1.0 / possibleOutputs.size();
+					nativeOutputs.remove(arg);
 					break;
 				}
 
@@ -309,11 +310,26 @@ public class Matcher {
 	 * @return true if the arguments are considered to be the same variable
 	 */
 	public static boolean sameVariable(Importer.Argument arg0, Importer.Argument arg1) {
+		//remove name when is the second synthetic word e.g.don't match country_name with author_name
+		ComparableName name0 = arg0.getName();
+		ComparableName name1 = arg1.getName();
+		
+		if (arg0.getName().toString().contains("_name")){
+			String regex = "_name";
+			String name = name0.toString().replaceAll(regex, "");
+			name0= new ComparableName(name);
+		}
+		if (arg1.getName().toString().contains("_name")){
+			String regex = "_name";
+			String name = name1.toString().replaceAll(regex, "");
+			name1= new ComparableName(name);
+		}
+		
 		return (arg0.getType().isEmpty() || arg1.getType().isEmpty()
 				|| (arg0.getType().equals(arg1.getType()) && arg0.isArray() == arg1.isArray()))
 				&& (arg0.getName().isEmpty() || arg1.getName().isEmpty()
-						|| Similarity.similarity(arg0.getName(), arg1.getName())
-								/ (Math.max(arg0.getName().getComparableForm().split("\\s").length, arg1.getName()
+						|| Similarity.similarity(name0, name1)
+								/ (Math.max(name0.getComparableForm().split("\\s").length, name1
 										.getComparableForm().split("\\s").length)) >= VARIABLE_SIMILARITY_THRESHOLD);
 	}
 

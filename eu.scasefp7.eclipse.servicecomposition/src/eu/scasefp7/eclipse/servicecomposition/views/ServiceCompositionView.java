@@ -2808,7 +2808,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 		label1.setText("Workflow Inputs:");
 		label1.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
 		label1.setFont(JFaceResources.getFontRegistry().getBold(""));
-		inputsComposite = new Tree(rightComposite, SWT.FILL | SWT.MULTI);
+		inputsComposite = new Tree(rightComposite, SWT.BORDER | SWT.FILL | SWT.MULTI);
 		inputsComposite.setLayout(new GridLayout(2, false));
 		inputsTreeViewer = new TreeViewer(inputsComposite);
 		TreeViewerEditor.create(inputsTreeViewer, new ColumnViewerEditorActivationStrategy(inputsTreeViewer) {
@@ -3067,7 +3067,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 		label2.setText("Workflow Outputs:");
 		label2.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
 		label2.setFont(JFaceResources.getFontRegistry().getBold(""));
-		outputsComposite = new Tree(rightComposite, SWT.FILL | SWT.MULTI);
+		outputsComposite = new Tree(rightComposite, SWT.BORDER |SWT.FILL | SWT.MULTI);
 		outputsComposite.setLayout(new GridLayout(2, false));
 		treeViewer = new TreeViewer(outputsComposite);
 		column1 = new TreeViewerColumn(treeViewer, SWT.NONE);
@@ -3138,6 +3138,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 		inputsTreeViewer.refresh();
 		outputsComposite.redraw();
 		inputsComposite.redraw();
+		rightComposite.layout();
 		rightComposite.update();
 		rightComposite.redraw();
 		sc.update();
