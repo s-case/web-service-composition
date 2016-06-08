@@ -2864,7 +2864,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 
 		// columnz.setLabelProvider(createColumnZLabelProvider(InputNodes));
 
-		inputsTreeViewer.getTree().setLayoutData(new GridData(GridData.FILL_BOTH));
+		//inputsTreeViewer.getTree().setLayoutData(new GridData(GridData.FILL_BOTH));
 		inputsComposite.setSize(300, 200);
 		inputsTreeViewer.setContentProvider(new MyTreeContentProvider());
 
