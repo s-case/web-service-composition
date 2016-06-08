@@ -10,6 +10,7 @@ import eu.scasefp7.eclipse.servicecomposition.operation.ipr.ServiceLicense;
 import eu.scasefp7.eclipse.servicecomposition.operation.ipr.ServiceTrialSchema;
 import eu.scasefp7.eclipse.servicecomposition.transformer.Matcher;
 import eu.scasefp7.eclipse.servicecomposition.transformer.JungXMItoOwlTransform.OwlService;
+import eu.scasefp7.eclipse.servicecomposition.ui.TreeDialog;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -26,6 +27,9 @@ import java.util.Properties;
 
 import org.eclipse.core.runtime.FileLocator;
 import org.eclipse.core.runtime.Platform;
+import org.eclipse.jface.window.Window;
+import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.Shell;
 import org.osgi.framework.Bundle;
 
 import edu.uci.ics.jung.graph.Graph;
@@ -503,7 +507,8 @@ public class Transformer {
 
 			ArrayList<Operation> previousOperations = predecessors.get(in.getArgument().getBelongsToOperation());
 			boolean belongsToPreviousService = false;
-			if (sameVariable != null && previousOperations!=null && previousOperations.contains(sameVariable.getArgument().getBelongsToOperation())) {
+			if (sameVariable != null && previousOperations != null
+					&& previousOperations.contains(sameVariable.getArgument().getBelongsToOperation())) {
 				belongsToPreviousService = true;
 			}
 
@@ -801,7 +806,11 @@ public class Transformer {
 	 * @return the operation that was inserted into the graph
 	 * @throws Exception
 	 */
-	public OwlService placeSingleLinkingOperation(ArrayList<Operation> operations) throws Exception {
+	Operation matchingOperation = null;
+
+	public OwlService placeSingleLinkingOperation(ArrayList<Operation> operations, Display disp, Shell shell)
+			throws Exception {
+
 		OwlService dummyService = new OwlService(new Operation("", (ApplicationDomain) null));
 		Collection<Connector> connectors = graph.getEdges();
 		double bestMatch = 0;
@@ -850,7 +859,7 @@ public class Transformer {
 						}
 				// detect mandatory arguments
 				ArrayList<Argument> mandatoryArguments = new ArrayList<Argument>();
-
+				HashMap<Operation, Double> matches = new HashMap<Operation, Double>();
 				// detect matching operation
 				for (Operation operation : operations) {
 					// detect if all target inputs are matched
@@ -866,10 +875,15 @@ public class Transformer {
 							break;
 						}
 					}
+					if (operation.getName().toString().equals("SBEvents")
+							|| operation.getName().toString().equals("GET_BookDetails")) {
+						int a = 0;
+					}
 					double match = Matcher.match(dummyService, operation, mandatoryArguments, possibleArguments,
 							possibleOutputs, -1);
 					// if (match > 0)
 					// match += nextServices.size();
+					matches.put(operation, match);
 					boolean contains = false;
 					for (OwlService pre : perviousServices) {
 						if (pre.getOperation() != null) {
@@ -891,45 +905,98 @@ public class Transformer {
 						targetConnector = connector;
 					}
 				}
-				ArrayList<Argument> nativeOutputs = new ArrayList<Argument>();
-				ArrayList<Operation> previousOperations = new ArrayList<Operation>();
-				// for (OwlService service:perviousServices){
-				// if (service.getOperation()!=null){
-				// previousOperations.add(service.getOperation());
-				// }
-				// }
-				// if (previousOperations!=null){
-				// for (Operation op: previousOperations){
-				// for (Argument out : op.getOutputs()) {
+
+				// ArrayList<Argument> nativeOutputs = new
+				// ArrayList<Argument>();
+				// ArrayList<Operation> previousOperations = new
+				// ArrayList<Operation>();
+				// // for (OwlService service:perviousServices){
+				// // if (service.getOperation()!=null){
+				// // previousOperations.add(service.getOperation());
+				// // }
+				// // }
+				// // if (previousOperations!=null){
+				// // for (Operation op: previousOperations){
+				// // for (Argument out : op.getOutputs()) {
+				// // getNative(out, nativeOutputs);
+				// // }
+				// // }
+				// // }
+				// if (targetOperation != null) {
+				// for (Argument out : targetOperation.getOutputs()) {
 				// getNative(out, nativeOutputs);
 				// }
 				// }
+				//
+				// if (targetOperation != null && ((OwlService)
+				// targetConnector.getTarget()).getOperation() != null) {
+				// int matched = 0;
+				// for (Argument in : ((OwlService)
+				// targetConnector.getTarget()).getOperation().getInputs()) {
+				// for (Argument out : nativeOutputs) {
+				//
+				// if (Matcher.hasSame(out, in)) {
+				// matched++;
+				// break;
 				// }
-				if (targetOperation != null) {
-					for (Argument out : targetOperation.getOutputs()) {
-						getNative(out, nativeOutputs);
+				// }
+				// }
+				// ArrayList<Argument> nativeInputs = new ArrayList<Argument>();
+				// for (Argument in : targetOperation.getInputs()) {
+				// getNative(in, nativeInputs);
+				// }
+				// if (targetConnector != null && (nativeInputs.size() <=
+				// matched)) {
+				// found = true;
+				// break;
+				// }
+				// }
+
+				found = inputsAreReduced(targetOperation, targetConnector);
+
+				if (found) {
+					ArrayList<Operation> bestMatchedOperations = new ArrayList<Operation>();
+					Iterator it = matches.entrySet().iterator();
+					while (it.hasNext()) {
+						Map.Entry pair = (Map.Entry) it.next();
+						if (bestMatch != 0 && (Double) pair.getValue() == bestMatch
+								&& !((Operation) pair.getKey()).equals(targetOperation)) {
+							if (inputsAreReduced((Operation) pair.getKey(), targetConnector))
+								bestMatchedOperations.add((Operation) pair.getKey());
+						}
+						it.remove(); // avoids a ConcurrentModificationException
 					}
-				}
 
-				if (targetOperation != null && ((OwlService) targetConnector.getTarget()).getOperation() != null) {
-					int matched = 0;
-					for (Argument in : ((OwlService) targetConnector.getTarget()).getOperation().getInputs()) {
-						for (Argument out : nativeOutputs) {
+					if (!bestMatchedOperations.isEmpty()) {
+						bestMatchedOperations.add(targetOperation);
+						final String operationName = targetOperation.getName().toString();
+						disp.syncExec(new Runnable() {
+							public void run() {
 
-							if (Matcher.hasSame(out, in)) {
-								matched++;
-								break;
+								TreeDialog dialog = new TreeDialog(shell);
+								dialog.setDisp(disp);
+								dialog.setOperations(bestMatchedOperations);
+								dialog.setText("Inputs Redunction for operation: " + operationName);
+								dialog.create();
+								dialog.configureShell(shell);
+								dialog.setDialogLocation();
+								if (dialog.open() == Window.OK) {
+									Operation selectedItem = dialog.getOperation();
+									if (selectedItem != null) {
+										matchingOperation = selectedItem;
+									}
+
+								} else {
+									return;
+								}
 							}
+						});
+						if (matchingOperation != null) {
+							targetOperation = matchingOperation;
 						}
 					}
-					ArrayList<Argument> nativeInputs = new ArrayList<Argument>();
-					for (Argument in : targetOperation.getInputs()) {
-						getNative(in, nativeInputs);
-					}
-					if (targetConnector != null && (nativeInputs.size() <= matched)) {
-						found = true;
-						break;
-					}
+
+					break;
 				}
 			}
 		}
@@ -961,6 +1028,39 @@ public class Transformer {
 		}
 
 		return null;
+	}
+
+	private boolean inputsAreReduced(Operation targetOperation, Connector targetConnector) {
+		ArrayList<Argument> nativeOutputs = new ArrayList<Argument>();
+		boolean found = false;
+
+		if (targetOperation != null) {
+			for (Argument out : targetOperation.getOutputs()) {
+				getNative(out, nativeOutputs);
+			}
+		}
+
+		if (targetOperation != null && ((OwlService) targetConnector.getTarget()).getOperation() != null) {
+			int matched = 0;
+			for (Argument in : ((OwlService) targetConnector.getTarget()).getOperation().getInputs()) {
+				for (Argument out : nativeOutputs) {
+
+					if (Matcher.hasSame(out, in)) {
+						matched++;
+						break;
+					}
+				}
+			}
+			ArrayList<Argument> nativeInputs = new ArrayList<Argument>();
+			for (Argument in : targetOperation.getInputs()) {
+				getNative(in, nativeInputs);
+			}
+			if (targetConnector != null && (nativeInputs.size() <= matched)) {
+				found = true;
+			}
+		}
+
+		return found;
 	}
 
 	private void getNative(Argument output, ArrayList<Argument> nativeOutputs) {

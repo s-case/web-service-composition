@@ -2460,7 +2460,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 
 				try {
 
-					reloadStoryboard(disp);
+					reloadStoryboard(disp, shell);
 				} catch (Exception e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
@@ -5304,7 +5304,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 
 	}
 
-	private void reloadStoryboard(Display disp) {
+	private void reloadStoryboard(Display disp, Shell shell) {
 		if (this.storyboardFile != null) {
 			Job reloadSBD = new Job("Reload StoryBoard Creator file") {
 				@Override
@@ -5338,7 +5338,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 						if (monitor.isCanceled())
 							return Status.CANCEL_STATUS;
 						// transform graph
-						jungGraph = Algorithm.transformationAlgorithm(pathToSBDFile, operations, disp);
+						jungGraph = Algorithm.transformationAlgorithm(pathToSBDFile, operations, disp, shell);
 
 						if (jungGraph != null) {
 							// SHOW REPLACEMENT REPORT

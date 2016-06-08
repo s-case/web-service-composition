@@ -17,6 +17,7 @@ import eu.scasefp7.eclipse.servicecomposition.transformer.Similarity.ComparableN
 import eu.scasefp7.eclipse.servicecomposition.transformer.Transformer;
 import eu.scasefp7.eclipse.servicecomposition.transformer.JungXMItoOwlTransform.OwlService;
 import eu.scasefp7.eclipse.servicecomposition.transformer.Transformer.ReplaceInformation;
+import eu.scasefp7.eclipse.servicecomposition.ui.TreeDialog;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -24,13 +25,18 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.jface.dialogs.MessageDialog;
+import org.eclipse.jface.window.Window;
 import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.Shell;
 
 import edu.uci.ics.jung.graph.Graph;
 
@@ -89,7 +95,7 @@ public class Algorithm {
 			this.selection = selection;
 			description = selection.toString();
 			double maxWeight = selection.getWeight();
-			//set alternative operations
+			// set alternative operations
 			for (Transformer.ReplaceInformation replace : replaceInformations)
 				if (replace.getWeight() <= maxWeight) {
 					if (replace.getOriginalServiceOperation().equals(selection.getOriginalServiceOperation()))
@@ -100,7 +106,7 @@ public class Algorithm {
 			if (alternativeOperationsSize > alternativeOperationsMaxSize) {
 				alternativeOperationsSize = alternativeOperationsMaxSize;
 			}
-			for (int i=0;i<alternativeOperationsSize;i++) {
+			for (int i = 0; i < alternativeOperationsSize; i++) {
 				selection.setAlternativeOperations(alternativeOperations.get(i));
 			}
 			updateWeight();
@@ -130,10 +136,8 @@ public class Algorithm {
 					isRestfulWithDescription = true;
 					// this.numberOfWords=selection.getOperationToReplace().getAccessInfo().getDescription().get(0)
 					// .getDescription().split("\\s").length;
-					this.nameSimilarity = Similarity
-							.similarity(
-									new ComparableName(selection.getOperationToReplace()
-											.getDescription()),
+					this.nameSimilarity = Similarity.similarity(
+							new ComparableName(selection.getOperationToReplace().getDescription()),
 							selection.getOriginalServiceOperation().getName());
 				}
 
@@ -439,8 +443,10 @@ public class Algorithm {
 	 * @return an OWL graph that contains the composition of services
 	 * @throws Exception
 	 */
+	static Transformer.ReplaceInformation matchingOperation = null;
+
 	public static Graph<OwlService, Connector> transformationAlgorithm(String path,
-			ArrayList<Importer.Operation> operations, Display disp) throws Exception {
+			ArrayList<Importer.Operation> operations, Display disp, Shell shell) throws Exception {
 
 		costReport costPerUsage = new costReport();
 		costReport costPerMonth = new costReport();
@@ -461,8 +467,8 @@ public class Algorithm {
 			Transformer transformer = new Transformer(JungXMItoOwlTransform.createOwlGraph(xmiGraph, true));
 			correctStepProbability.clear();
 			int numOfActions = 0;
-			for (OwlService service : transformer.getGraph().getVertices()){
-				if (service.getOperation()!= null){
+			for (OwlService service : transformer.getGraph().getVertices()) {
+				if (service.getOperation() != null) {
 					numOfActions++;
 				}
 			}
@@ -480,13 +486,60 @@ public class Algorithm {
 				// }
 				double maxWeight = Double.NEGATIVE_INFINITY;
 				Transformer.ReplaceInformation selection = null;
-				for (Transformer.ReplaceInformation replace : replaceInformations)
+				HashMap<Transformer.ReplaceInformation, Double> matches = new HashMap<Transformer.ReplaceInformation, Double>();
+				for (Transformer.ReplaceInformation replace : replaceInformations) {
+					matches.put(replace, replace.getWeight());
 					if (replace.getWeight() > maxWeight) {
 						selection = replace;
 						maxWeight = replace.getWeight();
+
 					}
+				}
 				if (selection == null)
 					break;
+				ArrayList<Transformer.ReplaceInformation> bestMatchedOperations = new ArrayList<Transformer.ReplaceInformation>();
+				Iterator it = matches.entrySet().iterator();
+				while (it.hasNext()) {
+					Map.Entry pair = (Map.Entry) it.next();
+					if (maxWeight != 0 && (Double) pair.getValue() == maxWeight
+							&& !(((Transformer.ReplaceInformation) pair.getKey()).getOperationToReplace())
+									.equals(selection.getOperationToReplace())
+							&& ((Transformer.ReplaceInformation) pair.getKey()).getOriginalServiceOperation()
+									.equals(selection.getOriginalServiceOperation())) {
+						bestMatchedOperations.add((Transformer.ReplaceInformation) pair.getKey());
+					}
+					it.remove();
+				}
+
+				if (!bestMatchedOperations.isEmpty()) {
+					final String actionName = selection.getOriginalServiceOperation().getName().toString();
+					bestMatchedOperations.add(selection);
+					disp.syncExec(new Runnable() {
+						public void run() {
+
+							TreeDialog dialog = new TreeDialog(shell);
+							dialog.setDisp(disp);
+							dialog.setMode("replaceInfo");
+							dialog.setReplaceInformations(bestMatchedOperations);
+							dialog.setText("Replacement for action: " + actionName);
+							dialog.create();
+							dialog.configureShell(shell);
+							dialog.setDialogLocation();
+							if (dialog.open() == Window.OK) {
+								ReplaceInformation selectedItem = dialog.getReplaceInformation();
+								if (selectedItem != null) {
+									matchingOperation = selectedItem;
+								}
+
+							} else {
+								return;
+							}
+						}
+					});
+					if (matchingOperation != null) {
+						selection = matchingOperation;
+					}
+				}
 
 				correctStepProbability.add(new WeightReport(selection, replaceInformations));
 				// if an ideal operation was selected, try to replace with one
@@ -558,9 +611,10 @@ public class Algorithm {
 				int counter = 0;
 				while (true) {
 
-					OwlService replacedOperation = transformer.placeSingleLinkingOperation(candidateOperations);
+					OwlService replacedOperation = transformer.placeSingleLinkingOperation(candidateOperations, disp,
+							shell);
 					// added interlock to avoid infinite loops (counter)
-					if (replacedOperation == null || counter>numOfActions*3)
+					if (replacedOperation == null || counter > numOfActions * 3)
 						break;
 
 					// Moved down in order to be executed only if op is not
@@ -607,7 +661,7 @@ public class Algorithm {
 					counter++;
 				}
 
-				//transformer.createLinkedVariableGraph();
+				// transformer.createLinkedVariableGraph();
 
 				// Calculate and print total cost
 				String perUsage = costPerUsage.calculateWorkflowCost(" per usage");
@@ -747,7 +801,11 @@ public class Algorithm {
 			return Status.CANCEL_STATUS;
 		}
 
-		for (OwlService service : graph.getVertices()) {
+		for (
+
+		OwlService service : graph.getVertices())
+
+		{
 			// check that action has at least one input and one out put edge
 			if (service.getType().contains("Action") || service.getType().contains("Condition")) {
 
@@ -915,7 +973,9 @@ public class Algorithm {
 
 			}
 		}
-		if (numberOfActions == 0) {
+		if (numberOfActions == 0)
+
+		{
 
 			try {
 				throw new Exception("Graph should contain at least one Operation.");

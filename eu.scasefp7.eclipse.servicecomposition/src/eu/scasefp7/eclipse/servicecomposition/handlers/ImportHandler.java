@@ -144,7 +144,7 @@ public class ImportHandler extends AbstractHandler {
 								+ file.getFullPath().toOSString();
 						//check if the user has cancelled the job before transforming
 						if (monitor.isCanceled()) return Status.CANCEL_STATUS;
-						graph = Algorithm.transformationAlgorithm(pathToSBDFile, operations, disp);
+						graph = Algorithm.transformationAlgorithm(pathToSBDFile, operations, disp, shell);
 
 						if (graph != null) {
 							// SHOW REPLACEMENT REPORT

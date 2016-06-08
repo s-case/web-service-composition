@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Vector;
 
 import org.eclipse.jface.dialogs.Dialog;
+import org.eclipse.jface.dialogs.IMessageProvider;
 import org.eclipse.jface.viewers.ColumnLabelProvider;
 import org.eclipse.jface.viewers.ILabelProvider;
 import org.eclipse.jface.viewers.ILabelProviderListener;
@@ -31,20 +32,31 @@ import org.eclipse.swt.widgets.TreeItem;
 
 import eu.scasefp7.eclipse.servicecomposition.importer.Importer.Argument;
 import eu.scasefp7.eclipse.servicecomposition.importer.Importer.Operation;
-
-
+import eu.scasefp7.eclipse.servicecomposition.transformer.Transformer.ReplaceInformation;
 
 public class TreeDialog extends Dialog {
 	private ArrayList<Operation> operations = new ArrayList<Operation>();
 	private Display disp;
 	private Operation operation;
+	private ArrayList<ReplaceInformation> replaceInformations = new ArrayList<ReplaceInformation>();
+	private ReplaceInformation replaceInformation;
+	private String mode = "operations";
+	private String text = "S-CASE Operations";
 
 	public TreeDialog(Shell parentShell) {
 		super(parentShell);
 	}
 
+	public void setMode(String mode) {
+		this.mode = mode;
+	}
+
 	public void setOperations(ArrayList<Operation> operations) {
 		this.operations = operations;
+	}
+
+	public void setReplaceInformations(ArrayList<ReplaceInformation> replaceInformations) {
+		this.replaceInformations = replaceInformations;
 	}
 
 	public void setDisp(Display disp) {
@@ -55,61 +67,92 @@ public class TreeDialog extends Dialog {
 		this.operation = operation;
 	}
 
+	public void setReplaceInformation(ReplaceInformation replaceInformation) {
+		this.replaceInformation = replaceInformation;
+	}
+
 	public Operation getOperation() {
 		return this.operation;
 	}
 
+	public ReplaceInformation getReplaceInformation() {
+		return this.replaceInformation;
+	}
+	
+	public void setText(String text){
+		this.text = text;
+	}
+
+
+	
 	@Override
 	protected Control createDialogArea(Composite parent) {
 		Composite container = (Composite) super.createDialogArea(parent);
-		// Button button = new Button(container, SWT.PUSH);
-		// button.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER,
-		// false,
-		// false));
-		// button.setText("Press me");
-		// button.addSelectionListener(new SelectionAdapter() {
-		// @Override
-		// public void widgetSelected(SelectionEvent e) {
-		// System.out.println("Pressed");
-		// }
-		// });
-
+		
 		TreeViewer tree = new TreeViewer(container, SWT.BORDER | SWT.H_SCROLL | SWT.V_SCROLL);
+
 		TreeViewerColumn column1 = new TreeViewerColumn(tree, SWT.LEFT);
 		column1.getColumn().setText("Attribute");
-		column1.getColumn().setWidth(200);
+		column1.getColumn().setWidth(300);
 		column1.getColumn().setResizable(true);
-		TreeViewerColumn column2 = new TreeViewerColumn(tree, SWT.LEFT);
-		column2.getColumn().setText("Value");
-		column2.getColumn().setWidth(200);
-		column2.getColumn().setResizable(true);
-
-		Vector<OperationNode> nodes = new Vector<OperationNode>();
-
-		for (Operation operation : operations) {
-			OperationNode n = new OperationNode(operation.getName().toString(), null, operation, null, "");
-			OperationNode subn1 = new OperationNode("Inputs", n, operation, null, "");
-			OperationNode subn2 = new OperationNode("Outputs", n, operation, null, "");
-			OperationNode subn3 = new OperationNode("URL", n, operation, null, operation.getDomain().getURI());
-			column2.setLabelProvider(createTreeColumnLabelProvider());
-			for (Argument input : operation.getInputs()) {
-				OperationNode inputn = new OperationNode("", subn1, operation, input, input.getName().toString());
-				column2.setLabelProvider(createTreeColumnLabelProvider());
-			}
-			for (Argument output : operation.getOutputs()) {
-				OperationNode outputn = new OperationNode("", subn2, operation, output,
-						output.getName().toString());
-				column2.setLabelProvider(createTreeColumnLabelProvider());
-			}
-
-			nodes.add(n);
-
-		}
+		// TreeViewerColumn column2 = new TreeViewerColumn(tree, SWT.LEFT);
+		// column2.getColumn().setText("Value");
+		// column2.getColumn().setWidth(200);
+		// column2.getColumn().setResizable(true);
 
 		tree.getTree().setLayoutData(new GridData(GridData.FILL_BOTH));
 		tree.setContentProvider(new TreeContentProvider());
 		column1.setLabelProvider(new TreeLabelProvider());
-		tree.setInput(nodes);
+
+		if (mode.equals("operations")) {
+			Vector<OperationNode> nodes = new Vector<OperationNode>();
+
+			for (Operation operation : operations) {
+
+				// OperationNode n = new
+				// OperationNode(operation.getName().toString(), null,
+				// operation, null, "");
+				// OperationNode subn1 = new OperationNode("Inputs", n,
+				// operation, null, "");
+				// OperationNode subn2 = new OperationNode("Outputs", n,
+				// operation, null, "");
+				// OperationNode subn3 = new OperationNode("URL", n, operation,
+				// null, operation.getDomain().getURI());
+				// column2.setLabelProvider(createTreeColumnLabelProvider());
+				// for (Argument input : operation.getInputs()) {
+				// OperationNode inputn = new OperationNode("", subn1,
+				// operation, input, input.getName().toString());
+				// column2.setLabelProvider(createTreeColumnLabelProvider());
+				// }
+				// for (Argument output : operation.getOutputs()) {
+				// OperationNode outputn = new OperationNode("", subn2,
+				// operation, output,
+				// output.getName().toString());
+				// column2.setLabelProvider(createTreeColumnLabelProvider());
+				// }
+				OperationNode n = createOperationNode(operation);
+				// column2.setLabelProvider(createTreeColumnLabelProvider());
+				nodes.add(n);
+
+			}
+			tree.setInput(nodes);
+		} else if (mode.equals("replaceInfo")) {
+			Vector<ReplaceInformationNode> nodes = new Vector<ReplaceInformationNode>();
+			int i = 1;
+			for (ReplaceInformation replaceInformation : replaceInformations) {
+				OperationNode n = createOperationNode(replaceInformation.getOperationToReplace());
+				ReplaceInformationNode rn = new ReplaceInformationNode("Replacement option" + i, null, n,
+						replaceInformation);
+				ReplaceInformationNode subrn = new ReplaceInformationNode(
+						replaceInformation.getOperationToReplace().getName().toString(), rn, n, replaceInformation);
+				// column2.setLabelProvider(new TreeLabelProvider());
+				nodes.add(rn);
+				i++;
+			}
+
+			tree.setInput(nodes);
+			tree.expandToLevel(2);
+		}
 
 		// the viewer field is an already configured TreeViewer
 		Tree tree2 = (Tree) tree.getControl();
@@ -138,11 +181,26 @@ public class TreeDialog extends Dialog {
 				if (event.getSelection() instanceof IStructuredSelection) {
 					IStructuredSelection selection = (IStructuredSelection) event.getSelection();
 					if (selection.getFirstElement() != null) {
-						if (((OperationNode) selection.getFirstElement()).getParent() == null) {
-							setOperation(((OperationNode) selection.getFirstElement()).getOperation());
-						} else {
-							setOperation(((OperationNode) selection.getFirstElement()).getOperation());
-							tree.setSelection(StructuredSelection.EMPTY);
+						if (selection.getFirstElement() instanceof OperationNode) {
+							if (((OperationNode) selection.getFirstElement()).getParent() == null) {
+								setOperation(((OperationNode) selection.getFirstElement()).getOperation());
+							} else {
+								if (((OperationNode) selection.getFirstElement()).getParent() instanceof ReplaceInformationNode){
+									setReplaceInformation(
+											(((ReplaceInformationNode)((OperationNode) selection.getFirstElement()).getParent()).getReplaceInformation()));
+								}
+								setOperation(((OperationNode) selection.getFirstElement()).getOperation());
+								tree.setSelection(StructuredSelection.EMPTY);
+							}
+						} else if (selection.getFirstElement() instanceof ReplaceInformationNode) {
+							if (((ReplaceInformationNode) selection.getFirstElement()).getParent() == null) {
+								setReplaceInformation(
+										((ReplaceInformationNode) selection.getFirstElement()).getReplaceInformation());
+							} else {
+								setReplaceInformation(
+										((ReplaceInformationNode) selection.getFirstElement()).getReplaceInformation());
+								tree.setSelection(StructuredSelection.EMPTY);
+							}
 						}
 					}
 
@@ -160,7 +218,8 @@ public class TreeDialog extends Dialog {
 	@Override
 	public void configureShell(Shell newShell) {
 		super.configureShell(newShell);
-		newShell.setText("S-CASE Operations");
+		newShell.setText(text);
+		newShell.setMinimumSize(200, 200);
 	}
 
 	public void setDialogLocation() {
@@ -180,32 +239,50 @@ public class TreeDialog extends Dialog {
 	protected void okPressed() {
 		super.okPressed();
 	}
-	
-	
-	
-	
-	
+
+	public OperationNode createOperationNode(Operation operation) {
+		OperationNode n = new OperationNode(operation.getName().toString(), null, operation, null, "");
+		OperationNode subn1 = new OperationNode("Inputs", n, operation, null, "");
+		OperationNode subn2 = new OperationNode("Outputs", n, operation, null, "");
+		OperationNode subn3 = new OperationNode("URL", n, operation, null, operation.getDomain().getURI());
+
+		for (Argument input : operation.getInputs()) {
+			OperationNode inputn = new OperationNode(input.getName().toString(), subn1, operation, input,
+					input.getName().toString());
+		}
+		for (Argument output : operation.getOutputs()) {
+			OperationNode outputn = new OperationNode(output.getName().toString(), subn2, operation, output,
+					output.getName().toString());
+		}
+		OperationNode urln = new OperationNode(operation.getDomain().getURI(), subn3, operation, null,
+				operation.getDomain().getURI());
+		return (n);
+	}
+
 	class OperationNode {
 		private String name;
 		private String value;
 		private Operation operation;
 		private Argument argument;
 		private Vector<OperationNode> subCategories;
-		private OperationNode parent;
+		private Object parent;
 
-		public OperationNode(String name, OperationNode parent, Operation service, Argument argument, String value) {
+		public OperationNode(String name, Object parent, Operation service, Argument argument, String value) {
 			if (service != null) {
 				this.name = name;
-			} else if (argument != null) {
-				this.name = name + " [" + argument.getType() + "]:";
+			}
+			if (argument != null) {
+				this.name = name + " [" + argument.getType() + "]";
 			}
 			this.parent = parent;
 			this.operation = service;
 			this.argument = argument;
 			this.value = value;
 
-			if (parent != null)
-				parent.addSubCategory(this);
+			if ((OperationNode) parent != null) {
+				if (parent instanceof OperationNode)
+					((OperationNode) parent).addSubCategory(this);
+			}
 		}
 
 		public Vector<OperationNode> getSubCategories() {
@@ -235,16 +312,76 @@ public class TreeDialog extends Dialog {
 			return value;
 		}
 
-		public OperationNode getParent() {
+		public Object getParent() {
+			if (parent instanceof OperationNode) {
+				return (OperationNode) parent;
+			} else {
+				return (ReplaceInformationNode) parent;
+			}
+		}
+
+		public void setParent(Object parent) {
+			this.parent = parent;
+		}
+	}
+
+	class ReplaceInformationNode {
+		private String name;
+		private OperationNode operation;
+		private ReplaceInformation replaceInformation;
+		private Vector<OperationNode> subCategories;
+		private ReplaceInformationNode parent;
+
+		public ReplaceInformationNode(String name, ReplaceInformationNode parent, OperationNode service,
+				ReplaceInformation replaceInformation) {
+			if (service != null) {
+				this.name = name;
+			}
+			this.parent = parent;
+			this.operation = service;
+			this.replaceInformation = replaceInformation;
+
+			if (parent != null) {
+				service.setParent((ReplaceInformationNode) parent);
+				parent.addSubCategory(service);
+			}
+		}
+
+		public Vector<OperationNode> getSubCategories() {
+			return subCategories;
+		}
+
+		public ReplaceInformation getReplaceInformation() {
+			return replaceInformation;
+		}
+
+		private void addSubCategory(OperationNode subcategory) {
+			if (subCategories == null)
+				subCategories = new Vector<OperationNode>();
+			if (!subCategories.contains(subcategory))
+				subCategories.add(subcategory);
+		}
+
+		public String getName() {
+			return name;
+		}
+
+		public OperationNode getOperation() {
+			return operation;
+		}
+
+		public ReplaceInformationNode getParent() {
 			return parent;
 		}
 	}
 
-	
-	
 	class TreeLabelProvider extends ColumnLabelProvider implements ILabelProvider {
 		public String getText(Object element) {
-			return ((OperationNode) element).getName();
+			if (element instanceof OperationNode) {
+				return ((OperationNode) element).getName();
+			} else {
+				return ((ReplaceInformationNode) element).getName();
+			}
 		}
 
 		public Image getImage(Object arg0) {
@@ -267,21 +404,39 @@ public class TreeDialog extends Dialog {
 
 	class TreeContentProvider implements ITreeContentProvider {
 		public Object[] getChildren(Object parentElement) {
-			Vector<OperationNode> subcats = ((OperationNode) parentElement).getSubCategories();
+			Vector<OperationNode> subcats = null;
+			if (parentElement instanceof OperationNode) {
+				subcats = ((OperationNode) parentElement).getSubCategories();
+			} else if (parentElement instanceof ReplaceInformationNode) {
+				subcats = ((ReplaceInformationNode) parentElement).getSubCategories();
+
+			}
 			return subcats == null ? new Object[0] : subcats.toArray();
 		}
 
 		public Object getParent(Object element) {
-			return ((OperationNode) element).getParent();
+			if (element instanceof OperationNode) {
+				return ((OperationNode) element).getParent();
+			} else {
+				return ((ReplaceInformationNode) element).getParent();
+			}
 		}
 
 		public boolean hasChildren(Object element) {
-			return ((OperationNode) element).getSubCategories() != null;
+			if (element instanceof OperationNode) {
+				return ((OperationNode) element).getSubCategories() != null;
+			} else {
+				return ((ReplaceInformationNode) element).getSubCategories() != null;
+			}
 		}
 
 		public Object[] getElements(Object inputElement) {
 			if (inputElement != null && inputElement instanceof Vector) {
-				return ((Vector<OperationNode>) inputElement).toArray();
+				if (inputElement instanceof OperationNode) {
+					return ((Vector<OperationNode>) inputElement).toArray();
+				} else {
+					return ((Vector<ReplaceInformationNode>) inputElement).toArray();
+				}
 			}
 			return new Object[0];
 		}
@@ -298,7 +453,9 @@ public class TreeDialog extends Dialog {
 
 			@Override
 			public String getText(Object element) {
+
 				return ((OperationNode) element).getValue();
+
 			}
 
 		};
