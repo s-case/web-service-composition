@@ -156,8 +156,9 @@ public class Matcher {
 		}
 		double nameSimilarity = Similarity.similarity(action.getName(), operation.getName());
 		double numberOfWords = action.getName().getComparableForm().split("\\s").length;
-		if (nameSimilarity > numberOfWords) {
-			nameSimilarity = numberOfWords;
+		double operationNumberOfWords = operation.getName().getComparableForm().split("\\s").length;
+		if (nameSimilarity > Math.max(numberOfWords, operationNumberOfWords)) {
+			nameSimilarity = Math.max(numberOfWords, operationNumberOfWords);
 		}
 		// double numberOfWords =
 		// operation.getName().getComparableForm().split("\\s").length;
@@ -180,8 +181,8 @@ public class Matcher {
 			// operation.getAccessInfo().getDescription().get(0)).getDescription().split("\\s").length;
 			// descriptionSimilarity = descriptionSimilarity / numberOfWords;
 		}
-		if (descriptionSimilarity > numberOfWords) {
-			descriptionSimilarity = numberOfWords;
+		if (descriptionSimilarity > Math.max(numberOfWords, operationNumberOfWords)) {
+			descriptionSimilarity = Math.max(numberOfWords, operationNumberOfWords);
 		}
 
 		if (!action.getName().isEmpty() && nameSimilarity < NAME_SIMILARITY_THRESHOLD)
@@ -259,8 +260,8 @@ public class Matcher {
 		// System.out.println("\""+action.toString()+"\" compared with
 		// \""+operation.toString()+"\" (Weight: "+similarity+")");
 
-		similarity = similarity / (DESCRIPTION_WEIGHT * numberOfWords + POSSIBLE_INPUT_WEIGHT + MANDATORY_INPUT_WEIGHT
-				+ OUTPUT_TO_INPUT_WEIGHT + NAME_SIMILARITY_WEIGHT * numberOfWords);
+		similarity = similarity / (DESCRIPTION_WEIGHT * Math.max(numberOfWords, operationNumberOfWords) + POSSIBLE_INPUT_WEIGHT + MANDATORY_INPUT_WEIGHT
+				+ OUTPUT_TO_INPUT_WEIGHT + NAME_SIMILARITY_WEIGHT * Math.max(numberOfWords, operationNumberOfWords));
 		return similarity;
 	}
 

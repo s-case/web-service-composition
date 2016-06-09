@@ -82,6 +82,7 @@ public class Algorithm {
 		 * 
 		 */
 		private double numberOfWords;
+		private double operationNumberOfWords;
 		/**
 		 * the replacement selection
 		 */
@@ -101,11 +102,11 @@ public class Algorithm {
 					if (replace.getOriginalServiceOperation().equals(selection.getOriginalServiceOperation()))
 						alternativeOperations.add(replace);
 				}
-			int alternativeOperationsMaxSize = 3;
+			//int alternativeOperationsMaxSize = 3;
 			int alternativeOperationsSize = alternativeOperations.size();
-			if (alternativeOperationsSize > alternativeOperationsMaxSize) {
-				alternativeOperationsSize = alternativeOperationsMaxSize;
-			}
+//			if (alternativeOperationsSize > alternativeOperationsMaxSize) {
+//				alternativeOperationsSize = alternativeOperationsMaxSize;
+//			}
 			for (int i = 0; i < alternativeOperationsSize; i++) {
 				selection.setAlternativeOperations(alternativeOperations.get(i));
 			}
@@ -125,6 +126,8 @@ public class Algorithm {
 			double descriptionSimilarity = 0;
 			boolean isRestfulWithDescription = false;
 			this.numberOfWords = selection.getOriginalServiceOperation().getName().getComparableForm()
+					.split("\\s").length;
+			this.operationNumberOfWords = selection.getOperationToReplace().getName().getComparableForm()
 					.split("\\s").length;
 			this.nameSimilarity = Similarity.similarity(selection.getOperationToReplace().getName(),
 					selection.getOriginalServiceOperation().getName());
@@ -187,7 +190,7 @@ public class Algorithm {
 			String ret = "REPLACEMENT REPORT\n";
 			ret += "\tAction     : " + description + "\n";
 			ret += "\tBase URI	: " + this.selection.getOperationToReplace().getDomain().getURI() + "\n";
-			ret += "\tName Similarity     : " + this.nameSimilarity + "/" + this.numberOfWords + "\n";
+			ret += "\tName Similarity     : " + this.nameSimilarity + "/" + Math.max(numberOfWords, operationNumberOfWords) + "\n";
 			ret += "\tProbability: " + Math.round(effectiveProbability * 1000) / 10.0 + "%\n";
 			// ret += "\tWorst Probability: " + Math.round(worstCaseProbability
 			// * 1000) / 10.0 + "%\n";

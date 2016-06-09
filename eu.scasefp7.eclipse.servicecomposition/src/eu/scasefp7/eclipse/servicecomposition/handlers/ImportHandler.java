@@ -54,6 +54,10 @@ public class ImportHandler extends AbstractHandler {
 	 * s-case project
 	 */
 	IProject existingProject;
+	/**
+	 * the ontology operations
+	 */
+	private static ArrayList<Operation> operations;
 
 	@Override
 	public Object execute(ExecutionEvent event) throws ExecutionException {
@@ -97,12 +101,12 @@ public class ImportHandler extends AbstractHandler {
 				}
 			}
 		}
-		importStoryboard(disp, shell);
+		importStoryboard(disp, shell, view);
 		return null;
 
 	}
 
-	private void importStoryboard(Display disp, Shell shell) {
+	private void importStoryboard(Display disp, Shell shell, ServiceCompositionView view) {
 		ResourceFileSelectionDialog dialog = new ResourceFileSelectionDialog("Select an .scd file", "",
 				new String[] { "scd" });
 		dialog.open();
@@ -113,6 +117,8 @@ public class ImportHandler extends AbstractHandler {
 		try {
 
 			// Runnable myRunnable = new Runnable() {
+			
+			
 			Job ImportSBD = new Job("Import StoryBoard Creator file") {
 				@Override
 				protected IStatus run(IProgressMonitor monitor) {
@@ -124,26 +130,13 @@ public class ImportHandler extends AbstractHandler {
 						File file = (File) selections[0];
 						// check if ontology file exists in .metadata plug-in's
 						// folder
-						ontologyCheck(shell, disp);
-						//check if user has cancelled before importing operations
-						if (monitor.isCanceled()) return Status.CANCEL_STATUS;
-						Algorithm.init();
-						final ArrayList<Operation> operations = Algorithm
-								.importServices(ResourcesPlugin.getWorkspace().getRoot().getLocation().toString()
-										+ "/.metadata/.plugins/eu.scasefp7.servicecomposition/ontology/WS.owl");
-						// final ArrayList<Operation> operations =
-						// Algorithm.importServices(
-						// ResourcesPlugin.getWorkspace().getRoot().getLocation().toString()
-						// + "/" + "WS.owl");
-						// final ArrayList<Operation> operations = Algorithm
-						// .importServices("D:/web-service-composition-Maven-plugin/web-service-composition/eu.scasefp7.eclipse.serviceComposition/data/WS.owl");
-						// final ArrayList<Operation> operations =
-						// Algorithm.importServices("",
-						// "data/testing_scripts/");
+						view.loadOperations(disp, shell);
 						final String pathToSBDFile = ResourcesPlugin.getWorkspace().getRoot().getLocation().toString()
 								+ file.getFullPath().toOSString();
-						//check if the user has cancelled the job before transforming
-						if (monitor.isCanceled()) return Status.CANCEL_STATUS;
+						// check if the user has cancelled the job before
+						// transforming
+						if (monitor.isCanceled())
+							return Status.CANCEL_STATUS;
 						graph = Algorithm.transformationAlgorithm(pathToSBDFile, operations, disp, shell);
 
 						if (graph != null) {
@@ -163,7 +156,7 @@ public class ImportHandler extends AbstractHandler {
 							boolean propertyExists = false;
 							for (OwlService property : services) {
 								if (property.getArgument() != null) {
-									if (property.getArgument().getBelongsToOperation()==null) {
+									if (property.getArgument().getBelongsToOperation() == null) {
 										propertyExists = true;
 										for (OwlService operation : graph.getSuccessors(property)) {
 											if (operation.getOperation() != null) {
@@ -176,7 +169,8 @@ public class ImportHandler extends AbstractHandler {
 								}
 							}
 							// check if user cancelled before showing the view
-							if (monitor.isCanceled()) return Status.CANCEL_STATUS;
+							if (monitor.isCanceled())
+								return Status.CANCEL_STATUS;
 							disp.syncExec(new Runnable() {
 								@Override
 								public void run() {
@@ -362,15 +356,31 @@ public class ImportHandler extends AbstractHandler {
 							// OK Button selected
 							try {
 								String path = repo.downloadOntology("WS", disp);
+								ServiceCompositionView.setUpdateOperations(true);
 							} catch (Exception e) {
 								Activator.log("Error occured while downloading the ontology", e);
 								e.printStackTrace();
 							}
+						} else {
+							ServiceCompositionView.setUpdateOperations(false);
 						}
 					}
 				});
 
+			}else {
+				ServiceCompositionView.setUpdateOperations(false);
 			}
 		}
 	}
+
+	/**
+	 * <h1>setOperations</h1>
+	 * 
+	 * @param operations:
+	 *            the list of ontology operations
+	 */
+	public static void setOperations(ArrayList<Operation> operationsList) {
+		operations = operationsList;
+	}
+
 }
