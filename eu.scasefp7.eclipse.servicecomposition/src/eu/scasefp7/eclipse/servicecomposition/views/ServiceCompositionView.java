@@ -2273,7 +2273,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 
 				try {
 					// clean outputs
-					cleanOutputs();
+					//cleanOutputs();
 					runWorkflow();
 				} catch (Exception e) {
 					Activator.log("Error while running the workflow", e);
@@ -2677,8 +2677,10 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 				for (Argument output : service.getOperation().getOutputs()) {
 					int size = output.getElements().size();
 					cleanElements(output, size, outputsComposite);
+					
 					int size2 = output.getSubtypes().size();
 					cleanElements(output, size2, outputsComposite);
+					
 				}
 			}
 		}
@@ -3483,6 +3485,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 						@Override
 						public void run() {
 							unhighlightAllNodes();
+							cleanOutputs();
 						}
 					});
 					Properties prop = new Properties();
@@ -3538,12 +3541,25 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 							OwlService created = new OwlService(service);
 							created.getArgument().setOwlService(created);
 							Value value = new Value(service.getArgument());
-							value.getElements().clear();
-							// Value value =
-							// (Value.getValue(service.getArgument()));
-							// Clear old values
-							value.setValue("");
-							value.getElements().removeAll(value.getElements());
+//							value.getElements().clear();
+//							// Value value =
+//							// (Value.getValue(service.getArgument()));
+//							// Clear old values
+//							value.setValue("");
+//							value.getElements().removeAll(value.getElements());
+							
+							if (!value.getElements().isEmpty() || !service.getArgument().getElements().isEmpty()){
+								int a=0;
+							}
+//							ArrayList<Value> list = value.getElements();
+//							
+//							for (Iterator<Value> iterator = list.iterator(); iterator.hasNext(); ) {
+//							    Value v = iterator.next();
+//							    if (v != null) {
+//							        iterator.remove();
+//							    }
+//							}
+							
 							created.editContent(value);
 
 							// if (service.getisMatchedIO()) {
@@ -3918,13 +3934,13 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 									@Override
 									public void run() {
 										fillInOutputValues(serviceOutputs, nodes, graph);
+										
+									}
+								});
 										OwlService array = null;
 										for (Argument arg : serviceOutputs) {
 											for (OwlService service : graph.getVertices()) {
 												if (service.equals(((Value) arg).getOwlService())
-												// &&
-												// RAMLCaller.stringIsItemFromList(((Value)
-												// arg).getType(), datatypes)
 												) {
 													try {
 														service.setContent((Value) arg);
@@ -4003,11 +4019,20 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 																	for (Argument input : inputVariables) {
 																		if (input.getOwlService()
 																				.equals(successorInitialArray)) {
-																			input.getElements()
-																					.remove(input.getElements().get(0));
+																			ArrayList<Value> list = input.getElements();
+																			
+																			for (Iterator<Value> iterator = list.iterator(); iterator.hasNext(); ) {
+																			    Value v = iterator.next();
+																			    if (v != null) {
+																			        iterator.remove();
+																			    }
+																			}
 																			input.getElements().add(value);
+																			break;
 																		}
 																	}
+																	
+																	
 
 																	i++;
 																}
@@ -4042,7 +4067,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 																}
 
 															} else {
-																return;
+																//return;
 															}
 														}
 													}
@@ -4100,8 +4125,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 												}
 											}
 										}
-									}
-								});
+									
 							}
 
 							// Update matched variable values
@@ -4357,7 +4381,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 			for (OwlService successor : graph.getSuccessors(matchedVar)) {
 				if (successor.getArgument() != null) {
 					if (successor.getArgument().isArray()) {
-						initialArray = getInitialArray(successor, graph, false);
+						initialArray = getInitialArray(successor, graph, true);
 					} else {
 						break;
 					}
@@ -5150,11 +5174,12 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 		edu.uci.ics.jung.graph.Graph<OwlService, Connector> g = null;
 
 		try {
-			Algorithm.init();
-
-			ArrayList<Operation> operations = Algorithm
-					.importServices(ResourcesPlugin.getWorkspace().getRoot().getLocation().toString()
-							+ "/.metadata/.plugins/eu.scasefp7.servicecomposition/ontology/WS.owl");
+			// Algorithm.init();
+			//
+			// ArrayList<Operation> operations = Algorithm
+			// .importServices(ResourcesPlugin.getWorkspace().getRoot().getLocation().toString()
+			// +
+			// "/.metadata/.plugins/eu.scasefp7.servicecomposition/ontology/WS.owl");
 			g = readFile(file, operations);
 
 		} catch (Exception ex) {
@@ -5172,6 +5197,8 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 		HashMap<String, OwlService> nodes = new HashMap<String, OwlService>();
 		HashMap<String, String> ids = new HashMap<String, String>();
 		HashMap<String, String> matchedIO = new HashMap<String, String>();
+		ArrayList<OwlService> owlInputs = new ArrayList<OwlService>();
+		ArrayList<OwlService> owlOutputs = new ArrayList<OwlService>();
 		try {
 			BufferedReader fileReader = new BufferedReader(new FileReader(file.getAbsolutePath()));
 
@@ -5207,12 +5234,13 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 						nodes.put(metadata.getId(), v);
 					} else if (metadata.getProperty("type").equals("Property")) {
 						ArrayList<Argument> possibleArguments = new ArrayList<Argument>();
+						ArrayList<Argument> possibleOutputs = new ArrayList<Argument>();
 						for (Operation op : operations) {
 							for (Argument arg : op.getInputs()) {
 								addArguments(arg, possibleArguments);
 							}
 							for (Argument arg : op.getOutputs()) {
-								addArguments(arg, possibleArguments);
+								addArguments(arg, possibleOutputs);
 							}
 						}
 						for (Argument arg : possibleArguments) {
@@ -5222,7 +5250,21 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 									&& Boolean.toString(arg.isArray()).equals(metadata.getProperty("IOisArray"))
 									&& Boolean.toString(arg.isRequired()).equals(metadata.getProperty("IOisRequired"))
 									&& arg.getBelongsToOperation().getName().toString()
-											.equals(metadata.getProperty("operationName"))) {
+											.equals(metadata.getProperty("operationName")) && metadata.getProperty("IO").equals("input")) {
+								Argument argument = new Argument(arg);
+								v = new OwlService(argument);
+								// v.getArgument().setOwlService(v);
+							}
+						}
+						
+						for (Argument arg : possibleOutputs) {
+							if (arg.getName().toString().equals(metadata.getProperty("name"))
+									&& arg.getType().equals(metadata.getProperty("IOType"))
+									&& Boolean.toString(arg.isNative()).equals(metadata.getProperty("IOisNative"))
+									&& Boolean.toString(arg.isArray()).equals(metadata.getProperty("IOisArray"))
+									&& Boolean.toString(arg.isRequired()).equals(metadata.getProperty("IOisRequired"))
+									&& arg.getBelongsToOperation().getName().toString()
+											.equals(metadata.getProperty("operationName")) && metadata.getProperty("IO").equals("output")) {
 								Argument argument = new Argument(arg);
 								v = new OwlService(argument);
 								// v.getArgument().setOwlService(v);
@@ -5234,6 +5276,12 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 						v.setId(Integer.parseInt(metadata.getId().replaceAll("\\D+", "")));
 						v.setisMatchedIO(Boolean.parseBoolean(metadata.getProperty("matchedIO")));
 
+						if (metadata.getProperty("IO").equals("input")){
+							owlInputs.add(v);
+						}else {
+							owlOutputs.add(v);
+						}
+						
 						nodes.put(metadata.getId(), v);
 					} else {
 						v = new OwlService(new Service("", metadata.getProperty("type")));
@@ -5270,24 +5318,27 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 
 			/* Get the new graph object from the GraphML file */
 			g = graphReader.readGraph();
+
+			// connect arguments with operations
 			ArrayList<Operation> graphOperations = new ArrayList<Operation>();
 			for (OwlService op : g.getVertices()) {
 				if (op.getOperation() != null) {
 					graphOperations.add(op.getOperation());
 				}
 			}
-			ArrayList<Argument> arguments = new ArrayList<Argument>();
+			ArrayList<Argument> inputs = new ArrayList<Argument>();
+			ArrayList<Argument> outputs = new ArrayList<Argument>();
 			for (Operation op : graphOperations) {
 				for (Argument arg : op.getInputs()) {
-					addArguments(arg, arguments);
+					addArguments(arg, inputs);
 				}
 				for (Argument arg : op.getOutputs()) {
-					addArguments(arg, arguments);
+					addArguments(arg, outputs);
 				}
 			}
-			for (OwlService arg : g.getVertices()) {
+			for (OwlService arg : owlInputs) {
 				if (arg.getArgument() != null) {
-					for (Argument argument : arguments) {
+					for (Argument argument : inputs) {
 						if (argument.getName().toString().equals(arg.getArgument().getName().toString())
 								&& argument.getBelongsToOperation().getName().toString()
 										.equals(arg.getArgument().getBelongsToOperation().getName().toString())
@@ -5297,8 +5348,40 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 										.equals(Boolean.toString(arg.getArgument().isNative()))
 								&& Boolean.toString(argument.isRequired())
 										.equals(Boolean.toString(arg.getArgument().isRequired()))) {
+
 							arg.setContent(argument);
 							arg.getArgument().setOwlService(arg);
+						}
+					}
+				}
+			}
+			
+			for (OwlService arg : owlOutputs) {
+				if (arg.getArgument() != null) {
+					for (Argument argument : outputs) {
+						if (argument.getName().toString().equals(arg.getArgument().getName().toString())
+								&& argument.getBelongsToOperation().getName().toString()
+										.equals(arg.getArgument().getBelongsToOperation().getName().toString())
+								&& Boolean.toString(argument.isArray())
+										.equals(Boolean.toString(arg.getArgument().isArray()))
+								&& Boolean.toString(argument.isNative())
+										.equals(Boolean.toString(arg.getArgument().isNative()))
+								&& Boolean.toString(argument.isRequired())
+										.equals(Boolean.toString(arg.getArgument().isRequired()))) {
+
+							arg.setContent(argument);
+							arg.getArgument().setOwlService(arg);
+						}
+					}
+				}
+			}
+
+			// add matchedInputs
+			for (OwlService arg : g.getVertices()) {
+				if (arg.getisMatchedIO()) {
+					for (OwlService next : g.getSuccessors(arg)) {
+						if (next.getisMatchedIO()) {
+							arg.getArgument().addMatchedInputs(next.getArgument());
 						}
 					}
 				}
@@ -5573,6 +5656,19 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 			workflowFilePath = workflowFile.getAbsolutePath();
 			out = new PrintWriter(new BufferedWriter(new FileWriter(workflowFile, false)));
 
+			ArrayList<Argument> possibleInputs = new ArrayList<Argument>();
+			ArrayList<Argument> possibleOutputs = new ArrayList<Argument>();
+			for (OwlService op : jungGraph.getVertices()) {
+				if (op.getOperation() != null) {
+					for (Argument arg : op.getOperation().getInputs()) {
+						addArguments(arg, possibleInputs);
+					}
+					for (Argument arg : op.getOperation().getOutputs()) {
+						addArguments(arg, possibleOutputs);
+					}
+				}
+			}
+
 			graphWriter.addVertexData("type", "The type of the vertex", "Action",
 					new org.apache.commons.collections15.Transformer<OwlService, String>() {
 						public String transform(OwlService v) {
@@ -5689,6 +5785,23 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 							return isRequired;
 						}
 					});
+			
+			graphWriter.addVertexData("IO", "Argument is input or output", "",
+					new org.apache.commons.collections15.Transformer<OwlService, String>() {
+						public String transform(OwlService v) {
+							String is = "";
+							if (v.getArgument() != null) {
+								if (possibleInputs.contains(v.getArgument()) && !possibleOutputs.contains(v.getArgument())){
+									is = "input";
+								} else if (possibleOutputs.contains(v.getArgument()) && !possibleInputs.contains(v.getArgument())){
+									is = "output";
+								} else {
+									is = "not defined";
+								}
+							}
+							return is;
+						}
+					});
 
 			graphWriter.addVertexData("IOSubtypes", "IO Argument Subtypes", "",
 					new org.apache.commons.collections15.Transformer<OwlService, String>() {
@@ -5702,6 +5815,19 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 							return subtypes;
 						}
 					});
+
+//			graphWriter.addVertexData("matchedInputs", "Vertex has matched inputs", "false",
+//					new org.apache.commons.collections15.Transformer<OwlService, String>() {
+//						public String transform(OwlService v) {
+//							String inputs = "";
+//							if (v.getArgument() != null) {
+//								for (Argument in : v.getArgument().getMatchedInputs()) {
+//									inputs += in.getName().toString() + in.getOwlService().getId() + ",";
+//								}
+//							}
+//							return inputs;
+//						}
+//					});
 
 			graphWriter.addEdgeData("condition", "Edge condition name", "",
 					new org.apache.commons.collections15.Transformer<Connector, String>() {
