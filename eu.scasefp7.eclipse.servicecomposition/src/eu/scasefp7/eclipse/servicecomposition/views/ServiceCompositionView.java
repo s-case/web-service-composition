@@ -5351,6 +5351,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 
 							arg.setContent(argument);
 							arg.getArgument().setOwlService(arg);
+							break;
 						}
 					}
 				}
@@ -5371,6 +5372,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 
 							arg.setContent(argument);
 							arg.getArgument().setOwlService(arg);
+							break;
 						}
 					}
 				}
