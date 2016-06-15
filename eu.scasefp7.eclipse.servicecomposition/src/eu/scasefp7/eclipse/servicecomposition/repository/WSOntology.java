@@ -264,6 +264,10 @@ public class WSOntology {
 				} else if (arg.isTypeOf().equals("QueryParameter") || arg.isTypeOf().equals("URIParameter")){
 					noInd.addProperty(isTypeOf, "QueryParameter");
 				}
+				// create is array prop
+				if (arg.isArray()) {
+					noInd.addProperty(isArray, String.valueOf(arg.isArray()));
+				}
 				// create has type prop
 				String type = arg.getType();
 				Iterator it = datatypeClass.listInstances();
@@ -343,6 +347,10 @@ public class WSOntology {
 					noInd.addProperty(isTypeOf, "BodyParameter");
 				} else if (arg.isTypeOf().equals("QueryParameter") || arg.isTypeOf().equals("URIParameter")){
 					noInd.addProperty(isTypeOf, "QueryParameter");
+				}
+				// create is array prop
+				if (arg.isArray()) {
+					noInd.addProperty(isArray, String.valueOf(arg.isArray()));
 				}
 				// create has type prop
 				String type = arg.getType();
