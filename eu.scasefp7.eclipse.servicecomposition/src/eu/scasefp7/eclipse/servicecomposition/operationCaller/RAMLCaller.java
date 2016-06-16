@@ -13,6 +13,7 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.net.URLEncoder;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
@@ -90,7 +91,7 @@ public class RAMLCaller {
 			Value val = null;
 			for (Argument arg : uriParams) {
 				val = (Value) arg;
-				if (val.getValue().equals("matched")){
+				if (val.getValue().equals("matched")) {
 					val.setValue("");
 				}
 				wsUrl = wsUrl.replace("{" + arg.getName().toString() + "}", val.getValue());
@@ -111,7 +112,7 @@ public class RAMLCaller {
 						inputList += "&";
 
 					}
-					if (val.getValue().equals("matched")){
+					if (val.getValue().equals("matched")) {
 						val.setValue("");
 					}
 					inputList += input.getName().toString() + "=" + val.getValue();
@@ -120,19 +121,25 @@ public class RAMLCaller {
 			}
 		}
 
+		// instead of using URLEncoder
+		inputList = inputList.replaceAll("\\{", "%7B");
+		inputList = inputList.replaceAll("\\}", "%7D");
+		inputList = inputList.replaceAll("\\[", "%5B");
+		inputList = inputList.replaceAll("\\]", "%5D");
+		inputList = inputList.replaceAll("\\:", "%3A");
+
 		String inputListGet = "";
 		if (!inputList.isEmpty()) {
 
 			inputListGet = "?" + inputList;
 		}
 
-		//////only for eng services////////
-		////////test/////////////
-		if (wsUrl.startsWith("https://foreman.res.eng.it")){
+		////// only for eng services////////
+		//////// test/////////////
+		if (wsUrl.startsWith("https://foreman.res.eng.it")) {
 			byPassCert();
 		}
-		
-		
+
 		String result = "";
 		if (ramlOperation.getDomain().getCrudVerb().equalsIgnoreCase("get")) {
 			HttpURLConnection conn = null;
@@ -201,7 +208,9 @@ public class RAMLCaller {
 				String USER_AGENT = "Mozilla/5.0";
 				// add header
 				post.setHeader("User-Agent", USER_AGENT);
-				post.setHeader("Content-Type", "application/json");
+				if (!url.contains("mailgun")) {
+					post.setHeader("Content-Type", "application/json");
+				}
 				if (ramlOperation.getDomain().getSecurityScheme() != null) {
 					if (ramlOperation.getDomain().getSecurityScheme().equalsIgnoreCase("Basic Authentication")) {
 						Base64 b = new Base64();
@@ -236,10 +245,22 @@ public class RAMLCaller {
 					obj = (JSONObject) createJson(input, obj);
 				}
 				// String journey= "Journey=" + obj.toString();
-				String entity = obj.toString();
-				post.setEntity(new StringEntity(entity, "UTF-8"));
-				// post.setEntity(new StringEntity(request, "UTF-8"));
-				// post.setEntity(new UrlEncodedFormEntity(urlParameters));
+				if (url.contains("mailgun")) {
+					List<NameValuePair> urlParameters = new ArrayList<NameValuePair>();
+					Value val = null;
+					for (Argument input : bodyParams) {
+						val = (Value) input;
+						urlParameters
+								.add(new BasicNameValuePair(input.getName().getContent().toString(), val.getValue()));
+					}
+
+					post.setEntity(new UrlEncodedFormEntity(urlParameters));
+				} else {
+					String entity = obj.toString();
+					post.setEntity(new StringEntity(entity, "UTF-8"));
+					// post.setEntity(new StringEntity(request, "UTF-8"));
+					// post.setEntity(new UrlEncodedFormEntity(urlParameters));
+				}
 
 				HttpResponse response = client.execute(post);
 				// System.out.println("Response Code : " +
@@ -511,43 +532,44 @@ public class RAMLCaller {
 				}
 
 			} else {
+				if (((JSONObject) json).get(output.getName().toString()) == null) {
+					((Value) output).setValue("");
+				} else {
+					if (output.getType().equalsIgnoreCase("String")) {
 
-				if (output.getType().equalsIgnoreCase("String")) {
-					if (((JSONObject) json).get(output.getName().toString()) == null) {
-						((Value) output).setValue("null");
-					} else {
 						String value = (String) ((JSONObject) json).get(output.getName().toString());
 						((Value) output).setValue(value);
+
 					}
-				}
-				// if (output.getType().equalsIgnoreCase("int")) {
-				// int value = (int) ((JSONObject)
-				// json).get(output.getName().toString());
-				// ((Value) output).setValue(Integer.toString(value));
-				// }
-				if (output.getType().equalsIgnoreCase("long") || output.getType().equalsIgnoreCase("int")) {
-					long value = (long) ((JSONObject) json).get(output.getName().toString());	
-					((Value) output).setValue(Long.toString(value));
-				}
-				if (output.getType().equalsIgnoreCase("boolean")) {
-					boolean value = (boolean) ((JSONObject) json).get(output.getName().toString());
-					((Value) output).setValue(Boolean.toString(value));
-				}
-				if (output.getType().equalsIgnoreCase("float")) {
-					float value = (float) ((JSONObject) json).get(output.getName().toString());
-					((Value) output).setValue(Float.toString(value));
-				}
-				if (output.getType().equalsIgnoreCase("double")) {
-					double value;
-					try {
-						value = (double) ((JSONObject) json).get(output.getName().toString());
-					} catch (Exception ex) {
-						String str = (String) (((JSONObject) json).get(output.getName().toString()));
-						value = Double.parseDouble(str);
+					// if (output.getType().equalsIgnoreCase("int")) {
+					// int value = (int) ((JSONObject)
+					// json).get(output.getName().toString());
+					// ((Value) output).setValue(Integer.toString(value));
+					// }
+					if (output.getType().equalsIgnoreCase("long") || output.getType().equalsIgnoreCase("int")) {
+						long value = (long) ((JSONObject) json).get(output.getName().toString());
+						((Value) output).setValue(Long.toString(value));
 					}
-					((Value) output).setValue(Double.toString(value));
+					if (output.getType().equalsIgnoreCase("boolean")) {
+						boolean value = (boolean) ((JSONObject) json).get(output.getName().toString());
+						((Value) output).setValue(Boolean.toString(value));
+					}
+					if (output.getType().equalsIgnoreCase("float")) {
+						float value = (float) ((JSONObject) json).get(output.getName().toString());
+						((Value) output).setValue(Float.toString(value));
+					}
+					if (output.getType().equalsIgnoreCase("double")) {
+						double value;
+						try {
+							value = (double) ((JSONObject) json).get(output.getName().toString());
+						} catch (Exception ex) {
+							String str = (String) (((JSONObject) json).get(output.getName().toString()));
+							value = Double.parseDouble(str);
+						}
+						((Value) output).setValue(Double.toString(value));
+					}
+					// dateTime needs to be filled
 				}
-				// dateTime needs to be filled
 			}
 
 		}
@@ -761,36 +783,34 @@ public class RAMLCaller {
 		// String jsonText = out.toString();
 		return obj;
 	}
-	
-	
-	private void byPassCert(){
+
+	private void byPassCert() {
 		// Create a trust manager that does not validate certificate chains
-		TrustManager[] trustAllCerts = new TrustManager[] { 
-		    new X509TrustManager() {     
-		        public java.security.cert.X509Certificate[] getAcceptedIssuers() { 
-		            return new X509Certificate[0];
-		        } 
-		        public void checkClientTrusted( 
-		            java.security.cert.X509Certificate[] certs, String authType) {
-		            } 
-		        public void checkServerTrusted( 
-		            java.security.cert.X509Certificate[] certs, String authType) {
-		        }
-		    } 
-		}; 
+		TrustManager[] trustAllCerts = new TrustManager[] { new X509TrustManager() {
+			public java.security.cert.X509Certificate[] getAcceptedIssuers() {
+				return new X509Certificate[0];
+			}
+
+			public void checkClientTrusted(java.security.cert.X509Certificate[] certs, String authType) {
+			}
+
+			public void checkServerTrusted(java.security.cert.X509Certificate[] certs, String authType) {
+			}
+		} };
 
 		// Install the all-trusting trust manager
 		try {
-		    SSLContext sc = SSLContext.getInstance("SSL"); 
-		    sc.init(null, trustAllCerts, new java.security.SecureRandom()); 
-		    HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
+			SSLContext sc = SSLContext.getInstance("SSL");
+			sc.init(null, trustAllCerts, new java.security.SecureRandom());
+			HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
 		} catch (GeneralSecurityException e) {
-		} 
-		// Now you can access an https URL without having the certificate in the truststore
-		try { 
-		    URL url = new URL("https://hostname/index.html"); 
+		}
+		// Now you can access an https URL without having the certificate in the
+		// truststore
+		try {
+			URL url = new URL("https://hostname/index.html");
 		} catch (MalformedURLException e) {
-		} 
+		}
 	}
 
 }
