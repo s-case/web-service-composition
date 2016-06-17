@@ -66,7 +66,7 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 	String[] datatypes = new String[] { "string", "long", "int", "float", "double", "dateTime", "boolean" };
 
 	HashMap<OwlService, OwlService> map = new HashMap<OwlService, OwlService>();
-	
+
 	boolean hasDeserializer = false;
 
 	public String generateCode(final Graph<OwlService, Connector> jungGraph, String functionName,
@@ -112,10 +112,17 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 		}
 
 		// detect all operations
+		//check if mailgun operation exists in the workflow
+		boolean hasMailgun = false;
 		ArrayList<OwlService> remainingOperations = new ArrayList<OwlService>();
 		for (OwlService service : graph.getVertices()) {
-			if (service.getOperation() != null)
+			if (service.getOperation() != null) {
 				remainingOperations.add(service);
+				if (service.getOperation().getDomain().getURI().contains("mailgun")) {
+					hasMailgun = true;
+				}
+			}
+
 		}
 		// detect starting service
 		OwlService startingService = null;
@@ -383,7 +390,8 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 						vars += ", ";
 					}
 					for (OwlService arg : allVariables) {
-						if (input.getName().toString().equals(arg.getName().toString().replaceAll("[0123456789]", "")) && input.getOwlService().getId() == arg.getId()) {
+						if (input.getName().toString().equals(arg.getName().toString().replaceAll("[0123456789]", ""))
+								&& input.getOwlService().getId() == arg.getId()) {
 							vars += "request.get" + arg.getName().getContent() + "()";
 						}
 					}
@@ -489,8 +497,11 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 			operationRequestObjects += TAB + TAB + "public static class " + op.getName().getContent() + "Request {\n";
 			operationRequestObjects += RequestVarDeclaration + "\n\n";
 			operationRequestObjects += operationRequestConstructor0;
-			operationRequestObjects += operationRequestConstructor + operationRequestConstructorVars + "){\n";
-			operationRequestObjects += operationRequestConstractorVarsBody + "\n" + TAB + TAB + TAB + "}\n";
+			if (!operationRequestConstructorVars.isEmpty()) {
+				operationRequestObjects += operationRequestConstructor + operationRequestConstructorVars + "){\n";
+				operationRequestObjects += operationRequestConstractorVarsBody + "\n" + TAB + TAB + TAB + "}\n";
+			}
+
 			operationRequestObjects += RequestgetSet;
 			operationRequestObjects += TAB + TAB + "}\n";
 		}
@@ -501,7 +512,8 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 		String declaredInputs = "";
 		for (OwlService input : inputVariables) {
 			if ((input.getArgument().isTypeOf().equals("QueryParameter")
-					|| input.getArgument().isTypeOf().equals("URIParameter") || input.getArgument().isTypeOf().equals("")) && !input.getisMatchedIO()) {
+					|| input.getArgument().isTypeOf().equals("URIParameter")
+					|| input.getArgument().isTypeOf().equals("")) && !input.getisMatchedIO()) {
 				if (!declaredInputs.isEmpty())
 					declaredInputs += ", ";
 				if (input.getArgument().getType() == "") {
@@ -918,7 +930,8 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 		if (hasBodyInput)
 			declaredInputs += constractorInstanceInputVars;
 		for (OwlService arg : inputVariables) {
-			if ((arg.getArgument().isTypeOf().equals("QueryParameter") || arg.getArgument().isTypeOf().equals("")) && !arg.getisMatchedIO()) {
+			if ((arg.getArgument().isTypeOf().equals("QueryParameter") || arg.getArgument().isTypeOf().equals(""))
+					&& !arg.getisMatchedIO()) {
 				String type = arg.getArgument().getType();
 
 				declaredInputs += TAB + TAB + "if (" + arg.getName().getContent() + " == null) {\n";
@@ -1050,20 +1063,23 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 					matchedArrays = TAB + TAB + TAB + "if (!"
 							+ matchedOutput.getArgument().getBelongsToOperation().getName() + "_response" + array
 							+ ".isEmpty() && _nextCall != null";
-					
+
 					for (OwlService matchedInput : graph.getSuccessors(matchedOutput)) {
-						matchedArrays += "&& _nextCall.equals(\"call" + matchedInput.getArgument().getBelongsToOperation().getName() + "\")";
+						matchedArrays += "&& _nextCall.equals(\"call"
+								+ matchedInput.getArgument().getBelongsToOperation().getName() + "\")";
 					}
 					matchedArrays += "){\n";
 					String type = initialArray.getName().toString().replaceAll("[0123456789]", "");
-					matchedArrays += TAB +TAB + TAB + TAB + type.substring(0, 1).toUpperCase() + type.substring(1) + " "
-							+ type + " = new " + type.substring(0, 1).toUpperCase() + type.substring(1) + "();\n";
+					matchedArrays += TAB + TAB + TAB + TAB + type.substring(0, 1).toUpperCase() + type.substring(1)
+							+ " " + type + " = new " + type.substring(0, 1).toUpperCase() + type.substring(1) + "();\n";
 					for (OwlService matchedInput : graph.getSuccessors(matchedOutput)) {
 						matchedArrays3 += TAB + TAB + TAB + TAB + type + "."
 								+ matchedInput.getName().toString().replaceAll("[0123456789]", "") + " = "
 								+ matchedOutput.getArgument().getBelongsToOperation().getName() + "_response" + ret
 								+ ";\n";
-						matchedArrays2 = TAB + TAB + TAB + TAB + matchedInput.getArgument().getBelongsToOperation().getName() + "_request." + type + ".add(" + type + ");\n";
+						matchedArrays2 = TAB + TAB + TAB + TAB
+								+ matchedInput.getArgument().getBelongsToOperation().getName() + "_request." + type
+								+ ".add(" + type + ");\n";
 					}
 
 					matchedArrays2 += TAB + TAB + TAB + "}\n";
@@ -1168,8 +1184,8 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 
 		// return code
 		String returnCode = "";
-		returnCode = FunctionCodeNode.generateImports(restServiceExists, hasDeserializer, wsdlServiceExists) + "\npublic class "
-				+ createdClassName + "{\n" + TAB;
+		returnCode = FunctionCodeNode.generateImports(restServiceExists, hasDeserializer, wsdlServiceExists, hasMailgun)
+				+ "\npublic class " + createdClassName + "{\n" + TAB;
 
 		returnCode += declaredVariables + "\n" + requestClassDeclaration + resultClassDeclaration
 				+ variableClassDeclaration + functionCode + declaredInputs + requestObjectDeclaration

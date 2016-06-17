@@ -875,8 +875,10 @@ public class Transformer {
 							break;
 						}
 					}
-					if (operation.getName().toString().equals("SBEvents")
-							|| operation.getName().toString().equals("GET_BookDetails")) {
+					if (operation.getName().toString().equals("GET_IPAddress")
+					// ||
+					// operation.getName().toString().equals("GET_BookDetails")
+					) {
 						int a = 0;
 					}
 					double match = Matcher.match(dummyService, operation, mandatoryArguments, possibleArguments,
@@ -899,10 +901,12 @@ public class Transformer {
 							}
 						}
 					}
-					if (match > bestMatch && !contains) {
-						bestMatch = match;
-						targetOperation = operation;
-						targetConnector = connector;
+					if (match > bestMatch && !contains && match>0.4) {
+						if (inputsAreReduced(operation, connector)) {
+							bestMatch = match;
+							targetOperation = operation;
+							targetConnector = connector;
+						}
 					}
 				}
 
@@ -969,7 +973,8 @@ public class Transformer {
 
 					if (!bestMatchedOperations.isEmpty()) {
 						bestMatchedOperations.add(targetOperation);
-						final String operationName = targetOperation.getName().toString();
+						final String operationName = ((OwlService) targetConnector.getTarget()).getOperation().getName()
+								.toString();
 						disp.syncExec(new Runnable() {
 							public void run() {
 

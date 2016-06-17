@@ -371,7 +371,7 @@ public class FunctionCodeNode extends CodeNode {
 	}
 
 	public static String generateImports(boolean restServiceExists, boolean hasDeserializer,
-			boolean wsdlServiceExists) {
+			boolean wsdlServiceExists, boolean mailgun) {
 
 		String imports = "";
 		if (restServiceExists) {
@@ -382,6 +382,9 @@ public class FunctionCodeNode extends CodeNode {
 						+ "import com.google.gson.JsonParseException;\n"
 						+ "import com.google.gson.annotations.SerializedName;\n"
 						+ "import com.google.gson.reflect.TypeToken;\n" + "import java.lang.reflect.Type;\n";
+			}
+			if (mailgun){
+				imports += "import org.apache.http.HttpEntity;\nimport org.apache.http.NameValuePair;\nimport org.apache.http.client.entity.UrlEncodedFormEntity;\nimport org.apache.http.entity.StringEntity;\nimport org.apache.http.message.BasicNameValuePair;\nimport java.util.List;\n";
 			}
 		}
 		if (wsdlServiceExists) {

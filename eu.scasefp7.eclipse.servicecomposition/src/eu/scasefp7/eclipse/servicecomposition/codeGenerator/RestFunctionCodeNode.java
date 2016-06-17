@@ -1,9 +1,15 @@
 package eu.scasefp7.eclipse.servicecomposition.codeGenerator;
 
 import java.util.ArrayList;
+import java.util.List;
+
+import org.apache.http.NameValuePair;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
+import org.apache.http.message.BasicNameValuePair;
 
 import edu.uci.ics.jung.graph.Graph;
 import eu.scasefp7.eclipse.servicecomposition.codeGenerator.CodeGenerator.CodeNode;
+import eu.scasefp7.eclipse.servicecomposition.codeInterpreter.Value;
 import eu.scasefp7.eclipse.servicecomposition.importer.Importer.Argument;
 import eu.scasefp7.eclipse.servicecomposition.importer.Importer.Operation;
 import eu.scasefp7.eclipse.servicecomposition.importer.JungXMIImporter.Connector;
@@ -53,10 +59,27 @@ public class RestFunctionCodeNode extends CodeNode {
 			boolean hasBodyInput) {
 
 		String ret = "";
-		
+
 		if (hasBodyInput) {
-			ret += "Gson body = new Gson();\n";
-			ret += "String entity = body.toJson(" + operation.getName().toString() + "_request);\n";
+			if (operation.getDomain().getURI().contains("mailgun")) {
+				ret += "List<NameValuePair> urlParameters = new ArrayList<NameValuePair>();\n";
+				for (Argument input : operation.getInputs()) {
+					if (input.isTypeOf().equals("BodyParameter")) {
+						ret += "urlParameters.add(new BasicNameValuePair(" + input.getName().getContent().toString()
+								+ ".name , " + operation.getName().toString() + "_request.get" + input.getName().getContent().toString() + "()));\n";
+					} else {
+						ret += "urlParameters.add(new BasicNameValuePair(" + input.getName().getContent().toString()
+								+ ".name , " + input.getName().getContent().toString() + ".value));\n";
+					}
+				}
+
+				ret += "HttpEntity entity = new UrlEncodedFormEntity(urlParameters);\n";
+
+			} else {
+				ret += TAB + "Gson body = new Gson();\n";
+				ret += TAB + "String json = body.toJson(" + operation.getName().toString() + "_request);\n";
+				ret += "HttpEntity entity = new StringEntity(json, \"UTF-8\");\n";
+			}
 		} else {
 			ret += "String entity = \"\";\n";
 		}
@@ -76,18 +99,19 @@ public class RestFunctionCodeNode extends CodeNode {
 
 		String ret = "";
 		String var = "";
-		for (OwlService variable : allVariables){
-			if (variable.getArgument().getObjectOrArray()){
+		for (OwlService variable : allVariables) {
+			if (variable.getArgument().getObjectOrArray()) {
 				String type = variable.getArgument().getName().toString();
-				var+= "gsonBuilder.registerTypeAdapter(" + type.substring(0, 1).toUpperCase() + type.substring(1) + ".class, new " + type.substring(0, 1).toUpperCase() + type.substring(1) + "Deserializer());\n";
+				var += "gsonBuilder.registerTypeAdapter(" + type.substring(0, 1).toUpperCase() + type.substring(1)
+						+ ".class, new " + type.substring(0, 1).toUpperCase() + type.substring(1)
+						+ "Deserializer());\n";
 			}
 		}
-		
-		ret += "GsonBuilder gsonBuilder = new GsonBuilder();\n" + var
-				+ "Gson gson = gsonBuilder.create();\n";
-		
-		//ret += "Gson gson = new Gson();\n";
-		
+
+		ret += "GsonBuilder gsonBuilder = new GsonBuilder();\n" + var + "Gson gson = gsonBuilder.create();\n";
+
+		// ret += "Gson gson = new Gson();\n";
+
 		ret += operation.getName().toString() + "_response = gson.fromJson(result, " + operation.getName().toString()
 				+ "Response.class);\n";
 		// ret += "ArrayList<Variable> outputs = new ArrayList<Variable>();\n";
