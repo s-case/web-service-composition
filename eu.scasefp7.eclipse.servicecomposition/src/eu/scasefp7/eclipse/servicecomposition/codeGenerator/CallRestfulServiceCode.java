@@ -69,8 +69,8 @@ public class CallRestfulServiceCode {
 				+ "HttpPost post = new HttpPost(url);\n" + TAB + TAB + TAB + TAB
 				+ "String USER_AGENT = \"Mozilla/5.0\";\n" + TAB + TAB + TAB + TAB + "// add header\n" + TAB + TAB + TAB
 				+ TAB + "post.setHeader(\"User-Agent\", USER_AGENT);\n" + TAB + TAB + TAB + TAB + "if (!url.contains(\"mailgun\")) {\n" + TAB + TAB + TAB + TAB + TAB
-				+ "post.setHeader(\"Content-Type\", \"application/json\");\n" + TAB + TAB + TAB + TAB + "}\n" + TAB + TAB + TAB + TAB
-				+ "post.setEntity(entity);\n";
+				+ "post.setHeader(\"Content-Type\", \"application/json\");\n" + TAB + TAB + TAB + TAB + "}\n" + TAB + TAB + TAB + TAB + "if (entity!=null){\n" + TAB + TAB + TAB + TAB + TAB
+				+ "post.setEntity(entity);\n" + TAB + TAB + TAB + TAB + "}\n";
 		// code += TAB + TAB + TAB + TAB + TAB + "urlParameters.add(new
 		// BasicNameValuePair(input.name, input.value));\n";
 		// code += TAB + TAB + TAB + TAB + "}\n";
@@ -114,7 +114,9 @@ public class CallRestfulServiceCode {
 		code += TAB + TAB + TAB + TAB + "String USER_AGENT = \"Mozilla/5.0\";\n";
 		code += TAB + TAB + TAB + TAB + "// add header\n";
 		code += TAB + TAB + TAB + TAB + "put.setHeader(\"User-Agent\", USER_AGENT);\n";
-		code += TAB + TAB + TAB + TAB + "put.setEntity(entity);\n";
+		code += TAB + TAB + TAB + TAB + "if (entity!=null){\n";
+		code += TAB + TAB + TAB + TAB + TAB + "put.setEntity(entity);\n";
+		code += TAB + TAB + TAB + TAB + "}\n";
 		// code += TAB + TAB + TAB + TAB + "for (Variable input : inputs) {\n";
 		// code += TAB + TAB + TAB + TAB + TAB + "urlParameters.add(new
 		// BasicNameValuePair(input.name, input.value));\n";

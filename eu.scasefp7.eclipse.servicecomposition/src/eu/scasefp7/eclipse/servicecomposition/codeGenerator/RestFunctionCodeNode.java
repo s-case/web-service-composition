@@ -64,7 +64,7 @@ public class RestFunctionCodeNode extends CodeNode {
 			if (operation.getDomain().getURI().contains("mailgun")) {
 				ret += "List<NameValuePair> urlParameters = new ArrayList<NameValuePair>();\n";
 				for (Argument input : operation.getInputs()) {
-					if (input.isTypeOf().equals("BodyParameter")) {
+					if (input.isTypeOf().equals("BodyParameter") && !input.getOwlService().getisMatchedIO()) {
 						ret += "urlParameters.add(new BasicNameValuePair(" + input.getName().getContent().toString()
 								+ ".name , " + operation.getName().toString() + "_request.get" + input.getName().getContent().toString() + "()));\n";
 					} else {
@@ -81,7 +81,7 @@ public class RestFunctionCodeNode extends CodeNode {
 				ret += "HttpEntity entity = new StringEntity(json, \"UTF-8\");\n";
 			}
 		} else {
-			ret += "String entity = \"\";\n";
+			ret += "HttpEntity entity = null;\n";
 		}
 		ret += "ArrayList<Variable> inputs = new ArrayList<Variable>();\n";
 		for (Argument arg : operation.getInputs())
