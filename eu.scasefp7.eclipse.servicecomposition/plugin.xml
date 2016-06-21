@@ -79,6 +79,20 @@
          </command>
       </menuContribution>
    </extension>
+   <extension point="eu.scasefp7.eclipse.core.ui.dashboardItem">
+		<group
+            id="eu.scasefp7.eclipse.core.ui.dashboard.groups.mashup"
+            appearsBefore="eu.scasefp7.eclipse.core.ui.dashboard.groups.code"
+            name="Mashup" />
+        <command
+              buttonId="eu.scasefp7.eclipse.core.ui.dashboard.buttons.createsvccomposition"
+              commandId="eu.scasefp7.eclipse.servicecomposition.importSBD"
+              error="Import storyboard failed."
+              groupId="eu.scasefp7.eclipse.core.ui.dashboard.groups.mashup"
+              label="Create service composition"
+              tooltip="Use a storyboard for service composition">
+        </command>
+    </extension>
   <!-- <extension
          point="org.eclipse.ui.menus">
       <menuContribution
@@ -100,8 +114,8 @@
       </menuContribution>     
    </extension>-->
   <extension
-        id="eu.scasefp7.eclipse.core.ui.tracing"
-        name="S-CASE Core UI tracing"
+        id="eu.scasefp7.eclipse.servicecomposition.tracing"
+        name="Service composition tracing"
         point="org.eclipse.ui.trace.traceComponents">
   	<component
          id="eu.scasefp7.eclipse.core.trace"
@@ -161,6 +175,5 @@
             </command>
       </menuContribution>
    </extension> -->
-
-
+	
 </plugin>
