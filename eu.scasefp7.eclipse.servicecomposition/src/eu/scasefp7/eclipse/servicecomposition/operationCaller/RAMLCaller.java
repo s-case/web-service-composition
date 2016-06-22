@@ -562,9 +562,17 @@ public class RAMLCaller {
 						double value;
 						try {
 							value = (double) ((JSONObject) json).get(output.getName().toString());
+
 						} catch (Exception ex) {
-							String str = (String) (((JSONObject) json).get(output.getName().toString()));
-							value = Double.parseDouble(str);
+							if (((JSONObject) json).get(output.getName().toString()) instanceof Long) {
+								Long lng = (Long) (((JSONObject) json).get(output.getName().toString()));
+								value = lng.doubleValue();
+							} else if (((JSONObject) json).get(output.getName().toString()) instanceof String) {
+								String str = (String) (((JSONObject) json).get(output.getName().toString()));
+								value = Double.parseDouble(str);
+							} else {
+								value = 0.0;
+							}
 						}
 						((Value) output).setValue(Double.toString(value));
 					}
