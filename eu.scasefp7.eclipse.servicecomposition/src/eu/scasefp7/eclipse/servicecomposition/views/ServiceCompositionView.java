@@ -711,26 +711,26 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 			}
 		});
 
-		final Display disp = Display.getCurrent();
-		final Shell shell = new Shell();
-		loadOperationJob = new Job("Loading operations") {
-			@Override
-			protected IStatus run(IProgressMonitor monitor) {
-				monitor.beginTask("Loading operations...", IProgressMonitor.UNKNOWN);
-				try {
-					loadOperations(disp, shell);
-					monitor.done();
-					return Status.OK_STATUS;
-				} catch (Exception ex) {
-					Activator.log("Error while loading the operations from the ontology", ex);
-					ex.printStackTrace();
-					return Status.CANCEL_STATUS;
-				} finally {
-					monitor.done();
-				}
-			}
-		};
-		loadOperationJob.schedule();
+//		final Display disp = Display.getCurrent();
+//		final Shell shell = new Shell();
+//		loadOperationJob = new Job("Loading operations") {
+//			@Override
+//			protected IStatus run(IProgressMonitor monitor) {
+//				monitor.beginTask("Loading operations...", IProgressMonitor.UNKNOWN);
+//				try {
+//					loadOperations(disp, shell);
+//					monitor.done();
+//					return Status.OK_STATUS;
+//				} catch (Exception ex) {
+//					Activator.log("Error while loading the operations from the ontology", ex);
+//					ex.printStackTrace();
+//					return Status.CANCEL_STATUS;
+//				} finally {
+//					monitor.done();
+//				}
+//			}
+//		};
+//		loadOperationJob.schedule();
 	}
 
 	public class NodeFilter extends ViewerFilter {
