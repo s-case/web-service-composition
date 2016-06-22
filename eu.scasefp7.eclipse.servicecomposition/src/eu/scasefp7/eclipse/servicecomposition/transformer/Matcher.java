@@ -326,6 +326,17 @@ public class Matcher {
 			name1= new ComparableName(name);
 		}
 		
+		if (arg0.getName().toString().contains("_id")){
+			String regex = "_id";
+			String name = name0.toString().replaceAll(regex, "");
+			name0= new ComparableName(name);
+		}
+		if (arg1.getName().toString().contains("_id")){
+			String regex = "_id";
+			String name = name1.toString().replaceAll(regex, "");
+			name1= new ComparableName(name);
+		}
+		
 		return (arg0.getType().isEmpty() || arg1.getType().isEmpty()
 				|| (arg0.getType().equals(arg1.getType()) && arg0.isArray() == arg1.isArray()))
 				&& (arg0.getName().isEmpty() || arg1.getName().isEmpty()
@@ -398,9 +409,24 @@ public class Matcher {
 		// Put name similarities of this input and all the outputs in a list
 		for (int i = 0; i < allOutputs.size(); i++) {
 
-			double nameSimilarity = Similarity.similarity(allOutputs.get(i).getName(), input.getName());
+			//remove id when is the second synthetic word e.g.match place_id with placeid
+			ComparableName name0 = allOutputs.get(i).getName();
+			ComparableName name1 = input.getName();
+			
+			if (allOutputs.get(i).getName().toString().contains("_id")){
+				String regex = "_id";
+				String name = name0.toString().replaceAll(regex, "");
+				name0= new ComparableName(name);
+			}
+			if (input.getName().toString().contains("_id")){
+				String regex = "_id";
+				String name = name1.toString().replaceAll(regex, "");
+				name1= new ComparableName(name);
+			}
+			
+			double nameSimilarity = Similarity.similarity(name0, name1);
 
-			nameSimilarity = nameSimilarity / allOutputs.get(i).getName().getComparableForm().split("\\s").length;
+			nameSimilarity = nameSimilarity / name0.getComparableForm().split("\\s").length;
 
 //			nameSimilarity = nameSimilarity
 //					/ Math.max(allOutputs.get(i).getName().getComparableForm().split("\\s").length,
