@@ -108,7 +108,7 @@
               commandId="eu.scasefp7.eclipse.core.ui.switchToSCView"
               error="Change to SC view has failed."
               groupId="eu.scasefp7.eclipse.core.ui.dashboard.groups.mashup"
-              label="Create a new service composition"
+              label="Create service composition"
               tooltip="Create a new service composition">
         </command>
     </extension>
