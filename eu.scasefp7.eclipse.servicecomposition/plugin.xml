@@ -38,10 +38,10 @@
             id="StoryboardMenuId"
             name="StoryboardMenuId">
       </command>
-      <command
+     <!-- <command
             id="eu.scasefp7.eclipse.servicecomposition.switchToSCView"
             name="Switch to Service Composition View">
-      </command>
+      </command>-->
     <!--  <command
         name="%command.showView.name"
         description="%command.showView.description"
@@ -60,10 +60,10 @@
             commandId="eu.scasefp7.eclipse.servicecomposition.importSBD"
             class="eu.scasefp7.eclipse.servicecomposition.handlers.ImportHandler">
       </handler>
-      <handler
+     <!-- <handler
             class="eu.scasefp7.eclipse.servicecomposition.handlers.SwitchViewHandler"
             commandId="eu.scasefp7.eclipse.servicecomposition.switchToSCView">
-      </handler>
+      </handler>-->
    </extension>
    <extension
          point="org.eclipse.ui.bindings">
@@ -105,7 +105,7 @@
             name="Mashup" />
         <command
               buttonId="eu.scasefp7.eclipse.core.ui.dashboard.buttons.createsvccomposition"
-              commandId="eu.scasefp7.eclipse.servicecomposition.switchToSCView"
+              commandId="eu.scasefp7.eclipse.core.ui.switchToSCView"
               error="Change to SC view has failed."
               groupId="eu.scasefp7.eclipse.core.ui.dashboard.groups.mashup"
               label="Create a new service composition"
