@@ -875,7 +875,7 @@ public class Transformer {
 							break;
 						}
 					}
-					if (operation.getName().toString().equals("GET_IPAddress")
+					if (operation.getName().toString().equals("GET_GoogleCoordinates")
 					// ||
 					// operation.getName().toString().equals("GET_BookDetails")
 					) {
@@ -1060,7 +1060,19 @@ public class Transformer {
 			for (Argument in : targetOperation.getInputs()) {
 				getNative(in, nativeInputs);
 			}
-			if (targetConnector != null && (nativeInputs.size() <= matched)) {
+			int matched2 = 0;
+			if (((OwlService) targetConnector.getSource()).getOperation() != null) {
+			for (Argument out : ((OwlService) targetConnector.getSource()).getOperation().getOutputs()) {
+				for (Argument in : nativeInputs) {
+
+					if (Matcher.hasSame(out, in)) {
+						matched2++;
+						break;
+					}
+				}
+			}
+			}
+			if (targetConnector != null && (nativeInputs.size()- matched2 <= matched)) {
 				found = true;
 			}
 		}
