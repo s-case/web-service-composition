@@ -327,6 +327,9 @@ public class FunctionCodeNode extends CodeNode {
 											if (type == "double") {
 												varName = "Double.parseDouble(" + op.getName() + "_response" + ret
 														+ ")";
+											} else if (output.getType().equals("boolean")) {
+												varName = "Boolean.toString(" + op.getName() + "_response" + ret
+														+ ")";
 											} else {
 												varName = op.getName() + "_response" + ret;
 
