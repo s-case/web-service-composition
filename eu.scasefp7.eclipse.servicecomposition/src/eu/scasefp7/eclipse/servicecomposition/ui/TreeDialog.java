@@ -41,10 +41,11 @@ public class TreeDialog extends Dialog {
 	private ArrayList<ReplaceInformation> replaceInformations = new ArrayList<ReplaceInformation>();
 	private ReplaceInformation replaceInformation;
 	private String mode = "operations";
-	private String text = "S-CASE Operations";
+	private String title;
 
-	public TreeDialog(Shell parentShell) {
+	public TreeDialog(Shell parentShell, String title) {
 		super(parentShell);
+		this.title = title;
 	}
 
 	public void setMode(String mode) {
@@ -77,10 +78,6 @@ public class TreeDialog extends Dialog {
 
 	public ReplaceInformation getReplaceInformation() {
 		return this.replaceInformation;
-	}
-	
-	public void setText(String text){
-		this.text = text;
 	}
 
 
@@ -215,12 +212,13 @@ public class TreeDialog extends Dialog {
 
 	// overriding this methods allows you to set the
 	// title of the custom dialog
-	/*@Override
-	public void configureShell(Shell newShell) {
-		super.configureShell(newShell);
-		newShell.setText(text);
-		newShell.setMinimumSize(200, 200);
-	}*/
+	@Override
+	protected void configureShell(Shell shell) {
+		super.configureShell(shell);
+        if (title != null) {
+			shell.setText(title);
+		}
+	}
 
 	public void setDialogLocation() {
 		Rectangle monitorArea = getShell().getDisplay().getPrimaryMonitor().getBounds();

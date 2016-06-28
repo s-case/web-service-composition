@@ -520,11 +520,10 @@ public class Algorithm {
 					disp.syncExec(new Runnable() {
 						public void run() {
 
-							TreeDialog dialog = new TreeDialog(shell);
+							TreeDialog dialog = new TreeDialog(shell, "Replacement for action: " + actionName);
 							dialog.setDisp(disp);
 							dialog.setMode("replaceInfo");
 							dialog.setReplaceInformations(bestMatchedOperations);
-							dialog.setText("Replacement for action: " + actionName);
 							dialog.create();
 							dialog.setDialogLocation();
 							if (dialog.open() == Window.OK) {

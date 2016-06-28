@@ -1179,7 +1179,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 						disp.syncExec(new Runnable() {
 							public void run() {
 
-								TreeDialog dialog = new TreeDialog(shell);
+								TreeDialog dialog = new TreeDialog(shell, "S-CASE Operations");
 								dialog.setDisp(disp);
 								dialog.setOperations(nonPrototypeOperations);
 								dialog.create();

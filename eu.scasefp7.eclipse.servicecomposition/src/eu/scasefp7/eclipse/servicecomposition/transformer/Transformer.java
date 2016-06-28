@@ -978,10 +978,9 @@ public class Transformer {
 						disp.syncExec(new Runnable() {
 							public void run() {
 
-								TreeDialog dialog = new TreeDialog(shell);
+								TreeDialog dialog = new TreeDialog(shell, "Inputs Reduction for operation: " + operationName);
 								dialog.setDisp(disp);
 								dialog.setOperations(bestMatchedOperations);
-								dialog.setText("Inputs Reduction for operation: " + operationName);
 								dialog.create();
 								dialog.setDialogLocation();
 								if (dialog.open() == Window.OK) {
