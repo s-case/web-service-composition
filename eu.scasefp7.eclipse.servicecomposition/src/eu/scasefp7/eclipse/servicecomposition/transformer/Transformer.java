@@ -981,9 +981,8 @@ public class Transformer {
 								TreeDialog dialog = new TreeDialog(shell);
 								dialog.setDisp(disp);
 								dialog.setOperations(bestMatchedOperations);
-								dialog.setText("Inputs Redunction for operation: " + operationName);
+								dialog.setText("Inputs Reduction for operation: " + operationName);
 								dialog.create();
-								dialog.configureShell(shell);
 								dialog.setDialogLocation();
 								if (dialog.open() == Window.OK) {
 									Operation selectedItem = dialog.getOperation();

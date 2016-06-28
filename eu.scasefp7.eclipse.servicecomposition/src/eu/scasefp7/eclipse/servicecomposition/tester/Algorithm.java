@@ -526,7 +526,6 @@ public class Algorithm {
 							dialog.setReplaceInformations(bestMatchedOperations);
 							dialog.setText("Replacement for action: " + actionName);
 							dialog.create();
-							dialog.configureShell(shell);
 							dialog.setDialogLocation();
 							if (dialog.open() == Window.OK) {
 								ReplaceInformation selectedItem = dialog.getReplaceInformation();

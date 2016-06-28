@@ -62,9 +62,6 @@ public class ImportHandler extends AbstractHandler {
 	@Override
 	public Object execute(ExecutionEvent event) throws ExecutionException {
 
-		final Shell shell = new Shell();
-		final Display disp = Display.getCurrent();
-
 		try {
 			PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage().showView(ServiceCompositionView.ID);
 		} catch (PartInitException e2) {
@@ -72,6 +69,9 @@ public class ImportHandler extends AbstractHandler {
 			e2.printStackTrace();
 		}
 		ServiceCompositionView view = (ServiceCompositionView) getView(ServiceCompositionView.ID);
+		final Shell shell = view.getSite().getWorkbenchWindow().getShell();
+		final Display disp = shell.getDisplay();
+
 		Graph<OwlService, Connector> previousGraph = view.getJungGraph();
 		if (previousGraph != null) {
 			if (view.jungGraphHasOperations() && !view.getSavedWorkflow()) {

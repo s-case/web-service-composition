@@ -712,7 +712,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 		});
 
 		// final Display disp = Display.getCurrent();
-		// final Shell shell = new Shell();
+		// final Shell shell = this.getSite().getWorkbenchWindow().getShell();
 		// loadOperationJob = new Job("Loading operations") {
 		// @Override
 		// protected IStatus run(IProgressMonitor monitor) {
@@ -925,11 +925,10 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 	 * @param edge
 	 */
 	private void renameConditionEdge(GraphConnection edge) {
-		Shell shell = new Shell();
+		Shell shell = this.getSite().getWorkbenchWindow().getShell();
 		RenameEdgeConditionDialog dialog = new RenameEdgeConditionDialog(shell);
 		String s = "";
 		dialog.create();
-		dialog.configureShell(shell);
 		dialog.setDialogLocation();
 		if (dialog.open() == Window.OK) {
 			s = dialog.getConditionName().trim();
@@ -950,7 +949,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 					for (int j = 0; j < jungGraph.getOutEdges(source).size(); j++) {
 						if (jungGraph.getOutEdges(source).toArray()[j].toString().equalsIgnoreCase(s)) {
 
-							final Display disp = Display.getCurrent();
+							final Display disp = shell.getDisplay();
 							disp.syncExec(new Runnable() {
 								@Override
 								public void run() {
@@ -975,7 +974,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 				}
 			}
 		} else {
-			final Display disp = Display.getCurrent();
+			final Display disp = shell.getDisplay();
 			disp.syncExec(new Runnable() {
 
 				@Override
@@ -991,12 +990,11 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 	}
 
 	private void renameConditionNode(GraphNode node) {
-		Shell shell = new Shell();
+		Shell shell = this.getSite().getWorkbenchWindow().getShell();
 		RenameConditionDialog dialog = new RenameConditionDialog(shell);
 
 		String s = "";
 		dialog.create();
-		dialog.configureShell(shell);
 		dialog.setDialogLocation();
 		if (dialog.open() == Window.OK) {
 			if (dialog.getConditionValue().trim().isEmpty()) {
@@ -1032,7 +1030,8 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 	private void addNewCondition() {
 
 		if (jungGraph == null) {
-			final Display disp = Display.getCurrent();
+			final Shell shell = this.getSite().getWorkbenchWindow().getShell();
+			final Display disp = shell.getDisplay();
 			disp.syncExec(new Runnable() {
 				@Override
 				public void run() {
@@ -1042,12 +1041,11 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 
 		} else {
 
-			Shell shell = new Shell();
+			Shell shell = this.getSite().getWorkbenchWindow().getShell();
 			RenameConditionDialog dialog = new RenameConditionDialog(shell);
 
 			String s = "";
 			dialog.create();
-			dialog.configureShell(shell);
 			dialog.setDialogLocation();
 			if (dialog.open() == Window.OK) {
 				if (dialog.getConditionValue().trim().isEmpty()) {
@@ -1069,7 +1067,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 					if (service.getType().equalsIgnoreCase("Condition")
 							&& service.getName().toString().equalsIgnoreCase(s)) {
 
-						final Display disp = Display.getCurrent();
+						final Display disp = shell.getDisplay();
 						disp.syncExec(new Runnable() {
 
 							@Override
@@ -1104,7 +1102,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 					this.setFocus();
 				}
 			} else {
-				final Display disp = Display.getCurrent();
+				final Display disp = shell.getDisplay();
 				disp.syncExec(new Runnable() {
 					@Override
 					public void run() {
@@ -1128,8 +1126,9 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 	 * selection window to the user with all the repository operations.
 	 */
 	private void addNewOperation() {
-		final Display disp = Display.getCurrent();
 		if (jungGraph == null) {
+			final Shell shell = this.getSite().getWorkbenchWindow().getShell();
+			final Display disp = shell.getDisplay();
 			disp.syncExec(new Runnable() {
 				@Override
 				public void run() {
@@ -1139,7 +1138,8 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 
 		} else {
 
-			final Shell shell = new Shell();
+			final Shell shell = this.getSite().getWorkbenchWindow().getShell();
+			final Display disp = shell.getDisplay();
 			// ILabelProvider labelProvider = new LabelProvider() {
 			//
 			// public String getText(Object element) {
@@ -1183,7 +1183,6 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 								dialog.setDisp(disp);
 								dialog.setOperations(nonPrototypeOperations);
 								dialog.create();
-								dialog.configureShell(shell);
 								dialog.setDialogLocation();
 								if (dialog.open() == Window.OK) {
 									Operation selectedItem = dialog.getOperation();
@@ -1260,7 +1259,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 	 */
 	public void SelectionWindowNode(ArrayList<Object> list, String option) {
 
-		Shell shell = new Shell();
+		Shell shell = this.getSite().getWorkbenchWindow().getShell();
 		ElementListSelectionDialog dialog;
 		if ((option == "matchinput") || (option == "matchoutput")) {
 			dialog = new ElementListSelectionDialog(shell, new ArgumentsLabelProvider());
@@ -1450,12 +1449,11 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 					}
 
 				} else if (source.getType().contains("Condition")) {
-					Shell shell = new Shell();
+					Shell shell = this.getSite().getWorkbenchWindow().getShell();
 					RenameEdgeConditionDialog dialog = new RenameEdgeConditionDialog(shell);
 					// System.out.println(dialog.open());
 					String s = "";
 					dialog.create();
-					dialog.configureShell(shell);
 					dialog.setDialogLocation();
 					if (dialog.open() == Window.OK) {
 						s = dialog.getConditionName().trim();
@@ -1470,7 +1468,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 						for (int j = 0; j < jungGraph.getOutEdges(source).size(); j++) {
 							if (jungGraph.getOutEdges(source).toArray()[j].toString().equalsIgnoreCase(s)) {
 
-								final Display disp = Display.getCurrent();
+								final Display disp = shell.getDisplay();
 								disp.syncExec(new Runnable() {
 									@Override
 									public void run() {
@@ -1515,7 +1513,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 						}
 
 					} else {
-						final Display disp = Display.getCurrent();
+						final Display disp = shell.getDisplay();
 						disp.syncExec(new Runnable() {
 
 							@Override
@@ -2278,8 +2276,8 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 	private void fillToolBar() {
 		ZoomContributionViewItem toolbarZoomContributionViewItem = new ZoomContributionViewItem(this);
 		IActionBars bars = getViewSite().getActionBars();
-		final Shell shell = new Shell();
-		final Display disp = Display.getCurrent();
+		final Shell shell = this.getSite().getWorkbenchWindow().getShell();
+		final Display disp = shell.getDisplay();
 		bars.getMenuManager().add(toolbarZoomContributionViewItem);
 		runWorkflowAction = new Action("Run workflow") {
 			public void run() {
@@ -2320,7 +2318,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 		// protected IStatus run(IProgressMonitor monitor) {
 		// monitor.beginTask("Downloading ontology ...",
 		// IProgressMonitor.UNKNOWN);
-		// final Shell shell = new Shell();
+		// final Shell shell = this.getSite().getWorkbenchWindow().getShell();
 		// try {
 		// ImportHandler.ontologyCheck(shell, disp);
 		// return Status.OK_STATUS;
@@ -2405,7 +2403,6 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 			public void run() {
 
 				try {
-					final Display disp = Display.getCurrent();
 					IStatus status = checkGraph(jungGraph, disp);
 					if (status.getMessage().equalsIgnoreCase("OK")) {
 						generate();
@@ -2424,7 +2421,6 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 			public void run() {
 
 				try {
-					final Display disp = Display.getCurrent();
 					IStatus status = checkGraph(jungGraph, disp);
 					if (status.getMessage().equalsIgnoreCase("OK")) {
 						if (workflowFilePath.isEmpty()) {
@@ -2508,7 +2504,6 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 						install(pomPath);
 						// uploadOnServer();
 					} else {
-						final Display disp = Display.getCurrent();
 						disp.syncExec(new Runnable() {
 							@Override
 							public void run() {
@@ -2650,7 +2645,8 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 		}
 
 		final String message = ret;
-		final Display disp = Display.getCurrent();
+		final Shell shell = this.getSite().getWorkbenchWindow().getShell();
+		final Display disp = shell.getDisplay();
 		disp.syncExec(new Runnable() {
 			@Override
 			public void run() {
@@ -3485,8 +3481,8 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 	// UISynchronize sync;
 
 	public String runWorkflow() throws Exception {
-		final Display disp = Display.getCurrent();
-		final Shell shell = new Shell();
+		final Shell shell = this.getSite().getWorkbenchWindow().getShell();
+		final Display disp = shell.getDisplay();
 		runWorkflowJob = new Job("Running Workflow") {
 			@Override
 			protected IStatus run(IProgressMonitor monitor) {
@@ -4067,7 +4063,6 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 																	dialog.setArrayNodes(nodes);
 																	dialog.setName(successor.getName().toString());
 																	dialog.create();
-																	dialog.configureShell(shell);
 																	dialog.setDialogLocation();
 																	if (dialog.open() == Window.OK) {
 																		String value = dialog.getValue();
@@ -5472,7 +5467,8 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 	}
 
 	public void openWorkflowJob(File file) {
-		final Display disp = Display.getCurrent();
+		final Shell shell = this.getSite().getWorkbenchWindow().getShell();
+		final Display disp = shell.getDisplay();
 		Job OpenWorkflowJob = new Job("Open workflow..") {
 			@Override
 			protected IStatus run(IProgressMonitor monitor) {
@@ -5510,10 +5506,10 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 	 * pressing the appropriate button in the toolbar.
 	 */
 	public void saveWorkflow(boolean doSaveAs) {
-		final Display disp = Display.getCurrent();
+		final Shell shell = this.getSite().getWorkbenchWindow().getShell();
+		final Display disp = shell.getDisplay();
 		String path = workflowFilePath;
 		if (doSaveAs) {
-			Shell shell = new Shell();
 			SafeSaveDialog dialog = new SafeSaveDialog(shell);
 			dialog.setFilterExtensions(new String[] { "*.sc" });
 			dialog.setText("Save workflow..");
@@ -5774,10 +5770,9 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 	 */
 	public void generate() throws Exception {
 
-		Shell shell = new Shell();
+		Shell shell = this.getSite().getWorkbenchWindow().getShell();
 		MyTitleAreaDialog dialog = new MyTitleAreaDialog(shell);
 		dialog.create();
-		dialog.configureShell(shell);
 		dialog.setDialogLocation();
 		if (dialog.open() == Window.OK) {
 			System.out.println(dialog.getProjectName());
@@ -5803,7 +5798,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 			IProgressMonitor monitor = new NullProgressMonitor();
 			IProject existingProject = ResourcesPlugin.getWorkspace().getRoot().getProject(projectName.trim());
 			if (existingProject.exists() || nameExists) {
-				shell = new Shell();
+				//shell = this.getSite().getWorkbenchWindow().getShell();
 				boolean result = MessageDialog.openQuestion(shell, "Project already exists",
 						"A project with this name already exists. Would you like to replace it?");
 
@@ -6042,11 +6037,11 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 			createProject.schedule();
 
 		} else {
-			final Display disp = Display.getCurrent();
+			final Display disp = shell.getDisplay();
 			disp.syncExec(new Runnable() {
 				@Override
 				public void run() {
-					MessageDialog.openInformation(disp.getActiveShell(), "Error occured", "This is not a valid name.");
+					MessageDialog.openInformation(shell, "Error occured", "This is not a valid name.");
 				}
 			});
 		}
@@ -6443,8 +6438,8 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 	 */
 	protected void install(String path) throws Exception {
 
-		final Shell shell = new Shell();
-		final Display disp = Display.getCurrent();
+		final Shell shell = this.getSite().getWorkbenchWindow().getShell();
+		final Display disp = shell.getDisplay();
 
 		createWarFileJob = new Job("Uploading..") {
 			@Override
@@ -6737,7 +6732,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 
 	public void loadOperations(Display disp, Shell shell) {
 		// final Display disp = Display.getCurrent();
-		// final Shell shell = new Shell();
+		// final Shell shell = this.getSite().getWorkbenchWindow().getShell();
 		// loadOperationJob = new Job("Loading operations") {
 		// @Override
 		// protected IStatus run(IProgressMonitor monitor) {

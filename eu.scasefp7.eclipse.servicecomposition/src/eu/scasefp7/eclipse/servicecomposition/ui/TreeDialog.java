@@ -215,12 +215,12 @@ public class TreeDialog extends Dialog {
 
 	// overriding this methods allows you to set the
 	// title of the custom dialog
-	@Override
+	/*@Override
 	public void configureShell(Shell newShell) {
 		super.configureShell(newShell);
 		newShell.setText(text);
 		newShell.setMinimumSize(200, 200);
-	}
+	}*/
 
 	public void setDialogLocation() {
 		Rectangle monitorArea = getShell().getDisplay().getPrimaryMonitor().getBounds();
