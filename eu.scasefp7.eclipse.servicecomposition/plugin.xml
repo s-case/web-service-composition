@@ -194,5 +194,16 @@
             </command>
       </menuContribution>
    </extension> -->
+	<extension
+         point="org.eclipse.ui.perspectiveExtensions">
+      <perspectiveExtension targetID="eu.scasefp7.eclipse.core.ui.ScasePerspective">
+         <view
+               id="eu.scasefp7.eclipse.servicecomposition.views.ServiceCompositionView"
+               minimized="false"
+               relationship="stack"
+               relative="eu.scasefp7.eclipse.core.ui.views.Dashboard">
+         </view>
+      </perspectiveExtension>
+	</extension>
 	
 </plugin>
