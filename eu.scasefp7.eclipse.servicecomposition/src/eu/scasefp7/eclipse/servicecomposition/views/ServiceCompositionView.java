@@ -1050,7 +1050,12 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 			dialog.configureShell(shell);
 			dialog.setDialogLocation();
 			if (dialog.open() == Window.OK) {
-				s = dialog.getConditionName().trim() + dialog.getConditionSymbol() + dialog.getConditionValue().trim();
+				if (dialog.getConditionValue().trim().isEmpty()) {
+					s = dialog.getConditionName().trim();
+				} else {
+					s = dialog.getConditionName().trim() + dialog.getConditionSymbol()
+							+ dialog.getConditionValue().trim();
+				}
 				System.out.println(s);
 			} else {
 				return;
@@ -3944,192 +3949,200 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 									public void run() {
 										fillInOutputValues(serviceOutputs, nodes, graph);
 
-									}
-								});
-								OwlService array = null;
-								for (Argument arg : serviceOutputs) {
-									for (OwlService service : graph.getVertices()) {
-										if (service.equals(((Value) arg).getOwlService())) {
-											try {
-												service.setContent((Value) arg);
-											} catch (Exception e) {
-												Activator.log("Error setting outputs content", e);
-												e.printStackTrace();
-											}
-										}
-									}
-								}
-
-								for (OwlService service : graph.getVertices()) {
-									if (service.getisMatchedIO() && !service.getArgument().getMatchedInputs().isEmpty()
-											&& service.getArgument().getBelongsToOperation().getName().toString()
-													.equals(currentService.getOperation().getName().toString())) {
-
-										boolean isMemberOfArray = false;
-
-										for (Object parent : service.getArgument().getParent()) {
-											if (parent instanceof Argument)
-												if (((Argument) parent).isArray()) {
-													isMemberOfArray = true;
-												}
-										}
-										// if predecessor is array
-										if (isMemberOfArray || service.getArgument().isArray()) {
-											OwlService initialArray = getInitialArray(service, graph, false);
-											int subNum = 0;
-											for (Argument sub : initialArray.getArgument().getSubtypes()) {
-												if (sub.getOwlService().getisMatchedIO())
-													subNum++;
-											}
-											boolean arrayIsMatched = false;
-
-											if (subNum == initialArray.getArgument().getSubtypes().size()) {
-												arrayIsMatched = true;
-
-											}
-											boolean successorIsMemberOfArray = false;
-											for (Argument successor : service.getArgument().getMatchedInputs()) {
-												// for each successor
-												for (Object parent : successor.getParent()) {
-													if (parent instanceof Argument)
-														if (((Argument) parent).isArray()) {
-															successorIsMemberOfArray = true;
-														}
-												}
-												OwlService successorMatched = null;
-												for (OwlService suc : graph.getSuccessors(service)) {
-													successorMatched = suc;
-												}
-												// if successor is also
-												// member of array
-												if (successorIsMemberOfArray) {
-													OwlService successorInitialArray = getInitialArray(successorMatched,
-															graph, true);
-													// clear matched
-													// elements
-													ArrayList<Argument> in = successorInitialArray.getArgument()
-															.getBelongsToOperation().getInputs();
-
-													int i = 0;
-													if (arrayIsMatched && array != initialArray) {
-														for (Value element : initialArray.getArgument().getElements()) {
-															Value value = new Value(element);
-															value.setOwlService(successorInitialArray.getArgument()
-																	.getOwlService());
-															value.setName(successorInitialArray.getArgument().getType()
-																	+ "[" + i + "]");
-															successorInitialArray.getArgument().getElements()
-																	.add(value);
-															for (Argument input : inputVariables) {
-																if (input.getOwlService()
-																		.equals(successorInitialArray)) {
-																	ArrayList<Value> list = input.getElements();
-
-																	for (Iterator<Value> iterator = list
-																			.iterator(); iterator.hasNext();) {
-																		Value v = iterator.next();
-																		if (v != null) {
-																			iterator.remove();
-																		}
-																	}
-																	input.getElements().add(value);
-																	break;
-																}
-															}
-
-															i++;
-														}
-														array = initialArray;
-													}
-												} else if (successor.isArray()) {
-													// successor is
-													// array
-													for (Value element : service.getArgument().getElements()) {
-														successor.getElements().add(element);
-													}
-												} else {
-
-													// successor is
-													// object
-													disp.syncExec(new Runnable() {
-														@Override
-														public void run() {
-															MatchOutputDialog dialog = new MatchOutputDialog(shell);
-															dialog.setDisp(disp);
-															dialog.setArrayNodes(nodes);
-															dialog.setName(successor.getName().toString());
-															dialog.create();
-															dialog.configureShell(shell);
-															dialog.setDialogLocation();
-															if (dialog.open() == Window.OK) {
-																String value = dialog.getValue();
-																((Value) successor).setValue(value);
-																for (Argument input : inputVariables) {
-																	if (input.getOwlService()
-																			.equals(successor.getOwlService())) {
-
-																		((Value) input).setValue(value);
-																	}
-																}
-
-															} else {
-																return;
-															}
-														}
-													});
-												}
-											}
-
-											// if predecessor is object
-										} else {
-											boolean successorIsMemberOfArray = false;
-											for (Argument successor : service.getArgument().getMatchedInputs()) {
-												// for each successor
-												for (Object parent : successor.getParent()) {
-													if (parent instanceof Argument)
-														if (((Argument) parent).isArray()) {
-															successorIsMemberOfArray = true;
-														}
-												}
-
-												if (successor.isArray()) {
-													Argument in;
+										OwlService array = null;
+										for (Argument arg : serviceOutputs) {
+											for (OwlService service : graph.getVertices()) {
+												if (service.equals(((Value) arg).getOwlService())) {
 													try {
-														in = new Argument(successor.getName().toString() + "[0]", "",
-																successor.isTypeOf(), false, successor.isNative(),
-																successor.getSubtypes());
-														in.setOwlService(successor.getOwlService());
-														Value value = new Value(in);
-														value.setValue(((Value) service.getArgument()).getValue());
-														successor.getElements().add(0, value);
+														service.setContent((Value) arg);
 													} catch (Exception e) {
-														// TODO
-														// Auto-generated
-														// catch block
+														Activator.log("Error setting outputs content", e);
 														e.printStackTrace();
 													}
-												} else if (successorIsMemberOfArray) {
+												}
+											}
+										}
 
-													// TODO complex
-													// array
+										for (OwlService service : graph.getVertices()) {
+											if (service.getisMatchedIO()
+													&& !service.getArgument().getMatchedInputs().isEmpty()
+													&& service.getArgument().getBelongsToOperation().getName()
+															.toString().equals(currentService.getOperation().getName()
+																	.toString())) {
+
+												boolean isMemberOfArray = false;
+
+												for (Object parent : service.getArgument().getParent()) {
+													if (parent instanceof Argument)
+														if (((Argument) parent).isArray()) {
+															isMemberOfArray = true;
+														}
+												}
+												// if predecessor is array
+												if (isMemberOfArray || service.getArgument().isArray()) {
+													OwlService initialArray = getInitialArray(service, graph, false);
+													int subNum = 0;
+													for (Argument sub : initialArray.getArgument().getSubtypes()) {
+														if (sub.getOwlService().getisMatchedIO())
+															subNum++;
+													}
+													boolean arrayIsMatched = false;
+
+													if (subNum == initialArray.getArgument().getSubtypes().size()) {
+														arrayIsMatched = true;
+
+													}
+													boolean successorIsMemberOfArray = false;
+													for (Argument successor : service.getArgument()
+															.getMatchedInputs()) {
+														// for each successor
+														for (Object parent : successor.getParent()) {
+															if (parent instanceof Argument)
+																if (((Argument) parent).isArray()) {
+																	successorIsMemberOfArray = true;
+																}
+														}
+														OwlService successorMatched = null;
+														for (OwlService suc : graph.getSuccessors(service)) {
+															successorMatched = suc;
+														}
+														// if successor is also
+														// member of array
+														if (successorIsMemberOfArray) {
+															OwlService successorInitialArray = getInitialArray(
+																	successorMatched, graph, true);
+															// clear matched
+															// elements
+															ArrayList<Argument> in = successorInitialArray.getArgument()
+																	.getBelongsToOperation().getInputs();
+
+															int i = 0;
+															if (arrayIsMatched && array != initialArray) {
+																for (Value element : initialArray.getArgument()
+																		.getElements()) {
+																	Value value = new Value(element);
+																	value.setOwlService(successorInitialArray
+																			.getArgument().getOwlService());
+																	value.setName(successorInitialArray.getArgument()
+																			.getType() + "[" + i + "]");
+																	successorInitialArray.getArgument().getElements()
+																			.add(value);
+																	for (Argument input : inputVariables) {
+																		if (input.getOwlService()
+																				.equals(successorInitialArray)) {
+																			ArrayList<Value> list = input.getElements();
+
+																			for (Iterator<Value> iterator = list
+																					.iterator(); iterator.hasNext();) {
+																				Value v = iterator.next();
+																				if (v != null) {
+																					iterator.remove();
+																				}
+																			}
+																			input.getElements().add(value);
+																			break;
+																		}
+																	}
+
+																	i++;
+																}
+																array = initialArray;
+															}
+														} else if (successor.isArray()) {
+															// successor is
+															// array
+															for (Value element : service.getArgument().getElements()) {
+																successor.getElements().add(element);
+															}
+														} else {
+
+															// successor is
+															// object
+															disp.syncExec(new Runnable() {
+																@Override
+																public void run() {
+																	MatchOutputDialog dialog = new MatchOutputDialog(
+																			shell);
+																	dialog.setDisp(disp);
+																	dialog.setArrayNodes(nodes);
+																	dialog.setName(successor.getName().toString());
+																	dialog.create();
+																	dialog.configureShell(shell);
+																	dialog.setDialogLocation();
+																	if (dialog.open() == Window.OK) {
+																		String value = dialog.getValue();
+																		((Value) successor).setValue(value);
+																		for (Argument input : inputVariables) {
+																			if (input.getOwlService().equals(
+																					successor.getOwlService())) {
+
+																				((Value) input).setValue(value);
+																			}
+																		}
+
+																	} else {
+																		return;
+																	}
+																}
+															});
+														}
+													}
+
+													// if predecessor is object
 												} else {
-													((Value) successor)
-															.setValue(((Value) service.getArgument()).getValue());
-													for (Argument input : inputVariables) {
-														if (input.getOwlService().equals(successor.getOwlService())) {
+													boolean successorIsMemberOfArray = false;
+													for (Argument successor : service.getArgument()
+															.getMatchedInputs()) {
+														// for each successor
+														for (Object parent : successor.getParent()) {
+															if (parent instanceof Argument)
+																if (((Argument) parent).isArray()) {
+																	successorIsMemberOfArray = true;
+																}
+														}
 
-															((Value) input).setValue(
+														if (successor.isArray()) {
+															Argument in;
+															try {
+																in = new Argument(
+																		successor.getName().toString() + "[0]", "",
+																		successor.isTypeOf(), false,
+																		successor.isNative(), successor.getSubtypes());
+																in.setOwlService(successor.getOwlService());
+																Value value = new Value(in);
+																value.setValue(
+																		((Value) service.getArgument()).getValue());
+																successor.getElements().add(0, value);
+															} catch (Exception e) {
+																// TODO
+																// Auto-generated
+																// catch block
+																e.printStackTrace();
+															}
+														} else if (successorIsMemberOfArray) {
+
+															// TODO complex
+															// array
+														} else {
+															((Value) successor).setValue(
 																	((Value) service.getArgument()).getValue());
+															for (Argument input : inputVariables) {
+																if (input.getOwlService()
+																		.equals(successor.getOwlService())) {
+
+																	((Value) input).setValue(
+																			((Value) service.getArgument()).getValue());
+																}
+															}
+
 														}
 													}
 
 												}
 											}
-
 										}
 									}
-								}
-
+								});
 							}
 
 						}
