@@ -142,7 +142,7 @@ public class Activator extends AbstractUIPlugin implements DebugOptionsListener 
 	public static void log(String className, String methodName, String message, Exception exception) {
 		String msg = message;
 		msg += "\n!ERROR_ID t" + errorID;
-		msg += "\n!SERVICE_NAME Requirements Editor";
+		msg += "\n!SERVICE_NAME ServiceComposition";
 		msg += "\n!SERVICE_VERSION 1.0.0-SNAPSHOT";
 		msg += "\n!STARTING_TIME " + STARTING_TIME;
 		msg += "\n!CLASS_NAME " + className;
