@@ -182,6 +182,7 @@ public class RAMLCaller {
 
 			} catch (IOException e) {
 				e.printStackTrace();
+				System.out.println(e.toString());
 				throw new IOException();
 
 			} finally {
@@ -427,91 +428,97 @@ public class RAMLCaller {
 		if (json instanceof JSONObject) {
 			// if it is an array of primitive datatypes e.g boolean
 			if (output.isArray() && stringIsItemFromList(output.getType(), datatypes)) {
-				JSONArray array = (JSONArray) ((JSONObject) json).get(output.getName().toString());
+				if (((JSONObject) json).containsKey(output.getName().toString())) {
+					JSONArray array = (JSONArray) ((JSONObject) json).get(output.getName().toString());
 
-				for (int i = 0; i < array.size(); i++) {
-					if (array.get(i) != null) {
-						Argument out;
-						try {
-							out = new Argument(output.getName().toString() + "[" + i + "]", "", "BodyParameter", false,
-									output.isNative(), output.getSubtypes());
-							out.setOwlService(output.getOwlService());
-							Value value = new Value(out);
-							// Value value = Value.getValue(out);
-							value.setValue(array.get(i).toString());
-							output.getElements().add(value);
-						} catch (Exception e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
+					for (int i = 0; i < array.size(); i++) {
+						if (array.get(i) != null) {
+							Argument out;
+							try {
+								out = new Argument(output.getName().toString() + "[" + i + "]", "", "BodyParameter",
+										false, output.isNative(), output.getSubtypes());
+								out.setOwlService(output.getOwlService());
+								Value value = new Value(out);
+								// Value value = Value.getValue(out);
+								value.setValue(array.get(i).toString());
+								output.getElements().add(value);
+							} catch (Exception e) {
+								// TODO Auto-generated catch block
+								e.printStackTrace();
+							}
 						}
-					}
 
+					}
 				}
 				// if it is an array of arrays or array of objects
 			} else if (output.isArray() && !stringIsItemFromList(output.getType(), datatypes)) {
-				if (((JSONObject) json).get(output.getType()) instanceof JSONArray) {
-					JSONArray array = (JSONArray) ((JSONObject) json).get(output.getType());
-					for (int i = 0; i < array.size(); i++) {
-						// create and add site[0]element, device[0]
-						Argument out = new Argument(output);
-						out.setOwlService(output.getOwlService());
-						out.setName(output.getType() + "[" + i + "]");
-						Value value = new Value(out);
+				if (((JSONObject) json).containsKey(output.getName().toString())) {
+					if (((JSONObject) json).get(output.getType()) instanceof JSONArray) {
+						JSONArray array = (JSONArray) ((JSONObject) json).get(output.getType());
+						for (int i = 0; i < array.size(); i++) {
+							// create and add site[0]element, device[0]
+							Argument out = new Argument(output);
+							out.setOwlService(output.getOwlService());
+							out.setName(output.getType() + "[" + i + "]");
+							Value value = new Value(out);
 
-						for (Argument sub : output.getSubtypes()) {
-							if (sub.isArray()) {
-								JSONArray array2 = (JSONArray) ((JSONObject) array.get(i))
-										.get(sub.getName().toString());
-								// if (output.getType().equals(sub.getType())){
-								// create device[], metrics[]
-								Argument out1 = new Argument(sub);
-								out1.setOwlService(sub.getOwlService());
-								out1.setName(sub.getName().toString());
-								Value value2 = new Value(out1);
-								parseJson(value2, (JSONObject) array.get(i));
+							for (Argument sub : output.getSubtypes()) {
+								if (sub.isArray()) {
+									JSONArray array2 = (JSONArray) ((JSONObject) array.get(i))
+											.get(sub.getName().toString());
+									// if
+									// (output.getType().equals(sub.getType())){
+									// create device[], metrics[]
+									Argument out1 = new Argument(sub);
+									out1.setOwlService(sub.getOwlService());
+									out1.setName(sub.getName().toString());
+									Value value2 = new Value(out1);
+									parseJson(value2, (JSONObject) array.get(i));
 
-								// add device[] metrics[]
-								value.getElements().add(value2);
+									// add device[] metrics[]
+									value.getElements().add(value2);
 
-								// }else{
-								// //create device,metrics
-								// Argument out1 = new Argument(sub);
-								// out1.setOwlService(sub.getOwlService());
-								// out1.setName(sub.getName().toString());
-								// Value value1 = new Value(out1);
-								// //add device, metrics
-								// value.getElements().add(value1);
-								// //create device[0],[1], metrics[0],[1]
-								// Argument out2 = new Argument(sub);
-								// out2.setOwlService(sub.getOwlService());
-								// out2.setName(sub.getName().toString());
-								// Value value2 = new Value(out2);
-								//
-								//
-								// parseJson(value2, (JSONObject) array.get(i));
-								//
-								// //add device[0],[1], metrics[0],[1]
-								// value1.getElements().add(value2);
-								// }
-							} else {
+									// }else{
+									// //create device,metrics
+									// Argument out1 = new Argument(sub);
+									// out1.setOwlService(sub.getOwlService());
+									// out1.setName(sub.getName().toString());
+									// Value value1 = new Value(out1);
+									// //add device, metrics
+									// value.getElements().add(value1);
+									// //create device[0],[1], metrics[0],[1]
+									// Argument out2 = new Argument(sub);
+									// out2.setOwlService(sub.getOwlService());
+									// out2.setName(sub.getName().toString());
+									// Value value2 = new Value(out2);
+									//
+									//
+									// parseJson(value2, (JSONObject)
+									// array.get(i));
+									//
+									// //add device[0],[1], metrics[0],[1]
+									// value1.getElements().add(value2);
+									// }
+								} else {
 
-								// create device
-								Argument out1 = new Argument(sub);
-								out1.setOwlService(sub.getOwlService());
-								out1.setName(sub.getName().toString());
-								Value value1 = new Value(out1);
-								JSONObject object = (JSONObject) array.get(i);
+									// create device
+									Argument out1 = new Argument(sub);
+									out1.setOwlService(sub.getOwlService());
+									out1.setName(sub.getName().toString());
+									Value value1 = new Value(out1);
+									JSONObject object = (JSONObject) array.get(i);
 
-								parseJson(value1, (object));
+									parseJson(value1, (object));
 
-								value.getElements().add(value1);
+									value.getElements().add(value1);
+								}
 							}
+							output.getElements().add(value);
 						}
-						output.getElements().add(value);
+					} else {
+						output.setIsArray(false);
+						parseJson(output, json);
 					}
-				} else {
-					output.setIsArray(false);
-					parseJson(output, json);
 				}
 				// if it is an object but not an array
 			} else if (!output.isArray() && !stringIsItemFromList(output.getType(), datatypes)) {
@@ -688,7 +695,9 @@ public class RAMLCaller {
 
 				}
 			}
-			((JSONObject) obj).put(input.getName().getContent().toString(), array);
+			if (!array.isEmpty() || input.isRequired()) {
+				((JSONObject) obj).put(input.getName().getContent().toString(), array);
+			}
 			// array of objects or arrays
 		} else if (input.isArray() && !stringIsItemFromList(input.getType(), datatypes)) {
 			JSONArray array = new JSONArray();
@@ -711,8 +720,9 @@ public class RAMLCaller {
 				}
 
 			}
-
-			((JSONObject) obj).put(input.getName().getContent().toString(), array);
+			if (!array.isEmpty() || input.isRequired()) {
+				((JSONObject) obj).put(input.getName().getContent().toString(), array);
+			}
 			// object
 		} else if (!input.isArray() && !stringIsItemFromList(input.getType(), datatypes)) {
 			JSONObject obj2 = new JSONObject();
@@ -720,7 +730,9 @@ public class RAMLCaller {
 			for (Argument subinput : input.getSubtypes()) {
 				obj2 = (JSONObject) createJson(subinput, obj2);
 			}
-			((JSONObject) obj).put(input.getName().getContent().toString(), obj2);
+			if (!obj2.isEmpty() || input.isRequired()) {
+				((JSONObject) obj).put(input.getName().getContent().toString(), obj2);
+			}
 			// primitive
 		} else {
 			if (input.getType().equalsIgnoreCase("String")) {

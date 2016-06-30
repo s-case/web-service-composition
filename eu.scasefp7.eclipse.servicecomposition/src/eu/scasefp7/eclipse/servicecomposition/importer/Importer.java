@@ -333,6 +333,9 @@ public abstract class Importer {
 		Operation(Individual ind) throws Exception {
 			// load basic properties
 			name = new ComparableName(ind.getPropertyValue(hasName).asLiteral().getString());
+			if (name.toString().contains("host")){
+				int a=0;
+			}
 			// SOAP or RESTful
 			if (ind.getPropertyValue(belongsToWSType) != null) {
 				type = ind.getPropertyValue(belongsToWSType).asLiteral().getString();
@@ -993,7 +996,7 @@ public abstract class Importer {
 		private ArrayList<Object> parent = new ArrayList<Object>();
 		private OwlService belongsToOwlService = null;
 		private Operation belongsToOperation;
-		private boolean isRequired = true;
+		private boolean isRequired = false;
 		private boolean objectOrArray = false;
 
 		/**
