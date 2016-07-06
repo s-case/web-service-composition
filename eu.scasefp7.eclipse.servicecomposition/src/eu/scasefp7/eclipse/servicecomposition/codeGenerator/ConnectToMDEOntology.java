@@ -60,7 +60,7 @@ public class ConnectToMDEOntology {
 
 		ArrayList<MDERepresentation> hasOutput = new ArrayList<MDERepresentation>();
 		// Query, URI and Input Parameters
-		//removed .replaceAll("[0123456789]", "")
+		// removed .replaceAll("[0123456789]", "")
 		for (OwlService input : inputs) {
 			if (!input.getisMatchedIO()) {
 				String url = ((Operation) input.getArgument().getBelongsToOperation()).getDomain().getURI();
@@ -80,30 +80,30 @@ public class ConnectToMDEOntology {
 					ArrayList<String> subNames = new ArrayList<String>();
 					subNames.add(input.getArgument().getType().toLowerCase());
 					MDERepresentation inputRepresentation = new MDERepresentation(false,
-							!input.getArgument().isRequired(), url,
-							input.getName().getContent(), type, null, subNames);
+							!input.getArgument().isRequired(), url, input.getName().getContent(), type, null, subNames);
 					hasQueryParameters.add(inputRepresentation);
 				} else if (input.getArgument().getSubtypes().isEmpty()
 						&& input.getArgument().isTypeOf().equals("URIParameter")) {
 					ArrayList<String> subNames = new ArrayList<String>();
 					subNames.add("string");
 					MDERepresentation inputRepresentation = new MDERepresentation(false,
-							!input.getArgument().isRequired(), url,
-							input.getArgument().getName().getContent(), "Primitive",
-							null, subNames);
+							!input.getArgument().isRequired(), url, input.getArgument().getName().getContent(),
+							"Primitive", null, subNames);
 					hasQueryParameters.add(inputRepresentation);
 				} else {
 
 					ArrayList<String> subNames = new ArrayList<String>();
 					ArrayList<MDERepresentation> hasSubs = new ArrayList<MDERepresentation>();
 					for (OwlService sub : graph.getPredecessors(input)) {
-						hasSubs.add(addSubtypes(sub, graph, hasSubs, true));
-						subNames.add(sub.getName().getContent());
+						if (!sub.getisMatchedIO()) {
+							hasSubs.add(addSubtypes(sub, graph, hasSubs, true));
+							subNames.add(sub.getName().getContent());
+						}
 					}
 
 					MDERepresentation inputRepresentation = new MDERepresentation(false,
-							!input.getArgument().isRequired(), url,
-							input.getName().getContent(), type, hasSubs, subNames);
+							!input.getArgument().isRequired(), url, input.getName().getContent(), type, hasSubs,
+							subNames);
 					hasInput.add(inputRepresentation);
 				}
 			}
@@ -128,7 +128,7 @@ public class ConnectToMDEOntology {
 		// }
 
 		// Outputs
-		//removed .replaceAll("[0123456789]", "")
+		// removed .replaceAll("[0123456789]", "")
 		for (OwlService output : outputs) {
 			String url = ((Operation) output.getArgument().getBelongsToOperation()).getDomain().getURI();
 			String type = "Primitive";
@@ -142,8 +142,7 @@ public class ConnectToMDEOntology {
 				ArrayList<String> subNames = new ArrayList<String>();
 				subNames.add(output.getArgument().getType().toLowerCase());
 				MDERepresentation outputRepresentation = new MDERepresentation(false,
-						!output.getArgument().isRequired(), url,
-						output.getName().getContent(), type, null, subNames);
+						!output.getArgument().isRequired(), url, output.getName().getContent(), type, null, subNames);
 				hasOutput.add(outputRepresentation);
 			} else {
 				ArrayList<String> subNames = new ArrayList<String>();
@@ -153,8 +152,8 @@ public class ConnectToMDEOntology {
 					subNames.add(sub.getName().getContent());
 				}
 				MDERepresentation outputRepresentation = new MDERepresentation(false,
-						!output.getArgument().isRequired(), url,
-						output.getName().getContent(), type, hasSubs, subNames);
+						!output.getArgument().isRequired(), url, output.getName().getContent(), type, hasSubs,
+						subNames);
 				hasOutput.add(outputRepresentation);
 
 			}
@@ -567,10 +566,11 @@ public class ConnectToMDEOntology {
 			ArrayList<MDERepresentation> hasSubSubs = new ArrayList<MDERepresentation>();
 			if (isInput) {
 				for (OwlService subsub : graph.getPredecessors(sub)) {
-
+					if (!subsub.getisMatchedIO()) {
 					hasSubSubs.add(addSubtypes(subsub, graph, hasSubSubs, true));
 
 					subNames.add(subsub.getName().getContent().replaceAll("[0123456789]", ""));
+					}
 				}
 			} else {
 				for (OwlService subsub : graph.getSuccessors(sub)) {

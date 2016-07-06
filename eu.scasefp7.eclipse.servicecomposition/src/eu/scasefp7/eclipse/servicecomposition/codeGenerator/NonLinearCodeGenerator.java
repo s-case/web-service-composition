@@ -50,6 +50,7 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 	protected ArrayList<OwlService> matchedInputs = new ArrayList<OwlService>();
 	protected ArrayList<OwlService> matchedOutputs = new ArrayList<OwlService>();
 	protected ArrayList<Argument> uriParameters = new ArrayList<Argument>();
+	protected ArrayList<OwlService> inputsWithoutMatchedVariables = new ArrayList<OwlService>();
 
 	/**
 	 * instance of ConnectToMDEOntology
@@ -112,7 +113,7 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 		}
 
 		// detect all operations
-		//check if mailgun operation exists in the workflow
+		// check if mailgun operation exists in the workflow
 		boolean hasMailgun = false;
 		ArrayList<OwlService> remainingOperations = new ArrayList<OwlService>();
 		for (OwlService service : graph.getVertices()) {
@@ -1195,7 +1196,28 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 		if (hasBodyInput) {
 			crudVerb = "POST";
 		}
-		operation = instance.createObjects(ProjectName, inputVariables, uriParameters, outputVariables, crudVerb,
+
+		for (OwlService input : inputVariables) {
+			if (input.getArgument().getSubtypes().size() != 0) {
+				int subNum = 0;
+				for (Argument sub : input.getArgument().getSubtypes()) {
+					if (sub.getOwlService().getisMatchedIO())
+						subNum++;
+				}
+				
+				if (subNum == input.getArgument().getSubtypes().size()) {
+					//don't write to ontology since the whole object is matched
+				// if (subNum < input.getArgument().getSubtypes().size())
+				}else {
+					inputsWithoutMatchedVariables.add(input);
+				}
+			}else{
+				if (!input.getisMatchedIO()){
+					inputsWithoutMatchedVariables.add(input);
+				}
+			}
+		}
+		operation = instance.createObjects(ProjectName, inputsWithoutMatchedVariables, uriParameters, outputVariables, crudVerb,
 				graph);
 
 		return returnCode;
@@ -1209,6 +1231,10 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 		return this.inputVariables;
 	}
 
+	public ArrayList<OwlService> getInputsWithoutMatchedVariables() {
+		return this.inputsWithoutMatchedVariables;
+	}
+	
 	public ArrayList<OwlService> getOutputVariables() {
 		return this.outputVariables;
 	}

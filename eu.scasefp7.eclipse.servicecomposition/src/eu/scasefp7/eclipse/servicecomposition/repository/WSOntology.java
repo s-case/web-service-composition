@@ -256,7 +256,7 @@ public class WSOntology {
 				if (arg.getSubtypes().size() == 0) {
 					// it is native object
 
-					String name = arg.getName().toString();
+					String name = s.getName().getContent();
 					name = changeUri(name);
 					IndividualImpl noInd = (IndividualImpl) ontologyModel.createIndividual(NS + name, conceptClass);
 					uris.add(noInd.getURI().toLowerCase());
@@ -295,7 +295,7 @@ public class WSOntology {
 					operInd.addProperty(property, noInd);
 				} else {
 					// it is complex object
-					String name = arg.getName().toString();
+					String name = s.getName().getContent();
 					name = changeUri(name);
 					IndividualImpl coInd = (IndividualImpl) ontologyModel.createIndividual(NS + name, conceptClass);
 					uris.add(coInd.getURI().toLowerCase());

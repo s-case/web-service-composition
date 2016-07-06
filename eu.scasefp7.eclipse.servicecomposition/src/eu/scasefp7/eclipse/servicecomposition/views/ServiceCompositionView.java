@@ -6569,7 +6569,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 										try {
 											WSOntology ws = new WSOntology();
 											ws.createNewWSOperation(generator.getOperation().getHasName(),
-													generator.getInputVariables(), generator.getUriParameters(),
+													generator.getInputsWithoutMatchedVariables(), generator.getUriParameters(),
 													generator.getOutputVariables(),
 													generator.getOperation().getBelongsToURL(), applicationDomainURI,
 													generator.getOperation().getHasCRUDVerb());
