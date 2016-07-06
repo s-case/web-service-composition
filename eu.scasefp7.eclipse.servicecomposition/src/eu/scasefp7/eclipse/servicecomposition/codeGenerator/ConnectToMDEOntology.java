@@ -94,16 +94,24 @@ public class ConnectToMDEOntology {
 
 					ArrayList<String> subNames = new ArrayList<String>();
 					ArrayList<MDERepresentation> hasSubs = new ArrayList<MDERepresentation>();
+
 					for (OwlService sub : graph.getPredecessors(input)) {
 						if (!sub.getisMatchedIO()) {
 							hasSubs.add(addSubtypes(sub, graph, hasSubs, true));
 							subNames.add(sub.getName().getContent());
 						}
 					}
-
-					MDERepresentation inputRepresentation = new MDERepresentation(false,
-							!input.getArgument().isRequired(), url, input.getName().getContent(), type, hasSubs,
-							subNames);
+					MDERepresentation inputRepresentation;
+					if (input.getArgument().getSubtypes().isEmpty()) {
+						subNames.add(input.getArgument().getType().toLowerCase());
+						inputRepresentation = new MDERepresentation(false,
+								!input.getArgument().isRequired(), url, input.getName().getContent(), type, null,
+								subNames);
+					} else {
+						inputRepresentation = new MDERepresentation(false,
+								!input.getArgument().isRequired(), url, input.getName().getContent(), type, hasSubs,
+								subNames);
+					}
 					hasInput.add(inputRepresentation);
 				}
 			}
@@ -362,11 +370,11 @@ public class ConnectToMDEOntology {
 
 		// Add a new resource in the linked ontology
 
-		linkedOntology.addResource(project.getName() + "_Resource", true);
-		linkedOntology.connectProjectToElement(project.getName() + "_Resource");
+		linkedOntology.addResource(operation.getHasName() + "_Resource", true);
+		linkedOntology.connectProjectToElement(operation.getHasName() + "_Resource");
 
 		// Add a new operation for the resource
-		linkedOntology.addOperationToResource(project.getName() + "_Resource", operation.getHasName(),
+		linkedOntology.addOperationToResource(operation.getHasName() + "_Resource", operation.getHasName(),
 				operation.getBelongsToURL(), operation.gethasResourcePath(), operation.getBelongsToWSType(),
 				operation.getHasCRUDVerb(), operation.getHasResponseType().get(0));
 
@@ -567,9 +575,9 @@ public class ConnectToMDEOntology {
 			if (isInput) {
 				for (OwlService subsub : graph.getPredecessors(sub)) {
 					if (!subsub.getisMatchedIO()) {
-					hasSubSubs.add(addSubtypes(subsub, graph, hasSubSubs, true));
+						hasSubSubs.add(addSubtypes(subsub, graph, hasSubSubs, true));
 
-					subNames.add(subsub.getName().getContent().replaceAll("[0123456789]", ""));
+						subNames.add(subsub.getName().getContent().replaceAll("[0123456789]", ""));
 					}
 				}
 			} else {
