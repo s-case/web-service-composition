@@ -58,6 +58,7 @@ public class ImportHandler extends AbstractHandler {
 	 * the ontology operations
 	 */
 	private static ArrayList<Operation> operations;
+	private static boolean updateOntology = false;
 
 	@Override
 	public Object execute(ExecutionEvent event) throws ExecutionException {
@@ -117,8 +118,7 @@ public class ImportHandler extends AbstractHandler {
 		try {
 
 			// Runnable myRunnable = new Runnable() {
-			
-			
+
 			Job ImportSBD = new Job("Import StoryBoard Creator file") {
 				@Override
 				protected IStatus run(IProgressMonitor monitor) {
@@ -353,21 +353,27 @@ public class ImportHandler extends AbstractHandler {
 								"A newer version of the web services ontology exists on server. Would you like to download it?");
 
 						if (answer) {
-							// OK Button selected
-							try {
-								String path = repo.downloadOntology("WS", disp);
-								ServiceCompositionView.setUpdateOperations(true);
-							} catch (Exception e) {
-								Activator.log("Error occured while downloading the ontology", e);
-								e.printStackTrace();
-							}
-						} else {
-							ServiceCompositionView.setUpdateOperations(false);
+							setUpdateOntology(true);
+						}else {
+							setUpdateOntology(false);
 						}
 					}
 				});
 
-			}else {
+				if (getUpdateOntology()) {
+					// OK Button selected
+					try {
+						String path = repo.downloadOntology("WS", disp);
+						ServiceCompositionView.setUpdateOperations(true);
+					} catch (Exception e) {
+						Activator.log("Error occured while downloading the ontology", e);
+						e.printStackTrace();
+					}
+				} else {
+					ServiceCompositionView.setUpdateOperations(false);
+				}
+
+			} else {
 				ServiceCompositionView.setUpdateOperations(false);
 			}
 		}
@@ -381,6 +387,14 @@ public class ImportHandler extends AbstractHandler {
 	 */
 	public static void setOperations(ArrayList<Operation> operationsList) {
 		operations = operationsList;
+	}
+
+	public static void setUpdateOntology(boolean update) {
+		updateOntology = update;
+	}
+
+	public static boolean getUpdateOntology() {
+		return updateOntology;
 	}
 
 }

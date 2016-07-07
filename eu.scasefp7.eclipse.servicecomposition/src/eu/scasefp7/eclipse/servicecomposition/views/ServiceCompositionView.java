@@ -384,6 +384,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 	private static ArrayList<Operation> operations;
 	// flag for updating operations
 	private static boolean updateOperations = true;
+	private static boolean updateYouRest = false;
 
 	public void createPartControl(Composite parent) {
 
@@ -5798,7 +5799,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 			IProgressMonitor monitor = new NullProgressMonitor();
 			IProject existingProject = ResourcesPlugin.getWorkspace().getRoot().getProject(projectName.trim());
 			if (existingProject.exists() || nameExists) {
-				//shell = this.getSite().getWorkbenchWindow().getShell();
+				// shell = this.getSite().getWorkbenchWindow().getShell();
 				boolean result = MessageDialog.openQuestion(shell, "Project already exists",
 						"A project with this name already exists. Would you like to replace it?");
 
@@ -6525,26 +6526,6 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 						// create .cservice file
 
 						ConnectToMDEOntology.writeToXMLFile(scaseProject, gGenerator.getOperation(), container);
-						// update YouRest
-						// String[] elements = { "Update YouREST (beta)" };
-
-						// ListSelectionDialog dialog = new
-						// ListSelectionDialog(shell, elements,
-						// ArrayContentProvider.getInstance(), new
-						// LabelProvider(), "selection message");
-
-						// dialog.setTitle("Upload is complete!");
-						// dialog.setMessage("The web service was deployed
-						// successfully on server!\n"
-						// + "Base URI: http://109.231.127.61:8080/" +
-						// currentProject.getName()
-						// + "-0.0.1-SNAPSHOT/\n" + "Resource Path:
-						// rest/result/query\n\n"
-						// + "Would you like to update YouREST platform and
-						// Linked Ontology with the composite web service?");
-
-						// dialog.setInitialSelections(new Object []{"Update
-						// Linked Ontology"});
 
 						// user pressed OK
 						disp.syncExec(new Runnable() {
@@ -6556,74 +6537,44 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 												+ "Base URI: http://109.231.127.61:8080/" + currentProject.getName()
 												+ "-0.0.1-SNAPSHOT/\n" + "Resource Path: rest/result/query\n\n"
 												+ "Would you like to update YouREST platform with the composite web service?")) {
-									try {
-										// Object[] results =
-										// dialog.getResult();
 
-										// for (Object selectedItem : results) {
-										// if (selectedItem.equals("Update
-										// YouREST (beta)")) {
-										// upload to WS ontology
-										// get application domain
-
-										try {
-											WSOntology ws = new WSOntology();
-											ws.createNewWSOperation(generator.getOperation().getHasName(),
-													generator.getInputsWithoutMatchedVariables(), generator.getUriParameters(),
-													generator.getOutputVariables(),
-													generator.getOperation().getBelongsToURL(), applicationDomainURI,
-													generator.getOperation().getHasCRUDVerb());
-											ws.saveToOWL();
-											RepositoryClient cl = new RepositoryClient();
-											cl.uploadOntology();
-										} catch (Exception e) {
-											disp.syncExec(new Runnable() {
-												@Override
-												public void run() {
-													MessageDialog.openError(shell, "YouREST could not be update!",
-															"Due to an error, YouREST could not be updated with project "
-																	+ currentProject.getName());
-
-												}
-											});
-											return;
-										}
-										// }
-										// if (selectedItem.equals("Update
-										// Linked Ontology")) {
-										// ConnectToMDEOntology.writeToOntology(scaseProject,
-										// gGenerator.getOperation());
-										//
-										// final IFile file =
-										// ResourcesPlugin.getWorkspace().getRoot()
-										// .getFileForLocation(Path.fromOSString(ResourcesPlugin
-										// .getWorkspace().getRoot().getLocation().toString()
-										// + "/"
-										// + scaseProject.getName() +
-										// "/LinkedOntology.owl"));
-										// if (file != null) {
-										// disp.syncExec(new Runnable() {
-										// @Override
-										// public void run() {
-										// MessageDialog.openInformation(disp.getActiveShell(),
-										// "Info",
-										// "LinkedOntology.owl file is
-										// created under the project "
-										// + scaseProject.getName());
-										// }
-										// });
-										//
-										// }
-										// }
-										// }
-									} catch (Exception e) {
-										e.printStackTrace();
-									}
+									setUpdateYouRest(true);
 								} else {
-									return;
+									setUpdateYouRest(false);
 								}
 							}
 						});
+
+						if (getUpdateYouRest()) {
+							try {
+
+								try {
+									WSOntology ws = new WSOntology();
+									ws.createNewWSOperation(generator.getOperation().getHasName(),
+											generator.getInputsWithoutMatchedVariables(), generator.getUriParameters(),
+											generator.getOutputVariables(), generator.getOperation().getBelongsToURL(),
+											applicationDomainURI, generator.getOperation().getHasCRUDVerb());
+									ws.saveToOWL();
+									RepositoryClient cl = new RepositoryClient();
+									cl.uploadOntology();
+								} catch (Exception e) {
+
+									disp.syncExec(new Runnable() {
+										@Override
+										public void run() {
+											MessageDialog.openError(shell, "YouREST could not be update!",
+													"Due to an error, YouREST could not be updated with project "
+															+ currentProject.getName());
+
+										}
+									});
+
+								}
+
+							} catch (Exception e) {
+								e.printStackTrace();
+							}
+						}
 
 					} else if (newUpload.getUploadStatus() == 0) {
 						return Status.CANCEL_STATUS;
@@ -6777,6 +6728,14 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 
 	public static ArrayList<Operation> getOperations() {
 		return operations;
+	}
+
+	public static void setUpdateYouRest(boolean update) {
+		updateYouRest = update;
+	}
+
+	public static boolean getUpdateYouRest() {
+		return updateYouRest;
 	}
 
 	public static void setUpdateOperations(boolean update) {
