@@ -106,7 +106,7 @@ public class RAMLCaller {
 			Value val = null;
 			for (Argument input : queryParams) {
 				val = (Value) input;
-				if (!(val.getValue().isEmpty() && !input.isRequired()) && val.getValue() != "enter value") {
+				if (!(val.getValue().isEmpty() && !input.isRequired()) && !val.getValue().equals("enter value")) {
 					if (!inputList.isEmpty()) {
 
 						inputList += "&";
@@ -678,7 +678,7 @@ public class RAMLCaller {
 		if (input.isArray() && stringIsItemFromList(input.getType(), datatypes)) {
 			JSONArray array = new JSONArray();
 			for (Value element : input.getElements()) {
-				if (element.getValue() != "enter value" && element.getValue() != "matched") {
+				if (!element.getValue().equals("enter value") && !element.getValue().equals("matched")) {
 					if (input.getType().equalsIgnoreCase("String")) {
 						array.add(element.getValue());
 					} else if (input.getType().equalsIgnoreCase("int")) {
@@ -738,7 +738,7 @@ public class RAMLCaller {
 			if (input.getType().equalsIgnoreCase("String")) {
 				Value val = (Value) input;
 				if (obj instanceof JSONObject) {
-					if (val.getValue() != "enter value" && val.getValue() != "matched")
+					if (!val.getValue().equals("enter value") && !val.getValue().equals("matched"))
 						((JSONObject) obj).put(input.getName().getContent().toString(), val.getValue());
 				} else if (obj instanceof JSONArray) {
 					((JSONArray) obj).add(val.getValue());
@@ -747,7 +747,7 @@ public class RAMLCaller {
 			if (input.getType().equalsIgnoreCase("int")) {
 				Value val = (Value) input;
 				if (obj instanceof JSONObject) {
-					if (val.getValue() != "enter value" && val.getValue() != "matched")
+					if (!val.getValue().equals("enter value") && !val.getValue().equals("matched"))
 						((JSONObject) obj).put(input.getName().getContent().toString(),
 								Integer.parseInt(val.getValue()));
 				} else if (obj instanceof JSONArray) {
@@ -757,7 +757,7 @@ public class RAMLCaller {
 			if (input.getType().equalsIgnoreCase("long")) {
 				Value val = (Value) input;
 				if (obj instanceof JSONObject) {
-					if (val.getValue() != "enter value" && val.getValue() != "matched")
+					if (!val.getValue().equals("enter value") && !val.getValue().equals("matched"))
 						((JSONObject) obj).put(input.getName().getContent().toString(), Long.parseLong(val.getValue()));
 				} else if (obj instanceof JSONArray) {
 					((JSONArray) obj).add(Long.parseLong(val.getValue()));
@@ -766,7 +766,7 @@ public class RAMLCaller {
 			if (input.getType().equalsIgnoreCase("boolean")) {
 				Value val = (Value) input;
 				if (obj instanceof JSONObject) {
-					if (val.getValue() != "enter value" && val.getValue() != "matched")
+					if (!val.getValue().equals("enter value") && !val.getValue().equals("matched"))
 						((JSONObject) obj).put(input.getName().getContent().toString(),
 								Boolean.parseBoolean(val.getValue()));
 				} else if (obj instanceof JSONArray) {
@@ -776,7 +776,7 @@ public class RAMLCaller {
 			if (input.getType().equalsIgnoreCase("float")) {
 				Value val = (Value) input;
 				if (obj instanceof JSONObject) {
-					if (val.getValue() != "enter value" && val.getValue() != "matched")
+					if (!val.getValue().equals("enter value") && !val.getValue().equals("matched"))
 						((JSONObject) obj).put(input.getName().getContent().toString(),
 								Float.parseFloat(val.getValue()));
 				} else if (obj instanceof JSONArray) {
@@ -786,7 +786,7 @@ public class RAMLCaller {
 			if (input.getType().equalsIgnoreCase("double")) {
 				Value val = (Value) input;
 				if (obj instanceof JSONObject) {
-					if (val.getValue() != "enter value" && val.getValue() != "matched")
+					if (!val.getValue().equals("enter value") && !val.getValue().equals("matched"))
 						((JSONObject) obj).put(input.getName().getContent().toString(),
 								Double.parseDouble(val.getValue()));
 				} else if (obj instanceof JSONArray) {
