@@ -66,6 +66,29 @@ public abstract class Importer {
 	protected static DatatypeProperty isArray;
 	protected static DatatypeProperty hasResourcePath;
 	protected static DatatypeProperty hasDescription;
+	// IPR properties
+	protected static ObjectProperty hasServiceAccessInfo;
+
+	protected static DatatypeProperty hasURLforAccess;
+	protected static ObjectProperty hasLicense;
+	protected static DatatypeProperty hasLicenseDescription;
+	protected static DatatypeProperty hasLicenseName;
+	protected static DatatypeProperty isProprietary;
+	protected static ObjectProperty hasCommercialCostSchema;
+	protected static DatatypeProperty hasCommercialCost;
+	protected static DatatypeProperty hasCommercialCostCurrency;
+	protected static DatatypeProperty hasCostPaymentChargeType;
+	protected static ObjectProperty hasTrialSchema;
+	protected static DatatypeProperty hasDurationInDays;
+	protected static DatatypeProperty hasLimitedFunctionalityDescription;
+	protected static DatatypeProperty hasDurationInUsages;
+	protected static DatatypeProperty offersFullFunctionalityDuringTrial;
+	protected static ObjectProperty hasDiscountIfUsedWithOtherSolution;
+	protected static DatatypeProperty hasDiscount;
+	protected static DatatypeProperty hasDiscountReason;
+	protected static DatatypeProperty hasPairedService;
+	protected static DatatypeProperty isValidForCountries;
+
 	protected static OntModel ontologyModel;
 
 	protected static HashMap<String, ApplicationDomain> domainList = new HashMap<String, ApplicationDomain>();
@@ -129,16 +152,17 @@ public abstract class Importer {
 				name = uri.substring(uri.lastIndexOf("/") + 1, uri.lastIndexOf("."));
 				// name = uri.substring(uri.lastIndexOf("#") + 1);
 			}
-			Bundle bundle = Platform.getBundle(Activator.PLUGIN_ID);
-			URL fileURL = bundle.getEntry(uri);
-			File file;
-			try {
-				file = new File(FileLocator.resolve(fileURL).toURI());
-				local = file.exists();
-			} catch (Exception e) {
-				local = false;
-				// e.printStackTrace();
-			}
+			local = false;
+//			Bundle bundle = Platform.getBundle(Activator.PLUGIN_ID);
+//			URL fileURL = bundle.getEntry(uri);
+//			File file;
+//			try {
+//				file = new File(FileLocator.resolve(fileURL).toURI());
+//				local = file.exists();
+//			} catch (Exception e) {
+//				local = false;
+//				// e.printStackTrace();
+//			}
 		}
 
 		public String getCrudVerb() {
@@ -333,9 +357,7 @@ public abstract class Importer {
 		Operation(Individual ind) throws Exception {
 			// load basic properties
 			name = new ComparableName(ind.getPropertyValue(hasName).asLiteral().getString());
-			if (name.toString().contains("host")){
-				int a=0;
-			}
+
 			// SOAP or RESTful
 			if (ind.getPropertyValue(belongsToWSType) != null) {
 				type = ind.getPropertyValue(belongsToWSType).asLiteral().getString();
@@ -395,35 +417,6 @@ public abstract class Importer {
 			try {
 				String NS = prefix;
 				OntClass cl = ontologyModel.getOntClass(NS + "Solutions");
-				ObjectProperty hasServiceAccessInfo = ontologyModel.getObjectProperty(NS + "hasServiceAccessInfo");
-				DatatypeProperty hasDescription = ontologyModel.getDatatypeProperty(NS + "hasDescription");
-
-				DatatypeProperty hasURLforAccess = ontologyModel.getDatatypeProperty(NS + "hasURLforAccess");
-				ObjectProperty hasLicense = ontologyModel.getObjectProperty(NS + "hasLicense");
-				DatatypeProperty hasLicenseDescription = ontologyModel
-						.getDatatypeProperty(NS + "hasLicenseDescription");
-				DatatypeProperty hasLicenseName = ontologyModel.getDatatypeProperty(NS + "hasLicenseName");
-				DatatypeProperty isProprietary = ontologyModel.getDatatypeProperty(NS + "isProprietary");
-				ObjectProperty hasCommercialCostSchema = ontologyModel
-						.getObjectProperty(NS + "hasCommercialCostSchema");
-				DatatypeProperty hasCommercialCost = ontologyModel.getDatatypeProperty(NS + "hasCommecrialCost");
-				DatatypeProperty hasCommercialCostCurrency = ontologyModel
-						.getDatatypeProperty(NS + "hasCommercialCostCurrency");
-				DatatypeProperty hasCostPaymentChargeType = ontologyModel
-						.getDatatypeProperty(NS + "hasCostPaymentChargeType");
-				ObjectProperty hasTrialSchema = ontologyModel.getObjectProperty(NS + "hasTrialSchema");
-				DatatypeProperty hasDurationInDays = ontologyModel.getDatatypeProperty(NS + "hasDurationInDays");
-				DatatypeProperty hasLimitedFunctionalityDescription = ontologyModel
-						.getDatatypeProperty(NS + "hasLimitedFunctionalityDescription");
-				DatatypeProperty hasDurationInUsages = ontologyModel.getDatatypeProperty(NS + "hasDurationInUsages");
-				DatatypeProperty offersFullFunctionalityDuringTrial = ontologyModel
-						.getDatatypeProperty(NS + "offersFullFunctionalityDuringTrial");
-				ObjectProperty hasDiscountIfUsedWithOtherSolution = ontologyModel
-						.getObjectProperty(NS + "hasDiscountIfUsedWithOtherSolution");
-				DatatypeProperty hasDiscount = ontologyModel.getDatatypeProperty(NS + "hasDiscount");
-				DatatypeProperty hasDiscountReason = ontologyModel.getDatatypeProperty(NS + "hasDiscountReason");
-				DatatypeProperty hasPairedService = ontologyModel.getDatatypeProperty(NS + "hasPairedService");
-				DatatypeProperty isValidForCountries = ontologyModel.getDatatypeProperty(NS + "isValidForCountries");
 
 				if (ind.getPropertyResourceValue(hasServiceAccessInfo) != null) {
 					Resource r1 = ind.getPropertyResourceValue(hasServiceAccessInfo);
@@ -740,9 +733,7 @@ public abstract class Importer {
 						Individual typeInd = (Individual) ontologyModel
 								.getIndividual(ioInd.getPropertyResourceValue(hasType).getURI());
 						boolean exists = false;
-						if (ioInd.getPropertyValue(hasName).asLiteral().getString().contains("event")){
-							int a =0;
-						}
+
 						for (Argument arg : vec) {
 							if ((arg.getName().toString()
 									.equals(ioInd.getPropertyValue(hasName).asLiteral().getString())
@@ -1030,9 +1021,7 @@ public abstract class Importer {
 		 * @param ioInd
 		 */
 		Argument(Operation operation, Individual typeInd, Individual ioInd) {
-			if (operation.getName().toString().contains("search")) {
-				int a = 1;
-			}
+
 			if (typeInd.getPropertyResourceValue(hasType) == null) {
 				// Native Object
 				if (ioInd.getPropertyValue(hasName) != null)
@@ -1162,11 +1151,12 @@ public abstract class Importer {
 		public void setIsRequired(boolean isRequired) {
 			this.isRequired = isRequired;
 		}
+
 		/**
 		 * <h1>getObjectOrArray</h1>
 		 * 
 		 * @return true if the argument returns either an array or an object.
-		 * Applies for output arguments.
+		 *         Applies for output arguments.
 		 */
 		public boolean getObjectOrArray() {
 			return objectOrArray;
@@ -1174,7 +1164,9 @@ public abstract class Importer {
 
 		/**
 		 * <h1>setObjectOrArray</h1>
-		 * @param objectOrArray: true if the argument returns either an array or an object.
+		 * 
+		 * @param objectOrArray:
+		 *            true if the argument returns either an array or an object.
 		 */
 		public void setObjectOrArray(boolean objectOrArray) {
 			this.objectOrArray = objectOrArray;

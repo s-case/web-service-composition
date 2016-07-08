@@ -1911,15 +1911,15 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 					}
 					if (!keep) {
 						((OwlService) ((MyNode) edge.getSource().getData()).getObject()).setisMatchedIO(false);
-						((OwlService) ((MyNode) edge.getSource().getData()).getObject()).getArgument()
-								.getMatchedInputs()
-								.remove(((OwlService) ((MyNode) edge.getDestination().getData()).getObject())
-										.getArgument());
 
 						// Style Node
 						ZestLabelProvider labelProvider = new ZestLabelProvider();
 						labelProvider.selfStyleNode((MyNode) edge.getSource().getData(), edge.getSource());
 					}
+					((OwlService) ((MyNode) edge.getSource().getData()).getObject()).getArgument()
+					.getMatchedInputs()
+					.remove(((OwlService) ((MyNode) edge.getDestination().getData()).getObject())
+							.getArgument());
 					((OwlService) ((MyNode) edge.getDestination().getData()).getObject()).setisMatchedIO(false);
 
 					// Style Node
@@ -3558,7 +3558,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 							// value.setValue("");
 							// value.getElements().removeAll(value.getElements());
 
-							if (!value.getElements().isEmpty() || !service.getArgument().getElements().isEmpty()) {
+							if (value.getName().toString().equals("name")) {
 								int a = 0;
 							}
 							// ArrayList<Value> list = value.getElements();
