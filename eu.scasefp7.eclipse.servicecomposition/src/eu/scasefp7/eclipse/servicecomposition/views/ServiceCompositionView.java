@@ -2975,6 +2975,23 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 
 			}
 		};
+
+		final Action b = new Action("Remove element") {
+			public void run() {
+
+				try {
+					Node n = ((Node) ((TreeSelection) inputSelection).getFirstElement()).getParent();
+					n.getSubCategories().remove(((Node) ((TreeSelection) inputSelection).getFirstElement()));
+
+					// Updating the display in the view
+					inputsTreeViewer.setInput(InputNodes);
+				} catch (Exception e) {
+					Activator.log("Error while running the workflow", e);
+					e.printStackTrace();
+				}
+
+			}
+		};
 		final MenuManager mgr = new MenuManager();
 		mgr.setRemoveAllWhenShown(true);
 
@@ -2984,16 +3001,44 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 			public void menuAboutToShow(IMenuManager manager) {
 				inputSelection = inputsTreeViewer.getSelection();
 
+				Node n = ((Node) ((TreeSelection) inputSelection).getFirstElement());
 				if (!inputSelection.isEmpty()) {
-					if (((Node) ((TreeSelection) inputSelection).getFirstElement()).getOwlService().getArgument()
-							.isArray()
-							&& ((Node) ((TreeSelection) inputSelection).getFirstElement()).getName().toString()
-									.replaceAll("[^\\d.]", "").isEmpty()) {
-						a.setText("Add new element for "
-								+ ((Node) ((TreeSelection) inputSelection).getFirstElement()).getName().toString());
-						a.setToolTipText("Right click to add new element");
-						a.setEnabled(true);
-						mgr.add(a);
+					if (n.getOwlService().getArgument().isArray()
+							&& n.getName().toString().replaceAll("[^\\d.]", "").isEmpty()) {
+						boolean notMatched = true;
+						// check if the array of primitive or array of objects
+						// is matched
+						if (n.getSubCategories().get(0).getValue().equals("matched")
+								|| (!n.getOwlService().getArgument().getSubtypes().isEmpty()
+										&& (n.getOwlService().getArgument().getSubtypes().get(0)).getOwlService()
+												.getisMatchedIO())) {
+							notMatched = false;
+						}
+						if (notMatched) {
+							a.setText("Add new element for "
+									+ ((Node) ((TreeSelection) inputSelection).getFirstElement()).getName().toString());
+							a.setToolTipText("Right click to add new element");
+							a.setEnabled(true);
+
+							mgr.add(a);
+						}
+
+					}
+					if (n.getOwlService().getArgument().isArray()
+							&& !n.getName().toString().replaceAll("[^\\d.]", "").isEmpty()) {
+
+						int nodeNum = Integer.parseInt(n.getName().toString().replaceAll("[^\\d.]", ""));
+						Node parent = ((Node) ((TreeSelection) inputSelection).getFirstElement()).getParent();
+						
+						if (nodeNum == parent.getSubCategories().size() - 1 && nodeNum!=0) {
+
+							b.setText("Remove element "
+									+ ((Node) ((TreeSelection) inputSelection).getFirstElement()).getName().toString());
+							b.setToolTipText("Right click to remove element");
+							b.setEnabled(true);
+
+							mgr.add(b);
+						}
 					}
 				}
 			}
@@ -3583,9 +3628,6 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 							// value.setValue("");
 							// value.getElements().removeAll(value.getElements());
 
-							if (value.getName().toString().equals("name")) {
-								int a = 0;
-							}
 							// ArrayList<Value> list = value.getElements();
 							//
 							// for (Iterator<Value> iterator = list.iterator();
