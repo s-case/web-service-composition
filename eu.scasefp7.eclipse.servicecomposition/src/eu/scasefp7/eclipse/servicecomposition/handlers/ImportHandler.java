@@ -1,6 +1,7 @@
 package eu.scasefp7.eclipse.servicecomposition.handlers;
 
 import eu.scasefp7.eclipse.servicecomposition.Activator;
+import eu.scasefp7.eclipse.servicecomposition.importer.Importer.Argument;
 import eu.scasefp7.eclipse.servicecomposition.importer.Importer.Operation;
 import eu.scasefp7.eclipse.servicecomposition.importer.JungXMIImporter.Connector;
 import eu.scasefp7.eclipse.servicecomposition.repository.RepositoryClient;
@@ -18,6 +19,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 
 import org.eclipse.core.commands.AbstractHandler;
@@ -93,10 +95,13 @@ public class ImportHandler extends AbstractHandler {
 								view.saveWorkflow(false);
 							}
 						}
+						view.clearMatchedInputs();
 					} catch (Exception e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
+				} else if (result == 1) {
+					view.clearMatchedInputs();
 				} else if (result == 2) {
 					return null;
 				}
@@ -378,6 +383,8 @@ public class ImportHandler extends AbstractHandler {
 			}
 		}
 	}
+	
+	
 
 	/**
 	 * <h1>setOperations</h1>

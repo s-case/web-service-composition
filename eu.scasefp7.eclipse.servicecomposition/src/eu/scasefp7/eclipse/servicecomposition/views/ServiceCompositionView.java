@@ -1916,10 +1916,9 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 						ZestLabelProvider labelProvider = new ZestLabelProvider();
 						labelProvider.selfStyleNode((MyNode) edge.getSource().getData(), edge.getSource());
 					}
-					((OwlService) ((MyNode) edge.getSource().getData()).getObject()).getArgument()
-					.getMatchedInputs()
-					.remove(((OwlService) ((MyNode) edge.getDestination().getData()).getObject())
-							.getArgument());
+					((OwlService) ((MyNode) edge.getSource().getData()).getObject()).getArgument().getMatchedInputs()
+							.remove(((OwlService) ((MyNode) edge.getDestination().getData()).getObject())
+									.getArgument());
 					((OwlService) ((MyNode) edge.getDestination().getData()).getObject()).setisMatchedIO(false);
 
 					// Style Node
@@ -2363,10 +2362,12 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 								}
 								// clean outputs
 								cleanOutputs();
+								clearMatchedInputs();
 								createNewWorkflow();
 							} else if (result == 1) {
 								// clean outputs
 								cleanOutputs();
+								clearMatchedInputs();
 								createNewWorkflow();
 							}
 						} else {
@@ -2462,8 +2463,10 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 										saveWorkflow(false);
 									}
 								}
+								clearMatchedInputs();
 								openWorkflow();
 							} else if (result == 1) {
+								clearMatchedInputs();
 								openWorkflow();
 							}
 						} else {
@@ -2534,6 +2537,28 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 		mgr.add(displayCostAction);
 		mgr.add(reloadWorkflowAction);
 		// mgr.add(DownloadOntologyAction);
+
+	}
+
+	public void clearMatchedInputs() {
+		ArrayList<Argument> outputs = new ArrayList<Argument>();
+		for (OwlService op : jungGraph.getVertices()) {
+			if (op.getOperation() != null) {
+				for (Argument arg : op.getOperation().getOutputs()) {
+					addArguments(arg, outputs);
+				}
+			}
+		}
+
+		for (Argument out : outputs) {
+			ArrayList<Argument> list = out.getMatchedInputs();
+			for (Iterator<Argument> iterator = list.iterator(); iterator.hasNext();) {
+				Argument v = iterator.next();
+				if (v != null) {
+					iterator.remove();
+				}
+			}
+		}
 
 	}
 
@@ -5476,7 +5501,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 				monitor.beginTask("Loading operations...", IProgressMonitor.UNKNOWN);
 
 				try {
-
+					loadOperations(disp, shell);
 					edu.uci.ics.jung.graph.Graph<OwlService, Connector> graph = loadWorkflowFile(file);
 					if (graph != null) {
 						disp.syncExec(new Runnable() {
