@@ -125,6 +125,7 @@ import org.eclipse.jface.viewers.TreeViewerColumn;
 import org.eclipse.jface.viewers.TreeViewerEditor;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.jface.viewers.ViewerCell;
+import org.eclipse.jface.viewers.ViewerComparator;
 import org.eclipse.jface.viewers.ViewerFilter;
 import org.eclipse.jface.window.Window;
 import org.eclipse.ui.dialogs.ListSelectionDialog;
@@ -2841,14 +2842,16 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 				TreeItem treeItem = (TreeItem) event.item;
 				final TreeColumn[] treeColumns = treeItem.getParent().getColumns();
 				// final Display display = Display.getCurrent();
-				display.syncExec(new Runnable() {
+				display.asyncExec(new Runnable() {
 
 					@Override
 					public void run() {
-						for (TreeColumn treeColumn : treeColumns)
+						for (TreeColumn treeColumn : treeColumns) {
 							treeColumn.pack();
+						}
 					}
 				});
+
 			}
 		};
 		// create inputs composite
@@ -2905,13 +2908,15 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 		for (int i = 0; i < vertices.length; i++) {
 			final OwlService node = (OwlService) vertices[i];
 			if (node.getType().contains("Action")) {
+				Node n = new Node(node.getName().toString(), null, node, null);
 				Collection<OwlService> predecessors = (Collection<OwlService>) jungGraph.getPredecessors(node);
 				for (OwlService predecessor : predecessors) {
 					if (predecessor.getType().contains("Property")) {
-						showInputs(predecessor, null, InputNodes, jungGraph, matchedNodes);
+						showInputs(predecessor, n, InputNodes, jungGraph, matchedNodes);
 
 					}
 				}
+				InputNodes.add(n);
 			}
 		}
 
@@ -2930,7 +2935,8 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 
 			@Override
 			protected void setValue(Object element, Object value) {
-				if (((Node) element).getOwlService().getArgument().getSubtypes().isEmpty())
+				if (((Node) element).getOwlService().getArgument() != null
+						&& ((Node) element).getOwlService().getArgument().getSubtypes().isEmpty())
 					((Node) element).setValue(value.toString());
 
 				getViewer().update(element, null);
@@ -2948,7 +2954,8 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 
 			@Override
 			protected boolean canEdit(Object element) {
-				if (((Node) element).getOwlService().getArgument().getSubtypes().isEmpty()
+				if (((Node) element).getOwlService().getArgument() != null
+						&& ((Node) element).getOwlService().getArgument().getSubtypes().isEmpty()
 						&& !((Node) element).getOwlService().getisMatchedIO())
 					return true;
 				else
@@ -2957,7 +2964,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 		});
 
 		inputsTreeViewer.setInput(InputNodes);
-		// inputsTreeViewer.expandAll();
+		inputsTreeViewer.expandToLevel(2);
 
 		final Action a = new Action("Add new element") {
 			public void run() {
@@ -2967,7 +2974,8 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 					addTreeNode(((Node) ((TreeSelection) inputSelection).getFirstElement()).getOwlService(),
 							((Node) ((TreeSelection) inputSelection).getFirstElement()), length);
 					// Updating the display in the view
-					inputsTreeViewer.setInput(InputNodes);
+					// inputsTreeViewer.setInput(InputNodes);
+					inputsTreeViewer.refresh();
 				} catch (Exception e) {
 					Activator.log("Error while running the workflow", e);
 					e.printStackTrace();
@@ -2984,7 +2992,8 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 					n.getSubCategories().remove(((Node) ((TreeSelection) inputSelection).getFirstElement()));
 
 					// Updating the display in the view
-					inputsTreeViewer.setInput(InputNodes);
+					// inputsTreeViewer.setInput(InputNodes);
+					inputsTreeViewer.refresh();
 				} catch (Exception e) {
 					Activator.log("Error while running the workflow", e);
 					e.printStackTrace();
@@ -3003,7 +3012,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 
 				Node n = ((Node) ((TreeSelection) inputSelection).getFirstElement());
 				if (!inputSelection.isEmpty()) {
-					if (n.getOwlService().getArgument().isArray()
+					if (n.getOwlService().getArgument() != null && n.getOwlService().getArgument().isArray()
 							&& n.getName().toString().replaceAll("[^\\d.]", "").isEmpty()) {
 						boolean notMatched = true;
 						// check if the array of primitive or array of objects
@@ -3024,13 +3033,13 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 						}
 
 					}
-					if (n.getOwlService().getArgument().isArray()
+					if (n.getOwlService().getArgument() != null && n.getOwlService().getArgument().isArray()
 							&& !n.getName().toString().replaceAll("[^\\d.]", "").isEmpty()) {
 
 						int nodeNum = Integer.parseInt(n.getName().toString().replaceAll("[^\\d.]", ""));
 						Node parent = ((Node) ((TreeSelection) inputSelection).getFirstElement()).getParent();
-						
-						if (nodeNum == parent.getSubCategories().size() - 1 && nodeNum!=0) {
+
+						if (nodeNum == parent.getSubCategories().size() - 1 && nodeNum != 0) {
 
 							b.setText("Remove element "
 									+ ((Node) ((TreeSelection) inputSelection).getFirstElement()).getName().toString());
@@ -3046,6 +3055,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 		});
 		inputsTreeViewer.getControl().setMenu(mgr.createContextMenu(inputsTreeViewer.getControl()));
 
+		inputsComposite.addListener(SWT.Collapse, inputListener);
 		inputsComposite.addListener(SWT.Expand, inputListener);
 
 		inputsTreeViewer.addSelectionChangedListener(new ISelectionChangedListener() {
@@ -3148,7 +3158,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 				TreeItem treeItem = (TreeItem) event.item;
 				final TreeColumn[] treeColumns = treeItem.getParent().getColumns();
 
-				display.syncExec(new Runnable() {
+				display.asyncExec(new Runnable() {
 
 					@Override
 					public void run() {
@@ -3200,6 +3210,18 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 		outputsComposite.setSize(300, 200);
 		treeViewer.setContentProvider(new MyTreeContentProvider());
 
+		// sort alphabetically based on operation name
+		treeViewer.setComparator(new ViewerComparator() {
+			@Override
+			public int compare(Viewer viewer, Object e1, Object e2) {
+				Node t1 = (Node) e1;
+				Node t2 = (Node) e2;
+				int order = ((t1.getOwlService().getArgument().getBelongsToOperation().getName().toString())
+						.compareTo(t2.getOwlService().getArgument().getBelongsToOperation().getName().toString()));
+				return order;
+			};
+		});
+
 		column1.setLabelProvider(new MyLabelProvider());
 		column2.setLabelProvider(createColumnLabelProvider());
 		treeViewer.setInput(nodes);
@@ -3207,6 +3229,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 		// treeViewer.expandAll();
 		//
 
+		outputsComposite.addListener(SWT.Collapse, outputListener);
 		outputsComposite.addListener(SWT.Expand, outputListener);
 
 		treeViewer.addSelectionChangedListener(new ISelectionChangedListener() {
@@ -3337,7 +3360,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 
 					}
 				}
-			}
+			} 
 		} else {
 
 			if (!((OwlService) arg).getArgument().getSubtypes().isEmpty()) {
@@ -3849,11 +3872,13 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 									Value var = inputVariables.get(i);
 									for (int j = 0; j < ((Vector<Node>) columnb.getViewer().getInput()).size(); j++) {
 										if (((Vector<Node>) columnb.getViewer().getInput()).get(j) instanceof Node) {
-											if (((Node) ((Vector<Node>) columnb.getViewer().getInput()).get(j))
-													.getOwlService().equals(var.getOwlService())) {
-												Node node = ((Node) ((Vector<Node>) columnb.getViewer().getInput())
-														.get(j));
-												fillInInputValues(var, node);
+											Node operation = ((Vector<Node>) columnb.getViewer().getInput()).get(j);
+											for (int k = 0; k < operation.getSubCategories().size(); k++) {
+												if (operation.getSubCategories().get(k).getOwlService()
+														.equals(var.getOwlService())) {
+													Node node = operation.getSubCategories().get(k);
+													fillInInputValues(var, node);
+												}
 											}
 										}
 									}

@@ -15,10 +15,14 @@ public class Node {
 
 	public Node(String name, Node parent, OwlService service, Value argument) {
 		if (service != null) {
-			this.name = name + " [" + service.getArgument().getType() + "]:";
-			if (service.getArgument().isRequired()){
-				this.name += "*";
+			this.name = name ;
+			if (service.getArgument()!=null){
+				this.name += " [" + service.getArgument().getType() + "]:";
+				if (service.getArgument().isRequired()){
+					this.name += "*";
+				}
 			}
+			
 		} else if (argument != null) {
 			this.name = name + " [" + argument.getType() + "]:";
 			if (argument.isRequired()){
