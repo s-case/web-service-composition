@@ -4052,6 +4052,8 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 											}
 										}
 
+										Vector<Node> matchedOutputNodes = new Vector<Node>();
+										
 										for (OwlService service : graph.getVertices()) {
 											if (service.getisMatchedIO()
 													&& !service.getArgument().getMatchedInputs().isEmpty()
@@ -4147,14 +4149,20 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 
 															// successor is
 															// object
+															
+															for (Value val : initialArray.getArgument().getElements()){
+																showOutputs(val, null, matchedOutputNodes, jungGraph);
+															}
+															
 															disp.syncExec(new Runnable() {
 																@Override
 																public void run() {
 																	MatchOutputDialog dialog = new MatchOutputDialog(
 																			shell);
 																	dialog.setDisp(disp);
-																	dialog.setArrayNodes(nodes);
+																	dialog.setArrayNodes(matchedOutputNodes);
 																	dialog.setName(successor.getName().toString());
+																	dialog.setOutputService(service);
 																	dialog.create();
 																	dialog.setDialogLocation();
 																	if (dialog.open() == Window.OK) {

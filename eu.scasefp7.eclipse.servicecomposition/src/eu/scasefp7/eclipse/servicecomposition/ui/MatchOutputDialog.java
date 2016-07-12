@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Vector;
 
 import org.eclipse.jface.dialogs.Dialog;
+import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.viewers.ColumnLabelProvider;
 import org.eclipse.jface.viewers.ILabelProvider;
 import org.eclipse.jface.viewers.ILabelProviderListener;
@@ -15,10 +16,12 @@ import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.jface.viewers.TreeViewerColumn;
 import org.eclipse.jface.viewers.Viewer;
+import org.eclipse.jface.viewers.ViewerFilter;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.layout.GridData;
+import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
@@ -33,6 +36,8 @@ import eu.scasefp7.eclipse.servicecomposition.codeInterpreter.Value;
 import eu.scasefp7.eclipse.servicecomposition.importer.Importer.Argument;
 import eu.scasefp7.eclipse.servicecomposition.importer.JungXMIImporter.Connector;
 import eu.scasefp7.eclipse.servicecomposition.transformer.JungXMItoOwlTransform.OwlService;
+import eu.scasefp7.eclipse.servicecomposition.ui.TreeDialog.OperationNode;
+import eu.scasefp7.eclipse.servicecomposition.ui.TreeDialog.ReplaceInformationNode;
 import eu.scasefp7.eclipse.servicecomposition.views.ServiceCompositionView;
 
 
@@ -43,6 +48,7 @@ public class MatchOutputDialog extends Dialog {
 	private String value;
 	private Display disp;
 	private String varName = "";
+	private OwlService output;
 
 	public MatchOutputDialog(Shell parentShell) {
 		super(parentShell);
@@ -54,6 +60,9 @@ public class MatchOutputDialog extends Dialog {
 	}
 	public String getValue() {
 		return value;
+	}
+	public void setOutputService(OwlService service){
+		this.output = service;
 	}
 	public void setName(String name) {
 		this.varName = name;
@@ -89,20 +98,44 @@ public class MatchOutputDialog extends Dialog {
 		columnii.setLabelProvider(createColumnLabelProvider());
 		tree.setInput(arrayNodes);
 		
+//		tree.addSelectionChangedListener(new ISelectionChangedListener() {
+//			public void selectionChanged(SelectionChangedEvent event) {
+//				if (event.getSelection() instanceof IStructuredSelection) {
+//					IStructuredSelection selection = (IStructuredSelection) event.getSelection();
+//					if (selection.getFirstElement() != null) {
+//						setValue(((Node) selection.getFirstElement()).getValue());
+//						
+//
+//						
+//					}
+//
+//				}
+//			}
+//		});
+		
+		
 		tree.addSelectionChangedListener(new ISelectionChangedListener() {
 			public void selectionChanged(SelectionChangedEvent event) {
 				if (event.getSelection() instanceof IStructuredSelection) {
 					IStructuredSelection selection = (IStructuredSelection) event.getSelection();
 					if (selection.getFirstElement() != null) {
-						setValue(((Node) selection.getFirstElement()).getValue());
-						
-
-						
+						if (selection.getFirstElement() instanceof Node) {
+							if (((Node) selection.getFirstElement()).getArgument().getOwlService().equals(output)) {
+								Button okButton = getButton(IDialogConstants.OK_ID);
+								okButton.setEnabled(true);
+								setValue(((Node) selection.getFirstElement()).getValue());
+							} else {
+								Button okButton = getButton(IDialogConstants.OK_ID);
+								okButton.setEnabled(false);
+								tree.setSelection(StructuredSelection.EMPTY);
+							}
+						} 
 					}
 
 				}
 			}
 		});
+		
 		// the viewer field is an already configured TreeViewer
 		Tree tree2 = (Tree) tree.getControl();
 
@@ -127,7 +160,7 @@ public class MatchOutputDialog extends Dialog {
 
 		
 
-		// tree.expandAll();
+		tree.expandAll();
 
 		return container;
 	}
