@@ -16,6 +16,7 @@ import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.jface.viewers.TreeViewerColumn;
 import org.eclipse.jface.viewers.Viewer;
+import org.eclipse.jface.viewers.ViewerComparator;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Rectangle;
@@ -80,12 +81,10 @@ public class TreeDialog extends Dialog {
 		return this.replaceInformation;
 	}
 
-
-	
 	@Override
 	protected Control createDialogArea(Composite parent) {
 		Composite container = (Composite) super.createDialogArea(parent);
-		
+
 		TreeViewer tree = new TreeViewer(container, SWT.BORDER | SWT.H_SCROLL | SWT.V_SCROLL);
 
 		TreeViewerColumn column1 = new TreeViewerColumn(tree, SWT.LEFT);
@@ -99,6 +98,19 @@ public class TreeDialog extends Dialog {
 
 		tree.getTree().setLayoutData(new GridData(GridData.FILL_BOTH));
 		tree.setContentProvider(new TreeContentProvider());
+
+		// sort alphabetically
+		tree.setComparator(new ViewerComparator() {
+			@Override
+			public int compare(Viewer viewer, Object e1, Object e2) {
+				OperationNode t1 = (OperationNode) e1;
+				OperationNode t2 = (OperationNode) e2;
+				int order = ((t1.getName())
+						.compareTo(t2.getName()));
+				return order;
+			};
+		});
+
 		column1.setLabelProvider(new TreeLabelProvider());
 
 		if (mode.equals("operations")) {
@@ -182,9 +194,11 @@ public class TreeDialog extends Dialog {
 							if (((OperationNode) selection.getFirstElement()).getParent() == null) {
 								setOperation(((OperationNode) selection.getFirstElement()).getOperation());
 							} else {
-								if (((OperationNode) selection.getFirstElement()).getParent() instanceof ReplaceInformationNode){
+								if (((OperationNode) selection.getFirstElement())
+										.getParent() instanceof ReplaceInformationNode) {
 									setReplaceInformation(
-											(((ReplaceInformationNode)((OperationNode) selection.getFirstElement()).getParent()).getReplaceInformation()));
+											(((ReplaceInformationNode) ((OperationNode) selection.getFirstElement())
+													.getParent()).getReplaceInformation()));
 								}
 								setOperation(((OperationNode) selection.getFirstElement()).getOperation());
 								tree.setSelection(StructuredSelection.EMPTY);
@@ -215,10 +229,10 @@ public class TreeDialog extends Dialog {
 	@Override
 	protected void configureShell(Shell shell) {
 		super.configureShell(shell);
-        if (title != null) {
+		if (title != null) {
 			shell.setText(title);
 		}
-        shell.setMinimumSize(200, 200); 
+		shell.setMinimumSize(200, 200);
 	}
 
 	public void setDialogLocation() {
