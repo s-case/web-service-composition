@@ -98,6 +98,21 @@
          </command>
       </menuContribution>
    </extension>
+   
+   <extension
+      point = "org.eclipse.ui.preferencePages">
+      <page
+         category="eu.scasefp7.eclipse.core.ui.preferences.global"
+         id="eu.scasefp7.eclipse.servicecomposition.preferences.Page"
+         class="eu.scasefp7.eclipse.servicecomposition.preferences.ColorPreferencesPage"
+         name="Web Service Composition">
+      </page>
+   </extension>
+   <extension
+      point="org.eclipse.core.runtime.preferences">
+      <initializer class="eu.scasefp7.eclipse.servicecomposition.preferences.PreferencesInitializer">
+      </initializer>
+   </extension>
    <extension point="eu.scasefp7.eclipse.core.ui.dashboardItem">
 		<group
             id="eu.scasefp7.eclipse.core.ui.dashboard.groups.mashup"

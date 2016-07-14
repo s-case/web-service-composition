@@ -15,6 +15,7 @@ import org.eclipse.zest.core.viewers.ISelfStyleProvider;
 import org.eclipse.zest.core.widgets.GraphConnection;
 import org.eclipse.zest.core.widgets.GraphNode;
 
+import eu.scasefp7.eclipse.servicecomposition.Activator;
 import eu.scasefp7.eclipse.servicecomposition.importer.Importer.Argument;
 import eu.scasefp7.eclipse.servicecomposition.transformer.JungXMItoOwlTransform.OwlService;
 
@@ -63,7 +64,14 @@ public class ZestLabelProvider extends LabelProvider implements ISelfStyleProvid
 		OwlService data = (OwlService) node1.getObject();
 		// set color of nodes
 		if (data.getType().equals("StartNode")) {
-			node.setBackgroundColor(Display.getCurrent().getSystemColor(SWT.COLOR_DARK_GRAY));
+			if (Activator.getDefault() != null) {
+				String colorString = Activator.getDefault().getPreferenceStore().getString("Start Node");
+				int r = Integer.parseInt(colorString.split(",")[0]);
+				int g = Integer.parseInt(colorString.split(",")[1]);
+				int b = Integer.parseInt(colorString.split(",")[2]);
+				node.setBackgroundColor(new Color(Display.getCurrent(), r, g, b));
+			} else
+				node.setBackgroundColor(Display.getCurrent().getSystemColor(SWT.COLOR_DARK_GRAY));
 			node.setForegroundColor(Display.getCurrent().getSystemColor(SWT.COLOR_WHITE));
 			node.setHighlightColor(Display.getCurrent().getSystemColor(SWT.COLOR_DARK_YELLOW));
 			// create tooltip
@@ -79,7 +87,15 @@ public class ZestLabelProvider extends LabelProvider implements ISelfStyleProvid
 			node.setTooltip(tooltip);
 
 		} else if (data.getType().equals("EndNode")) {
-			node.setBackgroundColor(Display.getCurrent().getSystemColor(SWT.COLOR_DARK_GRAY));
+			
+			if (Activator.getDefault() != null) {
+				String colorString = Activator.getDefault().getPreferenceStore().getString("End Node");
+				int r = Integer.parseInt(colorString.split(",")[0]);
+				int g = Integer.parseInt(colorString.split(",")[1]);
+				int b = Integer.parseInt(colorString.split(",")[2]);
+				node.setBackgroundColor(new Color(Display.getCurrent(), r, g, b));
+			} else
+				node.setBackgroundColor(Display.getCurrent().getSystemColor(SWT.COLOR_DARK_GRAY));
 			node.setForegroundColor(Display.getCurrent().getSystemColor(SWT.COLOR_WHITE));
 			node.setHighlightColor(Display.getCurrent().getSystemColor(SWT.COLOR_DARK_YELLOW));
 			// create tooltip
@@ -95,9 +111,26 @@ public class ZestLabelProvider extends LabelProvider implements ISelfStyleProvid
 			node.setTooltip(tooltip);
 		} else if (data.getType().equals("Property")) {
 			if (data.getisMatchedIO()) {
-				node.setBackgroundColor(Display.getCurrent().getSystemColor(SWT.COLOR_DARK_BLUE));
+				if (Activator.getDefault() != null) {
+					String colorString = Activator.getDefault().getPreferenceStore().getString("Matched Input/Output");
+					int r = Integer.parseInt(colorString.split(",")[0]);
+					int g = Integer.parseInt(colorString.split(",")[1]);
+					int b = Integer.parseInt(colorString.split(",")[2]);
+					node.setBackgroundColor(new Color(Display.getCurrent(), r, g, b));
+				} else
+					node.setBackgroundColor(Display.getCurrent().getSystemColor(SWT.COLOR_DARK_BLUE));
+				
+				
 			} else {
-				node.setBackgroundColor(Display.getCurrent().getSystemColor(SWT.COLOR_DARK_MAGENTA));
+				if (Activator.getDefault() != null) {
+					String colorString = Activator.getDefault().getPreferenceStore().getString("Input/Output");
+					int r = Integer.parseInt(colorString.split(",")[0]);
+					int g = Integer.parseInt(colorString.split(",")[1]);
+					int b = Integer.parseInt(colorString.split(",")[2]);
+					node.setBackgroundColor(new Color(Display.getCurrent(), r, g, b));
+				} else
+					node.setBackgroundColor(Display.getCurrent().getSystemColor(SWT.COLOR_DARK_MAGENTA));
+				
 			}
 
 			node.setForegroundColor(Display.getCurrent().getSystemColor(SWT.COLOR_WHITE));
@@ -118,7 +151,18 @@ public class ZestLabelProvider extends LabelProvider implements ISelfStyleProvid
 			}
 			node.setTooltip(tooltip);
 		} else if (data.getType().equals("Condition")) {
-			node.setBackgroundColor(Display.getCurrent().getSystemColor(SWT.COLOR_CYAN));
+			
+			
+			if (Activator.getDefault() != null) {
+				String colorString = Activator.getDefault().getPreferenceStore().getString("Condition");
+				int r = Integer.parseInt(colorString.split(",")[0]);
+				int g = Integer.parseInt(colorString.split(",")[1]);
+				int b = Integer.parseInt(colorString.split(",")[2]);
+				node.setBackgroundColor(new Color(Display.getCurrent(), r, g, b));
+			} else
+				node.setBackgroundColor(Display.getCurrent().getSystemColor(SWT.COLOR_CYAN));
+			
+			
 			// create tooltip
 
 			IFigure tooltip = new Figure();
@@ -131,6 +175,14 @@ public class ZestLabelProvider extends LabelProvider implements ISelfStyleProvid
 			tooltip.add(new Label("Condition: " + node.getText()));
 			node.setTooltip(tooltip);
 		} else if (data.getType().equals("Action")) {
+			if (Activator.getDefault() != null) {
+				String colorString = Activator.getDefault().getPreferenceStore().getString("Operation");
+				int r = Integer.parseInt(colorString.split(",")[0]);
+				int g = Integer.parseInt(colorString.split(",")[1]);
+				int b = Integer.parseInt(colorString.split(",")[2]);
+				node.setBackgroundColor(new Color(Display.getCurrent(), r, g, b));
+			} else
+				node.setBackgroundColor(Display.getCurrent().getSystemColor(SWT.COLOR_GRAY));
 			// create tooltip
 
 			IFigure tooltip = new Figure();
