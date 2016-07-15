@@ -7,7 +7,7 @@ import eu.scasefp7.eclipse.servicecomposition.importer.Importer.Operation;
 import eu.scasefp7.eclipse.servicecomposition.importer.JungXMIImporter.Connector;
 import eu.scasefp7.eclipse.servicecomposition.importer.JungXMIImporter.Service;
 import eu.scasefp7.eclipse.servicecomposition.transformer.Similarity.ComparableName;
-import eu.scasefp7.eclipse.servicecomposition.views.ServiceCompositionView.Implementation;
+
 
 import java.util.HashMap;
 

@@ -7,6 +7,7 @@ import eu.scasefp7.eclipse.servicecomposition.importer.JungXMIImporter.Connector
 import eu.scasefp7.eclipse.servicecomposition.importer.JungXMIImporter.Service;
 import eu.scasefp7.eclipse.servicecomposition.operationCaller.RAMLCaller;
 import eu.scasefp7.eclipse.servicecomposition.repository.WSOntology;
+import eu.scasefp7.eclipse.servicecomposition.toolbar.RunWorkflow;
 import eu.scasefp7.eclipse.servicecomposition.transformer.PathFinding;
 import eu.scasefp7.eclipse.servicecomposition.views.ServiceCompositionView;
 import eu.scasefp7.eclipse.servicecomposition.transformer.JungXMItoOwlTransform.OwlService;
@@ -1028,7 +1029,7 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 					}
 			}
 			if (isMemberOfArray || matchedOutput.getArgument().isArray()) {
-				OwlService initialArray = ServiceCompositionView.getInitialArray(matchedOutput, graph, false);
+				OwlService initialArray = RunWorkflow.getInitialArray(matchedOutput, graph, false);
 				int subNum = 0;
 				for (Argument sub : initialArray.getArgument().getSubtypes()) {
 					if (sub.getOwlService().getisMatchedIO())

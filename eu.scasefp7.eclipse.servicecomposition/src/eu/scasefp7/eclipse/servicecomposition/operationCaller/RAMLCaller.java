@@ -46,7 +46,6 @@ import org.apache.commons.codec.binary.Base64;
 import eu.scasefp7.eclipse.servicecomposition.codeInterpreter.Value;
 import eu.scasefp7.eclipse.servicecomposition.importer.Importer.Argument;
 import eu.scasefp7.eclipse.servicecomposition.importer.Importer.Operation;
-import eu.scasefp7.eclipse.servicecomposition.views.ServiceCompositionView.Implementation;
 
 /**
  * <h1>RAMLCaller</h1> is used for calling RESTful web services and parsing
