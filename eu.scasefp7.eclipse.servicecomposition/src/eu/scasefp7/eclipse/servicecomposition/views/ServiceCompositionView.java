@@ -205,9 +205,10 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 
 		viewer.setLayoutAlgorithm(layout, true);
 		viewer.applyLayout();
+		
+		CreateWorkflow.createNewWorkflow(this);
 		FillToolbar.fillToolBar(this);
 
-		CreateWorkflow.createNewWorkflow(this);
 		setSavedWorkflow(false);
 
 		// RepositoryClient repo = new RepositoryClient();

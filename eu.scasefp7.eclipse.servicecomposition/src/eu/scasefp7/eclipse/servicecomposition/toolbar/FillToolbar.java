@@ -84,7 +84,7 @@ public class FillToolbar {
 				try {
 					if (view.getSavedWorkflow()) {
 						// clean outputs
-						Utils.cleanOutputs(view.getOutputsComposite(), jungGraph);
+						Utils.cleanOutputs(view.getOutputsComposite(), view.getJungGraph());
 						CreateWorkflow.createNewWorkflow(view);
 					} else {
 						if (view.jungGraphHasOperations()) {
@@ -94,7 +94,7 @@ public class FillToolbar {
 							int result = dialog.open();
 							System.out.println(result);
 							if (result == 0) {
-								IStatus status = checkGraph(jungGraph, disp);
+								IStatus status = checkGraph(view.getJungGraph(), disp);
 								if (status.getMessage().equalsIgnoreCase("OK")) {
 									if (view.getWorkflowFilePath().isEmpty()) {
 										SaveOpen.saveWorkflow(true, view.getWorkflowFilePath(), view);
@@ -103,12 +103,12 @@ public class FillToolbar {
 									}
 								}
 								// clean outputs
-								Utils.cleanOutputs(view.getOutputsComposite(), jungGraph);
+								Utils.cleanOutputs(view.getOutputsComposite(), view.getJungGraph());
 								view.clearMatchedInputs();
 								CreateWorkflow.createNewWorkflow(view);
 							} else if (result == 1) {
 								// clean outputs
-								Utils.cleanOutputs(view.getOutputsComposite(), jungGraph);
+								Utils.cleanOutputs(view.getOutputsComposite(), view.getJungGraph());
 								view.clearMatchedInputs();
 								CreateWorkflow.createNewWorkflow(view);
 							}
