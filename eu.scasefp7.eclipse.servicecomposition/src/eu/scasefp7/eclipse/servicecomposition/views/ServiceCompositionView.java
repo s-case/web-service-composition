@@ -1,89 +1,41 @@
 package eu.scasefp7.eclipse.servicecomposition.views;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
-import java.net.Authenticator;
-import java.net.HttpURLConnection;
-import java.net.PasswordAuthentication;
+
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Properties;
 import java.util.Vector;
 
 
 import org.apache.maven.Maven;
-import org.apache.maven.cli.MavenCli;
-import org.apache.maven.execution.DefaultMavenExecutionRequest;
-import org.apache.maven.execution.MavenExecutionRequest;
+
 import org.apache.maven.execution.MavenExecutionRequestPopulator;
 import org.apache.maven.project.MavenProject;
-import org.apache.maven.execution.MavenExecutionResult;
-import org.apache.maven.settings.building.DefaultSettingsBuildingRequest;
 import org.apache.maven.settings.building.SettingsBuilder;
-import org.apache.maven.settings.building.SettingsBuildingRequest;
+
 import org.codehaus.plexus.DefaultPlexusContainer;
-
-
-
-import org.eclipse.core.commands.ExecutionException;
 import org.eclipse.core.resources.IFile;
-import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IProject;
-import org.eclipse.core.resources.IProjectDescription;
-import org.eclipse.core.resources.IResource;
-import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.resources.ResourcesPlugin;
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IProgressMonitor;
+
 import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.NullProgressMonitor;
-import org.eclipse.core.runtime.Path;
+
 import org.eclipse.core.runtime.Platform;
-import org.eclipse.core.runtime.QualifiedName;
+
 import org.eclipse.core.runtime.Status;
-import org.eclipse.core.runtime.jobs.Job;
+
 import org.eclipse.draw2d.IFigure;
-import org.eclipse.jdt.core.IAccessRule;
-import org.eclipse.jdt.core.IClasspathAttribute;
-import org.eclipse.jdt.core.IClasspathEntry;
-import org.eclipse.jdt.core.ICompilationUnit;
-import org.eclipse.jdt.core.IJavaProject;
-import org.eclipse.jdt.core.IPackageFragment;
-import org.eclipse.jdt.core.IPackageFragmentRoot;
-import org.eclipse.jdt.core.JavaCore;
-import org.eclipse.jdt.launching.IVMInstall;
-import org.eclipse.jdt.launching.JavaRuntime;
-import org.eclipse.jdt.launching.LibraryLocation;
-import org.eclipse.jdt.launching.environments.IExecutionEnvironment;
-import org.eclipse.jdt.launching.environments.IExecutionEnvironmentsManager;
-import org.eclipse.jface.dialogs.Dialog;
+
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IMenuListener;
 import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.IToolBarManager;
 import org.eclipse.jface.action.MenuManager;
-import org.eclipse.jface.dialogs.IMessageProvider;
 import org.eclipse.jface.dialogs.MessageDialog;
-import org.eclipse.jface.dialogs.TitleAreaDialog;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.resource.JFaceResources;
-import org.eclipse.jface.viewers.ArrayContentProvider;
-import org.eclipse.jface.viewers.CellEditor;
 import org.eclipse.jface.viewers.ColumnLabelProvider;
 import org.eclipse.jface.viewers.ColumnViewerEditor;
 import org.eclipse.jface.viewers.ColumnViewerEditorActivationEvent;
@@ -99,21 +51,7 @@ import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.jface.viewers.TreeViewerColumn;
 import org.eclipse.jface.viewers.TreeViewerEditor;
 import org.eclipse.jface.viewers.Viewer;
-import org.eclipse.jface.viewers.ViewerCell;
 import org.eclipse.jface.viewers.ViewerComparator;
-import org.eclipse.jface.viewers.ViewerFilter;
-import org.eclipse.jface.window.Window;
-import org.eclipse.ui.dialogs.ListSelectionDialog;
-import org.eclipse.ui.ide.IDE;
-import org.eclipse.jst.j2ee.internal.web.archive.operations.WebComponentExportDataModelProvider;
-import org.eclipse.jst.j2ee.internal.web.archive.operations.WebFacetProjectCreationDataModelProvider;
-import org.eclipse.jst.j2ee.project.facet.IJ2EEFacetConstants;
-import org.eclipse.jst.j2ee.project.facet.IJ2EEFacetInstallDataModelProperties;
-import org.eclipse.jst.j2ee.project.facet.IJ2EEModuleFacetInstallDataModelProperties;
-import org.eclipse.jst.j2ee.web.datamodel.properties.IWebComponentExportDataModelProperties;
-import org.eclipse.jst.j2ee.web.project.facet.IWebFacetInstallDataModelProperties;
-import org.eclipse.m2e.core.MavenPlugin;
-import org.eclipse.m2e.core.embedder.IMaven;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.SashForm;
 import org.eclipse.swt.custom.ScrolledComposite;
@@ -127,7 +65,6 @@ import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
-import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Menu;
@@ -138,102 +75,46 @@ import org.eclipse.swt.widgets.Tree;
 import org.eclipse.swt.widgets.TreeColumn;
 import org.eclipse.swt.widgets.TreeItem;
 import org.eclipse.ui.IActionBars;
-import org.eclipse.ui.IEditorPart;
-import org.eclipse.ui.IWorkbenchPage;
-import org.eclipse.ui.PlatformUI;
-import org.eclipse.ui.dialogs.ElementListSelectionDialog;
-import org.eclipse.ui.internal.util.BundleUtility;
 import org.eclipse.ui.part.ViewPart;
 import org.eclipse.zest.core.viewers.AbstractZoomableViewer;
 import org.eclipse.zest.core.viewers.EntityConnectionData;
 import org.eclipse.zest.core.viewers.GraphViewer;
 import org.eclipse.zest.core.viewers.IZoomableWorkbenchPart;
 import org.eclipse.zest.core.viewers.ZoomContributionViewItem;
-import org.eclipse.zest.core.viewers.internal.IStylingGraphModelFactory;
 import org.eclipse.zest.core.widgets.Graph;
 import org.eclipse.zest.core.widgets.GraphConnection;
 import org.eclipse.zest.core.widgets.GraphItem;
 import org.eclipse.zest.core.widgets.GraphNode;
-import org.eclipse.zest.core.widgets.IContainer;
 import org.eclipse.zest.core.widgets.ZestStyles;
-import org.eclipse.zest.layouts.Filter;
 import org.eclipse.zest.layouts.LayoutAlgorithm;
-import org.eclipse.zest.layouts.LayoutItem;
 import org.eclipse.zest.layouts.LayoutStyles;
 import org.eclipse.zest.layouts.algorithms.HorizontalTreeLayoutAlgorithm;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
 import org.osgi.framework.Bundle;
-import org.eclipse.wst.common.frameworks.datamodel.DataModelFactory;
-import org.eclipse.wst.common.frameworks.datamodel.IDataModel;
-import org.eclipse.wst.common.componentcore.datamodel.properties.IFacetDataModelProperties;
-import org.eclipse.wst.common.componentcore.datamodel.properties.IFacetProjectCreationDataModelProperties;
-import org.eclipse.wst.common.componentcore.datamodel.properties.IFacetProjectCreationDataModelProperties.FacetDataModelMap;
-import org.eclipse.wst.common.componentcore.internal.util.IModuleConstants;
-import org.eclipse.wst.project.facet.SimpleWebFacetProjectCreationDataModelProvider;
 
-import com.jcraft.jsch.Channel;
-import com.jcraft.jsch.ChannelSftp;
-import com.jcraft.jsch.JSch;
-import com.jcraft.jsch.Session;
 
-import edu.uci.ics.jung.graph.DirectedSparseGraph;
-import edu.uci.ics.jung.graph.SparseMultigraph;
-import edu.uci.ics.jung.graph.UndirectedSparseGraph;
-import edu.uci.ics.jung.graph.util.EdgeType;
-import edu.uci.ics.jung.io.GraphIOException;
-import edu.uci.ics.jung.io.GraphMLWriter;
-import edu.uci.ics.jung.io.graphml.EdgeMetadata;
-import edu.uci.ics.jung.io.graphml.GraphMLReader2;
-import edu.uci.ics.jung.io.graphml.GraphMetadata;
-import edu.uci.ics.jung.io.graphml.HyperEdgeMetadata;
-import edu.uci.ics.jung.io.graphml.NodeMetadata;
 import eu.scasefp7.eclipse.servicecomposition.operationCaller.RAMLCaller;
-import eu.scasefp7.eclipse.core.ontology.LinkedOntologyAPI;
 import eu.scasefp7.eclipse.servicecomposition.Activator;
-import eu.scasefp7.eclipse.servicecomposition.codeGenerator.CallRestfulServiceCode;
-import eu.scasefp7.eclipse.servicecomposition.codeGenerator.CallWSDLServiceCode;
-import eu.scasefp7.eclipse.servicecomposition.codeGenerator.ConnectToMDEOntology;
-import eu.scasefp7.eclipse.servicecomposition.codeGenerator.FunctionCodeNode;
-import eu.scasefp7.eclipse.servicecomposition.codeGenerator.MDERepresentation;
-import eu.scasefp7.eclipse.servicecomposition.codeGenerator.NonLinearCodeGenerator;
-import eu.scasefp7.eclipse.servicecomposition.codeGenerator.RestfulCodeGenerator;
-import eu.scasefp7.eclipse.servicecomposition.codeInterpreter.UserInput;
 import eu.scasefp7.eclipse.servicecomposition.codeInterpreter.Value;
 import eu.scasefp7.eclipse.servicecomposition.handlers.ImportHandler;
-import eu.scasefp7.eclipse.servicecomposition.importer.JungXMIImporter;
 import eu.scasefp7.eclipse.servicecomposition.importer.Importer.Argument;
 import eu.scasefp7.eclipse.servicecomposition.importer.Importer.Operation;
 import eu.scasefp7.eclipse.servicecomposition.importer.JungXMIImporter.Connector;
-import eu.scasefp7.eclipse.servicecomposition.importer.JungXMIImporter.Service;
-import eu.scasefp7.eclipse.servicecomposition.operationCaller.WSDLCaller;
-import eu.scasefp7.eclipse.servicecomposition.repository.ApplicationDomain;
-import eu.scasefp7.eclipse.servicecomposition.repository.RepositoryClient;
-import eu.scasefp7.eclipse.servicecomposition.repository.WSOntology;
 import eu.scasefp7.eclipse.servicecomposition.tester.Algorithm;
 import eu.scasefp7.eclipse.servicecomposition.tester.Algorithm.WeightReport;
 import eu.scasefp7.eclipse.servicecomposition.tester.Algorithm.costReport;
 import eu.scasefp7.eclipse.servicecomposition.tester.Algorithm.licenseReport;
 import eu.scasefp7.eclipse.servicecomposition.tester.Algorithm.trialReport;
+import eu.scasefp7.eclipse.servicecomposition.toolbar.CreateWorkflow;
+import eu.scasefp7.eclipse.servicecomposition.toolbar.FillToolbar;
 import eu.scasefp7.eclipse.servicecomposition.toolbar.GenerateUpload;
+import eu.scasefp7.eclipse.servicecomposition.toolbar.ReloadStoryboard;
 import eu.scasefp7.eclipse.servicecomposition.toolbar.RunWorkflow;
 import eu.scasefp7.eclipse.servicecomposition.toolbar.SaveOpen;
-import eu.scasefp7.eclipse.servicecomposition.transformer.Matcher;
-import eu.scasefp7.eclipse.servicecomposition.transformer.PathFinding;
-import eu.scasefp7.eclipse.servicecomposition.transformer.Similarity;
-import eu.scasefp7.eclipse.servicecomposition.transformer.Transformer;
-import eu.scasefp7.eclipse.servicecomposition.transformer.Transformer.ReplaceInformation;
+
 import eu.scasefp7.eclipse.servicecomposition.transformer.JungXMItoOwlTransform.OwlService;
-import eu.scasefp7.eclipse.servicecomposition.ui.MatchOutputDialog;
 import eu.scasefp7.eclipse.servicecomposition.ui.MyTextCellEditor;
-import eu.scasefp7.eclipse.servicecomposition.ui.MyTitleAreaDialog;
+
 import eu.scasefp7.eclipse.servicecomposition.ui.Node;
-import eu.scasefp7.eclipse.servicecomposition.ui.RenameConditionDialog;
-import eu.scasefp7.eclipse.servicecomposition.ui.RenameEdgeConditionDialog;
-import eu.scasefp7.eclipse.servicecomposition.ui.ResourceFileSelectionDialog;
-import eu.scasefp7.eclipse.servicecomposition.ui.SafeSaveDialog;
-import eu.scasefp7.eclipse.servicecomposition.ui.SelectScaseProjectDialog;
-import eu.scasefp7.eclipse.servicecomposition.ui.TreeDialog;
 
 /**
  * This sample class demonstrates how to plug-in a new workbench view. The view
@@ -263,14 +144,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 	
 	// the storyboard file
 	private IFile storyboardFile;
-	// toolbar actions
-	private Action runWorkflowAction;
-	private Action newWorkflowAction;
-	private Action displayCostAction;
-	private Action generateCodeAction;
-	private Action saveWorkflowAction;
-	private Action openWorkflowAction;
-	private Action reloadWorkflowAction;
+	
 	// composite in ui
 	private ScrolledComposite sc;
 	private Composite rightComposite;
@@ -297,7 +171,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 	private IProject scaseProject;
 	// if the workflow is saved
 	private boolean savedWorkflow = false;
-	GenerateUpload newProject;
+	
 	
 	// zest graph connection and node
 	private GraphConnection selectedGraphEdge;
@@ -306,8 +180,6 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 	// input composite selection
 	private ISelection inputSelection;
 	private String workflowFilePath = "";
-	// property to denote file is not saved
-	private boolean isDirty = false;
 	
 	// the imported operations from the ontology
 	private static ArrayList<Operation> operations;
@@ -333,9 +205,9 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 
 		viewer.setLayoutAlgorithm(layout, true);
 		viewer.applyLayout();
-		fillToolBar();
+		FillToolbar.fillToolBar(this);
 
-		createNewWorkflow();
+		CreateWorkflow.createNewWorkflow(this);
 		setSavedWorkflow(false);
 
 		// RepositoryClient repo = new RepositoryClient();
@@ -562,109 +434,6 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 	}
 
 
-	
-
-	/**
-	 * <h1>SelectionWindowOp</h1>Displays the selection window with the list of
-	 * the repository operations.
-	 * 
-	 * @param shell
-	 * @param dialog
-	 * @param operations
-	 * @param list
-	 */
-	public void SelectionWindowOp(Shell shell, ElementListSelectionDialog dialog, final ArrayList<Operation> operations,
-			ArrayList<String> list) {
-
-		dialog.setElements(operations.toArray());
-
-		dialog.setTitle("S-CASE Operations");
-		dialog.setMessage("Please choose one operation");
-
-		// user pressed OK
-		if (dialog.open() == Window.OK) {
-			Object[] result = dialog.getResult();
-
-			for (Object selectedItem : result) {
-				addNode(selectedItem, operations);
-			}
-
-		}
-
-	}
-
-	
-	/**
-	 * <h1>addNode</h1>Add the selected operation (chosen from the selection
-	 * window) to the graph with its IOs.
-	 * 
-	 * @param selectedItem
-	 * @param operations
-	 */
-	protected void addNode(Object selectedItem, ArrayList<Operation> operations) {
-		String operationName = selectedItem.toString();
-		// Similarity.ComparableName operationComparableName = new
-		// Similarity.ComparableName(operationName);
-		for (Operation op : operations) {
-			if (((Operation) selectedItem).getName().equals(op.getName())
-					&& ((Operation) selectedItem).getInputs().equals(op.getInputs())
-					&& ((Operation) selectedItem).getOutputs().equals(op.getOutputs())) {
-
-				String operationType = "Action";
-				JungXMIImporter.Service service = new JungXMIImporter.Service(operationName, operationType);
-				OwlService owlService;
-				owlService = new OwlService(op);
-
-				Collection<OwlService> services = new ArrayList<OwlService>(jungGraph.getVertices());
-				for (OwlService s : services) {
-					if (owlService.getName().getContent().equals(s.getName().getContent())) {
-						if (owlService.getId() <= s.getId()) {
-							owlService.setId(s.getId() + 1);
-						}
-					}
-
-				}
-
-				HashMap<Service, OwlService> map = new HashMap<Service, OwlService>();
-				map.put(service, owlService);
-				jungGraph.addVertex(owlService);
-
-				System.out.println("New operation: " + owlService + " is added to the graph");
-				Transformer transformer = new Transformer(jungGraph);
-				try {
-					// Add the io variables of the operation
-					transformer.expandOperations(owlService);
-					// transformer.createLinkedVariableGraph();
-				} catch (Exception e) {
-					Activator.log("Error while expanding new operation", e);
-					e.printStackTrace();
-				}
-				edu.uci.ics.jung.graph.Graph<OwlService, Connector> tempGraph = new SparseMultigraph<OwlService, Connector>();
-				tempGraph.addVertex(owlService);
-				Transformer tempTransformer = new Transformer(tempGraph);
-				try {
-					// Add the io variables of the operation
-					tempTransformer.expandOperations(owlService);
-
-				} catch (Exception e) {
-					Activator.log("Error while expanding new operation", e);
-					e.printStackTrace();
-				}
-				addOperationInZest(owlService, tempGraph);
-			}
-
-		}
-
-		this.setJungGraph(jungGraph);
-		// this.getViewer().setInput(createGraphNodes(jungGraph));
-		this.updateRightComposite(jungGraph);
-		this.setLayout();
-		this.setFocus();
-
-	}
-
-
-	
 
 	public List<MyNode> createGraphNodes(edu.uci.ics.jung.graph.Graph<OwlService, Connector> graph) {
 		List<MyNode> nodes = new ArrayList<MyNode>();
@@ -723,7 +492,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 		return viewer;
 	}
 
-	private LayoutAlgorithm setLayout() {
+	LayoutAlgorithm setLayout() {
 		LayoutAlgorithm layout;
 		// layout = new
 		// SpringLayoutAlgorithm(LayoutStyles.NO_LAYOUT_NODE_RESIZING);
@@ -739,242 +508,9 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 
 	}
 
-	private ImageDescriptor getImageDescriptor(String relativePath) {
+	
 
-		try {
-			// return
-			// ImageDescriptor.createFromURL(FileLocator.find(Platform.getBundle(Activator.PLUGIN_ID),
-			// new Path("icons/imageFileName.xxx"),null);
-			Bundle bundle = Platform.getBundle(Activator.PLUGIN_ID);
-			URL fullPathString = BundleUtility.find(bundle, relativePath);
-			return ImageDescriptor.createFromURL(fullPathString);
-		} catch (Exception e) {
-			// should not happen
-			return ImageDescriptor.getMissingImageDescriptor();
-		}
-	}
-
-	/**
-	 * <h1>fillToolBar</h1>Add buttons to the toolbar.
-	 */
-	private void fillToolBar() {
-		ZoomContributionViewItem toolbarZoomContributionViewItem = new ZoomContributionViewItem(this);
-		IActionBars bars = getViewSite().getActionBars();
-		final Shell shell = this.getSite().getWorkbenchWindow().getShell();
-		final Display disp = shell.getDisplay();
-		final ServiceCompositionView SCview = this;
-		bars.getMenuManager().add(toolbarZoomContributionViewItem);
-		runWorkflowAction = new Action("Run workflow") {
-			public void run() {
-
-				try {
-					// clean outputs
-					// cleanOutputs();
-					RunWorkflow run = new RunWorkflow(SCview, treeViewer, columnb, authParamsComposite);
-					run.runWorkflow();
-				} catch (Exception e) {
-					Activator.log("Error while running the workflow", e);
-					e.printStackTrace();
-				}
-
-			}
-		};
-		runWorkflowAction.setImageDescriptor(getImageDescriptor("icons/run.png"));
-		
-		newWorkflowAction = new Action("Create a new workflow") {
-			public void run() {
-
-				try {
-					if (getSavedWorkflow()) {
-						// clean outputs
-						Utils.cleanOutputs(outputsComposite, jungGraph);
-						createNewWorkflow();
-					} else {
-						if (jungGraphHasOperations()) {
-							MessageDialog dialog = new MessageDialog(shell, "Workflow is not saved", null,
-									"This workflow is not saved. Would you like to save it before creating a new one?",
-									MessageDialog.QUESTION_WITH_CANCEL, new String[] { "Yes", "No", "Cancel" }, 0);
-							int result = dialog.open();
-							System.out.println(result);
-							if (result == 0) {
-								IStatus status = checkGraph(jungGraph, disp);
-								if (status.getMessage().equalsIgnoreCase("OK")) {
-									if (workflowFilePath.isEmpty()) {
-										SaveOpen.saveWorkflow(true, workflowFilePath, SCview);
-									} else {
-										SaveOpen.saveWorkflow(false, workflowFilePath, SCview);
-									}
-								}
-								// clean outputs
-								Utils.cleanOutputs(outputsComposite, jungGraph);
-								clearMatchedInputs();
-								createNewWorkflow();
-							} else if (result == 1) {
-								// clean outputs
-								Utils.cleanOutputs(outputsComposite, jungGraph);
-								clearMatchedInputs();
-								createNewWorkflow();
-							}
-						} else {
-							createNewWorkflow();
-						}
-
-					}
-
-				} catch (Exception e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-
-			}
-		};
-		newWorkflowAction.setImageDescriptor(getImageDescriptor("icons/New File.png"));
-
-		displayCostAction = new Action("Display total cost, trial period, licenses") {
-			public void run() {
-
-				try {
-					// clean outputs
-					displayCost();
-
-				} catch (Exception e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-
-			}
-		};
-		displayCostAction.setImageDescriptor(getImageDescriptor("icons/copyrights.png"));
-
-		generateCodeAction = new Action("Generate RESTful java project of the workflow.") {
-			public void run() {
-
-				try {
-					IStatus status = checkGraph(jungGraph, disp);
-					if (status.getMessage().equalsIgnoreCase("OK")) {
-						newProject = new GenerateUpload(SCview);
-						newProject.generate();
-					}
-
-				} catch (Exception e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-
-			}
-		};
-		generateCodeAction.setImageDescriptor(getImageDescriptor("icons/java.png"));
-
-		saveWorkflowAction = new Action("Save the workflow.") {
-			public void run() {
-
-				try {
-					IStatus status = checkGraph(jungGraph, disp);
-					if (status.getMessage().equalsIgnoreCase("OK")) {
-						if (workflowFilePath.isEmpty()) {
-							SaveOpen.saveWorkflow(true, workflowFilePath, SCview);
-						} else {
-							SaveOpen.saveWorkflow(false, workflowFilePath, SCview);
-						}
-					}
-
-				} catch (Exception e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-
-			}
-		};
-		saveWorkflowAction.setImageDescriptor(getImageDescriptor("icons/save.png"));
-
-		openWorkflowAction = new Action("Open a workflow file.") {
-			public void run() {
-
-				try {
-					if (getSavedWorkflow()) {
-						SaveOpen.openWorkflow(SCview);
-					} else {
-						if (jungGraphHasOperations()) {
-							MessageDialog dialog = new MessageDialog(shell, "Workflow is not saved", null,
-									"This workflow is not saved. Would you like to save it before creating a new one?",
-									MessageDialog.QUESTION_WITH_CANCEL, new String[] { "Yes", "No", "Cancel" }, 0);
-							int result = dialog.open();
-							System.out.println(result);
-							if (result == 0) {
-								IStatus status = checkGraph(jungGraph, disp);
-								if (status.getMessage().equalsIgnoreCase("OK")) {
-									if (workflowFilePath.isEmpty()) {
-										SaveOpen.saveWorkflow(true, workflowFilePath, SCview);
-									} else {
-										SaveOpen.saveWorkflow(false, workflowFilePath, SCview);
-									}
-								}
-								clearMatchedInputs();
-								SaveOpen.openWorkflow(SCview);
-							} else if (result == 1) {
-								clearMatchedInputs();
-								SaveOpen.openWorkflow(SCview);
-							}
-						} else {
-							SaveOpen.openWorkflow(SCview);
-						}
-
-					}
-
-				} catch (Exception e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-
-			}
-		};
-		openWorkflowAction.setImageDescriptor(getImageDescriptor("icons/open.png"));
-
-		reloadWorkflowAction = new Action("Reload storyboard file.") {
-			public void run() {
-
-				try {
-
-					reloadStoryboard(disp, shell);
-				} catch (Exception e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-
-			}
-		};
-		reloadWorkflowAction.setImageDescriptor(getImageDescriptor("icons/reload_storyboard.png"));
-
-		Action uploadOnServerAction = new Action("Upload RESTful web service on server.") {
-			public void run() {
-
-				try {
-
-						newProject.install();
-					
-					
-				} catch (Exception e) {
-					
-					e.printStackTrace();
-				}
-
-			}
-		};
-		uploadOnServerAction.setImageDescriptor(getImageDescriptor("icons/database.png"));
-
-		IToolBarManager mgr = getViewSite().getActionBars().getToolBarManager();
-		mgr.add(newWorkflowAction);
-		mgr.add(openWorkflowAction);
-		mgr.add(saveWorkflowAction);
-		mgr.add(runWorkflowAction);
-		// mgr.add(cancelWorkflowAction);
-		mgr.add(generateCodeAction);
-		mgr.add(uploadOnServerAction);
-		mgr.add(displayCostAction);
-		mgr.add(reloadWorkflowAction);
-		// mgr.add(DownloadOntologyAction);
-
-	}
+	
 
 	public void clearMatchedInputs() {
 		ArrayList<Argument> outputs = new ArrayList<Argument>();
@@ -1009,113 +545,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 		return hasOperations;
 	}
 
-	/**
-	 * <h1>displayCost</h1>Method for displaying a dialog to the user with
-	 * information concerning the total cost, trial period and licenses required
-	 * for the workflow.
-	 */
-	private void displayCost() {
-		costReport costPerUsage = new costReport();
-		costReport costPerMonth = new costReport();
-		costReport costPerYear = new costReport();
-		costReport costUnlimited = new costReport();
-		trialReport workflowTrialPeriod = new trialReport();
-		licenseReport workflowLicense = new licenseReport();
-
-		for (OwlService service : jungGraph.getVertices()) {
-			if (service.getOperation() != null) {
-
-				// Calculate total cost
-
-				String currency = ((Operation) service.getContent()).getAccessInfo().getCommercialCostSchema()
-						.getCommercialCostCurrency();
-				String chargeType = ((Operation) service.getContent()).getAccessInfo().getCommercialCostSchema()
-						.getCostPaymentChargeType();
-
-				switch (chargeType) {
-				case "per usage":
-					costPerUsage.calculateCost(currency, service);
-					break;
-				case "per month":
-					costPerMonth.calculateCost(currency, service);
-					break;
-				case "per year":
-					costPerYear.calculateCost(currency, service);
-					break;
-				case "unlimited":
-					costUnlimited.calculateCost(currency, service);
-					break;
-				default:
-					break;
-				}
-
-				// trial period
-				int durationInUsages = ((Operation) service.getContent()).getAccessInfo().getCommercialCostSchema()
-						.getTrialSchema().getDurationInUsages();
-				int durationInDays = ((Operation) service.getContent()).getAccessInfo().getCommercialCostSchema()
-						.getTrialSchema().getDurationInDays();
-				workflowTrialPeriod.setTrialReport(durationInDays, durationInUsages);
-
-				// License
-				String licenseName = ((Operation) service.getContent()).getAccessInfo().getLicense().getLicenseName();
-				workflowLicense.setLicenseReport(licenseName);
-			}
-		}
-
-		// Calculate and print total cost
-		String perUsage = costPerUsage.calculateWorkflowCost(" per usage");
-		String perMonth = costPerMonth.calculateWorkflowCost(" per month");
-		if (perMonth != "") {
-			perMonth = " + " + perMonth;
-		}
-		String perYear = costPerYear.calculateWorkflowCost(" per year");
-		if (perYear != "") {
-			perYear = " + " + perYear;
-		}
-		String unlimited = costUnlimited.calculateWorkflowCost(" unlimited");
-		if (unlimited != "") {
-			unlimited = " + " + unlimited;
-		}
-		String ret = "Total workflow cost: " + perUsage + perMonth + perYear + unlimited;
-		System.out.println(ret);
-
-		// Calculate and print trial period
-		String ret2 = "Total trial period: ";
-		int minDays = workflowTrialPeriod.findDurationInDays();
-		int minUsages = workflowTrialPeriod.findDurationInUsages();
-		if (minDays != Integer.MAX_VALUE && minUsages != Integer.MAX_VALUE) {
-			ret2 = ret2 + minDays + " days or " + minUsages + " usages.";
-		} else if (minUsages != Integer.MAX_VALUE) {
-			ret2 = ret2 + minUsages + " usages.";
-		} else if (minDays != Integer.MAX_VALUE) {
-			ret2 = ret2 + minDays + " days";
-		} else {
-			ret2 = ret2 + " unlimited.";
-		}
-		ret = ret + "\n" + ret2;
-		System.out.println(ret2);
-
-		// Total Licenses
-		List<String> licenseNames = workflowLicense.getLicenseReport();
-		if (!licenseNames.isEmpty()) {
-			String ret3 = "Licenses: ";
-			for (String licenceName : licenseNames) {
-				ret3 = ret3 + licenceName + " ";
-			}
-			System.out.println(ret3);
-			ret = ret + "\n" + ret3;
-		}
-
-		final String message = ret;
-		final Shell shell = this.getSite().getWorkbenchWindow().getShell();
-		final Display disp = shell.getDisplay();
-		disp.syncExec(new Runnable() {
-			@Override
-			public void run() {
-				MessageDialog.openInformation(disp.getActiveShell(), "Cost, Trial, License Information.", message);
-			}
-		});
-	}
+	
 
 	@Override
 	public void setFocus() {
@@ -1133,35 +563,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 	}
 
 	
-	/**
-	 * <h1>createNewWorkflow</h1> Create a workflow with only Start and End
-	 * nodes.
-	 */
-	private void createNewWorkflow() {
-
-		jungGraph = new SparseMultigraph<OwlService, Connector>();
-		Similarity.loadProperties();
-		Service startNode = new Service("", "StartNode");
-		Service endNode = new Service("", "EndNode");
-
-		OwlService start = new OwlService(startNode);
-		OwlService end = new OwlService(endNode);
-
-		jungGraph.addVertex(start);
-		jungGraph.addVertex(end);
-		// jungGraph.addEdge(new Connector(start, end, ""), start, end);
-
-		List<MyNode> nodes = createGraphNodes(jungGraph);
-		this.setJungGraph(jungGraph);
-		this.addGraphInZest(jungGraph);
-		// this.getViewer().setInput(createGraphNodes(jungGraph));
-		this.updateRightComposite(jungGraph);
-		this.setSavedWorkflow(false);
-		this.setWorkflowFilePath("");
-		this.setStoryboardFile(null);
-		this.setFocus();
-
-	}
+	
 
 	public void updateRightComposite(edu.uci.ics.jung.graph.Graph jungGraph) {
 
@@ -1228,18 +630,14 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 		columna.getColumn().setWidth(200);
 		columna.getColumn().setText("Columna");
 		columna.getColumn().setResizable(true);
-		// column1.getColumn().pack();
-		// columnz = new TreeViewerColumn(inputsTreeViewer, SWT.NONE);
-		// columnz.getColumn().setWidth(10);
-		// columnz.getColumn().setText("Columnz");
-		// columnz.getColumn().setResizable(true);
+		
 		columnb = new TreeViewerColumn(inputsTreeViewer, SWT.NONE);
 		columnb.getColumn().setText("Columnb");
 		columnb.getColumn().setWidth(300);
 		columnb.getColumn().setResizable(true);
 
 		Vector<Node> InputNodes = new Vector<Node>();
-		// column2.getColumn().pack();
+		
 
 		// get matched io
 		Object[] vertices1 = (Object[]) jungGraph.getVertices().toArray();
@@ -1271,10 +669,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 			}
 		}
 
-		// columnz.setLabelProvider(createColumnZLabelProvider(InputNodes));
-
-		// inputsTreeViewer.getTree().setLayoutData(new
-		// GridData(GridData.FILL_BOTH));
+		
 		inputsComposite.setSize(300, 200);
 		inputsTreeViewer.setContentProvider(new MyTreeContentProvider());
 
@@ -1429,50 +824,8 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 			}
 		});
 
-		// for (int i = 0; i < vertices.length; i++) {
-		// final OwlService node = (OwlService) vertices[i];
-		//
-		// if (node.getType().contains("Property")) {
-		// if (jungGraph.getInEdges(node).size() == 0) {
-		//
-		// showInputs(node, matchedNodes, graph);
-		//
-		// } else if ((jungGraph.getInEdges(node).size() == 1
-		// && ((OwlService)
-		// jungGraph.getPredecessors(node).toArray()[0]).getisMatchedIO())) {
-		// showInputs(node, matchedNodes, graph);
-		// }
-		// }
-		// }
+		
 
-		// create UriParams composite
-
-		// rightComposite.setLayout(new GridLayout());
-		// Composite urisLabelComposite = new Composite(rightComposite,
-		// SWT.FILL);
-		//
-		// urisLabelComposite.setLayout(new GridLayout());
-		// Label label3 = new Label(urisLabelComposite, SWT.FILL);
-		// label3.setText("Workflow URI Parameters:");
-		// label3.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false,
-		// false));
-		// label3.setFont(JFaceResources.getFontRegistry().getBold(""));
-		// uriParamsComposite = new Composite(rightComposite, SWT.FILL);
-		// uriParamsComposite.setLayout(new GridLayout(2, false));
-
-		// get all uriParams
-
-		// for (int i = 0; i < vertices.length; i++) {
-		// final OwlService node = (OwlService) vertices[i];
-		//
-		// if (node.getType().contains("Action")) {
-		// if (!node.getOperation().getUriParameters().isEmpty()) {
-		// for (Argument arg : node.getOperation().getUriParameters()) {
-		// showUriParams(arg);
-		// }
-		// }
-		// }
-		// }
 		// create authentication Params composite
 
 		rightComposite.setLayout(new GridLayout());
@@ -1635,60 +988,6 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 		};
 	}
 
-	// private ColumnLabelProvider createColumnZLabelProvider(Vector<Node>
-	// InputNodes) {
-	// return new ColumnLabelProvider() {
-	// // make sure you dispose these buttons when viewer input changes
-	// // Map<Object, Button> buttons = new HashMap<Object, Button>();
-	//
-	// @Override
-	// public void update(ViewerCell cell) {
-	//
-	// TreeItem item = (TreeItem) cell.getItem();
-	// if (((Node) item.getData()).getOwlService().getArgument().isArray()
-	// && ((Node) item.getData()).getName().toString().replaceAll("[^\\d.]",
-	// "").isEmpty()) {
-	// // Button button;
-	// // if (buttons.containsKey(cell.getElement())) {
-	// // button = buttons.get(cell.getElement());
-	// // } else {
-	// Button button = new Button((Composite) cell.getViewerRow().getControl(),
-	// SWT.PUSH);
-	// button.addSelectionListener(new SelectionAdapter() {
-	// @Override
-	// public void widgetSelected(SelectionEvent e) {
-	// int length = ((Node) item.getData()).getSubCategories().size();
-	// // Node n= new Node(((Node)
-	// // item.getData()).getOwlService().getName().toString()+
-	// // "[" + length + "]", ((Node) item.getData()),
-	// // ((Node) item.getData()).getOwlService(),
-	// // null);
-	// addTreeNode(((Node) item.getData()).getOwlService(), (Node)
-	// item.getData(), length);
-	// // Updating the display in the view
-	// // disposeButtons();
-	// inputsTreeViewer.setInput(InputNodes);
-	// columnz.getColumn().getData();
-	// columnz.setLabelProvider(createColumnZLabelProvider(InputNodes));
-	// columnz.getViewer().refresh();
-	// }
-	// // public void disposeButtons(){
-	// // buttons.clear();
-	// // }
-	// });
-	// // button.setText("+");
-	// // buttons.put(cell.getElement(), button);
-	// // }
-	// TreeEditor editor = new TreeEditor(item.getParent());
-	// editor.grabHorizontal = true;
-	// editor.grabVertical = true;
-	// editor.setEditor(button, item, cell.getColumnIndex());
-	// editor.layout();
-	// }
-	// }
-	//
-	// };
-	// }
 
 	public void addTreeNode(final Object arg, Node parent, int length) {
 		Node n;
@@ -1822,9 +1121,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 				for (Argument element : ((Value) arg).getElements()) {
 					Node e = new Node(element.getName().toString(), n, ((Value) arg).getOwlService(),
 							((Value) element));
-					// column.setLabelProvider(createColumnLabelProvider());
-					// TreeItem newItem = new TreeItem(item, SWT.NONE);
-					// newItem.setText(0, element.getName().toString());
+					
 					if (element.isArray()) {
 						for (Argument el : ((Value) element).getElements()) {
 							showOutputs(el, e, nodes, graph);
@@ -1846,10 +1143,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 			} else if (!((Value) arg).isArray()
 					&& !RAMLCaller.stringIsItemFromList(((Value) arg).getType(), datatypes)) {
 				for (Argument sub : ((Value) arg).getSubtypes()) {
-					// TreeItem newItem = new TreeItem(item, SWT.NONE);
-					// newItem.setText(0, sub.getName().toString() + " [" +
-					// sub.getType() +
-					// "]:");
+					
 					showOutputs(sub, n, nodes, graph);
 				}
 			}
@@ -1899,19 +1193,6 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 
 	}
 
-	// public void showUriParams(final Argument arg) {
-	//
-	// Label firstLabel = new Label(uriParamsComposite, SWT.NONE);
-	// firstLabel.setText(arg.getName() + " [" + arg.getType() + "]*" + ":");
-	// firstLabel.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false,
-	// false));
-	//
-	// Text firstText = new Text(uriParamsComposite, SWT.BORDER);
-	// firstText.setText("");
-	// firstText.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
-	// firstText.setEditable(true);
-	//
-	// }
 
 	
 	public edu.uci.ics.jung.graph.Graph<OwlService, Connector> getJungGraph() {
@@ -1940,6 +1221,10 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 
 	public void setStoryboardFile(IFile file) {
 		this.storyboardFile = file;
+	}
+	
+	public IFile getStoryboardFile() {
+		return storyboardFile ;
 	}
 
 	/**
@@ -2326,412 +1611,6 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 
 	
 
-	private void reloadStoryboard(Display disp, Shell shell) {
-		if (this.storyboardFile != null) {
-			Job reloadSBD = new Job("Reload StoryBoard Creator file") {
-				@Override
-				protected IStatus run(IProgressMonitor monitor) {
-					monitor.beginTask("Transforming storyboard creator diagram to workflow of web services...",
-							IProgressMonitor.UNKNOWN);
-
-					try {
-						jungGraph = null;
-						IFile file = storyboardFile;
-						// // check if ontology file exists in .metadata
-						// plug-in's
-						// // folder
-						// ontologyCheck(shell, disp);
-						Algorithm.init();
-						final ArrayList<Operation> operations = Algorithm
-								.importServices(ResourcesPlugin.getWorkspace().getRoot().getLocation().toString()
-										+ "/.metadata/.plugins/eu.scasefp7.servicecomposition/ontology/WS.owl");
-						
-						final String pathToSBDFile = ResourcesPlugin.getWorkspace().getRoot().getLocation().toString()
-								+ file.getFullPath().toOSString();
-						// check if user has cancelled
-						if (monitor.isCanceled())
-							return Status.CANCEL_STATUS;
-						// transform graph
-						jungGraph = Algorithm.transformationAlgorithm(pathToSBDFile, operations, disp, shell);
-
-						if (jungGraph != null) {
-							// SHOW REPLACEMENT REPORT
-							System.out.println();
-							for (WeightReport report : Algorithm.getStepReports()) {
-								report.getReplaceInformation().reEvaluateWeight(jungGraph);
-								report.updateWeight();
-								System.out.println(report.toString());
-							}
-
-							// If the action was replaced with an operation
-							// remove
-							// any
-							// properties left from initial xmi.
-							Collection<OwlService> services = new ArrayList<OwlService>(jungGraph.getVertices());
-							boolean propertyExists = false;
-							for (OwlService property : services) {
-								if (property.getArgument() != null) {
-									if (property.getArgument().getParent().isEmpty()) {
-										propertyExists = true;
-										for (OwlService operation : jungGraph.getSuccessors(property)) {
-											if (operation.getOperation() != null) {
-												if (operation.getOperation().getDomain() != null)
-													jungGraph.removeVertex(property);
-											}
-										}
-									}
-
-								}
-							}
-							// check if user has cancelled
-							if (monitor.isCanceled())
-								return Status.CANCEL_STATUS;
-							disp.syncExec(new Runnable() {
-								@Override
-								public void run() {
-
-									try {
-
-										IWorkbenchPage page = PlatformUI.getWorkbench().getActiveWorkbenchWindow()
-												.getActivePage();
-
-										IEditorPart openEditor = IDE.openEditor(page, storyboardFile);
-
-										setJungGraph(jungGraph);
-										addGraphInZest(jungGraph);
-										updateRightComposite(jungGraph);
-										setSavedWorkflow(false);
-										// view.setDirty(true);
-										setFocus();
-
-									} catch (Exception e) {
-										// TODO Auto-generated catch block
-										Activator.log("Error while opening the service composition view", e);
-										e.printStackTrace();
-									}
-
-								}
-							});
-							// Check if there are still unreplaced actions in
-							// the
-							// graph
-							boolean serviceHasOperations = false;
-							// view.getViewer().setInput(createGraphNodes(graph));
-							for (OwlService service : jungGraph.getVertices()) {
-								if (service.getOperation() != null) {
-									if (service.getOperation().getDomain() != null) {
-										serviceHasOperations = true;
-									} else {
-										disp.syncExec(new Runnable() {
-											@Override
-											public void run() {
-												MessageDialog.openInformation(disp.getActiveShell(), "Info",
-														"No matching operation was found for action \""
-																+ service.getOperation().getName()
-																+ "\". Please modify the storyboard diagram or manually add an operation.");
-											}
-										});
-									}
-								}
-							}
-
-							monitor.done();
-							return Status.OK_STATUS;
-						} else {
-							try {
-								throw new Exception("Graph can not be null");
-							} catch (Exception e1) {
-								// TODO Auto-generated catch block
-								Activator.log("Graph is null", e1);
-								e1.printStackTrace();
-							}
-							return Status.CANCEL_STATUS;
-						}
-					} catch (Exception ex) {
-						Activator.log("Error while importing the .scd file", ex);
-						ex.printStackTrace();
-						return Status.CANCEL_STATUS;
-
-					} finally {
-						monitor.done();
-					}
-				}
-
-			};
-			reloadSBD.setUser(true);
-			reloadSBD.schedule();
-		} else {
-			disp.syncExec(new Runnable() {
-
-				@Override
-				public void run() {
-					MessageDialog.openInformation(disp.getActiveShell(), "Info",
-							"Nothing to reload! You should import a storyboard file first!");
-				}
-
-			});
-		}
-	}
-
-	
-
-	
-	public IStatus checkGraph(edu.uci.ics.jung.graph.Graph<OwlService, Connector> graph, final Display disp)
-			throws Exception {
-
-		// Check if every node has a path to StartNode and to
-		// EndNode, a condition has two output edges and the graph contains at
-		// least one operation in order to allow
-		// execution.
-
-		int numberOfActions = 0;
-		OwlService startingService = null;
-		OwlService endingService = null;
-
-		for (OwlService service : graph.getVertices()) {
-			// detect starting service
-			if (service.getType().trim().equals("StartNode")) {
-				startingService = service;
-
-			}
-			// detect ending service
-			if (service.getType().trim().equals("EndNode")) {
-				endingService = service;
-
-			}
-		}
-
-		if (startingService == null) {
-			try {
-				throw new Exception("Graph should contain a Start Node.");
-			} catch (Exception e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
-			}
-			disp.syncExec(new Runnable() {
-
-				@Override
-				public void run() {
-					MessageDialog.openInformation(disp.getActiveShell(), "Error occured",
-							"Graph should contain a Start Node.");
-				}
-
-			});
-			return Status.CANCEL_STATUS;
-		}
-		if (endingService == null) {
-			try {
-				throw new Exception("Graph should contain an End Node.");
-			} catch (Exception e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
-			}
-			disp.syncExec(new Runnable() {
-
-				@Override
-				public void run() {
-					MessageDialog.openInformation(disp.getActiveShell(), "Error occured",
-							"Graph should contain an End Node.");
-				}
-
-			});
-			return Status.CANCEL_STATUS;
-		}
-
-		for (OwlService service : graph.getVertices()) {
-			// check that action has at least one input and one out put edge
-			if (service.getType().contains("Action") || service.getType().contains("Condition")) {
-
-				if (service.getType().contains("Action")) {
-					numberOfActions++;
-					int predecessorCount = 0;
-					int successorCount = 0;
-					for (OwlService predecessor : graph.getPredecessors(service)) {
-						if (predecessor.getType().contains("Action") || predecessor.getType().contains("Condition")
-								|| predecessor.getType().contains("StartNode")) {
-							predecessorCount++;
-						}
-					}
-					if (predecessorCount == 0) {
-						final OwlService unlinked = service;
-						try {
-							throw new Exception(
-									"\"" + unlinked.getName().toString() + "\"" + " has no input connection.");
-						} catch (Exception e1) {
-							// TODO Auto-generated catch block
-							e1.printStackTrace();
-						}
-						disp.syncExec(new Runnable() {
-
-							@Override
-							public void run() {
-								MessageDialog.openInformation(disp.getActiveShell(), "Error occured",
-										"\"" + unlinked.getName().toString() + "\"" + " has no input connection.");
-							}
-						});
-						return Status.CANCEL_STATUS;
-					}
-
-					for (OwlService successor : graph.getSuccessors(service)) {
-						if (successor.getType().contains("Action") || successor.getType().contains("Condition")
-								|| successor.getType().contains("EndNode")) {
-							successorCount++;
-						}
-					}
-					if (successorCount == 0) {
-						final OwlService unlinked = service;
-						try {
-							throw new Exception(
-									"\"" + unlinked.getName().toString() + "\"" + " has no output connection.");
-						} catch (Exception e1) {
-							// TODO Auto-generated catch block
-							e1.printStackTrace();
-						}
-						disp.syncExec(new Runnable() {
-
-							@Override
-							public void run() {
-								MessageDialog.openInformation(disp.getActiveShell(), "Error occured",
-										"\"" + unlinked.getName().toString() + "\"" + " has no output connection.");
-							}
-						});
-						return Status.CANCEL_STATUS;
-					}
-				}
-
-				// check that end node has one input edge
-				if (service.getType().contains("EndNode") && (graph.getInEdges(service).size() == 0)) {
-
-					try {
-						throw new Exception("End Node should have an input edge.");
-					} catch (Exception e1) {
-						// TODO Auto-generated catch block
-						e1.printStackTrace();
-					}
-
-					disp.syncExec(new Runnable() {
-						@Override
-						public void run() {
-							MessageDialog.openInformation(disp.getActiveShell(), "Error occured",
-									"End Node should have an input edge.");
-						}
-					});
-					return Status.CANCEL_STATUS;
-				}
-				// check that start node has one output edge
-				if (service.getType().contains("StartNode") && (graph.getOutEdges(service).size() == 0)) {
-
-					try {
-						throw new Exception("Start Node should have an input edge.");
-					} catch (Exception e1) {
-						// TODO Auto-generated catch block
-						e1.printStackTrace();
-					}
-
-					disp.syncExec(new Runnable() {
-						@Override
-						public void run() {
-							MessageDialog.openInformation(disp.getActiveShell(), "Error occured",
-									"Start Node should have an input edge.");
-						}
-					});
-					return Status.CANCEL_STATUS;
-				}
-				// check that condition has one input edge
-				if (service.getType().contains("Condition") && (graph.getInEdges(service).size() == 0)) {
-					final OwlService unlinked = service;
-					try {
-						throw new Exception(
-								"\"" + unlinked.getName().toString() + "\"" + " condition should have one input edge.");
-					} catch (Exception e1) {
-						// TODO Auto-generated catch block
-						e1.printStackTrace();
-					}
-
-					disp.syncExec(new Runnable() {
-						@Override
-						public void run() {
-							MessageDialog.openInformation(disp.getActiveShell(), "Error occured", "\""
-									+ unlinked.getName().toString() + "\"" + " condition should have an input edge.");
-						}
-					});
-					return Status.CANCEL_STATUS;
-				}
-				// check that condition has two output edges
-				if (service.getType().contains("Condition") && (graph.getOutEdges(service).size() < 2)) {
-					final OwlService unlinked = service;
-					try {
-						throw new Exception("\"" + unlinked.getName().toString() + "\""
-								+ " condition should have two output edges.");
-					} catch (Exception e1) {
-						// TODO Auto-generated catch block
-						e1.printStackTrace();
-					}
-
-					disp.syncExec(new Runnable() {
-						@Override
-						public void run() {
-							MessageDialog.openInformation(disp.getActiveShell(), "Error occured",
-									"\"" + unlinked.getName().toString() + "\""
-											+ " condition should have two output edges.");
-						}
-					});
-					return Status.CANCEL_STATUS;
-				}
-				// check that condition output edges have text
-				if (service.getType().contains("Condition")) {
-					final OwlService unlinked = service;
-					for (Connector connector : graph.getOutEdges(service)) {
-						if (connector.getCondition().isEmpty()) {
-							try {
-								throw new Exception("\"" + unlinked.getName().toString() + "\""
-										+ " condition path should have a name.");
-							} catch (Exception e1) {
-								// TODO Auto-generated catch block
-								e1.printStackTrace();
-							}
-
-							disp.syncExec(new Runnable() {
-								@Override
-								public void run() {
-									MessageDialog.openInformation(disp.getActiveShell(), "Error occured",
-											"\"" + unlinked.getName().toString() + "\""
-													+ " condition path should have a name.");
-								}
-							});
-							return Status.CANCEL_STATUS;
-						}
-					}
-				}
-
-			}
-		}
-		if (numberOfActions == 0) {
-
-			try {
-				throw new Exception("Graph should contain at least one Operation.");
-			} catch (Exception e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
-			}
-			disp.syncExec(new Runnable() {
-
-				@Override
-				public void run() {
-					MessageDialog.openInformation(disp.getActiveShell(), "Error occured",
-							"Graph should contain at least one Action.");
-				}
-
-			});
-			return Status.CANCEL_STATUS;
-
-		}
-		return Status.OK_STATUS;
-	}
-
-
-
-	
 	
 
 	public void loadOperations(Display disp, Shell shell) {
@@ -2805,4 +1684,20 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 		return point;
 	}
 
+	
+	public TreeViewer getTreeViewer() {
+		return treeViewer;
+	}
+	
+	public Tree getOutputsComposite() {
+		return outputsComposite;
+	}
+	
+	public Composite getAuthParamsComposite() {
+		return authParamsComposite;
+	}
+	
+	public TreeViewerColumn getColumnb() {
+		return columnb;
+	}
 }

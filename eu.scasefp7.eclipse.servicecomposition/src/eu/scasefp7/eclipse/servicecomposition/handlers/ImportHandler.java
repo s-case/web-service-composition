@@ -7,6 +7,7 @@ import eu.scasefp7.eclipse.servicecomposition.importer.JungXMIImporter.Connector
 import eu.scasefp7.eclipse.servicecomposition.repository.RepositoryClient;
 import eu.scasefp7.eclipse.servicecomposition.tester.Algorithm;
 import eu.scasefp7.eclipse.servicecomposition.tester.Algorithm.WeightReport;
+import eu.scasefp7.eclipse.servicecomposition.toolbar.FillToolbar;
 import eu.scasefp7.eclipse.servicecomposition.toolbar.SaveOpen;
 import eu.scasefp7.eclipse.servicecomposition.transformer.JungXMItoOwlTransform.OwlService;
 import eu.scasefp7.eclipse.servicecomposition.ui.ResourceFileSelectionDialog;
@@ -87,7 +88,7 @@ public class ImportHandler extends AbstractHandler {
 				if (result == 0) {
 					IStatus status;
 					try {
-						status = view.checkGraph(previousGraph, disp);
+						status = FillToolbar.checkGraph(previousGraph, disp);
 
 						if (status.getMessage().equalsIgnoreCase("OK")) {
 							if (view.getWorkflowFilePath().isEmpty()) {

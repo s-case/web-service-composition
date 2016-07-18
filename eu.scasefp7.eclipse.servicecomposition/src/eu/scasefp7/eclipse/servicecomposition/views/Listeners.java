@@ -2,6 +2,7 @@ package eu.scasefp7.eclipse.servicecomposition.views;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -28,6 +29,7 @@ import org.eclipse.zest.core.widgets.GraphNode;
 import edu.uci.ics.jung.graph.SparseMultigraph;
 import edu.uci.ics.jung.graph.util.EdgeType;
 import eu.scasefp7.eclipse.servicecomposition.Activator;
+import eu.scasefp7.eclipse.servicecomposition.importer.JungXMIImporter;
 import eu.scasefp7.eclipse.servicecomposition.importer.Importer.Argument;
 import eu.scasefp7.eclipse.servicecomposition.importer.Importer.Operation;
 import eu.scasefp7.eclipse.servicecomposition.importer.JungXMIImporter.Connector;
@@ -829,7 +831,7 @@ public class Listeners implements Listener {
 								if (dialog.open() == Window.OK) {
 									Operation selectedItem = dialog.getOperation();
 									if (selectedItem != null) {
-										view.addNode(selectedItem,  ServiceCompositionView.getOperations());
+										addNode(selectedItem,  ServiceCompositionView.getOperations());
 									}
 
 								} else {
@@ -1180,6 +1182,75 @@ public class Listeners implements Listener {
 		}
 	}
 	
+	
+	/**
+	 * <h1>addNode</h1>Add the selected operation (chosen from the selection
+	 * window) to the graph with its IOs.
+	 * 
+	 * @param selectedItem
+	 * @param operations
+	 */
+	protected void addNode(Object selectedItem, ArrayList<Operation> operations) {
+		String operationName = selectedItem.toString();
+		// Similarity.ComparableName operationComparableName = new
+		// Similarity.ComparableName(operationName);
+		for (Operation op : operations) {
+			if (((Operation) selectedItem).getName().equals(op.getName())
+					&& ((Operation) selectedItem).getInputs().equals(op.getInputs())
+					&& ((Operation) selectedItem).getOutputs().equals(op.getOutputs())) {
+
+				String operationType = "Action";
+				JungXMIImporter.Service service = new JungXMIImporter.Service(operationName, operationType);
+				OwlService owlService;
+				owlService = new OwlService(op);
+
+				Collection<OwlService> services = new ArrayList<OwlService>(jungGraph.getVertices());
+				for (OwlService s : services) {
+					if (owlService.getName().getContent().equals(s.getName().getContent())) {
+						if (owlService.getId() <= s.getId()) {
+							owlService.setId(s.getId() + 1);
+						}
+					}
+
+				}
+
+				HashMap<Service, OwlService> map = new HashMap<Service, OwlService>();
+				map.put(service, owlService);
+				jungGraph.addVertex(owlService);
+
+				System.out.println("New operation: " + owlService + " is added to the graph");
+				Transformer transformer = new Transformer(jungGraph);
+				try {
+					// Add the io variables of the operation
+					transformer.expandOperations(owlService);
+					// transformer.createLinkedVariableGraph();
+				} catch (Exception e) {
+					Activator.log("Error while expanding new operation", e);
+					e.printStackTrace();
+				}
+				edu.uci.ics.jung.graph.Graph<OwlService, Connector> tempGraph = new SparseMultigraph<OwlService, Connector>();
+				tempGraph.addVertex(owlService);
+				Transformer tempTransformer = new Transformer(tempGraph);
+				try {
+					// Add the io variables of the operation
+					tempTransformer.expandOperations(owlService);
+
+				} catch (Exception e) {
+					Activator.log("Error while expanding new operation", e);
+					e.printStackTrace();
+				}
+				view.addOperationInZest(owlService, tempGraph);
+			}
+
+		}
+
+		view.setJungGraph(jungGraph);
+		// this.getViewer().setInput(createGraphNodes(jungGraph));
+		view.updateRightComposite(jungGraph);
+		view.setLayout();
+		view.setFocus();
+
+	}
 	
 	class ArgumentsLabelProvider implements ILabelProvider {
 		public String getText(Object element) {
