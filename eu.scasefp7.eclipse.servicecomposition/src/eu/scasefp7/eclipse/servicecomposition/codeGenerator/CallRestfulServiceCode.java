@@ -19,10 +19,12 @@ public class CallRestfulServiceCode {
 				+ TAB + TAB + "String result = \"\";\n" + TAB + TAB + "String inputList = \"\";\n";
 		code += TAB + TAB + "if (!inputs.isEmpty()) {\n";
 		code += TAB + TAB + TAB + "for (Variable input : inputs) {\n";
-		code += TAB + TAB + TAB + TAB + "if (!inputList.isEmpty())\n";
-		code += TAB + TAB + TAB + TAB + TAB + "inputList += \"&\";\n";
-		code += TAB + TAB + TAB + TAB + "inputList += input.name + \"=\" + input.value;\n";
-		code += TAB + TAB + TAB + "}\n";
+		code += TAB + TAB + TAB + TAB + "if (!input.value.isEmpty()) {\n";
+		code += TAB + TAB + TAB + TAB + TAB + "if (!inputList.isEmpty())\n";
+		code += TAB + TAB + TAB + TAB + TAB + TAB + "inputList += \"&\";\n";
+		code += TAB + TAB + TAB + TAB + TAB + "inputList += input.name + \"=\" + input.value;\n";
+		code += TAB + TAB + TAB + TAB +"}\n";
+		code += TAB + TAB + TAB +"}\n";
 		code += TAB + TAB + "}\n\n";
 		code += TAB + TAB + "// instead of using URLEncoder\n" + TAB + TAB
 				+ "inputList = inputList.replaceAll(\"\\\\{\", \"%7B\");\n";
