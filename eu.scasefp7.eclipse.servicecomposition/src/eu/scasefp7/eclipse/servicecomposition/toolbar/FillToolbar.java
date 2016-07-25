@@ -59,7 +59,7 @@ public class FillToolbar {
 		IActionBars bars = view.getViewSite().getActionBars();
 		final Shell shell = view.getSite().getWorkbenchWindow().getShell();
 		final Display disp = shell.getDisplay();
-		edu.uci.ics.jung.graph.Graph<OwlService, Connector> jungGraph = view.getJungGraph();
+		
 		bars.getMenuManager().add(toolbarZoomContributionViewItem);
 		runWorkflowAction = new Action("Run workflow") {
 			public void run() {
@@ -147,7 +147,7 @@ public class FillToolbar {
 			public void run() {
 
 				try {
-					IStatus status = checkGraph(jungGraph, disp);
+					IStatus status = checkGraph(view.getJungGraph(), disp);
 					if (status.getMessage().equalsIgnoreCase("OK")) {
 						newProject = new GenerateUpload(view);
 						newProject.generate();
@@ -166,7 +166,7 @@ public class FillToolbar {
 			public void run() {
 
 				try {
-					IStatus status = checkGraph(jungGraph, disp);
+					IStatus status = checkGraph(view.getJungGraph(), disp);
 					if (status.getMessage().equalsIgnoreCase("OK")) {
 						if (view.getWorkflowFilePath().isEmpty()) {
 							SaveOpen.saveWorkflow(true, view.getWorkflowFilePath(), view);
@@ -198,7 +198,7 @@ public class FillToolbar {
 							int result = dialog.open();
 							System.out.println(result);
 							if (result == 0) {
-								IStatus status = checkGraph(jungGraph, disp);
+								IStatus status = checkGraph(view.getJungGraph(), disp);
 								if (status.getMessage().equalsIgnoreCase("OK")) {
 									if (view.getWorkflowFilePath().isEmpty()) {
 										SaveOpen.saveWorkflow(true, view.getWorkflowFilePath(), view);

@@ -103,10 +103,17 @@ public class TreeDialog extends Dialog {
 		tree.setComparator(new ViewerComparator() {
 			@Override
 			public int compare(Viewer viewer, Object e1, Object e2) {
-				OperationNode t1 = (OperationNode) e1;
-				OperationNode t2 = (OperationNode) e2;
-				int order = ((t1.getName())
-						.compareTo(t2.getName()));
+				int order = 0;
+				if (e1 instanceof OperationNode) {
+					OperationNode t1 = (OperationNode) e1;
+					OperationNode t2 = (OperationNode) e2;
+					order = ((t1.getName()).compareTo(t2.getName()));
+				} else {
+					ReplaceInformationNode t1 = (ReplaceInformationNode) e1;
+					ReplaceInformationNode t2 = (ReplaceInformationNode) e2;
+					order = (((Double)(t1.getReplaceInformation().getWeight())).compareTo(t2.getReplaceInformation().getWeight()));
+				}
+				
 				return order;
 			};
 		});
