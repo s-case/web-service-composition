@@ -52,6 +52,7 @@ import org.eclipse.wst.common.componentcore.internal.util.IModuleConstants;
 import org.eclipse.wst.common.frameworks.datamodel.DataModelFactory;
 import org.eclipse.wst.common.frameworks.datamodel.IDataModel;
 
+import eu.scasefp7.eclipse.core.builder.ProjectUtils;
 import eu.scasefp7.eclipse.servicecomposition.Activator;
 import eu.scasefp7.eclipse.servicecomposition.codeGenerator.CallRestfulServiceCode;
 import eu.scasefp7.eclipse.servicecomposition.codeGenerator.CallWSDLServiceCode;
@@ -421,20 +422,7 @@ public class GenerateUpload {
 							return Status.CANCEL_STATUS;
 						}
 
-						String compositionsFolderLocation = null;
-						try {
-							compositionsFolderLocation = scaseProject.getPersistentProperty(
-									new QualifiedName("", "eu.scasefp7.eclipse.core.ui.compFolder"));
-						} catch (CoreException e) {
-							Activator.log("Error retrieving project property (compositions folder location)", e);
-						}
-						org.eclipse.core.resources.IContainer container = scaseProject;
-						if (compositionsFolderLocation != null) {
-							if (scaseProject.findMember(new Path(compositionsFolderLocation)).exists())
-								container = (org.eclipse.core.resources.IContainer) scaseProject
-										.findMember(new Path(compositionsFolderLocation));
-						}
-
+						org.eclipse.core.resources.IContainer container = ProjectUtils.getProjectCompositionsFolder(scaseProject);
 						File basedir = new File(pomPath);
 						IProgressMonitor monitor2 = new NullProgressMonitor();
 						IMaven maven = MavenPlugin.getMaven();
