@@ -34,19 +34,54 @@ public class RestFunctionCodeNode extends CodeNode {
 
 	@Override
 	public String createFunctionCode(Graph<OwlService, Connector> graph, ArrayList<OwlService> allVariables,
-			boolean hasBodyInput) throws Exception {
+			boolean hasBodyInput, boolean isRepeated) throws Exception {
 		if (service == null || service.getArgument() != null)
 			return "";
 		String tabIndent = getTab();
 		applyTab();
-		String code = tabIndent + "protected String " + codeGenerator.getFunctionName(service) + "()  throws Exception"
-				+ "{\n" + getCode(allVariables, hasBodyInput);
+		String code = tabIndent + "protected String " + codeGenerator.getFunctionName(service);
+		if (isRepeated) {
+			code += "(int i)";
+		} else {
+			code += "()";
+		}
+
+		code += "  throws Exception" + "{\n" + getCode(allVariables, hasBodyInput, isRepeated);
+		String matchedInputName = "";
+		if (isRepeated) {
+			for (OwlService matched : allVariables) {
+				if (matched.getisMatchedIO() && matched.getArgument().getBelongsToOperation().getName().toString()
+						.equals(service.getName().toString())) {
+					for (OwlService output : graph.getPredecessors(matched)) {
+						if (output.getisMatchedIO()) {
+							matchedInputName = matched.getName().getContent();
+						}
+					}
+				}
+			}
+		}
 		for (OwlService next : graph.getSuccessors(service)) {
 			if (next.getArgument() == null && !next.getName().isEmpty()) {
-				code += tabIndent + TAB + "return \"" + codeGenerator.getFunctionName(next) + "\";\n";
+				if (isRepeated) {
+					code += tabIndent + TAB + "if (i == " + matchedInputName + ".size() - 1) {\n";
+					code += tabIndent + TAB + TAB + "return \"" + codeGenerator.getFunctionName(next) + "\";\n";
+					code += tabIndent + TAB + "} else {\n";
+					code += tabIndent + TAB + TAB + "return \"" + codeGenerator.getFunctionName(service) + "\";\n";
+					code += tabIndent + TAB + "}\n";
+				} else {
+					code += tabIndent + TAB + "return \"" + codeGenerator.getFunctionName(next) + "\";\n";
+				}
 				code += tabIndent + "}\n";
 			} else if (next.getType().equalsIgnoreCase("EndNode")) {
-				code += tabIndent + TAB + "return \"callEndNode\";\n";
+				if (isRepeated) {
+					code += tabIndent + TAB + "if (i == " + matchedInputName + ".size() - 1) {\n";
+					code += tabIndent + TAB + TAB + "return \"callEndNode\";\n";
+					code += tabIndent + TAB + "} else {\n";
+					code += tabIndent + TAB + TAB + "return \"" + codeGenerator.getFunctionName(service) + "\";\n";
+					code += tabIndent + TAB + "}\n";
+				} else {
+					code += tabIndent + TAB + "return \"callEndNode\";\n";
+				}
 				code += tabIndent + "}\n";
 
 			}
@@ -56,7 +91,7 @@ public class RestFunctionCodeNode extends CodeNode {
 
 	@Override
 	protected String generateInputSynchronizationCode(Operation operation, ArrayList<OwlService> allVariables,
-			boolean hasBodyInput) {
+			boolean hasBodyInput, boolean isRepeated) {
 
 		String ret = "";
 
@@ -66,7 +101,8 @@ public class RestFunctionCodeNode extends CodeNode {
 				for (Argument input : operation.getInputs()) {
 					if (input.isTypeOf().equals("BodyParameter") && !input.getOwlService().getisMatchedIO()) {
 						ret += "urlParameters.add(new BasicNameValuePair(" + input.getName().getContent().toString()
-								+ ".name , " + operation.getName().toString() + "_request.get" + input.getName().getContent().toString() + "()));\n";
+								+ ".name , " + operation.getName().toString() + "_request.get"
+								+ input.getName().getContent().toString() + "()));\n";
 					} else {
 						ret += "urlParameters.add(new BasicNameValuePair(" + input.getName().getContent().toString()
 								+ ".name , " + input.getName().getContent().toString() + ".value));\n";
@@ -87,15 +123,21 @@ public class RestFunctionCodeNode extends CodeNode {
 		for (Argument arg : operation.getInputs())
 			for (OwlService var : allVariables) {
 				if (var.getArgument().equals(arg)) {
-					if (arg.isTypeOf().equals("QueryParameter"))
-						ret += "inputs.add(" + var.getName().getContent().toString() + ");\n";
+					if (arg.isTypeOf().equals("QueryParameter")) {
+						ret += "inputs.add(" + var.getName().getContent().toString();
+						if (isRepeated && var.getisMatchedIO()) {
+							ret += ".get(i)";
+						}
+						ret += ");\n";
+					}
 				}
 			}
 		return ret;
 	}
 
 	@Override
-	protected String generateOutputSynchronizationCode(Operation operation, ArrayList<OwlService> allVariables) {
+	protected String generateOutputSynchronizationCode(Operation operation, ArrayList<OwlService> allVariables,
+			boolean isRepeated) {
 
 		String ret = "";
 		String var = "";
@@ -114,6 +156,10 @@ public class RestFunctionCodeNode extends CodeNode {
 
 		ret += operation.getName().toString() + "_response = gson.fromJson(result, " + operation.getName().toString()
 				+ "Response.class);\n";
+		if (isRepeated) {
+			ret += operation.getName().toString() + "_response_arraylist.add(" + operation.getName().toString()
+					+ "_response);\n";
+		}
 		// ret += "ArrayList<Variable> outputs = new ArrayList<Variable>();\n";
 		//
 		// for (OwlService var : outputVariables) {
@@ -144,7 +190,8 @@ public class RestFunctionCodeNode extends CodeNode {
 	}
 
 	@Override
-	protected String generateOperationCode(Operation operation, ArrayList<OwlService> allVariables) throws Exception {
+	protected String generateOperationCode(Operation operation, ArrayList<OwlService> allVariables, boolean isRepeated)
+			throws Exception {
 
 		String ret = "";
 		if (operation.getDomain().getResourcePath() != null) {
@@ -154,9 +201,13 @@ public class RestFunctionCodeNode extends CodeNode {
 			ret += "String wsUrl =\"" + operation.getDomain().getURI() + "\";\n";
 		}
 		for (Argument arg : operation.getInputs()) {
-			if (arg.isTypeOf().equals("URIParameter"))
-				ret += "wsUrl = wsUrl.replace(\"{" + arg.getName().toString() + "}\", " + arg.getName().toString()
-						+ ".value);\n";
+			if (arg.isTypeOf().equals("URIParameter")) {
+				ret += "wsUrl = wsUrl.replace(\"{" + arg.getName().toString() + "}\", " + arg.getName().toString();
+				if (isRepeated) {
+					ret += ".get(i)";
+				}
+				ret += ".value);\n";
+			}
 		}
 		ret += "String crudVerb=\"" + operation.getDomain().getCrudVerb() + "\";\n";
 		if (operation.getDomain().getSecurityScheme() != null) {

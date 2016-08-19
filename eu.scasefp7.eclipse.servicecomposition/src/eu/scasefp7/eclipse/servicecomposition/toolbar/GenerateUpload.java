@@ -317,7 +317,7 @@ public class GenerateUpload {
 							}
 						}
 						String restCode = RestfulCodeGenerator.generateRestfulCode(pack.getElementName(),
-								generator.getInputVariables(), generator.geturiParameters(), hasPost);
+								generator.getInputVariables(), generator.geturiParameters(), generator.getNativeInputsMatchedWithArrays(), hasPost);
 						StringBuffer restBuffer = new StringBuffer();
 						restBuffer.append(restCode);
 						ICompilationUnit restClass = pack.createCompilationUnit("WebService.java",
@@ -516,7 +516,7 @@ public class GenerateUpload {
 										WSOntology ws = new WSOntology();
 										ws.createNewWSOperation(generator.getOperation().getHasName(),
 												generator.getInputsWithoutMatchedVariables(),
-												generator.getUriParameters(), generator.getOutputVariables(),
+												generator.getUriParameters(), generator.getOutputVariables(), generator.getRepeatedOperations(),
 												generator.getOperation().getBelongsToURL(), applicationDomainURI,
 												generator.getOperation().getHasCRUDVerb());
 										ws.saveToOWL();
@@ -527,7 +527,7 @@ public class GenerateUpload {
 										disp.syncExec(new Runnable() {
 											@Override
 											public void run() {
-												MessageDialog.openError(shell, "YouREST could not be update!",
+												MessageDialog.openError(shell, "YouREST could not be updated!",
 														"Due to an error, YouREST could not be updated with project "
 																+ currentProject.getName());
 

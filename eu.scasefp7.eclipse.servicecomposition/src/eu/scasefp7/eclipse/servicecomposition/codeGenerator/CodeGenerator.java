@@ -91,9 +91,9 @@ public abstract class CodeGenerator {
 		 * @return the code of the service
 		 * @throws Exception
 		 */
-		public String getCode(ArrayList<OwlService> allVariables, boolean hasBodyInput) throws Exception {
+		public String getCode(ArrayList<OwlService> allVariables, boolean hasBodyInput, boolean isRepeated) throws Exception {
 			if (updateCode)
-				updateCode(allVariables, hasBodyInput);
+				updateCode(allVariables, hasBodyInput, isRepeated);
 			return code;
 		}
 
@@ -118,14 +118,14 @@ public abstract class CodeGenerator {
 		 * @param allVariables
 		 * @throws Exception
 		 */
-		protected void updateCode(ArrayList<OwlService> allVariables, boolean hasBodyInput) throws Exception {
+		protected void updateCode(ArrayList<OwlService> allVariables, boolean hasBodyInput, boolean isRepeated) throws Exception {
 			Operation operation = service != null ? service.getOperation() : null;
 			code = "";
 			if (operation != null) {
 				code += "//call service: " + operation.getName().getContent() + "\n";
-				code += generateInputSynchronizationCode(operation, allVariables, hasBodyInput);
-				code += generateOperationCode(operation, allVariables);
-				code += generateOutputSynchronizationCode(operation, allVariables);
+				code += generateInputSynchronizationCode(operation, allVariables, hasBodyInput, isRepeated);
+				code += generateOperationCode(operation, allVariables, isRepeated);
+				code += generateOutputSynchronizationCode(operation, allVariables, isRepeated);
 			}
 			String lines[] = code.split("\n");
 			code = "";
@@ -149,7 +149,7 @@ public abstract class CodeGenerator {
 		 * @param allVariables
 		 * @return the generated code
 		 */
-		protected String generateInputSynchronizationCode(Operation operation, ArrayList<OwlService> allVariables, boolean hasBodyInput) {
+		protected String generateInputSynchronizationCode(Operation operation, ArrayList<OwlService> allVariables, boolean hasBodyInput, boolean isRepeated) {
 			// create synchronization with other variables
 			String finalizeCommands = "";
 			String inputName = "";
@@ -178,7 +178,7 @@ public abstract class CodeGenerator {
 		 * @return the generated code
 		 * @throws Exception
 		 */
-		protected String generateOperationCode(Operation operation, ArrayList<OwlService> allVariables)
+		protected String generateOperationCode(Operation operation, ArrayList<OwlService> allVariables, boolean isRepeated)
 				throws Exception {
 			// detect outputs
 			if (operation.getOutputs().size() > 1)
@@ -227,7 +227,7 @@ public abstract class CodeGenerator {
 		 * @param allVariables
 		 * @return the generated code
 		 */
-		protected String generateOutputSynchronizationCode(Operation operation, ArrayList<OwlService> allVariables) {
+		protected String generateOutputSynchronizationCode(Operation operation, ArrayList<OwlService> allVariables, boolean isRepeated) {
 			// create synchronization with other variables
 			String finalizeCommands = "";
 			String outputName = "";
@@ -287,7 +287,7 @@ public abstract class CodeGenerator {
 		 * @return generates
 		 * @throws Exception
 		 */
-		public String createFunctionCode(Graph<OwlService, Connector> graph,ArrayList<OwlService> allVariables, boolean hasBodyInput)
+		public String createFunctionCode(Graph<OwlService, Connector> graph,ArrayList<OwlService> allVariables, boolean hasBodyInput, boolean isRepeated)
 				throws Exception {
 			throw new Exception("CodeNode cannot create function code.Use a FunctionCodeNode instance instead.");
 		}

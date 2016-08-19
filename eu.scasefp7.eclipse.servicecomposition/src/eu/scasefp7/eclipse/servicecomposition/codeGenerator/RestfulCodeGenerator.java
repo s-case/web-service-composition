@@ -30,7 +30,7 @@ import eu.scasefp7.eclipse.servicecomposition.transformer.JungXMItoOwlTransform.
 public class RestfulCodeGenerator {
 
 	public static String generateRestfulCode(String packageName, ArrayList<OwlService> inputs,
-			ArrayList<Argument> uriParameters, boolean containsPost) {
+			ArrayList<Argument> uriParameters, ArrayList<OwlService> nativeInputsMatchedWithArrays, boolean containsPost) {
 
 		boolean hasBodyInput = false;
 		for (OwlService input : inputs) {
@@ -82,6 +82,8 @@ public class RestfulCodeGenerator {
 							+ input.getName().getContent();
 				}
 			}
+			
+			
 
 			// for (Argument param : uriParameters) {
 			// if (!inputList.isEmpty())
@@ -91,6 +93,12 @@ public class RestfulCodeGenerator {
 			// "\") String "
 			// + param.getName().getContent().replaceAll("[0123456789]", "");
 			// }
+		}
+		for (OwlService matchedInput :nativeInputsMatchedWithArrays){
+			if (!inputList.isEmpty())
+				inputList += ", ";
+			inputList += "@QueryParam(\"" + matchedInput.getName().getContent() + "_num"
+					+ "\") Integer " + matchedInput.getName().getContent() + "_num";
 		}
 		if (containsPost) {
 			if (!inputList.isEmpty()) {
@@ -111,6 +119,11 @@ public class RestfulCodeGenerator {
 					inputList += ", ";
 				inputList += input.getName().getContent();
 			}
+		}
+		for (OwlService matchedInput :nativeInputsMatchedWithArrays){
+			if (!inputList.isEmpty())
+				inputList += ", ";
+			inputList += matchedInput.getName().getContent() + "_num";
 		}
 		if (containsPost) {
 			inputList += ", request";

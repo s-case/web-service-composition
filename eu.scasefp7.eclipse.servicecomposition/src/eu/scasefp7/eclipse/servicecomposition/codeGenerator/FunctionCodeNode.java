@@ -48,10 +48,10 @@ public class FunctionCodeNode extends CodeNode {
 	}
 
 	@Override
-	protected String generateOperationCode(Operation operation, ArrayList<OwlService> allVariables) throws Exception {
+	protected String generateOperationCode(Operation operation, ArrayList<OwlService> allVariables, boolean isRepeated) throws Exception {
 		// return a dummy Python call
 		if (operation.getDomain().isLocal())
-			return super.generateOperationCode(operation, allVariables);
+			return super.generateOperationCode(operation, allVariables, false);
 		// similar to interpreter implementation
 		String ret = "";
 		ret += "ParsedWSDLDefinition parsedWS = service.parsedWSMap.get(\"" + operation.getDomain().getURI() + "\");\n";
@@ -68,10 +68,10 @@ public class FunctionCodeNode extends CodeNode {
 
 	@Override
 	protected String generateInputSynchronizationCode(Operation operation, ArrayList<OwlService> allVariables,
-			boolean hasBodyInput) {
+			boolean hasBodyInput, boolean isRepeated) {
 		// return a dummy Python call
 		if (operation.getDomain().isLocal())
-			return super.generateInputSynchronizationCode(operation, allVariables, hasBodyInput);
+			return super.generateInputSynchronizationCode(operation, allVariables, hasBodyInput, isRepeated);
 		String ret = "CallWSDLService service =new CallWSDLService();\n";
 		ret += "WSOperation wsOperation = service.domainOperation(\"" + operation.getName().toString() + "\", \""
 				+ operation.getDomain().getURI() + "\");\n";
@@ -159,10 +159,10 @@ public class FunctionCodeNode extends CodeNode {
 	}
 
 	@Override
-	protected String generateOutputSynchronizationCode(Operation operation, ArrayList<OwlService> allVariables) {
+	protected String generateOutputSynchronizationCode(Operation operation, ArrayList<OwlService> allVariables, boolean isRepeated) {
 		// return a dummy Python call
 		if (operation.getDomain().isLocal())
-			return super.generateInputSynchronizationCode(operation, allVariables, false);
+			return super.generateInputSynchronizationCode(operation, allVariables, false, false);
 		String ret = "";
 		String varArguments = "";
 		String varInstance = "";
@@ -230,13 +230,13 @@ public class FunctionCodeNode extends CodeNode {
 
 	@Override
 	public String createFunctionCode(Graph<OwlService, Connector> graph, ArrayList<OwlService> allVariables,
-			boolean hasBodyInput) throws Exception {
+			boolean hasBodyInput, boolean isRepeated) throws Exception {
 		if (service == null || service.getArgument() != null)
 			return "";
 		String tabIndent = getTab();
 		applyTab();
 		String code = tabIndent + "protected String " + codeGenerator.getFunctionName(service) + "()  throws Exception"
-				+ "{\n" + getCode(allVariables, false);
+				+ "{\n" + getCode(allVariables, hasBodyInput, isRepeated);
 		boolean hardReturn = false;
 		for (OwlService next : graph.getSuccessors(service))
 			if (next.getArgument() == null && !next.getName().isEmpty()) {

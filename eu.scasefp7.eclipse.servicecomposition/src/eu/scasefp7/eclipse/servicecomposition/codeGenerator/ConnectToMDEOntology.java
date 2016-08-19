@@ -4,6 +4,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -52,8 +53,8 @@ public class ConnectToMDEOntology {
 	}
 
 	public MDEOperation createObjects(String projectName, ArrayList<OwlService> inputs,
-			ArrayList<Argument> uriParameters, ArrayList<OwlService> outputs, String crudVerb,
-			final Graph<OwlService, Connector> graph) {
+			ArrayList<Argument> uriParameters, ArrayList<OwlService> outputs, ArrayList<Operation> repeatedOperations,
+			String crudVerb, final Graph<OwlService, Connector> graph) {
 		ArrayList<MDERepresentation> hasQueryParameters = new ArrayList<MDERepresentation>();
 		ArrayList<MDERepresentation> hasInput = new ArrayList<MDERepresentation>();
 		ArrayList<MDERepresentation> hasURIParameters = new ArrayList<MDERepresentation>();
@@ -63,9 +64,14 @@ public class ConnectToMDEOntology {
 		// removed .replaceAll("[0123456789]", "")
 		for (OwlService input : inputs) {
 			if (!input.getisMatchedIO()) {
-				String url = ((Operation) input.getArgument().getBelongsToOperation()).getDomain().getURI();
-				if (((Operation) input.getArgument().getBelongsToOperation()).getDomain().getResourcePath() != null) {
-					url = url + ((Operation) input.getArgument().getBelongsToOperation()).getDomain().getResourcePath();
+				String url = "";
+				if (((Operation) input.getArgument().getBelongsToOperation()) != null) {
+					url = ((Operation) input.getArgument().getBelongsToOperation()).getDomain().getURI();
+					if (((Operation) input.getArgument().getBelongsToOperation()).getDomain()
+							.getResourcePath() != null) {
+						url = url + ((Operation) input.getArgument().getBelongsToOperation()).getDomain()
+								.getResourcePath();
+					}
 				}
 				String type = "Primitive";
 				if (input.getArgument().isArray()) {
@@ -104,13 +110,11 @@ public class ConnectToMDEOntology {
 					MDERepresentation inputRepresentation;
 					if (input.getArgument().getSubtypes().isEmpty()) {
 						subNames.add(input.getArgument().getType().toLowerCase());
-						inputRepresentation = new MDERepresentation(false,
-								!input.getArgument().isRequired(), url, input.getName().getContent(), type, null,
-								subNames);
+						inputRepresentation = new MDERepresentation(false, !input.getArgument().isRequired(), url,
+								input.getName().getContent(), type, null, subNames);
 					} else {
-						inputRepresentation = new MDERepresentation(false,
-								!input.getArgument().isRequired(), url, input.getName().getContent(), type, hasSubs,
-								subNames);
+						inputRepresentation = new MDERepresentation(false, !input.getArgument().isRequired(), url,
+								input.getName().getContent(), type, hasSubs, subNames);
 					}
 					hasInput.add(inputRepresentation);
 				}
@@ -138,33 +142,74 @@ public class ConnectToMDEOntology {
 		// Outputs
 		// removed .replaceAll("[0123456789]", "")
 		for (OwlService output : outputs) {
-			String url = ((Operation) output.getArgument().getBelongsToOperation()).getDomain().getURI();
-			String type = "Primitive";
-			if (output.getArgument().isArray()) {
-				type = "Array";
-			} else if (!output.getArgument().isArray()
-					&& !RAMLCaller.stringIsItemFromList(output.getArgument().getType(), datatypes)) {
-				type = "Object";
-			}
-			if (output.getArgument().getSubtypes().isEmpty()) {
-				ArrayList<String> subNames = new ArrayList<String>();
-				subNames.add(output.getArgument().getType().toLowerCase());
-				MDERepresentation outputRepresentation = new MDERepresentation(false,
-						!output.getArgument().isRequired(), url, output.getName().getContent(), type, null, subNames);
-				hasOutput.add(outputRepresentation);
-			} else {
-				ArrayList<String> subNames = new ArrayList<String>();
-				ArrayList<MDERepresentation> hasSubs = new ArrayList<MDERepresentation>();
-				for (OwlService sub : graph.getSuccessors(output)) {
-					hasSubs.add(addSubtypes(sub, graph, hasSubs, false));
-					subNames.add(sub.getName().getContent());
+			if (!repeatedOperations.contains(output.getArgument().getBelongsToOperation())) {
+				String url = "";
+				if (((Operation) output.getArgument().getBelongsToOperation()) != null)
+					url = ((Operation) output.getArgument().getBelongsToOperation()).getDomain().getURI();
+				String type = "Primitive";
+				if (output.getArgument().isArray()) {
+					type = "Array";
+				} else if (!output.getArgument().isArray()
+						&& !RAMLCaller.stringIsItemFromList(output.getArgument().getType(), datatypes)) {
+					type = "Object";
 				}
-				MDERepresentation outputRepresentation = new MDERepresentation(false,
-						!output.getArgument().isRequired(), url, output.getName().getContent(), type, hasSubs,
-						subNames);
-				hasOutput.add(outputRepresentation);
+				if (output.getArgument().getSubtypes().isEmpty()) {
+					ArrayList<String> subNames = new ArrayList<String>();
+					subNames.add(output.getArgument().getType().toLowerCase());
+					MDERepresentation outputRepresentation = new MDERepresentation(false,
+							!output.getArgument().isRequired(), url, output.getName().getContent(), type, null,
+							subNames);
+					hasOutput.add(outputRepresentation);
+				} else {
+					ArrayList<String> subNames = new ArrayList<String>();
+					ArrayList<MDERepresentation> hasSubs = new ArrayList<MDERepresentation>();
+					for (OwlService sub : graph.getSuccessors(output)) {
+						hasSubs.add(addSubtypes(sub, graph, hasSubs, false));
+						subNames.add(sub.getName().getContent());
+					}
+					MDERepresentation outputRepresentation = new MDERepresentation(false,
+							!output.getArgument().isRequired(), url, output.getName().getContent(), type, hasSubs,
+							subNames);
+					hasOutput.add(outputRepresentation);
 
+				}
 			}
+		}
+		
+		for (Operation op :repeatedOperations){
+			String url = op.getDomain().getURI();
+			ArrayList<String> operationSubNames = new ArrayList<String>();
+			ArrayList<MDERepresentation> operationHasSubs = new ArrayList<MDERepresentation>();
+			for (OwlService output : outputs) {
+				if (output.getArgument().getBelongsToOperation().equals(op)){
+					String type = "Primitive";
+					if (output.getArgument().isArray()) {
+						type = "Array";
+					} else if (!output.getArgument().isArray()
+							&& !RAMLCaller.stringIsItemFromList(output.getArgument().getType(), datatypes)) {
+						type = "Object";
+					}
+					ArrayList<String> subNames = new ArrayList<String>();
+					ArrayList<MDERepresentation> hasSubs = new ArrayList<MDERepresentation>();
+					for (OwlService sub : graph.getSuccessors(output)) {
+						hasSubs.add(addSubtypes(sub, graph, hasSubs, false));
+						subNames.add(sub.getName().getContent());
+					}
+					MDERepresentation outputRepresentation = new MDERepresentation(false,
+							!output.getArgument().isRequired(), url, output.getName().getContent(), type, hasSubs,
+							subNames);
+					operationHasSubs.add(outputRepresentation);
+					operationSubNames.add(output.getName().getContent());
+				}
+			}
+			
+			
+			
+			MDERepresentation outputRepresentation2 = new MDERepresentation(false,
+					false, url, op.getName().getContent().toLowerCase() + "_response", "Array", operationHasSubs,
+					operationSubNames);
+			hasOutput.add(outputRepresentation2);
+
 		}
 
 		ArrayList<String> hasResponseType = new ArrayList<String>();

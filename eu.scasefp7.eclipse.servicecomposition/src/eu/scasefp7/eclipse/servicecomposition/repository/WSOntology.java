@@ -28,6 +28,7 @@ import com.hp.hpl.jena.rdf.model.StmtIterator;
 import com.hp.hpl.jena.ontology.impl.IndividualImpl;
 
 import eu.scasefp7.eclipse.servicecomposition.importer.Importer.Argument;
+import eu.scasefp7.eclipse.servicecomposition.importer.Importer.Operation;
 import eu.scasefp7.eclipse.servicecomposition.transformer.JungXMItoOwlTransform.OwlService;
 
 public class WSOntology {
@@ -95,8 +96,8 @@ public class WSOntology {
 	}
 
 	public void createNewWSOperation(String projectName, ArrayList<OwlService> inputs,
-			ArrayList<Argument> uriParameters, ArrayList<OwlService> resultVariables, String serviceURL,
-			String applicationDomainURI, String crudVerb) {
+			ArrayList<Argument> uriParameters, ArrayList<OwlService> resultVariables,
+			ArrayList<Operation> repeatedOperations, String serviceURL, String applicationDomainURI, String crudVerb) {
 		String str = "";
 
 		str = projectName.replace(" ", "_").replaceAll("[^\\p{L}\\p{Nd}]", "");
@@ -160,7 +161,7 @@ public class WSOntology {
 		DatatypeProperty isRequired = ontologyModel.getDatatypeProperty(NS + "isRequired");
 		DatatypeProperty isArray = ontologyModel.getDatatypeProperty(NS + "isArray");
 
-		createOutputs(hasInput, operInd, inputs, "input");
+		createOutputs(hasInput, operInd, inputs, repeatedOperations, "input");
 
 		// for (int i = 0; i < inputs.size(); i++) {
 		// if (!inputs.get(i).getisMatchedIO()) {
@@ -238,11 +239,11 @@ public class WSOntology {
 		// operInd.addProperty(hasInput, noInd);
 		// }
 		ObjectProperty hasOutput = ontologyModel.getObjectProperty(NS + "hasOutput");
-		createOutputs(hasOutput, operInd, resultVariables, "output");
+		createOutputs(hasOutput, operInd, resultVariables, repeatedOperations, "output");
 	}
 
 	private void createOutputs(ObjectProperty property, IndividualImpl operInd, ArrayList<OwlService> resultVariables,
-			String IOtype) {
+			ArrayList<Operation> repeatedOperations, String IOtype) {
 		OntClass conceptClass = ontologyModel.getOntClass(NS + "Concept");
 		OntClass datatypeClass = ontologyModel.getOntClass(NS + "Datatype");
 		DatatypeProperty hasName = ontologyModel.getDatatypeProperty(NS + "hasName");
@@ -250,9 +251,11 @@ public class WSOntology {
 		DatatypeProperty isArray = ontologyModel.getDatatypeProperty(NS + "isArray");
 		DatatypeProperty isTypeOf = ontologyModel.getDatatypeProperty(NS + "isTypeOf");
 		for (int i = 0; i < resultVariables.size(); i++) {
+
 			OwlService s = resultVariables.get(i);
 			Argument arg = s.getArgument();
-			if ((IOtype.equals("input") && !s.getisMatchedIO()) || (IOtype.equals("output"))) {
+			if ((IOtype.equals("input") && !s.getisMatchedIO())
+					|| (IOtype.equals("output") && !repeatedOperations.contains(arg.getBelongsToOperation()))) {
 				if (arg.getSubtypes().size() == 0) {
 					// it is native object
 
@@ -323,6 +326,28 @@ public class WSOntology {
 					// ontologyModel.getObjectProperty(NS + "hasOutput");
 					operInd.addProperty(property, coInd);
 				}
+			}
+		}
+		if (property.toString().equals(NS + "hasOutput")) {
+			for (Operation op : repeatedOperations) {
+
+				String name = op.getName().getContent().toLowerCase() + "_response";
+				name = changeUri(name);
+				IndividualImpl coInd = (IndividualImpl) ontologyModel.createIndividual(NS + name, conceptClass);
+				uris.add(coInd.getURI().toLowerCase());
+				// create has name prop
+				coInd.addProperty(hasName, name);
+				// create is required prop
+				coInd.addProperty(isRequired, "true");
+				// create is array prop
+				coInd.addProperty(isArray, "true");
+				// add children
+				ObjectProperty hasType = ontologyModel.getObjectProperty(NS + "hasType");
+
+				createIOrecursively(hasType, coInd, op.getOutputs());
+				// ObjectProperty hasOutput =
+				// ontologyModel.getObjectProperty(NS + "hasOutput");
+				operInd.addProperty(property, coInd);
 			}
 		}
 
