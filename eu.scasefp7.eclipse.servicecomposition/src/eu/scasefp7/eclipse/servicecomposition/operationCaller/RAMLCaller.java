@@ -140,7 +140,11 @@ public class RAMLCaller {
 		}
 
 		String result = "";
-		if (ramlOperation.getDomain().getCrudVerb().equalsIgnoreCase("get")) {
+		String crudVerb = ramlOperation.getDomain().getCrudVerb();
+
+		if (crudVerb.equalsIgnoreCase("get") || crudVerb.equalsIgnoreCase("post") || crudVerb.equalsIgnoreCase("delete")
+				|| crudVerb.equalsIgnoreCase("put")) {
+
 			HttpURLConnection conn = null;
 			try {
 
@@ -149,7 +153,14 @@ public class RAMLCaller {
 				conn = (HttpURLConnection) url.openConnection();
 				conn.setConnectTimeout(30000);
 				conn.setRequestMethod(ramlOperation.getDomain().getCrudVerb());
-				conn.setRequestProperty("Accept", "application/json");
+				if (ramlOperation.getDomain().getCrudVerb().equalsIgnoreCase("post")
+						|| ramlOperation.getDomain().getCrudVerb().equalsIgnoreCase("put")) {
+					conn.setDoInput(true);
+					conn.setDoOutput(true);
+				}
+				if (!url.toString().contains("mailgun")) {
+					conn.setRequestProperty("Content-Type", "application/json");
+				}
 				if (ramlOperation.getDomain().getSecurityScheme() != null) {
 					if (ramlOperation.getDomain().getSecurityScheme().equalsIgnoreCase("Basic Authentication")) {
 						Base64 b = new Base64();
@@ -159,8 +170,31 @@ public class RAMLCaller {
 						conn.setRequestProperty("Authorization", "Basic " + encoding);
 					}
 				}
+				if (ramlOperation.getDomain().getCrudVerb().equalsIgnoreCase("post")
+						|| ramlOperation.getDomain().getCrudVerb().equalsIgnoreCase("put")) {
+					JSONObject obj = new JSONObject();
+					for (Argument input : bodyParams) {
+						obj = (JSONObject) createJson(input, obj);
+					}
+					if (url.toString().contains("mailgun")) {
+						List<NameValuePair> urlParameters = new ArrayList<NameValuePair>();
+						Value val = null;
+						for (Argument input : bodyParams) {
+							val = (Value) input;
+							urlParameters.add(
+									new BasicNameValuePair(input.getName().getContent().toString(), val.getValue()));
+						}
+						OutputStream os = conn.getOutputStream();
+						os.write((new UrlEncodedFormEntity(urlParameters)).toString().getBytes());
 
-				if (conn.getResponseCode() != 200) {
+					} else {
+						String entity = obj.toString();
+						DataOutputStream os = new DataOutputStream(conn.getOutputStream());
+						os.writeBytes(entity);
+					}
+				}
+
+				if (conn.getResponseCode() != 200 && conn.getResponseCode() != 201 && conn.getResponseCode() != 301) {
 					throw new RuntimeException("Failed : HTTP error code : " + conn.getResponseCode());
 				}
 
@@ -190,194 +224,14 @@ public class RAMLCaller {
 						if (conn.getInputStream() != null) {
 							conn.getInputStream().close();
 						}
-						conn.disconnect();
+
 					} catch (Exception e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
+					} finally {
+						conn.disconnect();
 					}
 				}
-			}
-		} else if (ramlOperation.getDomain().getCrudVerb().equalsIgnoreCase("post")) {
-
-			try {
-				// Create connection
-				String url = (wsUrl + inputListGet).replaceAll(" ", "%20");
-				System.out.println("Calling " + url.toString());
-				HttpClient client = HttpClientBuilder.create().build();
-				HttpPost post = new HttpPost(url);
-				String USER_AGENT = "Mozilla/5.0";
-				// add header
-				post.setHeader("User-Agent", USER_AGENT);
-				if (!url.contains("mailgun")) {
-					post.setHeader("Content-Type", "application/json");
-				}
-				if (ramlOperation.getDomain().getSecurityScheme() != null) {
-					if (ramlOperation.getDomain().getSecurityScheme().equalsIgnoreCase("Basic Authentication")) {
-						Base64 b = new Base64();
-						String username = ((Value) ramlOperation.getAuthenticationParameters().get(0)).getValue();
-						String password = ((Value) ramlOperation.getAuthenticationParameters().get(1)).getValue();
-						String encoding = b.encodeAsString(new String(username + ":" + password).getBytes());
-						post.setHeader("Authorization", "Basic " + encoding);
-					}
-				}
-				// List<NameValuePair> urlParameters = new
-				// ArrayList<NameValuePair>();
-				// Value val = null;
-				// for (Argument input : bodyParams) {
-				// val = (Value) input;
-				// urlParameters.add(new
-				// BasicNameValuePair(input.getName().getContent().toString(),
-				// val.getValue()));
-				// }
-				//
-
-				// String request = "Journey={\"journeyLegs\":[
-				// {\"transportType\":\"ECAR\", \"geoLocationPoints\":[
-				// {\"latitude\":44.8500574, \"longitude\":13.8368621,
-				// \"eta\":0}, {\"latitude\":44.8500531,
-				// \"longitude\":13.8370427, \"eta\":2}] },
-				// {\"transportType\":\"CAR\", \"geoLocationPoints\":[
-				// {\"latitude\":44.8500531, \"longitude\":13.8370427,
-				// \"eta\":2}, {\"latitude\":44.8500574,
-				// \"longitude\":13.8368621, \"eta\":5}] }]}";
-				JSONObject obj = new JSONObject();
-				for (Argument input : bodyParams) {
-					obj = (JSONObject) createJson(input, obj);
-				}
-				// String journey= "Journey=" + obj.toString();
-				if (url.contains("mailgun")) {
-					List<NameValuePair> urlParameters = new ArrayList<NameValuePair>();
-					Value val = null;
-					for (Argument input : bodyParams) {
-						val = (Value) input;
-						urlParameters
-								.add(new BasicNameValuePair(input.getName().getContent().toString(), val.getValue()));
-					}
-
-					post.setEntity(new UrlEncodedFormEntity(urlParameters));
-				} else {
-					String entity = obj.toString();
-					post.setEntity(new StringEntity(entity, "UTF-8"));
-					// post.setEntity(new StringEntity(request, "UTF-8"));
-					// post.setEntity(new UrlEncodedFormEntity(urlParameters));
-				}
-
-				HttpResponse response = client.execute(post);
-				// System.out.println("Response Code : " +
-				// response.getStatusLine().getStatusCode());
-				if (response.getStatusLine().getStatusCode() != 200) {
-					throw new RuntimeException(
-							"Failed : HTTP error code : " + response.getStatusLine().getStatusCode());
-				}
-				BufferedReader rd = new BufferedReader(new InputStreamReader(response.getEntity().getContent()));
-
-				StringBuffer resultPost = new StringBuffer();
-				String line = "";
-				while ((line = rd.readLine()) != null) {
-					resultPost.append(line);
-				}
-				result = resultPost.toString();
-				System.out.println(result);
-			} catch (MalformedURLException e) {
-
-				e.printStackTrace();
-
-			} catch (IOException e) {
-
-				e.printStackTrace();
-				throw new IOException();
-			}
-
-		} else if (ramlOperation.getDomain().getCrudVerb().equalsIgnoreCase("delete")) {
-			URL url = null;
-			try {
-				url = new URL((wsUrl + inputListGet).replaceAll(" ", "%20"));
-				System.out.println("Calling " + url.toString());
-			} catch (MalformedURLException exception) {
-				exception.printStackTrace();
-			}
-			HttpURLConnection httpURLConnection = null;
-			try {
-				httpURLConnection = (HttpURLConnection) url.openConnection();
-				httpURLConnection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
-				httpURLConnection.setRequestMethod("DELETE");
-				if (ramlOperation.getDomain().getSecurityScheme() != null) {
-					if (ramlOperation.getDomain().getSecurityScheme().equalsIgnoreCase("Basic Authentication")) {
-						Base64 b = new Base64();
-						String username = ((Value) ramlOperation.getAuthenticationParameters().get(0)).getValue();
-						String password = ((Value) ramlOperation.getAuthenticationParameters().get(1)).getValue();
-						String encoding = b.encodeAsString(new String(username + ":" + password).getBytes());
-						httpURLConnection.setRequestProperty("Authorization", "Basic " + encoding);
-					}
-				}
-				System.out.println(httpURLConnection.getResponseCode());
-			} catch (IOException exception) {
-				exception.printStackTrace();
-				throw new IOException();
-			} finally {
-				if (httpURLConnection != null) {
-					httpURLConnection.disconnect();
-				}
-			}
-
-		} else if (ramlOperation.getDomain().getCrudVerb().equalsIgnoreCase("put")) {
-			try {
-				// Create connection
-				String url = (wsUrl + inputListGet).replaceAll(" ", "%20");
-
-				HttpClient client = HttpClientBuilder.create().build();
-				HttpPut put = new HttpPut(url);
-				String USER_AGENT = "Mozilla/5.0";
-				// add header
-				put.setHeader("User-Agent", USER_AGENT);
-
-				// List<NameValuePair> urlParameters = new
-				// ArrayList<NameValuePair>();
-				// Value val = null;
-				// for (Argument input : bodyParams) {
-				// val = (Value) input;
-				// urlParameters.add(new
-				// BasicNameValuePair(input.getName().getContent().toString(),
-				// val.getValue()));
-				// }
-
-				JSONObject obj = new JSONObject();
-				for (Argument input : bodyParams) {
-					obj = (JSONObject) createJson(input, obj);
-				}
-				// String journey= "Journey=" + obj.toString();
-				put.setEntity(new StringEntity(obj.toString(), "UTF-8"));
-
-				// // just for testing
-				// String content =
-				// "<resource><NAME>xname</NAME><PRICE>3</PRICE></resource>";
-				// StringEntity entity = new StringEntity(content);
-				// entity.setContentType(new BasicHeader("Content-Type",
-				// "application/xml"));
-				// put.setEntity(entity);
-				// // end of test
-
-				// put.setEntity(new UrlEncodedFormEntity(urlParameters));
-
-				HttpResponse response = client.execute(put);
-				System.out.println("Response Code : " + response.getStatusLine().getStatusCode());
-
-				BufferedReader rd = new BufferedReader(new InputStreamReader(response.getEntity().getContent()));
-
-				StringBuffer resultPut = new StringBuffer();
-				String line = "";
-				while ((line = rd.readLine()) != null) {
-					resultPut.append(line);
-				}
-				result = resultPut.toString();
-			} catch (MalformedURLException e) {
-
-				e.printStackTrace();
-
-			} catch (IOException e) {
-
-				e.printStackTrace();
-				throw new IOException();
 			}
 
 		} else {
@@ -708,14 +562,18 @@ public class RAMLCaller {
 						obj2 = (JSONObject) createJson(element2, obj2);
 						array2.add(obj2);
 					}
-					((JSONArray) array).add(obj2);
+					if (!obj2.isEmpty() || input.isRequired()) {
+						((JSONArray) array).add(obj2);
+					}
 
 				} else {
 					JSONObject obj3 = new JSONObject();
 					for (Argument subinput : input.getSubtypes()) {
 						obj3 = (JSONObject) createJson(subinput, obj3);
 					}
-					((JSONArray) array).add(obj3);
+					if (!obj3.isEmpty() || input.isRequired()) {
+						((JSONArray) array).add(obj3);
+					}
 				}
 
 			}
@@ -737,7 +595,8 @@ public class RAMLCaller {
 			if (input.getType().equalsIgnoreCase("String")) {
 				Value val = (Value) input;
 				if (obj instanceof JSONObject) {
-					if (!val.getValue().equals("enter value") && !val.getValue().equals("matched"))
+					if (!val.getValue().equals("enter value") && !val.getValue().equals("matched")
+							&& !val.getValue().isEmpty())
 						((JSONObject) obj).put(input.getName().getContent().toString(), val.getValue());
 				} else if (obj instanceof JSONArray) {
 					((JSONArray) obj).add(val.getValue());
@@ -746,7 +605,8 @@ public class RAMLCaller {
 			if (input.getType().equalsIgnoreCase("int")) {
 				Value val = (Value) input;
 				if (obj instanceof JSONObject) {
-					if (!val.getValue().equals("enter value") && !val.getValue().equals("matched"))
+					if (!val.getValue().equals("enter value") && !val.getValue().equals("matched")
+							&& !val.getValue().isEmpty())
 						((JSONObject) obj).put(input.getName().getContent().toString(),
 								Integer.parseInt(val.getValue()));
 				} else if (obj instanceof JSONArray) {
@@ -756,7 +616,8 @@ public class RAMLCaller {
 			if (input.getType().equalsIgnoreCase("long")) {
 				Value val = (Value) input;
 				if (obj instanceof JSONObject) {
-					if (!val.getValue().equals("enter value") && !val.getValue().equals("matched"))
+					if (!val.getValue().equals("enter value") && !val.getValue().equals("matched")
+							&& !val.getValue().isEmpty())
 						((JSONObject) obj).put(input.getName().getContent().toString(), Long.parseLong(val.getValue()));
 				} else if (obj instanceof JSONArray) {
 					((JSONArray) obj).add(Long.parseLong(val.getValue()));
@@ -765,7 +626,8 @@ public class RAMLCaller {
 			if (input.getType().equalsIgnoreCase("boolean")) {
 				Value val = (Value) input;
 				if (obj instanceof JSONObject) {
-					if (!val.getValue().equals("enter value") && !val.getValue().equals("matched"))
+					if (!val.getValue().equals("enter value") && !val.getValue().equals("matched")
+							&& !val.getValue().isEmpty())
 						((JSONObject) obj).put(input.getName().getContent().toString(),
 								Boolean.parseBoolean(val.getValue()));
 				} else if (obj instanceof JSONArray) {
@@ -775,7 +637,8 @@ public class RAMLCaller {
 			if (input.getType().equalsIgnoreCase("float")) {
 				Value val = (Value) input;
 				if (obj instanceof JSONObject) {
-					if (!val.getValue().equals("enter value") && !val.getValue().equals("matched"))
+					if (!val.getValue().equals("enter value") && !val.getValue().equals("matched")
+							&& !val.getValue().isEmpty())
 						((JSONObject) obj).put(input.getName().getContent().toString(),
 								Float.parseFloat(val.getValue()));
 				} else if (obj instanceof JSONArray) {
@@ -785,7 +648,8 @@ public class RAMLCaller {
 			if (input.getType().equalsIgnoreCase("double")) {
 				Value val = (Value) input;
 				if (obj instanceof JSONObject) {
-					if (!val.getValue().equals("enter value") && !val.getValue().equals("matched"))
+					if (!val.getValue().equals("enter value") && !val.getValue().equals("matched")
+							&& !val.getValue().isEmpty())
 						((JSONObject) obj).put(input.getName().getContent().toString(),
 								Double.parseDouble(val.getValue()));
 				} else if (obj instanceof JSONArray) {

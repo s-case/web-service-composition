@@ -189,6 +189,7 @@ public class FillToolbar {
 
 				try {
 					if (view.getSavedWorkflow()) {
+						view.clearMatchedInputs();
 						SaveOpen.openWorkflow(view);
 					} else {
 						if (view.jungGraphHasOperations()) {
