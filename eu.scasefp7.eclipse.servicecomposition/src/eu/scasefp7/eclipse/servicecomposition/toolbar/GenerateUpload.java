@@ -318,7 +318,7 @@ public class GenerateUpload {
 							}
 						}
 						String restCode = RestfulCodeGenerator.generateRestfulCode(pack.getElementName(),
-								generator.getInputVariables(), generator.geturiParameters(), generator.getNativeInputsMatchedWithArrays(), hasPost);
+								generator.getInputVariables(), generator.geturiParameters(), generator.getAuthParameters(), generator.getNativeInputsMatchedWithArrays(), hasPost);
 						StringBuffer restBuffer = new StringBuffer();
 						restBuffer.append(restCode);
 						ICompilationUnit restClass = pack.createCompilationUnit("WebService.java",

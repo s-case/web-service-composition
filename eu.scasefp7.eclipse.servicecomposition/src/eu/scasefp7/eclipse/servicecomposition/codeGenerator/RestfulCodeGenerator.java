@@ -30,7 +30,7 @@ import eu.scasefp7.eclipse.servicecomposition.transformer.JungXMItoOwlTransform.
 public class RestfulCodeGenerator {
 
 	public static String generateRestfulCode(String packageName, ArrayList<OwlService> inputs,
-			ArrayList<Argument> uriParameters, ArrayList<OwlService> nativeInputsMatchedWithArrays, boolean containsPost) {
+			ArrayList<Argument> uriParameters, ArrayList<Argument> authParameters, ArrayList<OwlService> nativeInputsMatchedWithArrays, boolean containsPost) {
 
 		boolean hasBodyInput = false;
 		for (OwlService input : inputs) {
@@ -94,6 +94,13 @@ public class RestfulCodeGenerator {
 			// + param.getName().getContent().replaceAll("[0123456789]", "");
 			// }
 		}
+		for (Argument auth :authParameters){
+			if (!inputList.isEmpty())
+				inputList += ", ";
+			inputList += "@QueryParam(\"" + auth.getName().getContent().toLowerCase() + "\") "
+						+ auth.getType() + " "
+						+ auth.getName().getContent().toLowerCase();
+		}
 		for (OwlService matchedInput :nativeInputsMatchedWithArrays){
 			if (!inputList.isEmpty())
 				inputList += ", ";
@@ -119,6 +126,11 @@ public class RestfulCodeGenerator {
 					inputList += ", ";
 				inputList += input.getName().getContent();
 			}
+		}
+		for (Argument auth :authParameters){
+			if (!inputList.isEmpty())
+				inputList += ", ";
+			inputList += auth.getName().getContent().toLowerCase();
 		}
 		for (OwlService matchedInput :nativeInputsMatchedWithArrays){
 			if (!inputList.isEmpty())

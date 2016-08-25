@@ -35,7 +35,7 @@ import edu.uci.ics.jung.graph.util.EdgeType;
  * parameterized, defining different types of generated code, according to
  * packagedependences.
  * 
- * @author Manios Krasanakis
+ * @author Manios Krasanakis, mkoutli
  *
  * @param <FunctionCodeNodeType>
  *            : an instance of <code>FunctionCodeName</code> to generate
@@ -51,6 +51,7 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 	protected ArrayList<OwlService> matchedInputs = new ArrayList<OwlService>();
 	protected ArrayList<OwlService> matchedOutputs = new ArrayList<OwlService>();
 	protected ArrayList<Argument> uriParameters = new ArrayList<Argument>();
+	protected ArrayList<Argument> authParameters = new ArrayList<Argument>();
 	protected ArrayList<OwlService> inputsWithoutMatchedVariables = new ArrayList<OwlService>();
 	protected ArrayList<OwlService> nativeInputsMatchedWithArrays = new ArrayList<OwlService>();
 	protected ArrayList<Operation> repeatedOperations = new ArrayList<Operation>();
@@ -125,6 +126,12 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 				remainingOperations.add(service);
 				if (service.getOperation().getDomain().getURI().contains("mailgun")) {
 					hasMailgun = true;
+				}
+				if (!service.getOperation().getAuthenticationParameters().isEmpty()) {
+					for (Argument arg : service.getOperation().getAuthenticationParameters()) {
+						if (!authParameters.contains(arg))
+							authParameters.add(arg);
+					}
 				}
 			}
 
@@ -322,6 +329,12 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 				}
 			}
 
+		}
+		
+		for (Argument arg :authParameters){
+			declaredVariables += TAB + "private Variable " + arg.getName().getContent().toLowerCase()
+					+ " = new Variable(\"" + arg.getName().getContent().toLowerCase()
+					+ "\",\"\", \"" + arg.getType() + "\");\n";
 		}
 		/////////// create Response/Request for EACH operation
 		String operationResponseObjects = "";
@@ -578,6 +591,11 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 				declaredInputs += ", ";
 			declaredInputs += "Integer " + matchedInput.getName().getContent() + "_num";
 		}
+		for (Argument auth : authParameters) {
+			if (!declaredInputs.isEmpty())
+				declaredInputs += ", ";
+			declaredInputs += "String " + auth.getName().getContent().toLowerCase();
+		}
 		if (hasBodyInput) {
 			if (!declaredInputs.isEmpty())
 				declaredInputs += ", ";
@@ -778,7 +796,8 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 						+ op.getName().getContent() + "Response" + ">();\n";
 				resultClassConstractor1 += TAB + TAB + TAB + "this." + op.getName().getContent().toLowerCase()
 						+ "_response" + " = new ArrayList<" + op.getName().getContent() + "Response" + ">();\n";
-				Argument arg = new Argument(op.getName().getContent().toLowerCase() + "_response", op.getName().getContent() + "_response", "", true, false, op.getOutputs());
+				Argument arg = new Argument(op.getName().getContent().toLowerCase() + "_response",
+						op.getName().getContent() + "_response", "", true, false, op.getOutputs());
 				arg.setIsRequired(true);
 				outputVariables2.add(new OwlService(arg));
 			}
@@ -1359,13 +1378,14 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 				}
 			}
 		}
-		for (OwlService matched : nativeInputsMatchedWithArrays){
-			Argument arg = new Argument(matched.getArgument().getName().getContent() + "_num", "int", "QueryParameter", false, true, null);
+		for (OwlService matched : nativeInputsMatchedWithArrays) {
+			Argument arg = new Argument(matched.getName().getContent() + "_num", "int", "QueryParameter",
+					false, true, null);
 			arg.setIsRequired(true);
 			inputsWithoutMatchedVariables.add(new OwlService(arg));
 		}
-		operation = instance.createObjects(ProjectName, inputsWithoutMatchedVariables, uriParameters, outputVariables, repeatedOperations,
-				crudVerb, graph);
+		operation = instance.createObjects(ProjectName, inputsWithoutMatchedVariables, uriParameters, outputVariables,
+				repeatedOperations, crudVerb, graph);
 
 		return returnCode;
 	}
@@ -1377,7 +1397,7 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 	public ArrayList<Operation> getRepeatedOperations() {
 		return this.repeatedOperations;
 	}
-	
+
 	public ArrayList<OwlService> getInputVariables() {
 		return this.inputVariables;
 	}
@@ -1573,6 +1593,10 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 
 	public ArrayList<Argument> getUriParameters() {
 		return uriParameters;
+	}
+	
+	public ArrayList<Argument> getAuthParameters() {
+		return authParameters;
 	}
 
 	public void setUriParameters(ArrayList<Argument> uriParameters) {
