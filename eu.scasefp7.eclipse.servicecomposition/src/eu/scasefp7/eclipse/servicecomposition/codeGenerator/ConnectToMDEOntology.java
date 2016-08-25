@@ -175,13 +175,13 @@ public class ConnectToMDEOntology {
 				}
 			}
 		}
-		
-		for (Operation op :repeatedOperations){
+
+		for (Operation op : repeatedOperations) {
 			String url = op.getDomain().getURI();
 			ArrayList<String> operationSubNames = new ArrayList<String>();
 			ArrayList<MDERepresentation> operationHasSubs = new ArrayList<MDERepresentation>();
 			for (OwlService output : outputs) {
-				if (output.getArgument().getBelongsToOperation().equals(op)){
+				if (output.getArgument().getBelongsToOperation().equals(op)) {
 					String type = "Primitive";
 					if (output.getArgument().isArray()) {
 						type = "Array";
@@ -189,24 +189,30 @@ public class ConnectToMDEOntology {
 							&& !RAMLCaller.stringIsItemFromList(output.getArgument().getType(), datatypes)) {
 						type = "Object";
 					}
-					ArrayList<String> subNames = new ArrayList<String>();
-					ArrayList<MDERepresentation> hasSubs = new ArrayList<MDERepresentation>();
-					for (OwlService sub : graph.getSuccessors(output)) {
-						hasSubs.add(addSubtypes(sub, graph, hasSubs, false));
-						subNames.add(sub.getName().getContent());
+					MDERepresentation outputRepresentation;
+					if (output.getArgument().getSubtypes().isEmpty()) {
+						ArrayList<String> subNames = new ArrayList<String>();
+						subNames.add(output.getArgument().getType().toLowerCase());
+						outputRepresentation = new MDERepresentation(false, !output.getArgument().isRequired(), url,
+								output.getName().getContent(), type, null, subNames);
+					} else {
+						ArrayList<String> subNames = new ArrayList<String>();
+						ArrayList<MDERepresentation> hasSubs = new ArrayList<MDERepresentation>();
+						for (OwlService sub : graph.getSuccessors(output)) {
+							hasSubs.add(addSubtypes(sub, graph, hasSubs, false));
+							subNames.add(sub.getName().getContent());
+						}
+						outputRepresentation = new MDERepresentation(false, !output.getArgument().isRequired(), url,
+								output.getName().getContent(), type, hasSubs, subNames);
+
 					}
-					MDERepresentation outputRepresentation = new MDERepresentation(false,
-							!output.getArgument().isRequired(), url, output.getName().getContent(), type, hasSubs,
-							subNames);
 					operationHasSubs.add(outputRepresentation);
 					operationSubNames.add(output.getName().getContent());
 				}
 			}
-			
-			
-			
-			MDERepresentation outputRepresentation2 = new MDERepresentation(false,
-					false, url, op.getName().getContent().toLowerCase() + "_response", "Array", operationHasSubs,
+
+			MDERepresentation outputRepresentation2 = new MDERepresentation(false, false, url,
+					op.getName().getContent().toLowerCase() + "_response", "Array", operationHasSubs,
 					operationSubNames);
 			hasOutput.add(outputRepresentation2);
 
