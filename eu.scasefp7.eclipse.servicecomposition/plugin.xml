@@ -119,7 +119,7 @@
             appearsBefore="eu.scasefp7.eclipse.core.ui.dashboard.groups.code"
             name="Mashup" />
         <command
-              buttonId="eu.scasefp7.eclipse.core.ui.dashboard.buttons.createsvccomposition"
+              buttonId="eu.scasefp7.eclipse.core.ui.dashboard.buttons.mashup.createsvccomposition"
               commandId="eu.scasefp7.eclipse.core.ui.switchToSCView"
               error="Change to SC view has failed."
               groupId="eu.scasefp7.eclipse.core.ui.dashboard.groups.mashup"
