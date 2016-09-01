@@ -103,23 +103,35 @@ public class RestFunctionCodeNode extends CodeNode {
 						ret += "urlParameters.add(new BasicNameValuePair(" + input.getName().getContent().toString()
 								+ ".name , " + operation.getName().toString() + "_request.get"
 								+ input.getName().getContent().toString() + "()));\n";
-					} else {
-						ret += "urlParameters.add(new BasicNameValuePair(" + input.getName().getContent().toString()
-								+ ".name , " + input.getName().getContent().toString() + ".value));\n";
 					}
+					// else {
+					// ret += "urlParameters.add(new BasicNameValuePair(" +
+					// input.getName().getContent().toString()
+					// + ".name , " + input.getName().getContent().toString() +
+					// ".value));\n";
+					// }
 				}
 
-				ret += "HttpEntity entity = new UrlEncodedFormEntity(urlParameters);\n";
+				ret += "StringBuilder sb = new StringBuilder();\n" + "boolean first = true;\n" +
+
+				"for (NameValuePair pair : urlParameters) {\n" + TAB + "if (first)\n" + TAB + TAB + "first = false;\n"
+						+ TAB + "else\n" + TAB + TAB + "sb.append(\"&\");\n" + TAB +
+
+				"sb.append(URLEncoder.encode(pair.getName(), \"UTF-8\"));\n" + TAB + "sb.append(\"=\");\n" + TAB
+						+ "sb.append(URLEncoder.encode(pair.getValue(), \"UTF-8\"));\n" + TAB + "}\n"
+						+ "String entity = sb.toString();\n"
+						+ "ArrayList<Variable> inputs = new ArrayList<Variable>();\n" + "inputs.add(apikey);\n";
 
 			} else {
 				ret += TAB + "Gson body = new Gson();\n";
-				ret += TAB + "String json = body.toJson(" + operation.getName().toString() + "_request);\n";
-				ret += "HttpEntity entity = new StringEntity(json, \"UTF-8\");\n";
+				ret += TAB + "String entity = body.toJson(" + operation.getName().toString() + "_request);\n";
+				ret += "ArrayList<Variable> inputs = new ArrayList<Variable>();\n";
 			}
 		} else {
-			ret += "HttpEntity entity = null;\n";
+			ret += "String entity = \"\";\n";
+			ret += "ArrayList<Variable> inputs = new ArrayList<Variable>();\n";
 		}
-		ret += "ArrayList<Variable> inputs = new ArrayList<Variable>();\n";
+		
 		for (Argument arg : operation.getInputs())
 			for (OwlService var : allVariables) {
 				if (var.getArgument().equals(arg)) {

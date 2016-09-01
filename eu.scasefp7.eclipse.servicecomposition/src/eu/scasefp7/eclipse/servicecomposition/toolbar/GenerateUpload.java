@@ -209,12 +209,16 @@ public class GenerateUpload {
 						boolean hasRest = false;
 						boolean hasSoap = false;
 						boolean hasPost = false;
+						boolean hasForeman = false;
 						for (OwlService service : jungGraph.getVertices()) {
 							if (service.getOperation() != null) {
 								if (service.getOperation().getType().equalsIgnoreCase("Restful")) {
 									hasRest = true;
 									if (service.getOperation().getDomain().getCrudVerb().equalsIgnoreCase("post")) {
 										hasPost = true;
+									}
+									if (service.getOperation().getDomain().getURI().startsWith("https://foreman.res.eng.it")){
+										hasForeman = true;
 									}
 								}
 								if (service.getOperation().getType().equalsIgnoreCase("soap")) {
@@ -330,7 +334,7 @@ public class GenerateUpload {
 						if (monitor.isCanceled())
 							return Status.CANCEL_STATUS;
 						if (hasRest) {
-							String code = CallRestfulServiceCode.generateCode(pack.getElementName());
+							String code = CallRestfulServiceCode.generateCode(pack.getElementName(), hasForeman);
 							StringBuffer codeBuffer = new StringBuffer();
 							codeBuffer.append(code);
 							ICompilationUnit callRestClass = pack.createCompilationUnit("CallRESTfulService.java",

@@ -210,23 +210,30 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 		// detect inputs that are matched with arrays but do not belong to
 		// arrays
 		for (OwlService service : matchedInputs) {
-			if (service.getArgument().isNative() && !service.getArgument().isArray()) {
+			if (!service.getArgument().isArray()) {
 				Collection<OwlService> predecessors = (Collection<OwlService>) graph.getPredecessors(service);
-				for (OwlService predecessor : predecessors) {
-					boolean isMemberOfArray = false;
+				boolean outputIsMemberOfArray = false;
+				boolean inputIsMemberOfArray = false;
+				for (OwlService predecessor : predecessors) {	
 					if (predecessor.getArgument() != null && predecessor.getisMatchedIO()) {
 						for (Object parent : predecessor.getArgument().getParent()) {
 							if (parent instanceof Argument)
 								if (((Argument) parent).isArray()) {
-									isMemberOfArray = true;
+									outputIsMemberOfArray = true;
 								}
 						}
-						if (isMemberOfArray) {
-							nativeInputsMatchedWithArrays.add(service);
-							if (!repeatedOperations.contains(service.getArgument().getBelongsToOperation()))
-								repeatedOperations.add(service.getArgument().getBelongsToOperation());
-						}
 					}
+				}
+				for (Object parent : service.getArgument().getParent()) {
+					if (parent instanceof Argument)
+						if (((Argument) parent).isArray()) {
+							inputIsMemberOfArray = true;
+						}
+				}
+				if (!inputIsMemberOfArray && outputIsMemberOfArray) {
+					nativeInputsMatchedWithArrays.add(service);
+					if (!repeatedOperations.contains(service.getArgument().getBelongsToOperation()))
+						repeatedOperations.add(service.getArgument().getBelongsToOperation());
 				}
 			}
 		}
@@ -330,11 +337,11 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 			}
 
 		}
-		
-		for (Argument arg :authParameters){
+
+		for (Argument arg : authParameters) {
 			declaredVariables += TAB + "private Variable " + arg.getName().getContent().toLowerCase()
-					+ " = new Variable(\"" + arg.getName().getContent().toLowerCase()
-					+ "\",\"\", \"" + arg.getType() + "\");\n";
+					+ " = new Variable(\"" + arg.getName().getContent().toLowerCase() + "\",\"\", \"" + arg.getType()
+					+ "\");\n";
 		}
 		/////////// create Response/Request for EACH operation
 		String operationResponseObjects = "";
@@ -1063,6 +1070,15 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 				declaredInputs += TAB + TAB + "}\n";
 			}
 		}
+		for (Argument arg : authParameters) {
+			declaredInputs += TAB + TAB + "if (" + arg.getName().getContent().toLowerCase() + " == null) {\n";
+			declaredInputs += TAB + TAB + TAB + "this." + arg.getName().getContent().toLowerCase() + ".value"
+					+ " =\"\";\n";
+			declaredInputs += TAB + TAB + "} else {\n";
+			declaredInputs += TAB + TAB + TAB + "this." + arg.getName().getContent().toLowerCase() + ".value" + " = "
+					+ arg.getName().getContent().toLowerCase() + ";\n";
+			declaredInputs += TAB + TAB + "}\n";
+		}
 		declaredInputs += TAB + TAB + "//assign uri parameters of services to variables\n";
 		for (OwlService param : inputVariables) {
 			if (param.getArgument().isTypeOf().equals("URIParameter") && !param.getisMatchedIO()) {
@@ -1196,8 +1212,8 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 
 					String array = "";
 					String ret = ".get" + matchedOutput.getName().getContent().replaceAll("[0123456789]", "") + "()";
-					ret = roadToSub(initialArray, matchedOutput, graph, ret);
-					int index = ret.indexOf(".get(i)");
+					ret = roadToSub(initialArray, matchedOutput, graph, ret, "0");
+					int index = ret.indexOf(".get(0)");
 					array = ret.substring(0, index);
 					matchedArrays = TAB + TAB + TAB + "if (!"
 							+ matchedOutput.getArgument().getBelongsToOperation().getName() + "_response" + array
@@ -1241,7 +1257,7 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 						String array = "";
 						String ret = ".get" + matchedOutput.getName().getContent().replaceAll("[0123456789]", "")
 								+ "()";
-						ret = roadToSub(initialArray, matchedOutput, graph, ret);
+						ret = roadToSub(initialArray, matchedOutput, graph, ret, "i");
 						int index = ret.indexOf(".get(i)");
 						array = ret.substring(0, index);
 						String type = matchedOutput.getArgument().getType();
@@ -1290,7 +1306,7 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 					// ".value;\n";
 					// } else {
 					String ret = ".get" + matchedOutput.getName().getContent().replaceAll("[0123456789]", "") + "()";
-					ret = roadToSub(null, matchedOutput, graph, ret);
+					ret = roadToSub(null, matchedOutput, graph, ret, "");
 					String type = matchedOutput.getArgument().getType();
 					if (type.equalsIgnoreCase("String")) {
 						declaredInputs += TAB + TAB + TAB + "this." + matchedInput.getName().getContent().toString()
@@ -1379,8 +1395,8 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 			}
 		}
 		for (OwlService matched : nativeInputsMatchedWithArrays) {
-			Argument arg = new Argument(matched.getName().getContent() + "_num", "int", "QueryParameter",
-					false, true, null);
+			Argument arg = new Argument(matched.getName().getContent() + "_num", "int", "QueryParameter", false, true,
+					null);
 			arg.setIsRequired(true);
 			inputsWithoutMatchedVariables.add(new OwlService(arg));
 		}
@@ -1563,15 +1579,17 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 
 	}
 
-	private String roadToSub(OwlService initialArray, OwlService sub, Graph<OwlService, Connector> graph, String ret) {
+	private String roadToSub(OwlService initialArray, OwlService sub, Graph<OwlService, Connector> graph, String ret,
+			String num) {
 		for (OwlService service : graph.getPredecessors(sub)) {
 			if (service.getArgument() != null) {
 				if (initialArray != null && service.equals(initialArray)) {
-					ret = ".get" + service.getName().getContent().replaceAll("[0123456789]", "") + "().get(i)" + ret;
+					ret = ".get" + service.getName().getContent().replaceAll("[0123456789]", "") + "().get(" + num + ")"
+							+ ret;
 				} else {
 					ret = ".get" + service.getName().getContent().replaceAll("[0123456789]", "") + "()" + ret;
 				}
-				ret = roadToSub(initialArray, service, graph, ret);
+				ret = roadToSub(initialArray, service, graph, ret, num);
 			} else {
 				return ret;
 			}
@@ -1594,7 +1612,7 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 	public ArrayList<Argument> getUriParameters() {
 		return uriParameters;
 	}
-	
+
 	public ArrayList<Argument> getAuthParameters() {
 		return authParameters;
 	}

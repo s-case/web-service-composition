@@ -1,21 +1,13 @@
 package eu.scasefp7.eclipse.servicecomposition.operationCaller;
 
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.StringWriter;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.net.URLConnection;
 import java.net.URLEncoder;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
@@ -26,16 +18,7 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 
-import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.entity.UrlEncodedFormEntity;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.methods.HttpPut;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.message.BasicHeader;
 import org.apache.http.message.BasicNameValuePair;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -153,14 +136,7 @@ public class RAMLCaller {
 				conn = (HttpURLConnection) url.openConnection();
 				conn.setConnectTimeout(30000);
 				conn.setRequestMethod(ramlOperation.getDomain().getCrudVerb());
-				if (ramlOperation.getDomain().getCrudVerb().equalsIgnoreCase("post")
-						|| ramlOperation.getDomain().getCrudVerb().equalsIgnoreCase("put")) {
-					conn.setDoInput(true);
-					conn.setDoOutput(true);
-				}
-				if (!url.toString().contains("mailgun")) {
-					conn.setRequestProperty("Content-Type", "application/json");
-				}
+				
 				if (ramlOperation.getDomain().getSecurityScheme() != null) {
 					if (ramlOperation.getDomain().getSecurityScheme().equalsIgnoreCase("Basic Authentication")) {
 						Base64 b = new Base64();
@@ -170,12 +146,10 @@ public class RAMLCaller {
 						conn.setRequestProperty("Authorization", "Basic " + encoding);
 					}
 				}
+				//if it is post or put request
 				if (ramlOperation.getDomain().getCrudVerb().equalsIgnoreCase("post")
 						|| ramlOperation.getDomain().getCrudVerb().equalsIgnoreCase("put")) {
-					JSONObject obj = new JSONObject();
-					for (Argument input : bodyParams) {
-						obj = (JSONObject) createJson(input, obj);
-					}
+					//if it is request to mailgun
 					if (url.toString().contains("mailgun")) {
 						List<NameValuePair> urlParameters = new ArrayList<NameValuePair>();
 						Value val = null;
@@ -184,10 +158,45 @@ public class RAMLCaller {
 							urlParameters.add(
 									new BasicNameValuePair(input.getName().getContent().toString(), val.getValue()));
 						}
-						OutputStream os = conn.getOutputStream();
-						os.write((new UrlEncodedFormEntity(urlParameters)).toString().getBytes());
+						StringBuilder sb = new StringBuilder();
+						boolean first = true;
 
+						for (NameValuePair pair : urlParameters) {
+							if (first)
+								first = false;
+							else
+								sb.append("&");
+
+							sb.append(URLEncoder.encode(pair.getName(), "UTF-8"));
+							sb.append("=");
+							sb.append(URLEncoder.encode(pair.getValue(), "UTF-8"));
+						}
+						Value apikeyVal = null;
+						for (Argument arg : uriParams) {
+							apikeyVal = (Value) arg;
+							if (arg.getName().toString().equals("apikey")) {
+								Base64 b = new Base64();
+								String encoding = b.encodeAsString(new String("api:" + apikeyVal.getValue()).getBytes());
+								conn.setRequestProperty("Authorization", "Basic "+encoding);
+								break;
+							}
+							
+						}
+						
+						conn.setDoOutput(true);
+						DataOutputStream wr = new DataOutputStream(conn.getOutputStream());
+						wr.writeBytes(sb.toString());
+						wr.flush();
+						wr.close();
+						
 					} else {
+						conn.setRequestProperty("Content-Type", "application/json");
+						conn.setDoInput(true);
+						conn.setDoOutput(true);
+						JSONObject obj = new JSONObject();
+						for (Argument input : bodyParams) {
+							obj = (JSONObject) createJson(input, obj);
+						}
 						String entity = obj.toString();
 						DataOutputStream os = new DataOutputStream(conn.getOutputStream());
 						os.writeBytes(entity);
@@ -220,17 +229,17 @@ public class RAMLCaller {
 
 			} finally {
 				if (conn != null) {
-					try {
-						if (conn.getInputStream() != null) {
-							conn.getInputStream().close();
-						}
-
-					} catch (Exception e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					} finally {
+//					try {
+//						if (conn.getInputStream() != null) {
+//							conn.getInputStream().close();
+//						}
+//
+//					} catch (Exception e) {
+//						// TODO Auto-generated catch block
+//						e.printStackTrace();
+//					} finally {
 						conn.disconnect();
-					}
+//					}
 				}
 			}
 

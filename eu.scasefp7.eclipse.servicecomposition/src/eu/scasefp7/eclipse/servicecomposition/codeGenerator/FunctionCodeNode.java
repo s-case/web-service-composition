@@ -378,7 +378,7 @@ public class FunctionCodeNode extends CodeNode {
 
 		String imports = "";
 		if (restServiceExists) {
-			imports += "import org.apache.http.HttpEntity;\nimport com.google.gson.Gson;\n" + "import com.google.gson.GsonBuilder;\n";
+			imports += "import com.google.gson.Gson;\n" + "import com.google.gson.GsonBuilder;\n";
 			if (hasDeserializer) {
 				imports += "import com.google.gson.JsonDeserializationContext;\n"
 						+ "import com.google.gson.JsonDeserializer;\n" + "import com.google.gson.JsonElement;\n"
@@ -387,7 +387,7 @@ public class FunctionCodeNode extends CodeNode {
 						+ "import com.google.gson.reflect.TypeToken;\n" + "import java.lang.reflect.Type;\n";
 			}
 			if (mailgun){
-				imports += "import org.apache.http.NameValuePair;\nimport org.apache.http.client.entity.UrlEncodedFormEntity;\nimport org.apache.http.entity.StringEntity;\nimport org.apache.http.message.BasicNameValuePair;\nimport java.util.List;\n";
+				imports += "import java.net.URLEncoder;\nimport org.apache.http.NameValuePair;\nimport org.apache.http.message.BasicNameValuePair;\nimport java.util.List;\n";
 			}
 		}
 		if (wsdlServiceExists) {
