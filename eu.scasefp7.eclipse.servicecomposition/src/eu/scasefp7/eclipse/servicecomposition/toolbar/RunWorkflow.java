@@ -70,15 +70,15 @@ public class RunWorkflow {
 	protected ServiceCompositionView view;
 	protected edu.uci.ics.jung.graph.Graph<OwlService, Connector> jungGraph;
 
-	
-	public RunWorkflow(ServiceCompositionView view, TreeViewer treeViewer, TreeViewerColumn columnb, Composite authParamsComposite){
+	public RunWorkflow(ServiceCompositionView view, TreeViewer treeViewer, TreeViewerColumn columnb,
+			Composite authParamsComposite) {
 		this.view = view;
 		this.jungGraph = view.getJungGraph();
 		this.treeViewer = treeViewer;
 		this.columnb = columnb;
 		this.authParamsComposite = authParamsComposite;
 	}
-	
+
 	public void unhighlightAllNodes() {
 		// unhighlight all nodes
 		Graph graph = view.getViewer().getGraphControl();
@@ -150,7 +150,7 @@ public class RunWorkflow {
 							try {
 								service.getArgument().assertCorrectSubtypes();
 							} catch (Exception e) {
-								
+
 								e.printStackTrace();
 							}
 							// They get the previous call value-empty for the
@@ -280,7 +280,7 @@ public class RunWorkflow {
 							throw new Exception("StartNode was not detected on graph vertices");
 
 						} catch (Exception e1) {
-							
+
 							e1.printStackTrace();
 						}
 					}
@@ -289,7 +289,7 @@ public class RunWorkflow {
 						try {
 							throw new Exception("EndNode was not detected on graph vertices");
 						} catch (Exception e1) {
-							
+
 							e1.printStackTrace();
 						}
 					}
@@ -309,7 +309,7 @@ public class RunWorkflow {
 									throw new Exception("\"" + unlinked.getName().toString() + "\""
 											+ " condition should have two output edges.");
 								} catch (Exception e1) {
-									
+
 									e1.printStackTrace();
 								}
 
@@ -331,7 +331,7 @@ public class RunWorkflow {
 									throw new Exception("\"" + unlinked.getName().toString() + "\""
 											+ " has no path to StartNode. Check for unlinked operations.");
 								} catch (Exception e1) {
-									
+
 									e1.printStackTrace();
 								}
 								disp.syncExec(new Runnable() {
@@ -351,7 +351,7 @@ public class RunWorkflow {
 									throw new Exception("\"" + unlinked.getName().toString() + "\""
 											+ " has no path to EndNode. Check for unlinked operations.");
 								} catch (Exception e1) {
-									
+
 									e1.printStackTrace();
 								}
 
@@ -635,10 +635,11 @@ public class RunWorkflow {
 
 															// successor is
 															// object
+															OwlService initialInput = getInitialInput(service, graph);
 
-															for (Value val : initialArray.getArgument().getElements()) {
-																ServiceCompositionView.showOutputs(val, null, matchedOutputNodes, jungGraph);
-															}
+															ServiceCompositionView.showOutputs(
+																	(Value) initialInput.getArgument(), null,
+																	matchedOutputNodes, jungGraph);
 
 															disp.syncExec(new Runnable() {
 																@Override
@@ -696,7 +697,7 @@ public class RunWorkflow {
 																		((Value) service.getArgument()).getValue());
 																successor.getElements().add(0, value);
 															} catch (Exception e) {
-																
+
 																// Auto-generated
 																// catch block
 																e.printStackTrace();
@@ -795,7 +796,7 @@ public class RunWorkflow {
 							try {
 								Thread.sleep(500 - elapsedTime);
 							} catch (InterruptedException e) {
-								
+
 								e.printStackTrace();
 							}
 						}
@@ -807,7 +808,7 @@ public class RunWorkflow {
 							public void run() {
 								// fillInOutputValues(outputVariables);
 								treeViewer.setInput(nodes);
-								
+
 							}
 						});
 
@@ -859,6 +860,23 @@ public class RunWorkflow {
 			}
 		}
 		return initialArray;
+	}
+
+	public static OwlService getInitialInput(OwlService matchedVar,
+			edu.uci.ics.jung.graph.Graph<OwlService, Connector> graph) {
+		OwlService initialInput = matchedVar;
+
+		for (OwlService predecessor : graph.getPredecessors(matchedVar)) {
+			if (predecessor.getArgument() != null) {
+
+				initialInput = getInitialInput(predecessor, graph);
+
+			} else {
+				break;
+			}
+		}
+
+		return initialInput;
 	}
 
 	private ArrayList<Value> getSubtypes(ArrayList<Value> suboutputVariables, Argument sub, boolean noObjects) {
@@ -914,7 +932,7 @@ public class RunWorkflow {
 						value.setValue(node.getSubCategories().get(k).getValue());
 						var.getElements().add(value);
 					} catch (Exception e) {
-					
+
 						e.printStackTrace();
 					}
 				}
