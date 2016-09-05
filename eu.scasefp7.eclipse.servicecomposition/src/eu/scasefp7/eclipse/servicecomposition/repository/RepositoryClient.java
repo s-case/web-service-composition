@@ -7,8 +7,11 @@ import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 import org.json.simple.parser.JSONParser;
 
+import com.auth0.jwt.JWTSigner;
+
 import eu.scasefp7.eclipse.servicecomposition.Activator;
 
+import java.io.ByteArrayInputStream;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -20,9 +23,11 @@ import java.io.OutputStream;
 import java.io.RandomAccessFile;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
 //import java.net.URL;
 //import java.net.URLConnection;
 //import java.text.DateFormat;
@@ -30,6 +35,10 @@ import java.util.Date;
 //import java.util.Date;
 //import java.util.TimeZone;
 import java.util.TimeZone;
+
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.core.Response;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -52,6 +61,7 @@ import org.apache.http.impl.client.HttpClients;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.swt.widgets.Display;
+import org.glassfish.jersey.client.ClientProperties;
 
 public class RepositoryClient {
 	/**
@@ -62,6 +72,10 @@ public class RepositoryClient {
 	 * url of the server
 	 */
 	private String url = "http://109.231.126.165:8080";
+	private String CTUrl = "http://app.scasefp7.com:3000/api/proxy";
+	private static JWTSigner signer = new JWTSigner("RXs7eUv1E-qROLL7UX25_w5up6284KpJE6gygLPvQhcUSwY"); // scase_secret as parameter
+	private String scase_token = "yDjOpZaBdiVtlXp5Z6KNFhopeKpEdOJTFlWJvPiBZ7atW9Y"; // scase_token
+	
 	// private String apiKey = "1cfae05f-9e67-486f-820b-b393dec5764b";
 	// private String url = "http://repo.scasefp7.com:8080";
 
@@ -140,46 +154,59 @@ public class RepositoryClient {
 	// }
 	// }
 
-	public String downloadOntology(String text, Display disp) {
+	public String downloadOntology(String text, String serverVersion, Display disp) {
 
 		// FacesContext context = FacesContext.getCurrentInstance();
 
 		// String path = ((ServletContext) context.getExternalContext()
 		// .getContext()).getRealPath("/");
-		String latestSubmission = getLatestSubmissionId();
+		String signature = createSignature();
+		Client client = ClientBuilder.newClient();
+		client.property(ClientProperties.CONNECT_TIMEOUT, 1000000);
+		client.property(ClientProperties.READ_TIMEOUT, 1000000);
+		//String latestSubmission = getLatestSubmissionId(text);
+		String latestSubmission = serverVersion;
 
 		String path = ResourcesPlugin.getWorkspace().getRoot().getLocation().toString()
 				+ "/.metadata/.plugins/eu.scasefp7.servicecomposition/ontology";
 		String requestURL = "";
 		if (latestSubmission.equals(""))
-			requestURL = url + "/ontologies/" + text + "/download?apikey=" + apiKey;
+			requestURL = CTUrl + "/ontologies/" + text + "/download?apikey=" + apiKey;
 		else
-			requestURL = url + "/ontologies/WS/submissions/" + latestSubmission + "/download?apikey=" + apiKey;
+			requestURL = CTUrl + "/ontologies/" + text + "/submissions/" + latestSubmission + "/download?apikey="
+					+ apiKey;
 		InputStream inputStream = null;
 		OutputStream outputStream = null;
 		// write the version file
-		File versionFile = new File(path + "/version.txt");
-		if (!versionFile.exists()) {
-			versionFile.getParentFile().mkdirs();
-		} else {
-			versionFile.delete();
+		if (text.equals("WS")) {
+			File versionFile = new File(path + "/version.txt");
+			if (!versionFile.exists()) {
+				versionFile.getParentFile().mkdirs();
+			} else {
+				versionFile.delete();
+			}
+			try {
+				versionFile.createNewFile();
+				RandomAccessFile f = new RandomAccessFile(versionFile, "rw");
+				f.seek(0); // to the beginning
+				String version = "submissionId=" + latestSubmission;
+				f.write(version.getBytes());
+				f.close();
+			} catch (IOException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
 		}
-		try {
-			versionFile.createNewFile();
-			RandomAccessFile f = new RandomAccessFile(versionFile, "rw");
-			f.seek(0); // to the beginning
-			String version = "submissionId=" + latestSubmission;
-			f.write(version.getBytes());
-			f.close();
-		} catch (IOException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		}
-		
+
 		// write the ontology file
 		try {
-			inputStream = Request.Get(requestURL).connectTimeout(30000).socketTimeout(30000).execute()
-					.returnContent().asStream();
+			Response response = client.target(requestURL).request().header("AUTHORIZATION", "CT-AUTH " + scase_token + ":" + signature).get();
+			System.out.println("Get ontology");
+
+			String resString = response.readEntity(String.class);
+			JSONObject obj = (JSONObject) JSONValue.parseWithException(resString);
+			String body =  (String)obj.get("body");
+			inputStream = new ByteArrayInputStream(body.getBytes(StandardCharsets.UTF_8));;
 			File file = new File(path + "/" + text + ".owl");
 			if (!file.exists()) {
 				file.getParentFile().mkdirs();
@@ -194,8 +221,8 @@ public class RepositoryClient {
 			while ((read = inputStream.read(bytes)) != -1) {
 				outputStream.write(bytes, 0, read);
 			}
-//			inputStream.close();
-//			outputStream.close();
+			// inputStream.close();
+			// outputStream.close();
 
 			// sendGetRequest(url + "/ontologies/"+text+"/download?apikey=" +
 			// apiKey,"",text + ".owl");
@@ -238,8 +265,10 @@ public class RepositoryClient {
 		try {
 			String boundary = "-------------boundary";
 			CloseableHttpClient httpClient = HttpClients.createDefault();
-			HttpPost uploadFile = new HttpPost(url + "/ontologies/WS/submissions");
-			uploadFile.addHeader("Authorization", "apikey token=" + apiKey);
+			HttpPost uploadFile = new HttpPost(CTUrl + "/ontologies/WS/submissions?apikey=" + apiKey);
+			String signature = createSignature();
+			uploadFile.addHeader("AUTHORIZATION", "CT-AUTH " + scase_token + ":" + signature);
+			//uploadFile.addHeader("Authorization", "apikey token=" + apiKey);
 			uploadFile.addHeader("Content-Type",
 					"multipart/mixed; boundary=" + boundary + "; type=application/json; start=json");
 			MultipartEntityBuilder builder = MultipartEntityBuilder.create();
@@ -248,8 +277,7 @@ public class RepositoryClient {
 			DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm'Z'");
 			df.setTimeZone(tz);
 			String nowAsISO = df.format(new Date());
-			String jsonStr = "{\"ontology\":\"" + url
-					+ "/ontologies/WS\",\"description\":\"This is an ontology for the semantic annotation of web services\",\"hasOntologyLanguage\":\"OWL\",\"authorProperty\":\"\",\"obsoleteParent\":\"\",\"obsoleteProperty\":\"\",\"version\":\"\",\"status\":\"\",\"released\":\""
+			String jsonStr = "{\"ontology\":\"http://109.231.126.165:8080/ontologies/WS\",\"description\":\"This is an ontology for the semantic annotation of web services\",\"hasOntologyLanguage\":\"OWL\",\"authorProperty\":\"\",\"obsoleteParent\":\"\",\"obsoleteProperty\":\"\",\"version\":\"\",\"status\":\"\",\"released\":\""
 					+ nowAsISO
 					+ "0\",\"isRemote\":\"0\",\"contact\":[{\"name\":\"Kostas Giannoutakis\",\"email\":\"kgiannou@iti.gr\"}],\"publication\":\"\"}";
 
@@ -261,6 +289,7 @@ public class RepositoryClient {
 			HttpEntity multipart = builder.build();
 			uploadFile.setEntity(multipart);
 			HttpResponse response = httpClient.execute(uploadFile);
+			System.out.println(response);
 			return true;
 		} catch (Exception ex) {
 			ex.printStackTrace();
@@ -273,17 +302,25 @@ public class RepositoryClient {
 		return s.hasNext() ? s.next() : "";
 	}
 
-	public String getLatestSubmissionId() {
-		String apiKey = "1cfae05f-9e67-486f-820b-b393dec5764b";
+	public String getLatestSubmissionId(String ontology) {
 		String url = "http://109.231.126.165:8080";
+		String signature = createSignature();
+		Client client = ClientBuilder.newClient();
+		client.property(ClientProperties.CONNECT_TIMEOUT, 1000000);
+		client.property(ClientProperties.READ_TIMEOUT, 1000000);
 		try {
 			// get latest submission
-			InputStream inputStream = Request.Get(url + "/ontologies/" + "WS" + "/submissions?apikey=" + apiKey)
-					.connectTimeout(20000).socketTimeout(20000).execute().returnContent().asStream();
-			Object obj = JSONValue.parse(convertStreamToString(inputStream));
-			JSONArray array = (JSONArray) obj;
+			Response response = client.target(CTUrl + "/ontologies/WS/submissions?apikey=" + apiKey).request().header("AUTHORIZATION", "CT-AUTH " + scase_token + ":" + signature).get();
+			System.out.println("Check version");
+
+			String resString = response.readEntity(String.class);
+			System.out.println(resString);
+			JSONObject obj = (JSONObject) JSONValue.parseWithException(resString);
+			String body =  (String)obj.get("body");
+			JSONArray array = (JSONArray)JSONValue.parseWithException(body);
 			JSONObject obj2 = (JSONObject) array.get(0);
-			return obj2.get("submissionId").toString();
+			String id= obj2.get("submissionId").toString();
+			return id;
 		} catch (Exception ex) {
 			ex.printStackTrace();
 			return "";
@@ -388,6 +425,18 @@ public class RepositoryClient {
 			}
 		}
 
+	}
+	/**
+	 * createSignature
+	 * @return signature for connection with CT
+	 */
+	private String createSignature(){
+		HashMap<String, Object> claims = new HashMap<String, Object>();
+		claims.put("token", scase_token);
+
+		// create the signature
+		String signature = signer.sign(claims);
+		return signature;
 	}
 
 }

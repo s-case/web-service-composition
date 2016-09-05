@@ -343,7 +343,7 @@ public class ImportHandler extends AbstractHandler {
 
 		// check if a newer ontology version exists
 
-		String serverVersion = repo.getLatestSubmissionId();
+		String serverVersion = repo.getLatestSubmissionId("WS");
 		BufferedReader reader = new BufferedReader(
 				new FileReader(ResourcesPlugin.getWorkspace().getRoot().getLocation().toString()
 						+ "/.metadata/.plugins/eu.scasefp7.servicecomposition/ontology/version.txt"));
@@ -370,7 +370,7 @@ public class ImportHandler extends AbstractHandler {
 				if (getUpdateOntology()) {
 					// OK Button selected
 					try {
-						String path = repo.downloadOntology("WS", disp);
+						String path = repo.downloadOntology("WS", serverVersion, disp);
 						ServiceCompositionView.setUpdateOperations(true);
 					} catch (Exception e) {
 						Activator.log("Error occured while downloading the ontology", e);
