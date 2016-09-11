@@ -91,9 +91,9 @@ public abstract class CodeGenerator {
 		 * @return the code of the service
 		 * @throws Exception
 		 */
-		public String getCode(ArrayList<OwlService> allVariables, boolean hasBodyInput, boolean isRepeated) throws Exception {
+		public String getCode(ArrayList<OwlService> allVariables, boolean hasBodyInput, boolean isRepeated, Graph<OwlService, Connector> graph) throws Exception {
 			if (updateCode)
-				updateCode(allVariables, hasBodyInput, isRepeated);
+				updateCode(allVariables, hasBodyInput, isRepeated, graph);
 			return code;
 		}
 
@@ -118,12 +118,12 @@ public abstract class CodeGenerator {
 		 * @param allVariables
 		 * @throws Exception
 		 */
-		protected void updateCode(ArrayList<OwlService> allVariables, boolean hasBodyInput, boolean isRepeated) throws Exception {
+		protected void updateCode(ArrayList<OwlService> allVariables, boolean hasBodyInput, boolean isRepeated, Graph<OwlService, Connector> graph) throws Exception {
 			Operation operation = service != null ? service.getOperation() : null;
 			code = "";
 			if (operation != null) {
 				code += "//call service: " + operation.getName().getContent() + "\n";
-				code += generateInputSynchronizationCode(operation, allVariables, hasBodyInput, isRepeated);
+				code += generateInputSynchronizationCode(operation, allVariables, hasBodyInput, isRepeated, graph);
 				code += generateOperationCode(operation, allVariables, isRepeated);
 				code += generateOutputSynchronizationCode(operation, allVariables, isRepeated);
 			}
@@ -149,7 +149,7 @@ public abstract class CodeGenerator {
 		 * @param allVariables
 		 * @return the generated code
 		 */
-		protected String generateInputSynchronizationCode(Operation operation, ArrayList<OwlService> allVariables, boolean hasBodyInput, boolean isRepeated) {
+		protected String generateInputSynchronizationCode(Operation operation, ArrayList<OwlService> allVariables, boolean hasBodyInput, boolean isRepeated, Graph<OwlService, Connector> graph) {
 			// create synchronization with other variables
 			String finalizeCommands = "";
 			String inputName = "";

@@ -314,12 +314,13 @@ public class RepositoryClient {
 			System.out.println("Check version");
 
 			String resString = response.readEntity(String.class);
-			System.out.println(resString);
+			//System.out.println(resString);
 			JSONObject obj = (JSONObject) JSONValue.parseWithException(resString);
 			String body =  (String)obj.get("body");
 			JSONArray array = (JSONArray)JSONValue.parseWithException(body);
 			JSONObject obj2 = (JSONObject) array.get(0);
 			String id= obj2.get("submissionId").toString();
+			System.out.println(id);
 			return id;
 		} catch (Exception ex) {
 			ex.printStackTrace();

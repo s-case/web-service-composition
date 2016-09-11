@@ -96,7 +96,7 @@ public class WSOntology {
 	}
 
 	public void createNewWSOperation(String projectName, ArrayList<OwlService> inputs,
-			ArrayList<Argument> uriParameters, ArrayList<OwlService> resultVariables,
+			ArrayList<Argument> authParameters, ArrayList<OwlService> resultVariables,
 			ArrayList<Operation> repeatedOperations, String serviceURL, String applicationDomainURI, String crudVerb) {
 		String str = "";
 
@@ -174,7 +174,7 @@ public class WSOntology {
 		// uris.add(noInd.getURI().toLowerCase());
 		// // create has name prop
 		// noInd.addProperty(hasName,
-		// inputs.get(i).getArgument().getName().getContent());
+		// inputs.get(i).getArgument().getName().getJavaValidContent());
 		// // create is Required prop
 		// noInd.addProperty(isRequired,
 		// String.valueOf(inputs.get(i).getArgument().isRequired()));
@@ -205,39 +205,39 @@ public class WSOntology {
 		// }
 		// }
 		// commented since uri params are considered as inputs now
-		// for (int i = 0; i < uriParameters.size(); i++) {
-		// String name = uriParameters.get(i).getName().toString();
-		// name = changeUri(name);
-		// // check if concept already exists
-		// IndividualImpl nativeObjectInd = null;
-		// IndividualImpl noInd = (IndividualImpl)
-		// ontologyModel.createIndividual(NS + name, conceptClass);
-		// uris.add(noInd.getURI().toLowerCase());
-		// // create has name prop
-		// noInd.addProperty(hasName,
-		// uriParameters.get(i).getName().getContent());
-		// // create is Required prop
-		// noInd.addProperty(isRequired,
-		// String.valueOf(uriParameters.get(i).isRequired()));
-		// // create has type prop
-		// String type = uriParameters.get(i).getType();
-		// Iterator it = datatypeClass.listInstances();
-		// String uri = "";
-		// IndividualImpl datatypeInd = null;
-		// while (it.hasNext()) {
-		// datatypeInd = (IndividualImpl) it.next();
-		// if (datatypeInd.getLocalName().equalsIgnoreCase(type)) {
-		// uri = datatypeInd.getURI();
-		// break;
-		// }
-		// }
-		// if (datatypeInd != null) {
-		// ObjectProperty hasType = ontologyModel.getObjectProperty(NS +
-		// "hasType");
-		// noInd.addProperty(hasType, datatypeInd);
-		// }
-		// operInd.addProperty(hasInput, noInd);
-		// }
+		 for (int i = 0; i < authParameters.size(); i++) {
+		 String name = authParameters.get(i).getName().toString().toLowerCase();
+		 name = changeUri(name);
+		 // check if concept already exists
+		 IndividualImpl nativeObjectInd = null;
+		 IndividualImpl noInd = (IndividualImpl)
+		 ontologyModel.createIndividual(NS + name, conceptClass);
+		 uris.add(noInd.getURI().toLowerCase());
+		 // create has name prop
+		 noInd.addProperty(hasName,
+				 authParameters.get(i).getName().getJavaValidContent().toLowerCase());
+		 // create is Required prop
+		 noInd.addProperty(isRequired,
+		 String.valueOf(true));
+		 // create has type prop
+		 String type = authParameters.get(i).getType();
+		 Iterator it = datatypeClass.listInstances();
+		 String uri = "";
+		 IndividualImpl datatypeInd = null;
+		 while (it.hasNext()) {
+		 datatypeInd = (IndividualImpl) it.next();
+		 if (datatypeInd.getLocalName().equalsIgnoreCase(type)) {
+		 uri = datatypeInd.getURI();
+		 break;
+		 }
+		 }
+		 if (datatypeInd != null) {
+		 ObjectProperty hasType = ontologyModel.getObjectProperty(NS +
+		 "hasType");
+		 noInd.addProperty(hasType, datatypeInd);
+		 }
+		 operInd.addProperty(hasInput, noInd);
+		 }
 		ObjectProperty hasOutput = ontologyModel.getObjectProperty(NS + "hasOutput");
 		createOutputs(hasOutput, operInd, resultVariables, repeatedOperations, "output");
 	}
@@ -259,7 +259,7 @@ public class WSOntology {
 				if (arg.getSubtypes().size() == 0) {
 					// it is native object
 
-					String name = s.getName().getContent();
+					String name = s.getName().getJavaValidContent();
 					name = changeUri(name);
 					IndividualImpl noInd = (IndividualImpl) ontologyModel.createIndividual(NS + name, conceptClass);
 					uris.add(noInd.getURI().toLowerCase());
@@ -298,7 +298,7 @@ public class WSOntology {
 					operInd.addProperty(property, noInd);
 				} else {
 					// it is complex object
-					String name = s.getName().getContent();
+					String name = s.getName().getJavaValidContent();
 					name = changeUri(name);
 					IndividualImpl coInd = (IndividualImpl) ontologyModel.createIndividual(NS + name, conceptClass);
 					uris.add(coInd.getURI().toLowerCase());
@@ -331,7 +331,7 @@ public class WSOntology {
 		if (property.toString().equals(NS + "hasOutput")) {
 			for (Operation op : repeatedOperations) {
 
-				String name = op.getName().getContent().toLowerCase() + "_response";
+				String name = op.getName().getJavaValidContent().toLowerCase() + "_response";
 				name = changeUri(name);
 				IndividualImpl coInd = (IndividualImpl) ontologyModel.createIndividual(NS + name, conceptClass);
 				uris.add(coInd.getURI().toLowerCase());

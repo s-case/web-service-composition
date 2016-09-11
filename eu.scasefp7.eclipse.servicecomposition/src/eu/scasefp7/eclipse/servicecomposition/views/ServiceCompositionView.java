@@ -1645,6 +1645,9 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 		// loadOperationJob.schedule();
 	}
 
+	public ServiceCompositionView getView(){
+		return this;
+	}
 	public void setScaseProject(IProject project) {
 		scaseProject = project;
 	}

@@ -46,15 +46,23 @@ public class RestFunctionCodeNode extends CodeNode {
 			code += "()";
 		}
 
-		code += "  throws Exception" + "{\n" + getCode(allVariables, hasBodyInput, isRepeated);
+		code += "  throws Exception" + "{\n" + getCode(allVariables, hasBodyInput, isRepeated, graph);
 		String matchedInputName = "";
 		if (isRepeated) {
 			for (OwlService matched : allVariables) {
 				if (matched.getisMatchedIO() && matched.getArgument().getBelongsToOperation().getName().toString()
 						.equals(service.getName().toString())) {
+
 					for (OwlService output : graph.getPredecessors(matched)) {
-						if (output.getisMatchedIO()) {
-							matchedInputName = matched.getName().getContent();
+						boolean isMemberOfArray = false;
+						for (Object parent : output.getArgument().getParent()) {
+							if (parent instanceof Argument)
+								if (((Argument) parent).isArray()) {
+									isMemberOfArray = true;
+								}
+						}
+						if (output.getisMatchedIO() && isMemberOfArray) {
+							matchedInputName = matched.getName().getJavaValidContent();
 						}
 					}
 				}
@@ -91,7 +99,7 @@ public class RestFunctionCodeNode extends CodeNode {
 
 	@Override
 	protected String generateInputSynchronizationCode(Operation operation, ArrayList<OwlService> allVariables,
-			boolean hasBodyInput, boolean isRepeated) {
+			boolean hasBodyInput, boolean isRepeated, Graph<OwlService, Connector> graph) {
 
 		String ret = "";
 
@@ -100,14 +108,16 @@ public class RestFunctionCodeNode extends CodeNode {
 				ret += "List<NameValuePair> urlParameters = new ArrayList<NameValuePair>();\n";
 				for (Argument input : operation.getInputs()) {
 					if (input.isTypeOf().equals("BodyParameter") && !input.getOwlService().getisMatchedIO()) {
-						ret += "urlParameters.add(new BasicNameValuePair(" + input.getName().getContent().toString()
-								+ ".name , " + operation.getName().toString() + "_request.get"
-								+ input.getName().getContent().toString() + "()));\n";
+						ret += "urlParameters.add(new BasicNameValuePair("
+								+ input.getName().getJavaValidContent().toString() + ".name , "
+								+ operation.getName().toString() + "_request.get"
+								+ input.getName().getJavaValidContent().toString() + "()));\n";
 					}
 					// else {
 					// ret += "urlParameters.add(new BasicNameValuePair(" +
-					// input.getName().getContent().toString()
-					// + ".name , " + input.getName().getContent().toString() +
+					// input.getName().getJavaValidContent().toString()
+					// + ".name , " +
+					// input.getName().getJavaValidContent().toString() +
 					// ".value));\n";
 					// }
 				}
@@ -131,13 +141,24 @@ public class RestFunctionCodeNode extends CodeNode {
 			ret += "String entity = \"\";\n";
 			ret += "ArrayList<Variable> inputs = new ArrayList<Variable>();\n";
 		}
-		
+
 		for (Argument arg : operation.getInputs())
 			for (OwlService var : allVariables) {
 				if (var.getArgument().equals(arg)) {
+					boolean isMemberOfArray = false;
+					for (OwlService predesseccor : graph.getPredecessors(var)) {
+
+						for (Object parent : predesseccor.getArgument().getParent()) {
+							if (parent instanceof Argument)
+								if (((Argument) parent).isArray()) {
+									isMemberOfArray = true;
+								}
+						}
+					}
 					if (arg.isTypeOf().equals("QueryParameter")) {
-						ret += "inputs.add(" + var.getName().getContent().toString();
-						if (isRepeated && var.getisMatchedIO()) {
+
+						ret += "inputs.add(" + var.getName().getJavaValidContent().toString();
+						if (isRepeated && var.getisMatchedIO() && isMemberOfArray) {
 							ret += ".get(i)";
 						}
 						ret += ");\n";
@@ -183,7 +204,8 @@ public class RestFunctionCodeNode extends CodeNode {
 		// }
 		// }
 		// }
-		// ret += "outputs.add(" + var.getName().getContent().toString() +
+		// ret += "outputs.add(" +
+		// var.getName().getJavaValidContent().toString() +
 		// ");\n";
 		//
 		// }
@@ -240,8 +262,9 @@ public class RestFunctionCodeNode extends CodeNode {
 	// private String addSubtypes(OwlService sub, OwlService var, final
 	// Graph<OwlService, Connector> graph) {
 	// String ret="";
-	// ret += var.getName().getContent().toString() + ".subtypes.add(" +
-	// sub.getName().getContent().toString()
+	// ret += var.getName().getJavaValidContent().toString() + ".subtypes.add("
+	// +
+	// sub.getName().getJavaValidContent().toString()
 	// + ");\n";
 	// for (OwlService subsub : graph.getSuccessors(sub)) {
 	// if (subsub.getArgument() != null && !subsub.getisMatchedIO()) {

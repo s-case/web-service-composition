@@ -5,6 +5,7 @@ import java.io.FileInputStream;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Properties;
 
 import org.eclipse.core.runtime.FileLocator;
@@ -12,12 +13,14 @@ import org.eclipse.core.runtime.Platform;
 import org.osgi.framework.Bundle;
 
 import eu.scasefp7.eclipse.servicecomposition.Activator;
+import eu.scasefp7.eclipse.servicecomposition.operationCaller.RAMLCaller;
 
 /**
  * <h1>Similarity</h1> This class contains functions for comparing strings.
  */
 public class Similarity {
 
+	private static String[] invalidNames = new String[] { "string", "long", "int", "float", "double", "boolean", "class", "enum", "static", "private", "package", "super" };
 	public static class ComparableName {
 		/**
 		 * the original name
@@ -67,6 +70,15 @@ public class Similarity {
 
 		public void setContent(String content) {
 			this.content = content;
+		}
+		
+		public String getJavaValidContent() {
+			String name = content;
+			name = name.replaceAll("[^A-Za-z0-9()_\\[\\]]", "");
+			if (RAMLCaller.stringIsItemFromList(name, invalidNames)){
+				name += "_";
+			}
+			return name;
 		}
 
 	}

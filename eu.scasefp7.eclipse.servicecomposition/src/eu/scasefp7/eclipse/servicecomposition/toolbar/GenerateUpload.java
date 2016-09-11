@@ -508,7 +508,7 @@ public class GenerateUpload {
 										WSOntology ws = new WSOntology();
 										ws.createNewWSOperation(generator.getOperation().getHasName(),
 												generator.getInputsWithoutMatchedVariables(),
-												generator.getUriParameters(), generator.getOutputVariables(), generator.getRepeatedOperations(),
+												generator.getAuthParameters(), generator.getOutputVariables(), generator.getRepeatedOperations(),
 												generator.getOperation().getBelongsToURL(), applicationDomainURI,
 												generator.getOperation().getHasCRUDVerb());
 										ws.saveToOWL();

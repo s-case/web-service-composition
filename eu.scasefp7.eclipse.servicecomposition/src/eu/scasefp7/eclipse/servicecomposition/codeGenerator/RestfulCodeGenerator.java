@@ -69,17 +69,17 @@ public class RestfulCodeGenerator {
 				if (!inputList.isEmpty())
 					inputList += ", ";
 				if (input.getArgument().getType().equals("String")) {
-					inputList += "@QueryParam(\"" + input.getName().getContent() + "\") "
+					inputList += "@QueryParam(\"" + input.getName().getJavaValidContent() + "\") "
 							+ input.getArgument().getType() + " "
-							+ input.getName().getContent();
+							+ input.getName().getJavaValidContent();
 				} else if (input.getArgument().getType().equals("int")) {
-					inputList += "@QueryParam(\"" + input.getName().getContent()
-							+ "\") Integer " + input.getName().getContent();
+					inputList += "@QueryParam(\"" + input.getName().getJavaValidContent()
+							+ "\") Integer " + input.getName().getJavaValidContent();
 				} else {
 					String type = input.getArgument().getType();
-					inputList += "@QueryParam(\"" + input.getName().getContent() + "\") "
+					inputList += "@QueryParam(\"" + input.getName().getJavaValidContent() + "\") "
 							+ type.substring(0, 1).toUpperCase() + type.substring(1) + " "
-							+ input.getName().getContent();
+							+ input.getName().getJavaValidContent();
 				}
 			}
 			
@@ -89,23 +89,23 @@ public class RestfulCodeGenerator {
 			// if (!inputList.isEmpty())
 			// inputList += ", ";
 			// inputList += "@QueryParam(\"" +
-			// param.getName().getContent().replaceAll("[0123456789]", "") +
+			// param.getName().getJavaValidContent().replaceAll("[0123456789]", "") +
 			// "\") String "
-			// + param.getName().getContent().replaceAll("[0123456789]", "");
+			// + param.getName().getJavaValidContent().replaceAll("[0123456789]", "");
 			// }
 		}
 		for (Argument auth :authParameters){
 			if (!inputList.isEmpty())
 				inputList += ", ";
-			inputList += "@QueryParam(\"" + auth.getName().getContent().toLowerCase() + "\") "
+			inputList += "@QueryParam(\"" + auth.getName().getJavaValidContent().toLowerCase() + "\") "
 						+ auth.getType() + " "
-						+ auth.getName().getContent().toLowerCase();
+						+ auth.getName().getJavaValidContent().toLowerCase();
 		}
 		for (OwlService matchedInput :nativeInputsMatchedWithArrays){
 			if (!inputList.isEmpty())
 				inputList += ", ";
-			inputList += "@QueryParam(\"" + matchedInput.getName().getContent() + "_num"
-					+ "\") Integer " + matchedInput.getName().getContent() + "_num";
+			inputList += "@QueryParam(\"" + matchedInput.getName().getJavaValidContent() + "_num"
+					+ "\") Integer " + matchedInput.getName().getJavaValidContent() + "_num";
 		}
 		if (containsPost) {
 			if (!inputList.isEmpty()) {
@@ -124,18 +124,18 @@ public class RestfulCodeGenerator {
 					|| input.getArgument().isTypeOf().equals("URIParameter") || input.getArgument().isTypeOf().equals("")) && !input.getisMatchedIO()) {
 				if (!inputList.isEmpty())
 					inputList += ", ";
-				inputList += input.getName().getContent();
+				inputList += input.getName().getJavaValidContent();
 			}
 		}
 		for (Argument auth :authParameters){
 			if (!inputList.isEmpty())
 				inputList += ", ";
-			inputList += auth.getName().getContent().toLowerCase();
+			inputList += auth.getName().getJavaValidContent().toLowerCase();
 		}
 		for (OwlService matchedInput :nativeInputsMatchedWithArrays){
 			if (!inputList.isEmpty())
 				inputList += ", ";
-			inputList += matchedInput.getName().getContent() + "_num";
+			inputList += matchedInput.getName().getJavaValidContent() + "_num";
 		}
 		if (containsPost) {
 			inputList += ", request";
@@ -144,7 +144,7 @@ public class RestfulCodeGenerator {
 		// for (Argument param : uriParameters) {
 		// if (!inputList.isEmpty())
 		// inputList += ", ";
-		// inputList += param.getName().getContent().replaceAll("[0123456789]",
+		// inputList += param.getName().getJavaValidContent().replaceAll("[0123456789]",
 		// "");
 		// }
 		code += inputList;
