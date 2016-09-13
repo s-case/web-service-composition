@@ -136,6 +136,7 @@ public class RAMLCaller {
 				conn = (HttpURLConnection) url.openConnection();
 				conn.setConnectTimeout(30000);
 				conn.setRequestMethod(ramlOperation.getDomain().getCrudVerb());
+				conn.setRequestProperty("Accept", "application/json");
 				
 				if (ramlOperation.getDomain().getSecurityScheme() != null) {
 					if (ramlOperation.getDomain().getSecurityScheme().equalsIgnoreCase("Basic Authentication")) {
