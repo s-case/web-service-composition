@@ -462,10 +462,10 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 
 		ArrayList<String> classNames = new ArrayList<String>();
 		for (OwlService output : resultVariables) {
-			requestClassDeclaration += generateResultObjects(output, classObjects, classNames, graph);
+			resultClassDeclaration += generateResultObjects(output, classObjects, classNames, graph, false);
 		}
 		for (OwlService input : requestVariables) {
-			requestClassDeclaration += generateResultObjects(input, classObjects, classNames, graph);
+			requestClassDeclaration += generateResultObjects(input, classObjects, classNames, graph, true);
 		}
 
 		/////////// create Response/Request for EACH operation
@@ -1693,25 +1693,25 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 		return this.uriParameters;
 	}
 
-	private String generateResultObjects(OwlService output, ArrayList<OwlService> classObjects,
-			ArrayList<String> classNames, Graph<OwlService, Connector> graph) {
+	private String generateResultObjects(OwlService variable, ArrayList<OwlService> classObjects,
+			ArrayList<String> classNames, Graph<OwlService, Connector> graph, boolean isInput) {
 
-		String type = output.getArgument().getType();
+		String type = variable.getArgument().getType();
 		String ObjectClasses = "\n";
-		if (!output.getArgument().getSubtypes().isEmpty()) {
+		if (!variable.getArgument().getSubtypes().isEmpty()) {
 
 			for (OwlService object : classObjects) {
-				if (output.getName().getComparableForm().equals(object.getName().getComparableForm())
-						&& !output.equals(object)) {
-					type = output.getName().getJavaValidContent();
-					if (output.getArgument().getSubtypes().size() == object.getArgument().getSubtypes().size()) {
+				if (variable.getName().getComparableForm().equals(object.getName().getComparableForm())
+						&& !variable.equals(object)) {
+					type = variable.getName().getJavaValidContent();
+					if (variable.getArgument().getSubtypes().size() == object.getArgument().getSubtypes().size()) {
 						return ObjectClasses;
 					}
 				}
 			}
 			String deserializer = "";
 			// if output is either array or object
-			if (output.getArgument().getObjectOrArray()) {
+			if (variable.getArgument().getObjectOrArray()) {
 				deserializer = TAB + "public static class " + type.substring(0, 1).toUpperCase() + type.substring(1)
 						+ "Deserializer implements JsonDeserializer<" + type.substring(0, 1).toUpperCase()
 						+ type.substring(1) + "> {\n";
@@ -1730,7 +1730,13 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 			String getSet = "\n\n";
 			String deserializerBody = "";
 
-			for (OwlService sub : graph.getSuccessors(output)) {
+			Collection<OwlService> subList = new ArrayList<OwlService>();
+			if (isInput){
+				subList= (Collection<OwlService>) graph.getPredecessors(variable);
+			}else{
+				subList = (Collection<OwlService>) graph.getSuccessors(variable);
+			}
+			for (OwlService sub : subList) {
 				if (sub.getArgument() != null) {
 					String subType = sub.getArgument().getType();
 					String subName = sub.getArgument().getName().getJavaValidContent();
@@ -1738,7 +1744,7 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 					if (!constractorVars.isEmpty()) {
 						constractorVars += ", ";
 					}
-					if (output.getArgument().getObjectOrArray()) {
+					if (variable.getArgument().getObjectOrArray()) {
 						VarDeclaration += TAB + TAB + "@SerializedName(\"" + subName
 								+ "\")\n";
 						deserializerBody += TAB + TAB + "ArrayList<" + subType.substring(0, 1).toUpperCase()
@@ -1775,7 +1781,7 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 								+ subName + "() {\n" + TAB + TAB + TAB + "return "
 								+ subName + ";\n" + TAB + TAB + "}\n";
 					} else if (sub.getArgument().isArray() && RAMLCaller.stringIsItemFromList(sub.getType(), datatypes)
-							|| output.getArgument().getObjectOrArray()) {
+							|| variable.getArgument().getObjectOrArray()) {
 						if (subType.equals("int")) {
 							subType = "Integer";
 						} else {
@@ -1839,7 +1845,7 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 			classNames.add(type);
 			ObjectClasses += VarDeclaration;
 			ConstractorClasses += constractorVars + "){\n";
-			for (OwlService sub : graph.getSuccessors(output)) {
+			for (OwlService sub : subList) {
 				if (sub.getArgument() != null) {
 					ConstractorClasses += TAB + TAB + TAB + "this." + sub.getArgument().getName().getJavaValidContent() + " = "
 							+ sub.getArgument().getName().getJavaValidContent() + ";\n";
@@ -1850,16 +1856,16 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 			ObjectClasses += getSet;
 			ObjectClasses += "}\n";
 
-			for (OwlService sub : graph.getSuccessors(output)) {
+			for (OwlService sub : subList) {
 				if (sub.getArgument() != null) {
 					if (!sub.getArgument().getSubtypes().isEmpty()) {
-						ObjectClasses += generateResultObjects(sub, classObjects, classNames, graph);
+						ObjectClasses += generateResultObjects(sub, classObjects, classNames, graph, isInput);
 					}
 				}
 
 			}
-			if (!classObjects.contains(output)) {
-				classObjects.add(output);
+			if (!classObjects.contains(variable)) {
+				classObjects.add(variable);
 			}
 		}
 		return ObjectClasses;
