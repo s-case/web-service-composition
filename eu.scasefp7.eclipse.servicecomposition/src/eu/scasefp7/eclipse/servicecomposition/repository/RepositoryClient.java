@@ -72,7 +72,7 @@ public class RepositoryClient {
 	 * url of the server
 	 */
 	private String url = "http://109.231.126.165:8080";
-	private String CTUrl = "http://app.scasefp7.com:3000/api/proxy";
+	private String CTUrl = "https://app.scasefp7.com:8000/api/proxy";
 	private static JWTSigner signer = new JWTSigner("RXs7eUv1E-qROLL7UX25_w5up6284KpJE6gygLPvQhcUSwY"); // scase_secret as parameter
 	private String scase_token = "yDjOpZaBdiVtlXp5Z6KNFhopeKpEdOJTFlWJvPiBZ7atW9Y"; // scase_token
 	
