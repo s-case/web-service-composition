@@ -146,7 +146,7 @@ public abstract class Importer {
 			if (uri.contains("script")) {
 				name = uri.substring(uri.lastIndexOf("/") + 1, uri.lastIndexOf("."));
 			} else if (uri.contains("localhost") || uri.contains("160.40.50.176") || type.equalsIgnoreCase("RESTful")
-					|| (uri.lastIndexOf("/") + 1 < uri.lastIndexOf("."))) {
+					|| (uri.lastIndexOf("/") + 1 > uri.lastIndexOf("."))) {
 				name = "";
 			} else {
 				name = uri.substring(uri.lastIndexOf("/") + 1, uri.lastIndexOf("."));

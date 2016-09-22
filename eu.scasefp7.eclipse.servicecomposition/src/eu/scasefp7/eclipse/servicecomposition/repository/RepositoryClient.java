@@ -260,6 +260,80 @@ public class RepositoryClient {
 		}
 
 	}
+	
+	
+	public String downloadPWOntology(String text, String serverVersion, Display disp) {
+
+		//String latestSubmission = getLatestSubmissionId(text);
+		String latestSubmission = serverVersion;
+
+		String path = ResourcesPlugin.getWorkspace().getRoot().getLocation().toString()
+				+ "/.metadata/.plugins/eu.scasefp7.servicecomposition/ontology";
+		String requestURL = "";
+		if (latestSubmission.equals(""))
+			requestURL = url + "/ontologies/" + text + "/download?apikey=" + apiKey;
+		else
+			requestURL = url + "/ontologies/" + text + "/submissions/" + latestSubmission + "/download?apikey="
+					+ apiKey;
+		InputStream inputStream = null;
+		OutputStream outputStream = null;
+		
+
+		// write the ontology file
+		try {
+			inputStream = Request.Get(requestURL).connectTimeout(30000).socketTimeout(30000).execute()
+					.returnContent().asStream();
+			System.out.println("Get PW ontology");
+
+			
+			File file = new File(path + "/" + text + ".owl");
+			if (!file.exists()) {
+				file.getParentFile().mkdirs();
+				file.createNewFile();
+			}
+			System.out.println(file.getAbsolutePath());
+			outputStream = new FileOutputStream(file);
+
+			int read = 0;
+			byte[] bytes = new byte[1024];
+
+			while ((read = inputStream.read(bytes)) != -1) {
+				outputStream.write(bytes, 0, read);
+			}
+			
+			return path + "/" + text + ".owl";
+			
+		} catch (Exception ex) {
+			ex.printStackTrace();
+
+			disp.syncExec(new Runnable() {
+				@Override
+				public void run() {
+					MessageDialog.openInformation(disp.getActiveShell(), "Warning!",
+							"Ontology could not be downloaded. Local ontology will be used instead!");
+				}
+			});
+			return "";
+		} finally {
+			if (inputStream != null) {
+				try {
+					inputStream.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+			if (outputStream != null) {
+				try {
+
+					outputStream.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+
+			}
+		}
+
+	}
 
 	public boolean uploadOntology() {
 		try {

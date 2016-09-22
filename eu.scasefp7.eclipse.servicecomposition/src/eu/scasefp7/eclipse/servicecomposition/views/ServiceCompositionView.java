@@ -1,13 +1,11 @@
 package eu.scasefp7.eclipse.servicecomposition.views;
 
-
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Vector;
-
 
 import org.apache.maven.Maven;
 
@@ -19,13 +17,13 @@ import org.codehaus.plexus.DefaultPlexusContainer;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.ResourcesPlugin;
-
+import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 
 import org.eclipse.core.runtime.Platform;
 
 import org.eclipse.core.runtime.Status;
-
+import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.draw2d.IFigure;
 
 import org.eclipse.jface.action.Action;
@@ -91,8 +89,8 @@ import org.eclipse.zest.layouts.LayoutStyles;
 import org.eclipse.zest.layouts.algorithms.HorizontalTreeLayoutAlgorithm;
 import org.osgi.framework.Bundle;
 
-
 import eu.scasefp7.eclipse.servicecomposition.operationCaller.RAMLCaller;
+import eu.scasefp7.eclipse.servicecomposition.repository.RepositoryClient;
 import eu.scasefp7.eclipse.servicecomposition.Activator;
 import eu.scasefp7.eclipse.servicecomposition.codeInterpreter.Value;
 import eu.scasefp7.eclipse.servicecomposition.handlers.ImportHandler;
@@ -138,13 +136,12 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 	 */
 	public static final String ID = "eu.scasefp7.eclipse.servicecomposition.views.ServiceCompositionView";
 
-	
 	// the graph that appears in the view
 	private edu.uci.ics.jung.graph.Graph<OwlService, Connector> jungGraph;
-	
+
 	// the storyboard file
 	private IFile storyboardFile;
-	
+
 	// composite in ui
 	private ScrolledComposite sc;
 	private Composite rightComposite;
@@ -159,20 +156,19 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 	private TreeViewer inputsTreeViewer;
 	private Composite authParamsComposite;
 	private GraphViewer viewer;
-	
+
 	// maven build
 	public static MavenExecutionRequestPopulator populator;
 	public static DefaultPlexusContainer container;
 	public static Maven maven;
 	static public List<MavenProject> buildedProjects = new ArrayList<MavenProject>();
 	static public SettingsBuilder settingsBuilder;
-	
+
 	// the s-case project
 	private IProject scaseProject;
 	// if the workflow is saved
 	private boolean savedWorkflow = false;
-	
-	
+
 	// zest graph connection and node
 	private GraphConnection selectedGraphEdge;
 	private GraphNode selectedGraphNode;
@@ -180,9 +176,10 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 	// input composite selection
 	private ISelection inputSelection;
 	private String workflowFilePath = "";
-	
+
 	// the imported operations from the ontology
 	private static ArrayList<Operation> operations;
+	private static ArrayList<Operation> PWoperations;
 	// flag for updating operations
 	private static boolean updateOperations = true;
 	private static boolean updateYouRest = false;
@@ -205,15 +202,35 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 
 		viewer.setLayoutAlgorithm(layout, true);
 		viewer.applyLayout();
-		
+
 		CreateWorkflow.createNewWorkflow(this);
 		FillToolbar.fillToolBar(this);
 
 		setSavedWorkflow(false);
 
-		// RepositoryClient repo = new RepositoryClient();
-		// String path = repo.downloadOntology("WS");
+		Job downloadPWWS = new Job("Import StoryBoard Creator file") {
+			@Override
+			protected IStatus run(IProgressMonitor monitor) {
+				monitor.beginTask("Transforming storyboard creator diagram to workflow of web services...",
+						IProgressMonitor.UNKNOWN);
+				RepositoryClient repo = new RepositoryClient();
+				if (monitor.isCanceled())
+					return Status.CANCEL_STATUS;
+				String path = repo.downloadPWOntology("PWWS", "3", getDisplay());
+				Algorithm.init();
+				try {
+					PWoperations = Algorithm.importServices(ResourcesPlugin.getWorkspace().getRoot().getLocation().toString()
+							+ "/.metadata/.plugins/eu.scasefp7.servicecomposition/ontology/PWWS.owl");
+				} catch (Exception e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				monitor.done();
+				return Status.OK_STATUS;
+			}
+		};
 
+		downloadPWWS.schedule();
 		final Graph graph = viewer.getGraphControl();
 		graph.addSelectionListener(new SelectionAdapter() {
 			@Override
@@ -271,7 +288,6 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 					// Remove is applied to any edge that connects nodes that
 					// none of them is a property.
 
-					
 					if ((((OwlService) ((MyNode) source.getData()).getObject()).getArgument() == null
 							&& ((OwlService) ((MyNode) dest.getData()).getObject()).getArgument() == null)
 							|| (((OwlService) ((MyNode) source.getData()).getObject()).getisMatchedIO()
@@ -288,10 +304,12 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 					menu.setVisible(true);
 
 					// Remove selected edge.
-					item.addListener(SWT.Selection, new Listeners(selectedGraphEdge, selectedGraphNode, view, "removeEdge"));
+					item.addListener(SWT.Selection,
+							new Listeners(selectedGraphEdge, selectedGraphNode, view, "removeEdge"));
 
 					// Rename condition
-					item2.addListener(SWT.Selection, new Listeners(selectedGraphEdge, selectedGraphNode, view, "renameConditionEdge"));
+					item2.addListener(SWT.Selection,
+							new Listeners(selectedGraphEdge, selectedGraphNode, view, "renameConditionEdge"));
 
 				} else if (fig != null && selectedGraphNode != null) {
 					if (((OwlService) ((MyNode) selectedGraphNode.getData()).getObject()).getType()
@@ -319,8 +337,8 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 						menu.setVisible(true);
 
 						// Match i/o with..
-						item.addListener(SWT.Selection, new Listeners(selectedGraphEdge, selectedGraphNode, view, "matchIO"));
-
+						item.addListener(SWT.Selection,
+								new Listeners(selectedGraphEdge, selectedGraphNode, view, "matchIO"));
 
 					} else if (((OwlService) ((MyNode) selectedGraphNode.getData()).getObject()).getType()
 							.equals("Condition")) {
@@ -342,12 +360,15 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 						menu.setVisible(true);
 
 						// Link condition with..
-						item.addListener(SWT.Selection, new Listeners(selectedGraphEdge, selectedGraphNode, view, "linkCondition"));
+						item.addListener(SWT.Selection,
+								new Listeners(selectedGraphEdge, selectedGraphNode, view, "linkCondition"));
 
 						// Remove condition
-						item2.addListener(SWT.Selection, new Listeners(selectedGraphEdge, selectedGraphNode, view, "removeConditionNode"));
+						item2.addListener(SWT.Selection,
+								new Listeners(selectedGraphEdge, selectedGraphNode, view, "removeConditionNode"));
 						// rename condition
-						item3.addListener(SWT.Selection, new Listeners(selectedGraphEdge, selectedGraphNode, view, "renameConditionNode"));
+						item3.addListener(SWT.Selection,
+								new Listeners(selectedGraphEdge, selectedGraphNode, view, "renameConditionNode"));
 
 					} else if (((OwlService) ((MyNode) selectedGraphNode.getData()).getObject()).getType()
 							.equals("StartNode")) {
@@ -363,7 +384,8 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 						menu.setVisible(true);
 
 						// Link Start Node
-						item.addListener(SWT.Selection, new Listeners(selectedGraphEdge, selectedGraphNode, view, "linkStartNode"));
+						item.addListener(SWT.Selection,
+								new Listeners(selectedGraphEdge, selectedGraphNode, view, "linkStartNode"));
 
 					} else if (((OwlService) ((MyNode) selectedGraphNode.getData()).getObject()).getType()
 							.equals("Action")) {
@@ -403,14 +425,15 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 						menu.setVisible(true);
 
 						// Remove selected edge.
-						item.addListener(SWT.Selection, new Listeners(selectedGraphEdge, selectedGraphNode, view, "removeOperationNode"));
+						item.addListener(SWT.Selection,
+								new Listeners(selectedGraphEdge, selectedGraphNode, view, "removeOperationNode"));
 						// See alternative operations
-						item1.addListener(SWT.Selection, new Listeners(selectedGraphEdge, selectedGraphNode, view, "showAlternatives"));
-
+						item1.addListener(SWT.Selection,
+								new Listeners(selectedGraphEdge, selectedGraphNode, view, "showAlternatives"));
 
 						// Link the operation with..
-						item2.addListener(SWT.Selection, new Listeners(selectedGraphEdge, selectedGraphNode, view, "linkOperation"));
-
+						item2.addListener(SWT.Selection,
+								new Listeners(selectedGraphEdge, selectedGraphNode, view, "linkOperation"));
 
 					}
 
@@ -420,21 +443,26 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 					item.setText("Add operation..");
 					MenuItem item2 = new MenuItem(menu, SWT.NONE);
 					item2.setText("Add condition..");
+					MenuItem item3 = new MenuItem(menu, SWT.NONE);
+					item3.setText("Add PW operation..");
 					menu.setVisible(true);
 
 					// Add new operation.
-					item.addListener(SWT.Selection, new Listeners(selectedGraphEdge, selectedGraphNode, view, "addNewOperation"));
-
+					item.addListener(SWT.Selection,
+							new Listeners(selectedGraphEdge, selectedGraphNode, view, "addNewOperation"));
 
 					// Add new condition.
-					item2.addListener(SWT.Selection, new Listeners(selectedGraphEdge, selectedGraphNode, view, "addNewCondition"));
+					item2.addListener(SWT.Selection,
+							new Listeners(selectedGraphEdge, selectedGraphNode, view, "addNewCondition"));
+					
+					// Add new operation.
+					item3.addListener(SWT.Selection,
+							new Listeners(selectedGraphEdge, selectedGraphNode, view, "addNewPWOperation"));
 				}
 
 			}
 		});
 	}
-
-
 
 	public List<MyNode> createGraphNodes(edu.uci.ics.jung.graph.Graph<OwlService, Connector> graph) {
 		List<MyNode> nodes = new ArrayList<MyNode>();
@@ -509,10 +537,6 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 
 	}
 
-	
-
-	
-
 	public void clearMatchedInputs() {
 		ArrayList<Argument> outputs = new ArrayList<Argument>();
 		for (OwlService op : jungGraph.getVertices()) {
@@ -546,8 +570,6 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 		return hasOperations;
 	}
 
-	
-
 	@Override
 	public void setFocus() {
 
@@ -562,9 +584,6 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 	public void setViewer(GraphViewer viewer) {
 		this.viewer = viewer;
 	}
-
-	
-	
 
 	public void updateRightComposite(edu.uci.ics.jung.graph.Graph jungGraph) {
 
@@ -631,14 +650,13 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 		columna.getColumn().setWidth(200);
 		columna.getColumn().setText("Columna");
 		columna.getColumn().setResizable(true);
-		
+
 		columnb = new TreeViewerColumn(inputsTreeViewer, SWT.NONE);
 		columnb.getColumn().setText("Columnb");
 		columnb.getColumn().setWidth(300);
 		columnb.getColumn().setResizable(true);
 
 		Vector<Node> InputNodes = new Vector<Node>();
-		
 
 		// get matched io
 		Object[] vertices1 = (Object[]) jungGraph.getVertices().toArray();
@@ -670,7 +688,6 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 			}
 		}
 
-		
 		inputsComposite.setSize(300, 200);
 		inputsTreeViewer.setContentProvider(new MyTreeContentProvider());
 
@@ -824,8 +841,6 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 				}
 			}
 		});
-
-		
 
 		// create authentication Params composite
 
@@ -989,7 +1004,6 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 		};
 	}
 
-
 	public void addTreeNode(final Object arg, Node parent, int length) {
 		Node n;
 		if (length != 0) {
@@ -1011,7 +1025,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 
 					}
 				}
-			} 
+			}
 		} else {
 
 			if (!((OwlService) arg).getArgument().getSubtypes().isEmpty()) {
@@ -1122,7 +1136,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 				for (Argument element : ((Value) arg).getElements()) {
 					Node e = new Node(element.getName().toString(), n, ((Value) arg).getOwlService(),
 							((Value) element));
-					
+
 					if (element.isArray()) {
 						for (Argument el : ((Value) element).getElements()) {
 							showOutputs(el, e, nodes, graph);
@@ -1144,7 +1158,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 			} else if (!((Value) arg).isArray()
 					&& !RAMLCaller.stringIsItemFromList(((Value) arg).getType(), datatypes)) {
 				for (Argument sub : ((Value) arg).getSubtypes()) {
-					
+
 					showOutputs(sub, n, nodes, graph);
 				}
 			}
@@ -1194,8 +1208,6 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 
 	}
 
-
-	
 	public edu.uci.ics.jung.graph.Graph<OwlService, Connector> getJungGraph() {
 		return jungGraph;
 	}
@@ -1223,9 +1235,9 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 	public void setStoryboardFile(IFile file) {
 		this.storyboardFile = file;
 	}
-	
+
 	public IFile getStoryboardFile() {
-		return storyboardFile ;
+		return storyboardFile;
 	}
 
 	/**
@@ -1292,7 +1304,6 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 			}
 
 		}
-		
 
 		for (int j = 0; j < zestGraph.getNodes().size(); j++) {
 			GraphNode graphNode = (GraphNode) zestGraph.getNodes().get(j);
@@ -1307,9 +1318,9 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 								.getDestination();
 						GraphNode find = find(destination, zestGraph);
 						if (find != null) {
-							
+
 							GraphConnection graphConnection = new GraphConnection(zestGraph, SWT.NONE, graphNode, find);
-							
+
 							EntityConnectionData connectionData = new EntityConnectionData(node, destination);
 							graphConnection.setData(connectionData);
 						}
@@ -1318,10 +1329,8 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 			}
 		}
 
-		
 	}
-	
-	
+
 	private List<MyNode> createInputNodes(OwlService input, List<MyNode> nodes) {
 		MyNode inputNode = new MyNode(input.toString(), input.toString(), input);
 		nodes.add(inputNode);
@@ -1414,7 +1423,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 
 		return connections;
 	}
-	
+
 	public List<MyNode> createGraphNodes(OwlService owlService) {
 
 		List<MyNode> nodes = new ArrayList<MyNode>();
@@ -1489,7 +1498,6 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 
 		}
 
-		
 		for (MyConnection connection : connections) {
 			connection.getSource().getConnectedTo().add(connection.getDestination());
 		}
@@ -1581,10 +1589,10 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 								.getLabel();
 						GraphNode find = find(destination, zestGraph);
 						if (find != null) {
-							
+
 							GraphConnection graphConnection = new GraphConnection(zestGraph, SWT.NONE, graphNode, find);
 							graphConnection.setText(condition);
-							
+
 							EntityConnectionData connectionData = new EntityConnectionData(node, destination);
 							graphConnection.setData(connectionData);
 						}
@@ -1595,7 +1603,6 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 		viewer.applyLayout();
 	}
 
-	
 	/**
 	 * <h1>deleteAllNodes</h1>Delete all nodes from the zest graph.
 	 * 
@@ -1609,10 +1616,6 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 			graphNode.dispose();
 		}
 	}
-
-	
-
-	
 
 	public void loadOperations(Display disp, Shell shell) {
 
@@ -1645,9 +1648,10 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 		// loadOperationJob.schedule();
 	}
 
-	public ServiceCompositionView getView(){
+	public ServiceCompositionView getView() {
 		return this;
 	}
+
 	public void setScaseProject(IProject project) {
 		scaseProject = project;
 	}
@@ -1658,6 +1662,10 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 
 	public static ArrayList<Operation> getOperations() {
 		return operations;
+	}
+	
+	public static ArrayList<Operation> getPWOperations() {
+		return PWoperations;
 	}
 
 	public static void setUpdateYouRest(boolean update) {
@@ -1680,27 +1688,26 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 		return scaseProject;
 	}
 
-//	public NonLinearCodeGenerator getGenerator() {
-//		return gGenerator;
-//	}
-	
+	// public NonLinearCodeGenerator getGenerator() {
+	// return gGenerator;
+	// }
+
 	public Point getPoint() {
 		return point;
 	}
 
-	
 	public TreeViewer getTreeViewer() {
 		return treeViewer;
 	}
-	
+
 	public Tree getOutputsComposite() {
 		return outputsComposite;
 	}
-	
+
 	public Composite getAuthParamsComposite() {
 		return authParamsComposite;
 	}
-	
+
 	public TreeViewerColumn getColumnb() {
 		return columnb;
 	}

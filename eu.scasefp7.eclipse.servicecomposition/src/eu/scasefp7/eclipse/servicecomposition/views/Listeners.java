@@ -86,6 +86,8 @@ public class Listeners implements Listener {
 			showAlternatives(selectedGraphNode);
 		}else if (eventType.equals("addNewOperation")){
 			addNewOperation();
+		}else if (eventType.equals("addNewPWOperation")){
+			addNewPWOperation();
 		}else if (eventType.equals("addNewCondition")){
 			addNewCondition();
 		}else if (eventType.equals("removeOperationNode")){
@@ -863,6 +865,83 @@ public class Listeners implements Listener {
 		view.setFocus();
 
 	}
+	
+	private void addNewPWOperation(){
+		
+			if (jungGraph == null) {
+				final Shell shell = view.getSite().getWorkbenchWindow().getShell();
+				final Display disp = shell.getDisplay();
+				disp.syncExec(new Runnable() {
+					@Override
+					public void run() {
+						MessageDialog.openInformation(disp.getActiveShell(), "Warning", "Create a new workflow first!");
+					}
+				});
+
+			} else {
+				
+				final Shell shell = view.getSite().getWorkbenchWindow().getShell();
+				final Display disp = shell.getDisplay();
+				
+				AddNewOperationJob = new Job("Add new operation") {
+					@Override
+					protected IStatus run(IProgressMonitor monitor) {
+						monitor.beginTask("Loading operations...", IProgressMonitor.UNKNOWN);
+
+						try {
+							
+							ArrayList<Operation> nonPrototypeOperations = new ArrayList<Operation>();
+
+							final ArrayList<String> list = new ArrayList<String>();
+							// String option = "addnode";
+							for (Operation op : ServiceCompositionView.getPWOperations()) {
+									nonPrototypeOperations.add(op);
+							}
+							// check if user has cancelled
+							if (monitor.isCanceled())
+								return Status.CANCEL_STATUS;
+							// Open selection window
+							disp.syncExec(new Runnable() {
+								public void run() {
+
+									TreeDialog dialog = new TreeDialog(shell, "Programmable Web Operations");
+									dialog.setDisp(disp);
+									dialog.setOperations(nonPrototypeOperations);
+									dialog.create();
+									dialog.setDialogLocation();
+									if (dialog.open() == Window.OK) {
+										Operation selectedItem = dialog.getOperation();
+										if (selectedItem != null) {
+											addNode(selectedItem,  ServiceCompositionView.getPWOperations());
+										}
+
+									} else {
+										return;
+									}
+									// SelectionWindowOp(shell, dialog,
+									// nonPrototypeOperations, list);
+								}
+							});
+
+							monitor.done();
+							return Status.OK_STATUS;
+						} catch (Exception ex) {
+							Activator.log("Error while loading the operations from the ontology", ex);
+							ex.printStackTrace();
+							return Status.CANCEL_STATUS;
+						} finally {
+							monitor.done();
+						}
+
+					}
+
+				};
+				AddNewOperationJob.schedule();
+			}
+
+				
+	}
+	
 	
 	
 	/**
