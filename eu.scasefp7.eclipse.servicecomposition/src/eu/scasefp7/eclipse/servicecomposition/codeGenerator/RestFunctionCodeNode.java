@@ -235,12 +235,17 @@ public class RestFunctionCodeNode extends CodeNode {
 			ret += "String wsUrl =\"" + operation.getDomain().getURI() + "\";\n";
 		}
 		for (Argument arg : operation.getInputs()) {
-			if (arg.isTypeOf().equals("URIParameter")) {
-				ret += "wsUrl = wsUrl.replace(\"{" + arg.getName().toString() + "}\", " + arg.getName().toString();
-				if (isRepeated) {
-					ret += ".get(i)";
+			for (OwlService var : allVariables) {
+				if (var.getArgument().equals(arg)) {
+					if (arg.isTypeOf().equals("URIParameter")) {
+						ret += "wsUrl = wsUrl.replace(\"{" + var.getName().toString() + "}\", "
+								+ var.getName().getJavaValidContent().toString();
+						if (isRepeated) {
+							ret += ".get(i)";
+						}
+						ret += ".value);\n";
+					}
 				}
-				ret += ".value);\n";
 			}
 		}
 		ret += "String crudVerb=\"" + operation.getDomain().getCrudVerb() + "\";\n";
