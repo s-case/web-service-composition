@@ -78,7 +78,7 @@ public class CallRestfulServiceCode {
 		code += TAB + TAB + TAB + TAB + TAB + "}\n";
 		code += TAB + TAB + TAB + TAB + "}\n";
 
-		code += TAB + TAB + TAB + TAB + "if (conn.getResponseCode() != 200) {\n";
+		code += TAB + TAB + TAB + TAB + "if (conn.getResponseCode() != 200 && conn.getResponseCode() != 201 && conn.getResponseCode() != 301) {\n";
 		code += TAB + TAB + TAB + TAB + TAB
 				+ "throw new RuntimeException(\"Failed : HTTP error code : \" + conn.getResponseCode());\n";
 		code += TAB + TAB + TAB + TAB + "}\n";
