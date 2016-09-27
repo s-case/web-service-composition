@@ -208,10 +208,10 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 
 		setSavedWorkflow(false);
 
-		Job downloadPWWS = new Job("Import StoryBoard Creator file") {
+		Job downloadPWWS = new Job("Import ProgrammableWeb operations") {
 			@Override
 			protected IStatus run(IProgressMonitor monitor) {
-				monitor.beginTask("Transforming storyboard creator diagram to workflow of web services...",
+				monitor.beginTask("Importing ProgrammableWeb operations...",
 						IProgressMonitor.UNKNOWN);
 				RepositoryClient repo = new RepositoryClient();
 				if (monitor.isCanceled())

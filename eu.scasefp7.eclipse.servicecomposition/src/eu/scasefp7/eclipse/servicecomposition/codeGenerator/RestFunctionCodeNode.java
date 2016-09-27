@@ -144,7 +144,7 @@ public class RestFunctionCodeNode extends CodeNode {
 
 		for (Argument arg : operation.getInputs())
 			for (OwlService var : allVariables) {
-				if (var.getArgument().equals(arg)) {
+				if (var.getArgument().equals(arg) && var.getId() == arg.getOwlService().getId()){
 					boolean isMemberOfArray = false;
 					for (OwlService predesseccor : graph.getPredecessors(var)) {
 
@@ -235,10 +235,10 @@ public class RestFunctionCodeNode extends CodeNode {
 			ret += "String wsUrl =\"" + operation.getDomain().getURI() + "\";\n";
 		}
 		for (Argument arg : operation.getInputs()) {
-			for (OwlService var : allVariables) {
-				if (var.getArgument().equals(arg)) {
-					if (arg.isTypeOf().equals("URIParameter")) {
-						ret += "wsUrl = wsUrl.replace(\"{" + var.getName().toString() + "}\", "
+			if (arg.isTypeOf().equals("URIParameter")) {
+				for (OwlService var : allVariables) {
+					if (var.getArgument().equals(arg) && var.getId() == arg.getOwlService().getId()){
+						ret += "wsUrl = wsUrl.replace(\"{" + var.getName().getComparableForm() + "}\", "
 								+ var.getName().getJavaValidContent().toString();
 						if (isRepeated) {
 							ret += ".get(i)";
