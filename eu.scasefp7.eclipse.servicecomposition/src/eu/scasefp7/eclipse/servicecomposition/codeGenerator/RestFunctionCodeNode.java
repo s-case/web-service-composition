@@ -238,7 +238,7 @@ public class RestFunctionCodeNode extends CodeNode {
 			if (arg.isTypeOf().equals("URIParameter")) {
 				for (OwlService var : allVariables) {
 					if (var.getArgument().equals(arg) && var.getId() == arg.getOwlService().getId()){
-						ret += "wsUrl = wsUrl.replace(\"{" + var.getName().getComparableForm() + "}\", "
+						ret += "wsUrl = wsUrl.replace(\"{" + var.getName().getJavaValidContent().replaceAll("[0123456789]", "") + "}\", "
 								+ var.getName().getJavaValidContent().toString();
 						if (isRepeated) {
 							ret += ".get(i)";
