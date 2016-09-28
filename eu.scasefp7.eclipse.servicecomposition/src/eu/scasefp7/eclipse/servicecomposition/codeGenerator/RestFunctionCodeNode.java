@@ -34,7 +34,7 @@ public class RestFunctionCodeNode extends CodeNode {
 
 	@Override
 	public String createFunctionCode(Graph<OwlService, Connector> graph, ArrayList<OwlService> allVariables,
-			boolean hasBodyInput, boolean isRepeated) throws Exception {
+			boolean hasBodyInput, boolean isRepeated, boolean hasOutput) throws Exception {
 		if (service == null || service.getArgument() != null)
 			return "";
 		String tabIndent = getTab();
@@ -46,7 +46,7 @@ public class RestFunctionCodeNode extends CodeNode {
 			code += "()";
 		}
 
-		code += "  throws Exception" + "{\n" + getCode(allVariables, hasBodyInput, isRepeated, graph);
+		code += "  throws Exception" + "{\n" + getCode(allVariables, hasBodyInput, isRepeated, graph, hasOutput);
 		String matchedInputName = "";
 		if (isRepeated) {
 			for (OwlService matched : allVariables) {

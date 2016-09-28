@@ -187,6 +187,11 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 				hasBodyInput = true;
 			}
 		}
+		
+		boolean hasOutput = true;
+		if (outputVariables.isEmpty()){
+			hasOutput = false;
+		}
 
 		// detect matched io
 		for (OwlService service : graph.getVertices()) {
@@ -280,7 +285,7 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 					if (service.getOperation().getType().equalsIgnoreCase("RESTful")) {
 						CodeNode code = RestFunctionCodeNode.createInstance(service, this);
 						code.applyTab();
-						functionCode += code.createFunctionCode(graph, allVariables, hasBodyInput, isRepeated);
+						functionCode += code.createFunctionCode(graph, allVariables, hasBodyInput, isRepeated, hasOutput);
 						// for (Argument arg : uriParameters) {
 						// declaredVariables += TAB + "private Variable " +
 						// arg.getName().getJavaValidContent().toString()
@@ -294,13 +299,13 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 							|| service.getOperation().getDomain().isLocal()) {
 						CodeNode code = FunctionCodeNode.createInstance(service, this);
 						code.applyTab();
-						functionCode += code.createFunctionCode(graph, allVariables, false, false);
+						functionCode += code.createFunctionCode(graph, allVariables, false, false, hasOutput);
 						wsdlServiceExists = true;
 					}
 				} else {
 					CodeNode code = FunctionCodeNode.createInstance(service, this);
 					code.applyTab();
-					functionCode += code.createFunctionCode(graph, allVariables, false, false);
+					functionCode += code.createFunctionCode(graph, allVariables, false, false, hasOutput);
 				}
 
 			}
@@ -1073,6 +1078,18 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 			resultObjectDeclaration += resultClassInstance;
 
 			resultObjectDeclaration += TAB + TAB + "return " + resultObjectName + ";\n";
+		} else {
+			//class declaration
+			resultClassName = "Response";
+			resultClassDeclaration += TAB + "@XmlRootElement(name = \"Response\")\n" + TAB + "public static class "
+					+ resultClassName + "{\n";
+			resultClassDeclaration += TAB + TAB + "public Response() {\n";
+			resultClassDeclaration += TAB + TAB + "}\n\n";
+			resultClassDeclaration += TAB + "}\n\n";
+			//object declaration
+			resultObjectDeclaration += TAB + TAB + "//create class instance to be returned\n";
+			resultObjectDeclaration += TAB + TAB + "Response response = new Response();\n";
+			resultObjectDeclaration += TAB + TAB + "return response;\n";
 		}
 		String requestClassName = "void";
 		String requestObjectDeclaration = "";

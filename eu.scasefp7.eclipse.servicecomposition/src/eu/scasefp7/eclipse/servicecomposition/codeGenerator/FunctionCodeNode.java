@@ -230,13 +230,13 @@ public class FunctionCodeNode extends CodeNode {
 
 	@Override
 	public String createFunctionCode(Graph<OwlService, Connector> graph, ArrayList<OwlService> allVariables,
-			boolean hasBodyInput, boolean isRepeated) throws Exception {
+			boolean hasBodyInput, boolean isRepeated, boolean hasOutput) throws Exception {
 		if (service == null || service.getArgument() != null)
 			return "";
 		String tabIndent = getTab();
 		applyTab();
 		String code = tabIndent + "protected String " + codeGenerator.getFunctionName(service) + "()  throws Exception"
-				+ "{\n" + getCode(allVariables, hasBodyInput, isRepeated, graph);
+				+ "{\n" + getCode(allVariables, hasBodyInput, isRepeated, graph, hasOutput);
 		boolean hardReturn = false;
 		for (OwlService next : graph.getSuccessors(service))
 			if (next.getArgument() == null && !next.getName().isEmpty()) {

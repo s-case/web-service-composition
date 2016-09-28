@@ -91,9 +91,9 @@ public abstract class CodeGenerator {
 		 * @return the code of the service
 		 * @throws Exception
 		 */
-		public String getCode(ArrayList<OwlService> allVariables, boolean hasBodyInput, boolean isRepeated, Graph<OwlService, Connector> graph) throws Exception {
+		public String getCode(ArrayList<OwlService> allVariables, boolean hasBodyInput, boolean isRepeated, Graph<OwlService, Connector> graph, boolean hasOutput) throws Exception {
 			if (updateCode)
-				updateCode(allVariables, hasBodyInput, isRepeated, graph);
+				updateCode(allVariables, hasBodyInput, isRepeated, graph, hasOutput);
 			return code;
 		}
 
@@ -118,13 +118,14 @@ public abstract class CodeGenerator {
 		 * @param allVariables
 		 * @throws Exception
 		 */
-		protected void updateCode(ArrayList<OwlService> allVariables, boolean hasBodyInput, boolean isRepeated, Graph<OwlService, Connector> graph) throws Exception {
+		protected void updateCode(ArrayList<OwlService> allVariables, boolean hasBodyInput, boolean isRepeated, Graph<OwlService, Connector> graph, boolean hasOutput) throws Exception {
 			Operation operation = service != null ? service.getOperation() : null;
 			code = "";
 			if (operation != null) {
 				code += "//call service: " + operation.getName().getContent() + "\n";
 				code += generateInputSynchronizationCode(operation, allVariables, hasBodyInput, isRepeated, graph);
 				code += generateOperationCode(operation, allVariables, isRepeated);
+				if (hasOutput)
 				code += generateOutputSynchronizationCode(operation, allVariables, isRepeated);
 			}
 			String lines[] = code.split("\n");
@@ -287,7 +288,7 @@ public abstract class CodeGenerator {
 		 * @return generates
 		 * @throws Exception
 		 */
-		public String createFunctionCode(Graph<OwlService, Connector> graph,ArrayList<OwlService> allVariables, boolean hasBodyInput, boolean isRepeated)
+		public String createFunctionCode(Graph<OwlService, Connector> graph,ArrayList<OwlService> allVariables, boolean hasBodyInput, boolean isRepeated, boolean hasOutput)
 				throws Exception {
 			throw new Exception("CodeNode cannot create function code.Use a FunctionCodeNode instance instead.");
 		}
