@@ -1,5 +1,6 @@
 package eu.scasefp7.eclipse.servicecomposition.views;
 
+import java.awt.Dialog;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -16,10 +17,13 @@ import org.eclipse.jface.viewers.LabelProvider;
 import org.eclipse.jface.window.Window;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.Image;
+import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Shell;
+import org.eclipse.swt.widgets.TabFolder;
+import org.eclipse.swt.widgets.TabItem;
 import org.eclipse.ui.dialogs.ElementListSelectionDialog;
 import org.eclipse.zest.core.viewers.EntityConnectionData;
 import org.eclipse.zest.core.widgets.Graph;
@@ -38,8 +42,10 @@ import eu.scasefp7.eclipse.servicecomposition.transformer.Matcher;
 import eu.scasefp7.eclipse.servicecomposition.transformer.Transformer;
 import eu.scasefp7.eclipse.servicecomposition.transformer.JungXMItoOwlTransform.OwlService;
 import eu.scasefp7.eclipse.servicecomposition.transformer.Transformer.ReplaceInformation;
+import eu.scasefp7.eclipse.servicecomposition.ui.CustomDialog;
 import eu.scasefp7.eclipse.servicecomposition.ui.RenameConditionDialog;
 import eu.scasefp7.eclipse.servicecomposition.ui.RenameEdgeConditionDialog;
+import eu.scasefp7.eclipse.servicecomposition.ui.TabShell;
 import eu.scasefp7.eclipse.servicecomposition.ui.TreeDialog;
 
 public class Listeners implements Listener {
@@ -49,7 +55,7 @@ public class Listeners implements Listener {
 	protected ServiceCompositionView view;
 	protected edu.uci.ics.jung.graph.Graph<OwlService, Connector> jungGraph;
 	protected String eventType;
-	
+
 	private Job AddNewOperationJob;
 
 	Listeners(GraphConnection edge, GraphNode graphNode, ServiceCompositionView SCview, String type) {
@@ -62,35 +68,35 @@ public class Listeners implements Listener {
 
 	@Override
 	public void handleEvent(Event event) {
-		if (eventType.equals("removeEdge")){
+		if (eventType.equals("removeEdge")) {
 			removeEdge(selectedGraphEdge);
-		}else if (eventType.equals("renameConditionEdge")){
+		} else if (eventType.equals("renameConditionEdge")) {
 			renameConditionEdge(selectedGraphEdge);
-		}else if (eventType.equals("matchIO")){
-			matchIO(selectedGraphNode);		
-		}else if (eventType.equals("linkStartNode")){
+		} else if (eventType.equals("matchIO")) {
+			matchIO(selectedGraphNode);
+		} else if (eventType.equals("linkStartNode")) {
 			String mode = "StartNode";
 			linkOperation(selectedGraphNode, mode);
-		}else if (eventType.equals("linkCondition")){
+		} else if (eventType.equals("linkCondition")) {
 			String mode = "Condition";
 			linkOperation(selectedGraphNode, mode);
-		}else if (eventType.equals("linkOperation")){
+		} else if (eventType.equals("linkOperation")) {
 			String mode = "Operation";
 			linkOperation(selectedGraphNode, mode);
-		}else if (eventType.equals("removeConditionNode")){
+		} else if (eventType.equals("removeConditionNode")) {
 			String mode = "Condition";
 			removeNode(selectedGraphNode, mode);
-		}else if (eventType.equals("renameConditionNode")){
+		} else if (eventType.equals("renameConditionNode")) {
 			renameConditionNode(selectedGraphNode);
-		}else if (eventType.equals("showAlternatives")){
+		} else if (eventType.equals("showAlternatives")) {
 			showAlternatives(selectedGraphNode);
-		}else if (eventType.equals("addNewOperation")){
+		} else if (eventType.equals("addNewOperation")) {
 			addNewOperation();
-		}else if (eventType.equals("addNewPWOperation")){
+		} else if (eventType.equals("addNewPWOperation")) {
 			addNewPWOperation();
-		}else if (eventType.equals("addNewCondition")){
+		} else if (eventType.equals("addNewCondition")) {
 			addNewCondition();
-		}else if (eventType.equals("removeOperationNode")){
+		} else if (eventType.equals("removeOperationNode")) {
 			String mode = "Operation";
 			removeNode(selectedGraphNode, mode);
 		}
@@ -155,7 +161,6 @@ public class Listeners implements Listener {
 				// remove edge from zest graph
 
 				edge.dispose();
-				
 
 				break;
 			}
@@ -166,8 +171,7 @@ public class Listeners implements Listener {
 		view.updateRightComposite(jungGraph);
 		view.setFocus();
 	}
-	
-	
+
 	/**
 	 * <h1>renameCondition</h1>Rename the selected edge. Edge is coming out of a
 	 * condition node.
@@ -240,7 +244,7 @@ public class Listeners implements Listener {
 		view.updateRightComposite(jungGraph);
 		view.setFocus();
 	}
-	
+
 	/**
 	 * <h1>matchIO</h1> It is used to match (link variables) outputs with
 	 * inputs.
@@ -265,7 +269,7 @@ public class Listeners implements Listener {
 								((OwlService) ((MyNode) node.getData()).getObject()).getArgument().getParent(),
 								((OwlService) ((MyNode) graphNode.getData()).getObject()).getArgument().getParent())
 								.isEmpty()) {
-					
+
 					if (((OwlService) ((MyNode) graphNode.getData()).getObject()).getArgument().getSubtypes().isEmpty()
 					// && !isMemberOfArray
 					) {
@@ -294,7 +298,7 @@ public class Listeners implements Listener {
 								((OwlService) ((MyNode) node.getData()).getObject()).getArgument().getParent(),
 								((OwlService) ((MyNode) graphNode.getData()).getObject()).getArgument().getParent())
 								.isEmpty()) {
-					
+
 					if (((OwlService) ((MyNode) graphNode.getData()).getObject()).getArgument().getSubtypes().isEmpty()
 					// && !isMemberOfArray
 					) {
@@ -313,7 +317,7 @@ public class Listeners implements Listener {
 		view.setFocus();
 
 	}
-	
+
 	/**
 	 * <h1>linkOperation</h1>Link selected node with the node the user chooses
 	 * from the selection window(nodes in this case can be anything but IO)
@@ -359,8 +363,7 @@ public class Listeners implements Listener {
 		view.updateRightComposite(jungGraph);
 		view.setFocus();
 	}
-	
-	
+
 	/**
 	 * <h1>removeNode</h1>Remove operation node and all its IOs.
 	 * 
@@ -484,14 +487,12 @@ public class Listeners implements Listener {
 		jungGraph.removeVertex((OwlService) ((MyNode) node.getData()).getObject());
 		node.dispose();
 
-		
 		view.setJungGraph(jungGraph);
 		view.setSavedWorkflow(false);
 		view.updateRightComposite(jungGraph);
 		view.setFocus();
 	}
-	
-	
+
 	/**
 	 * Remove the outputs of operation <code>node</node>
 	 * 
@@ -551,24 +552,19 @@ public class Listeners implements Listener {
 				}
 				// Check if the node is the one which should be removed.
 				if (((OwlService) ((MyNode) graphNode.getData()).getObject()).equals((OwlService) node.getObject())) {
-					
+
 					// remove jung node
 					jungGraph.removeVertex((OwlService) node.getObject());
 					// remove zest node
 					graphNode.dispose();
 
-					
 				}
 
 			}
 		}
 
-		
-
 	}
 
-
-	
 	/**
 	 * <h1>replaceOperation</h1> Replace an operation with the alternative
 	 * operation that the user has chosen.
@@ -625,7 +621,7 @@ public class Listeners implements Listener {
 
 		// add new node
 		Collection<OwlService> services = new ArrayList<OwlService>(jungGraph.getVertices());
-		
+
 		OwlService owlService = new OwlService(((ReplaceInformation) selectedItem).getOperationToReplace());
 		for (OwlService s : services) {
 			if (owlService.getName().getContent().equals(s.getName().getContent())) {
@@ -724,8 +720,6 @@ public class Listeners implements Listener {
 
 	}
 
-	
-	
 	private void renameConditionNode(GraphNode node) {
 		Shell shell = view.getSite().getWorkbenchWindow().getShell();
 		RenameConditionDialog dialog = new RenameConditionDialog(shell);
@@ -751,7 +745,7 @@ public class Listeners implements Listener {
 			System.out.println("New condition name " + s);
 			((MyNode) node.getData()).setName(s);
 			node.setText(s);
-			
+
 			view.setJungGraph(jungGraph);
 			view.setSavedWorkflow(false);
 			view.updateRightComposite(jungGraph);
@@ -759,7 +753,6 @@ public class Listeners implements Listener {
 		}
 	}
 
-	
 	private void showAlternatives(GraphNode node) {
 		ArrayList<Object> list = new ArrayList<Object>();
 		for (ReplaceInformation replacement : ((MyNode) node.getData()).getAlternativeOperations()) {
@@ -770,12 +763,6 @@ public class Listeners implements Listener {
 		SelectionWindowNode(list, "alternativeOperations");
 	}
 
-
-	
-	
-	
-	
-	
 	/**
 	 * <h1>addNewOperation</h1> Add a new Operation with its IO. For this, the
 	 * method calls <code>SelectionWindowOp</code> method in order to display a
@@ -796,9 +783,9 @@ public class Listeners implements Listener {
 
 			final Shell shell = view.getSite().getWorkbenchWindow().getShell();
 			final Display disp = shell.getDisplay();
-			
 
 			AddNewOperationJob = new Job("Add new operation") {
+
 				@Override
 				protected IStatus run(IProgressMonitor monitor) {
 					monitor.beginTask("Loading operations...", IProgressMonitor.UNKNOWN);
@@ -806,6 +793,7 @@ public class Listeners implements Listener {
 					try {
 						view.loadOperations(disp, shell);
 						ArrayList<Operation> nonPrototypeOperations = new ArrayList<Operation>();
+						ArrayList<Operation> PWOperations = new ArrayList<Operation>();
 
 						final ArrayList<String> list = new ArrayList<String>();
 						// String option = "addnode";
@@ -818,6 +806,111 @@ public class Listeners implements Listener {
 							}
 
 						}
+						for (Operation op : ServiceCompositionView.getPWOperations()) {
+							PWOperations.add(op);
+						}
+						// check if user has cancelled
+						if (monitor.isCanceled())
+							return Status.CANCEL_STATUS;
+						// Open selection window
+						disp.syncExec(new Runnable() {
+							public void run() {
+								CustomDialog dialog = new CustomDialog(shell, "S-CASE Operations");
+								dialog.setDisp(disp);
+								dialog.setOperations(nonPrototypeOperations);
+								dialog.setPWOperations(PWOperations);
+								dialog.create();
+								if (dialog.open() == Window.OK) {
+									Operation selectedItem = dialog.getOperation();
+									if (selectedItem != null) {
+										if (dialog.getTabNumber().equals("S-CASE Operations")) {
+											addNode(selectedItem, ServiceCompositionView.getOperations());
+										} else if (dialog.getTabNumber().equals("PW Operations")) {
+											addNode(selectedItem, ServiceCompositionView.getPWOperations());
+										}
+									}
+
+								} else {
+									return;
+								}
+								// TreeDialog dialog = new TreeDialog(shell,
+								// "S-CASE Operations");
+								// dialog.setDisp(disp);
+								// dialog.setOperations(nonPrototypeOperations);
+								// dialog.create();
+								// dialog.setDialogLocation();
+								//
+								// if (dialog.open() == Window.OK) {
+								// Operation selectedItem =
+								// dialog.getOperation();
+								// if (selectedItem != null) {
+								// addNode(selectedItem,
+								// ServiceCompositionView.getOperations());
+								// }
+								//
+								// } else {
+								// return;
+								// }
+								// SelectionWindowOp(shell, dialog,
+								// nonPrototypeOperations, list);
+							}
+						});
+
+						monitor.done();
+						return Status.OK_STATUS;
+					} catch (Exception ex) {
+						Activator.log("Error while loading the operations from the ontology", ex);
+						ex.printStackTrace();
+						return Status.CANCEL_STATUS;
+					} finally {
+						monitor.done();
+					}
+
+				}
+
+			};
+			AddNewOperationJob.schedule();
+
+		}
+		view.setJungGraph(jungGraph);
+		view.setSavedWorkflow(false);
+		view.updateRightComposite(jungGraph);
+		view.setFocus();
+
+	}
+
+	private void addNewPWOperation() {
+
+		if (jungGraph == null) {
+			final Shell shell = view.getSite().getWorkbenchWindow().getShell();
+			final Display disp = shell.getDisplay();
+			disp.syncExec(new Runnable() {
+				@Override
+				public void run() {
+					MessageDialog.openInformation(disp.getActiveShell(), "Warning", "Create a new workflow first!");
+				}
+			});
+
+		} else {
+
+			final Shell shell = view.getSite().getWorkbenchWindow().getShell();
+			final Display disp = shell.getDisplay();
+
+			AddNewOperationJob = new Job("Add new operation") {
+
+				@Override
+				protected IStatus run(IProgressMonitor monitor) {
+					monitor.beginTask("Loading operations...", IProgressMonitor.UNKNOWN);
+
+					try {
+
+						ArrayList<Operation> nonPrototypeOperations = new ArrayList<Operation>();
+
+						final ArrayList<String> list = new ArrayList<String>();
+						// String option = "addnode";
+						for (Operation op : ServiceCompositionView.getPWOperations()) {
+							nonPrototypeOperations.add(op);
+						}
 						// check if user has cancelled
 						if (monitor.isCanceled())
 							return Status.CANCEL_STATUS;
@@ -825,7 +918,7 @@ public class Listeners implements Listener {
 						disp.syncExec(new Runnable() {
 							public void run() {
 
-								TreeDialog dialog = new TreeDialog(shell, "S-CASE Operations");
+								TreeDialog dialog = new TreeDialog(shell, "Programmable Web Operations");
 								dialog.setDisp(disp);
 								dialog.setOperations(nonPrototypeOperations);
 								dialog.create();
@@ -833,7 +926,7 @@ public class Listeners implements Listener {
 								if (dialog.open() == Window.OK) {
 									Operation selectedItem = dialog.getOperation();
 									if (selectedItem != null) {
-										addNode(selectedItem,  ServiceCompositionView.getOperations());
+										addNode(selectedItem, ServiceCompositionView.getPWOperations());
 									}
 
 								} else {
@@ -859,91 +952,9 @@ public class Listeners implements Listener {
 			};
 			AddNewOperationJob.schedule();
 		}
-		view.setJungGraph(jungGraph);
-		view.setSavedWorkflow(false);
-		view.updateRightComposite(jungGraph);
-		view.setFocus();
 
 	}
-	
-	private void addNewPWOperation(){
-		
-			if (jungGraph == null) {
-				final Shell shell = view.getSite().getWorkbenchWindow().getShell();
-				final Display disp = shell.getDisplay();
-				disp.syncExec(new Runnable() {
-					@Override
-					public void run() {
-						MessageDialog.openInformation(disp.getActiveShell(), "Warning", "Create a new workflow first!");
-					}
-				});
 
-			} else {
-				
-				final Shell shell = view.getSite().getWorkbenchWindow().getShell();
-				final Display disp = shell.getDisplay();
-				
-				AddNewOperationJob = new Job("Add new operation") {
-					@Override
-					protected IStatus run(IProgressMonitor monitor) {
-						monitor.beginTask("Loading operations...", IProgressMonitor.UNKNOWN);
-
-						try {
-							
-							ArrayList<Operation> nonPrototypeOperations = new ArrayList<Operation>();
-
-							final ArrayList<String> list = new ArrayList<String>();
-							// String option = "addnode";
-							for (Operation op : ServiceCompositionView.getPWOperations()) {
-									nonPrototypeOperations.add(op);
-							}
-							// check if user has cancelled
-							if (monitor.isCanceled())
-								return Status.CANCEL_STATUS;
-							// Open selection window
-							disp.syncExec(new Runnable() {
-								public void run() {
-
-									TreeDialog dialog = new TreeDialog(shell, "Programmable Web Operations");
-									dialog.setDisp(disp);
-									dialog.setOperations(nonPrototypeOperations);
-									dialog.create();
-									dialog.setDialogLocation();
-									if (dialog.open() == Window.OK) {
-										Operation selectedItem = dialog.getOperation();
-										if (selectedItem != null) {
-											addNode(selectedItem,  ServiceCompositionView.getPWOperations());
-										}
-
-									} else {
-										return;
-									}
-									// SelectionWindowOp(shell, dialog,
-									// nonPrototypeOperations, list);
-								}
-							});
-
-							monitor.done();
-							return Status.OK_STATUS;
-						} catch (Exception ex) {
-							Activator.log("Error while loading the operations from the ontology", ex);
-							ex.printStackTrace();
-							return Status.CANCEL_STATUS;
-						} finally {
-							monitor.done();
-						}
-
-					}
-
-				};
-				AddNewOperationJob.schedule();
-			}
-
-				
-	}
-	
-	
-	
 	/**
 	 * <h1>addNewCondition</h1> Add new condition node.
 	 */
@@ -1027,6 +1038,7 @@ public class Listeners implements Listener {
 					}
 				});
 			}
+
 		}
 
 		view.setJungGraph(jungGraph);
@@ -1035,8 +1047,7 @@ public class Listeners implements Listener {
 		view.setFocus();
 
 	}
-	
-	
+
 	/**
 	 * <h1>linkNode</h1>Link selected node with another node. It is used for non
 	 * IO nodes.
@@ -1158,7 +1169,6 @@ public class Listeners implements Listener {
 
 	}
 
-	
 	/**
 	 * <h1>addEdge</h1>Add an edge in order to create a link between an input
 	 * and an output variable. The link is always directed from the output to
@@ -1260,8 +1270,7 @@ public class Listeners implements Listener {
 			}
 		}
 	}
-	
-	
+
 	/**
 	 * <h1>addNode</h1>Add the selected operation (chosen from the selection
 	 * window) to the graph with its IOs.
@@ -1330,7 +1339,7 @@ public class Listeners implements Listener {
 		view.setFocus();
 
 	}
-	
+
 	class ArgumentsLabelProvider implements ILabelProvider {
 		public String getText(Object element) {
 			String parents = "";
@@ -1367,7 +1376,6 @@ public class Listeners implements Listener {
 		}
 	}
 
-	
 	/**
 	 * <h1>SelectionWindowNode</h1>Displays a selection window with a list of
 	 * nodes.
