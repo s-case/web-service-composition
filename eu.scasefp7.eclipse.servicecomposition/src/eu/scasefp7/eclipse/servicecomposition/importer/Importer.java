@@ -88,10 +88,12 @@ public abstract class Importer {
 	protected static DatatypeProperty hasDiscountReason;
 	protected static DatatypeProperty hasPairedService;
 	protected static DatatypeProperty isValidForCountries;
+	protected static DatatypeProperty hasTitle;
 
 	protected static OntModel ontologyModel;
 
 	protected static HashMap<String, ApplicationDomain> domainList = new HashMap<String, ApplicationDomain>();
+	protected static HashMap<String, Operation> titleList = new HashMap<String, Operation>();
 
 	/**
 	 * <h1>ApplicationDomain</h1> This class contains information about a single

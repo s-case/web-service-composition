@@ -89,6 +89,8 @@ public class OwlImporter extends Importer {
 		hasDiscountReason = ontologyModel.getDatatypeProperty(prefix + "hasDiscountReason");
 		hasPairedService = ontologyModel.getDatatypeProperty(prefix + "hasPairedService");
 		isValidForCountries = ontologyModel.getDatatypeProperty(prefix + "isValidForCountries");
+		hasTitle = ontologyModel.getDatatypeProperty(prefix + "hasTitle");
+		
 		OwlMetadata.updateDatatypes(prefix, ontologyModel);
 
 		// load domains

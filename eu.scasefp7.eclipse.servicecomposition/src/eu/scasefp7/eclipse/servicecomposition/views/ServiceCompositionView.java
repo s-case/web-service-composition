@@ -213,6 +213,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 			protected IStatus run(IProgressMonitor monitor) {
 				monitor.beginTask("Importing ProgrammableWeb operations...",
 						IProgressMonitor.UNKNOWN);
+				long startTime = System.nanoTime();
 				RepositoryClient repo = new RepositoryClient();
 				if (monitor.isCanceled())
 					return Status.CANCEL_STATUS;
@@ -225,6 +226,9 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
+				
+				long endTime = System.nanoTime();
+				System.out.println("Took "+(endTime - startTime) + " ns"); 
 				monitor.done();
 				return Status.OK_STATUS;
 			}
@@ -443,8 +447,8 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 					item.setText("Add operation..");
 					MenuItem item2 = new MenuItem(menu, SWT.NONE);
 					item2.setText("Add condition..");
-					MenuItem item3 = new MenuItem(menu, SWT.NONE);
-					item3.setText("Add PW operation..");
+//					MenuItem item3 = new MenuItem(menu, SWT.NONE);
+//					item3.setText("Add PW operation..");
 					menu.setVisible(true);
 
 					// Add new operation.
@@ -455,9 +459,9 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 					item2.addListener(SWT.Selection,
 							new Listeners(selectedGraphEdge, selectedGraphNode, view, "addNewCondition"));
 					
-					// Add new operation.
-					item3.addListener(SWT.Selection,
-							new Listeners(selectedGraphEdge, selectedGraphNode, view, "addNewPWOperation"));
+//					// Add new operation.
+//					item3.addListener(SWT.Selection,
+//							new Listeners(selectedGraphEdge, selectedGraphNode, view, "addNewPWOperation"));
 				}
 
 			}

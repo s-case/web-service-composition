@@ -62,6 +62,7 @@ public class ImportHandler extends AbstractHandler {
 	 * the ontology operations
 	 */
 	private static ArrayList<Operation> operations;
+	private static ArrayList<Operation> PWoperations;
 	private static boolean updateOntology = false;
 
 	@Override
@@ -138,13 +139,24 @@ public class ImportHandler extends AbstractHandler {
 						// check if ontology file exists in .metadata plug-in's
 						// folder
 						view.loadOperations(disp, shell);
+						PWoperations = ServiceCompositionView.getPWOperations();
 						final String pathToSBDFile = ResourcesPlugin.getWorkspace().getRoot().getLocation().toString()
 								+ file.getFullPath().toOSString();
 						// check if the user has cancelled the job before
 						// transforming
 						if (monitor.isCanceled())
 							return Status.CANCEL_STATUS;
-						graph = Algorithm.transformationAlgorithm(pathToSBDFile, operations, disp, shell);
+						boolean usePWOperations = false;
+						if (Activator.getDefault() != null) {
+							usePWOperations = Activator.getDefault().getPreferenceStore().getBoolean("Use PW operations");
+						}
+						if (!usePWOperations) {
+							graph = Algorithm.transformationAlgorithm(pathToSBDFile, operations, disp, shell);
+						} else {
+							
+							graph = Algorithm.transformationAlgorithm(pathToSBDFile, PWoperations, disp,
+									shell);
+						}
 
 						if (graph != null) {
 							// SHOW REPLACEMENT REPORT
@@ -361,7 +373,7 @@ public class ImportHandler extends AbstractHandler {
 
 						if (answer) {
 							setUpdateOntology(true);
-						}else {
+						} else {
 							setUpdateOntology(false);
 						}
 					}
@@ -385,8 +397,6 @@ public class ImportHandler extends AbstractHandler {
 			}
 		}
 	}
-	
-	
 
 	/**
 	 * <h1>setOperations</h1>

@@ -1,5 +1,6 @@
 package eu.scasefp7.eclipse.servicecomposition.preferences;
 
+import org.eclipse.jface.preference.BooleanFieldEditor;
 import org.eclipse.jface.preference.ColorFieldEditor;
 import org.eclipse.jface.preference.FieldEditorPreferencePage;
 import org.eclipse.ui.IWorkbench;
@@ -8,7 +9,6 @@ import org.eclipse.ui.IWorkbenchPreferencePage;
 import eu.scasefp7.eclipse.servicecomposition.Activator;
 
 public class ColorPreferencesPage extends FieldEditorPreferencePage implements IWorkbenchPreferencePage{
-
 	
 	/**
 	 * Initializes this object.
@@ -25,12 +25,13 @@ public class ColorPreferencesPage extends FieldEditorPreferencePage implements I
 		addField(new ColorFieldEditor("Matched Input/Output", "Matched Input/Output Node", getFieldEditorParent()));
 		addField(new ColorFieldEditor("Start Node", "Start Node", getFieldEditorParent()));
 		addField(new ColorFieldEditor("End Node", "End Node", getFieldEditorParent()));
+		addField(new BooleanFieldEditor("Use PW operations", "Use ProgrammableWeb operations", getFieldEditorParent()));
 	}
 	
 	@Override
 	public void init(IWorkbench workbench) {
 		setPreferenceStore(Activator.getDefault().getPreferenceStore());
-		setDescription("Set the colors of Web Service Composition Workflow.");
+		setDescription("Set the preferences for Web Service Composition plugin.");
 	}
 	
 }

@@ -29,6 +29,7 @@ public class PreferencesInitializer extends AbstractPreferenceInitializer {
 		store.setDefault("Matched Input/Output", "0,0,128");
 		store.setDefault("Start Node", "128,128,128");
 		store.setDefault("End Node", "128,128,128");
+		store.setDefault("Use PW operations", false); 
 	}
 
 }
