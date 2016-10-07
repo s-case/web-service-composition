@@ -1,8 +1,15 @@
 package eu.scasefp7.eclipse.servicecomposition.views;
 
 import java.io.File;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
 import java.util.HashMap;
 
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
@@ -29,9 +36,36 @@ public class UploadCompositeService {
 	private static JWTSigner signer = new JWTSigner("RXs7eUv1E-qROLL7UX25_w5up6284KpJE6gygLPvQhcUSwY"); // scase_secret as parameter
 	private String scase_token = "yDjOpZaBdiVtlXp5Z6KNFhopeKpEdOJTFlWJvPiBZ7atW9Y"; // scase_token
 
+	/**
+	 * Builds and returns a jersey client that accepts SSL certificates.
+	 * 
+	 * @return a new jersey client instance.
+	 */
+	private static Client getClient() {
+		Client client = null;
+		try {
+			SSLContext sc = SSLContext.getInstance("TLSv1");
+			sc.init(null, new TrustManager[] { new X509TrustManager() {
+				public void checkClientTrusted(X509Certificate[] chain, String authType) throws CertificateException {
+				}
+
+				public void checkServerTrusted(X509Certificate[] chain, String authType) throws CertificateException {
+				}
+
+				public X509Certificate[] getAcceptedIssuers() {
+					return new X509Certificate[0];
+				}
+			} }, new java.security.SecureRandom());
+			client = ClientBuilder.newBuilder().sslContext(sc).hostnameVerifier(null).build();
+		} catch (NoSuchAlgorithmException | KeyManagementException e) {
+			throw new RuntimeException("Failed to create client");
+		}
+		return client;
+	}
+
 	public boolean exists(String fileName) throws Exception {
 		// check if file exists
-		Client client = ClientBuilder.newClient();
+		Client client = getClient();
 		client.property(ClientProperties.CONNECT_TIMEOUT, 1000000);
 		client.property(ClientProperties.READ_TIMEOUT, 1000000);
 		WebTarget webTarget = client.target(CTUrl + "/SCServer/rest/file").path(fileName);
@@ -53,7 +87,8 @@ public class UploadCompositeService {
 	public void upload(String path, IProgressMonitor monitor) throws Exception {
 
 		// upload file
-		Client client = ClientBuilder.newBuilder().register(MultiPartFeature.class).build();
+		Client client = getClient();
+		client.register(MultiPartFeature.class);
 		client.property(ClientProperties.CONNECT_TIMEOUT, 1000000);
 		client.property(ClientProperties.READ_TIMEOUT, 1000000);
 		WebTarget webTarget = client.target(CTUrl + "/SCServer/rest/file/upload");

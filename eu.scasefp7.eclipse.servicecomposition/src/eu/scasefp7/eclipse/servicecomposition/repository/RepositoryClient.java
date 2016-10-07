@@ -24,6 +24,10 @@ import java.io.RandomAccessFile;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -36,6 +40,9 @@ import java.util.HashMap;
 //import java.util.TimeZone;
 import java.util.TimeZone;
 
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.core.Response;
@@ -154,6 +161,33 @@ public class RepositoryClient {
 	// }
 	// }
 
+	/**
+	 * Builds and returns a jersey client that accepts SSL certificates.
+	 * 
+	 * @return a new jersey client instance.
+	 */
+	private static Client getClient() {
+		Client client = null;
+		try {
+			SSLContext sc = SSLContext.getInstance("TLSv1");
+			sc.init(null, new TrustManager[] { new X509TrustManager() {
+				public void checkClientTrusted(X509Certificate[] chain, String authType) throws CertificateException {
+				}
+
+				public void checkServerTrusted(X509Certificate[] chain, String authType) throws CertificateException {
+				}
+
+				public X509Certificate[] getAcceptedIssuers() {
+					return new X509Certificate[0];
+				}
+			} }, new java.security.SecureRandom());
+			client = ClientBuilder.newBuilder().sslContext(sc).hostnameVerifier(null).build();
+		} catch (NoSuchAlgorithmException | KeyManagementException e) {
+			throw new RuntimeException("Failed to create client");
+		}
+		return client;
+	}
+
 	public String downloadOntology(String text, String serverVersion, Display disp) {
 
 		// FacesContext context = FacesContext.getCurrentInstance();
@@ -161,7 +195,7 @@ public class RepositoryClient {
 		// String path = ((ServletContext) context.getExternalContext()
 		// .getContext()).getRealPath("/");
 		String signature = createSignature();
-		Client client = ClientBuilder.newClient();
+		Client client = getClient();
 		client.property(ClientProperties.CONNECT_TIMEOUT, 1000000);
 		client.property(ClientProperties.READ_TIMEOUT, 1000000);
 		//String latestSubmission = getLatestSubmissionId(text);
@@ -379,7 +413,7 @@ public class RepositoryClient {
 	public String getLatestSubmissionId(String ontology) {
 		String url = "http://109.231.126.165:8080";
 		String signature = createSignature();
-		Client client = ClientBuilder.newClient();
+		Client client = getClient();
 		client.property(ClientProperties.CONNECT_TIMEOUT, 1000000);
 		client.property(ClientProperties.READ_TIMEOUT, 1000000);
 		try {
