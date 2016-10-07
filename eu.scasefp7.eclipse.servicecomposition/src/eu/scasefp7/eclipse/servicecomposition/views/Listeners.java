@@ -45,7 +45,6 @@ import eu.scasefp7.eclipse.servicecomposition.transformer.Transformer.ReplaceInf
 import eu.scasefp7.eclipse.servicecomposition.ui.CustomDialog;
 import eu.scasefp7.eclipse.servicecomposition.ui.RenameConditionDialog;
 import eu.scasefp7.eclipse.servicecomposition.ui.RenameEdgeConditionDialog;
-import eu.scasefp7.eclipse.servicecomposition.ui.TabShell;
 import eu.scasefp7.eclipse.servicecomposition.ui.TreeDialog;
 
 public class Listeners implements Listener {
