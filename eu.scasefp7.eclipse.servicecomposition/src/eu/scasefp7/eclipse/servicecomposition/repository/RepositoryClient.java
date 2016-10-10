@@ -57,6 +57,10 @@ import org.apache.http.HttpResponse;
 //import org.apache.http.HttpResponse;
 import org.apache.http.client.fluent.Request;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
+import org.apache.http.conn.ssl.SSLContextBuilder;
+import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
+import org.apache.http.conn.ssl.TrustStrategy;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -378,7 +382,14 @@ public class RepositoryClient {
 	public boolean uploadOntology(String path) {
 		try {
 			String boundary = "-------------boundary";
-			CloseableHttpClient httpClient = HttpClients.createDefault();
+			SSLContextBuilder sslBuilder = new SSLContextBuilder();
+			sslBuilder.loadTrustMaterial(null, new TrustStrategy() {
+				public boolean isTrusted(X509Certificate[] chain, String authType) throws CertificateException {
+					return true;
+				}
+			});
+			SSLConnectionSocketFactory sslsf = new SSLConnectionSocketFactory(sslBuilder.build());
+			CloseableHttpClient httpClient = HttpClients.custom().setSSLSocketFactory(sslsf).build();
 			HttpPost uploadFile = new HttpPost(CTUrl + "/ontologies/WS/submissions?apikey=" + apiKey);
 			String signature = createSignature();
 			uploadFile.addHeader("AUTHORIZATION", "CT-AUTH " + scase_token + ":" + signature);
