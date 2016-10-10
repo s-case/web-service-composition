@@ -370,6 +370,12 @@ public class RepositoryClient {
 	}
 
 	public boolean uploadOntology() {
+		String path = ResourcesPlugin.getWorkspace().getRoot().getLocation().toString()
+				+ "/.metadata/.plugins/eu.scasefp7.servicecomposition/ontology";
+		return uploadOntology(path);
+	}
+
+	public boolean uploadOntology(String path) {
 		try {
 			String boundary = "-------------boundary";
 			CloseableHttpClient httpClient = HttpClients.createDefault();
@@ -390,8 +396,6 @@ public class RepositoryClient {
 					+ "0\",\"isRemote\":\"0\",\"contact\":[{\"name\":\"Kostas Giannoutakis\",\"email\":\"kgiannou@iti.gr\"}],\"publication\":\"\"}";
 
 			builder.addTextBody("json", jsonStr, ContentType.APPLICATION_JSON);
-			String path = ResourcesPlugin.getWorkspace().getRoot().getLocation().toString()
-					+ "/.metadata/.plugins/eu.scasefp7.servicecomposition/ontology";
 			builder.addBinaryBody("file", new File(path + "/WS.owl"), ContentType.TEXT_PLAIN, "WS.owl");
 
 			HttpEntity multipart = builder.build();
@@ -548,4 +552,13 @@ public class RepositoryClient {
 		return signature;
 	}
 
+	/**
+	 * Test function for upload ontology
+	 * 
+	 * @param args the first and only command line parameter is the folder where the WS.owl file resides.
+	 */
+	public static void main(String[] args) {
+		new RepositoryClient().uploadOntology(args[0]);
+	}
+	
 }
