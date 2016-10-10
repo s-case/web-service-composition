@@ -382,6 +382,7 @@ public class RepositoryClient {
 	public boolean uploadOntology(String path) {
 		try {
 			String boundary = "-------------boundary";
+			// Check http://stackoverflow.com/a/19518383 and http://stackoverflow.com/a/19519566 for info on SLL code
 			SSLContextBuilder sslBuilder = new SSLContextBuilder();
 			sslBuilder.loadTrustMaterial(null, new TrustStrategy() {
 				public boolean isTrusted(X509Certificate[] chain, String authType) throws CertificateException {
