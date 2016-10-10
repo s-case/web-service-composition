@@ -44,7 +44,7 @@ public class CustomDialog extends Dialog {
 	private Display disp;
 	private Operation operation;
 	private String title;
-	private String tab = "0";
+	private String tab = "S-CASE Operations";
 
 	public CustomDialog(Shell parent, String title) {
 		super(parent);
@@ -75,6 +75,7 @@ public class CustomDialog extends Dialog {
 	protected Control createDialogArea(Composite parent) {
 		Composite container = (Composite) super.createDialogArea(parent);
 		TabFolder folder = new TabFolder(container, SWT.TOP);
+		folder.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
 		TabItem item = new TabItem(folder, SWT.NONE);
 		item.setText("S-CASE Operations");
 		item.setControl(createTree(folder, "s-case"));
@@ -117,7 +118,7 @@ public class CustomDialog extends Dialog {
 	protected Control createTree(TabFolder folder, String mode) {
 
 		TreeViewer tree = new TreeViewer(folder, SWT.BORDER | SWT.H_SCROLL | SWT.V_SCROLL);
-		TreeViewerColumn column1 = new TreeViewerColumn(tree, SWT.LEFT);
+		TreeViewerColumn column1 = new TreeViewerColumn(tree, SWT.LEFT );
 		column1.getColumn().setText("Attribute");
 		column1.getColumn().setWidth(300);
 		column1.getColumn().setResizable(true);
@@ -126,7 +127,7 @@ public class CustomDialog extends Dialog {
 		// column2.getColumn().setWidth(200);
 		// column2.getColumn().setResizable(true);
 
-		tree.getTree().setLayoutData(new GridData(GridData.FILL_BOTH));
+		tree.getTree().setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
 		tree.setContentProvider(new TreeContentProvider());
 
 		// sort alphabetically

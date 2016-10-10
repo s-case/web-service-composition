@@ -789,6 +789,7 @@ public class Listeners implements Listener {
 				protected IStatus run(IProgressMonitor monitor) {
 					monitor.beginTask("Loading operations...", IProgressMonitor.UNKNOWN);
 
+					if (ServiceCompositionView.getPWOperations() !=null){
 					try {
 						view.loadOperations(disp, shell);
 						ArrayList<Operation> nonPrototypeOperations = new ArrayList<Operation>();
@@ -864,7 +865,17 @@ public class Listeners implements Listener {
 					} finally {
 						monitor.done();
 					}
-
+					} else {
+						disp.syncExec(new Runnable() {
+							public void run() {
+								MessageDialog.openInformation(disp.getActiveShell(), "Try again later",
+										"Please wait until loading of ProgrammableWeb operations is finished!");
+							}
+						});
+						monitor.done();
+						return Status.CANCEL_STATUS;
+							
+					}
 				}
 
 			};
