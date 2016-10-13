@@ -4,8 +4,9 @@
       label="Web Service Composition"
       version="1.0.0.qualifier"
       provider-name="S-CASE Consortium"
-      plugin="eu.scasefp7.eclipse.servicecomposition">
-
+      plugin="eu.scasefp7.eclipse.servicecomposition"
+      image="s-case-feature.png">
+      
    <description url="https://github.com/s-case/web-service-composition">
       This is the Web Service Composition plugin, a tool for the EU-funded
 project S-CASE

@@ -1,10 +1,10 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
-Bundle-Name: web-service-composition
+Bundle-Name: Web service composition
 Bundle-SymbolicName: eu.scasefp7.eclipse.servicecomposition;singleton:=true
 Bundle-Version: 1.0.0.qualifier
 Bundle-Activator: eu.scasefp7.eclipse.servicecomposition.Activator
-Bundle-Vendor: CERTH
+Bundle-Vendor: S-CASE Consortium
 Require-Bundle: org.eclipse.ui,
  org.eclipse.jdt.core;bundle-version="3.10.0",
  org.eclipse.core.resources;bundle-version="3.9.1",
