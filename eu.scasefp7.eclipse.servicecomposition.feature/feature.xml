@@ -8,8 +8,7 @@
       image="s-case-feature.png">
       
    <description url="https://github.com/s-case/web-service-composition">
-      This is the Web Service Composition plugin, a tool for the EU-funded
-project S-CASE
+Web service compositions takes a workflow storyboard and finds suitable web services, based on the name, the inputs, the outputs and metadata of the operation. The resulting composition is created as a new web service that can be compiled and readily used.
    </description>
 
    <copyright url="http://www.scasefp7.eu/copyright">
