@@ -789,11 +789,12 @@ public class Listeners implements Listener {
 				protected IStatus run(IProgressMonitor monitor) {
 					monitor.beginTask("Loading operations...", IProgressMonitor.UNKNOWN);
 
-					if (ServiceCompositionView.getPWOperations() !=null){
+					if (ServiceCompositionView.getPWOperations() !=null && ServiceCompositionView.getMashapeOperations() != null){
 					try {
 						view.loadOperations(disp, shell);
 						ArrayList<Operation> nonPrototypeOperations = new ArrayList<Operation>();
 						ArrayList<Operation> PWOperations = new ArrayList<Operation>();
+						ArrayList<Operation> MashapeOperations = new ArrayList<Operation>();
 
 						final ArrayList<String> list = new ArrayList<String>();
 						// String option = "addnode";
@@ -809,6 +810,9 @@ public class Listeners implements Listener {
 						for (Operation op : ServiceCompositionView.getPWOperations()) {
 							PWOperations.add(op);
 						}
+						for (Operation op : ServiceCompositionView.getMashapeOperations()) {
+							MashapeOperations.add(op);
+						}
 						// check if user has cancelled
 						if (monitor.isCanceled())
 							return Status.CANCEL_STATUS;
@@ -819,6 +823,7 @@ public class Listeners implements Listener {
 								dialog.setDisp(disp);
 								dialog.setOperations(nonPrototypeOperations);
 								dialog.setPWOperations(PWOperations);
+								dialog.setMashapeOperations(MashapeOperations);
 								dialog.create();
 								if (dialog.open() == Window.OK) {
 									Operation selectedItem = dialog.getOperation();
@@ -827,6 +832,8 @@ public class Listeners implements Listener {
 											addNode(selectedItem, ServiceCompositionView.getOperations());
 										} else if (dialog.getTabNumber().equals("PW Operations")) {
 											addNode(selectedItem, ServiceCompositionView.getPWOperations());
+										}else if (dialog.getTabNumber().equals("Mashape Operations")) {
+											addNode(selectedItem, ServiceCompositionView.getMashapeOperations());
 										}
 									}
 
@@ -869,7 +876,7 @@ public class Listeners implements Listener {
 						disp.syncExec(new Runnable() {
 							public void run() {
 								MessageDialog.openInformation(disp.getActiveShell(), "Try again later",
-										"Please wait until loading of ProgrammableWeb operations is finished!");
+										"Please wait until loading of ProgrammableWeb and Mashape operations is finished!");
 							}
 						});
 						monitor.done();

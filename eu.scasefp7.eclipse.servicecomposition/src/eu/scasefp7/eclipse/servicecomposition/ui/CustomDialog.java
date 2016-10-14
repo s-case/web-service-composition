@@ -41,6 +41,7 @@ import eu.scasefp7.eclipse.servicecomposition.ui.TreeDialog.ReplaceInformationNo
 public class CustomDialog extends Dialog {
 	private ArrayList<Operation> operations = new ArrayList<Operation>();
 	private ArrayList<Operation> PWoperations = new ArrayList<Operation>();
+	private ArrayList<Operation> Mashapeoperations = new ArrayList<Operation>();
 	private Display disp;
 	private Operation operation;
 	private String title;
@@ -57,6 +58,10 @@ public class CustomDialog extends Dialog {
 
 	public void setPWOperations(ArrayList<Operation> operations) {
 		this.PWoperations = operations;
+	}
+	
+	public void setMashapeOperations(ArrayList<Operation> operations) {
+		this.Mashapeoperations = operations;
 	}
 
 	public void setDisp(Display disp) {
@@ -76,6 +81,7 @@ public class CustomDialog extends Dialog {
 		Composite container = (Composite) super.createDialogArea(parent);
 		TabFolder folder = new TabFolder(container, SWT.TOP);
 		folder.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+		
 		TabItem item = new TabItem(folder, SWT.NONE);
 		item.setText("S-CASE Operations");
 		item.setControl(createTree(folder, "s-case"));
@@ -83,6 +89,10 @@ public class CustomDialog extends Dialog {
 		TabItem item2 = new TabItem(folder, SWT.NONE);
 		item2.setText("PW Operations");
 		item2.setControl(createTree(folder, "PW"));
+		
+		TabItem item3 = new TabItem(folder, SWT.NONE);
+		item3.setText("Mashape Operations");
+		item3.setControl(createTree(folder, "Mashape"));
 		return container;
 	}
 
@@ -156,6 +166,13 @@ public class CustomDialog extends Dialog {
 			}
 		} else if (mode.equals("PW")) {
 			for (Operation operation : PWoperations) {
+				OperationNode n = createOperationNode(operation);
+				nodes.add(n);
+
+			}
+		}
+		else if (mode.equals("Mashape")) {
+			for (Operation operation : Mashapeoperations) {
 				OperationNode n = createOperationNode(operation);
 				nodes.add(n);
 

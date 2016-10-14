@@ -300,7 +300,7 @@ public class RepositoryClient {
 	}
 	
 	
-	public String downloadPWOntology(String text, String serverVersion, Display disp) {
+	public String downloadPWMOntology(String text, String serverVersion, Display disp) {
 
 		//String latestSubmission = getLatestSubmissionId(text);
 		String latestSubmission = serverVersion;
@@ -570,7 +570,7 @@ public class RepositoryClient {
 	 * @param args the first and only command line parameter is the folder where the WS.owl file resides.
 	 */
 	public static void main(String[] args) {
-		new RepositoryClient().uploadOntology(args[0]);
+		new RepositoryClient().uploadOntology("D:/runtime-EclipseApplication(1)/.metadata/.plugins/eu.scasefp7.servicecomposition/ontology");
 	}
 	
 }

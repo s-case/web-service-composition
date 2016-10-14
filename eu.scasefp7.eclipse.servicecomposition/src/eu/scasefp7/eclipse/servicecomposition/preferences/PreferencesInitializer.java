@@ -1,7 +1,10 @@
 package eu.scasefp7.eclipse.servicecomposition.preferences;
 
 import org.eclipse.core.runtime.preferences.AbstractPreferenceInitializer;
+import org.eclipse.jface.preference.BooleanFieldEditor;
 import org.eclipse.jface.preference.IPreferenceStore;
+import org.eclipse.jface.util.IPropertyChangeListener;
+import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.Display;
 
@@ -30,6 +33,8 @@ public class PreferencesInitializer extends AbstractPreferenceInitializer {
 		store.setDefault("Start Node", "128,128,128");
 		store.setDefault("End Node", "128,128,128");
 		store.setDefault("Use PW operations", false); 
+		store.setDefault("Use Mashape operations", false); 
+		
 	}
 
 }

@@ -180,6 +180,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 	// the imported operations from the ontology
 	private static ArrayList<Operation> operations;
 	private static ArrayList<Operation> PWoperations;
+	private static ArrayList<Operation> MashapeOperations;
 	// flag for updating operations
 	private static boolean updateOperations = true;
 	private static boolean updateYouRest = false;
@@ -208,16 +209,16 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 
 		setSavedWorkflow(false);
 
-		Job downloadPWWS = new Job("Import ProgrammableWeb operations") {
+		Job downloadPWWS = new Job("Import PW & Mashape operations") {
 			@Override
 			protected IStatus run(IProgressMonitor monitor) {
-				monitor.beginTask("Importing ProgrammableWeb operations...",
+				monitor.beginTask("Importing ProgrammableWeb and Mashape operations...",
 						IProgressMonitor.UNKNOWN);
-				long startTime = System.nanoTime();
+				long startPWTime = System.nanoTime();
 				RepositoryClient repo = new RepositoryClient();
 				if (monitor.isCanceled())
 					return Status.CANCEL_STATUS;
-				String path = repo.downloadPWOntology("PWWS", "3", getDisplay());
+				String path = repo.downloadPWMOntology("PWWS", "5", getDisplay());
 				Algorithm.init();
 				try {
 					PWoperations = Algorithm.importServices(ResourcesPlugin.getWorkspace().getRoot().getLocation().toString()
@@ -227,8 +228,25 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 					e.printStackTrace();
 				}
 				
-				long endTime = System.nanoTime();
-				System.out.println("Took "+(endTime - startTime) + " ns"); 
+				long endPWTime = System.nanoTime();
+				
+				if (monitor.isCanceled())
+					return Status.CANCEL_STATUS;
+				long startMTime = System.nanoTime();
+				if (monitor.isCanceled())
+					return Status.CANCEL_STATUS;
+				String path2 = repo.downloadPWMOntology("MASHAPEWS", "11", getDisplay());
+				try {
+					MashapeOperations = Algorithm.importServices(ResourcesPlugin.getWorkspace().getRoot().getLocation().toString()
+							+ "/.metadata/.plugins/eu.scasefp7.servicecomposition/ontology/MASHAPEWS.owl");
+				} catch (Exception e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				
+				long endMTime = System.nanoTime();
+				System.out.println("Loading PW operations took "+(endPWTime - startPWTime) * 1.66666667 * Math.pow(10, -11) + " min"); 
+				System.out.println("Loading Mashape operations took "+(endMTime - startMTime)  * 1.66666667 * Math.pow(10, -11) + " min"); 
 				monitor.done();
 				return Status.OK_STATUS;
 			}
@@ -1624,6 +1642,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 	public void loadOperations(Display disp, Shell shell) {
 
 		try {
+			long startTime = System.nanoTime();
 			ImportHandler.ontologyCheck(shell, disp);
 			// check if user has cancelled
 			// if (monitor.isCanceled())
@@ -1636,6 +1655,8 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 				setOperations(operations);
 				setUpdateOperations(false);
 				ImportHandler.setOperations(operations);
+				long endTime = System.nanoTime();
+				System.out.println("Loading S-CASE operations took "+(endTime - startTime) * 1.66666667 * Math.pow(10, -11) + " min"); 
 			}
 
 			// monitor.done();
@@ -1670,6 +1691,10 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 	
 	public static ArrayList<Operation> getPWOperations() {
 		return PWoperations;
+	}
+	
+	public static ArrayList<Operation> getMashapeOperations() {
+		return MashapeOperations;
 	}
 
 	public static void setUpdateYouRest(boolean update) {
