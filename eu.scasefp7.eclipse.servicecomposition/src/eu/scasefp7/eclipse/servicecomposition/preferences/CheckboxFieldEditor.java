@@ -11,7 +11,7 @@
  *******************************************************************************/
 package eu.scasefp7.eclipse.servicecomposition.preferences;
 
-import org.eclipse.jface.preference.FieldEditor;
+import org.eclipse.jface.preference.BooleanFieldEditor;
 import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.swt.SWT;
@@ -28,7 +28,7 @@ import org.eclipse.swt.widgets.Label;
 /**
  * A field editor for a boolean type preference.
  */
-public class CheckboxFieldEditor extends FieldEditor {
+public class CheckboxFieldEditor extends BooleanFieldEditor {
 
     /**
      * Style constant (value <code>0</code>) indicating the default layout where
