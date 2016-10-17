@@ -6,9 +6,9 @@
       provider-name="S-CASE Consortium"
       plugin="eu.scasefp7.eclipse.servicecomposition"
       image="s-case-feature.png">
-      
+
    <description url="https://github.com/s-case/web-service-composition">
-Web service compositions takes a workflow storyboard and finds suitable web services, based on the name, the inputs, the outputs and metadata of the operation. The resulting composition is created as a new web service that can be compiled and readily used.
+      Web service compositions takes a workflow storyboard and finds suitable web services, based on the name, the inputs, the outputs and metadata of the operation. The resulting composition is created as a new web service that can be compiled and readily used.
    </description>
 
    <copyright url="http://www.scasefp7.eu/copyright">
@@ -209,6 +209,10 @@ Web service compositions takes a workflow storyboard and finds suitable web serv
    <url>
       <update label="S-CASE update site" url="http://s-case.github.io/s-case_update_site/"/>
    </url>
+
+   <includes
+         id="eu.scasefp7.eclipse.servicecomposition.dependencies.feature"
+         version="0.0.0"/>
 
    <plugin
          id="eu.scasefp7.eclipse.servicecomposition"
