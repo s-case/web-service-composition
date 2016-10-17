@@ -209,10 +209,10 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 
 		setSavedWorkflow(false);
 
-		Job downloadPWWS = new Job("Import PW & Mashape operations") {
+		Job downloadPWWS = new Job("Import ProgrammableWeb operations") {
 			@Override
 			protected IStatus run(IProgressMonitor monitor) {
-				monitor.beginTask("Importing ProgrammableWeb and Mashape operations...",
+				monitor.beginTask("Importing ProgrammableWeb operations...",
 						IProgressMonitor.UNKNOWN);
 				long startPWTime = System.nanoTime();
 				RepositoryClient repo = new RepositoryClient();
@@ -232,6 +232,25 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 				
 				if (monitor.isCanceled())
 					return Status.CANCEL_STATUS;
+				
+				System.out.println("Loading PW operations took "+(endPWTime - startPWTime) * 1.66666667 * Math.pow(10, -11) + " min"); 
+				monitor.done();
+				return Status.OK_STATUS;
+			}
+		};
+
+		downloadPWWS.schedule();
+		
+		Job downloadMashapeWS = new Job("Import Mashape operations") {
+			@Override
+			protected IStatus run(IProgressMonitor monitor) {
+				monitor.beginTask("Importing Mashape operations...",
+						IProgressMonitor.UNKNOWN);
+				
+				RepositoryClient repo = new RepositoryClient();
+				
+				if (monitor.isCanceled())
+					return Status.CANCEL_STATUS;
 				long startMTime = System.nanoTime();
 				if (monitor.isCanceled())
 					return Status.CANCEL_STATUS;
@@ -245,14 +264,13 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 				}
 				
 				long endMTime = System.nanoTime();
-				System.out.println("Loading PW operations took "+(endPWTime - startPWTime) * 1.66666667 * Math.pow(10, -11) + " min"); 
 				System.out.println("Loading Mashape operations took "+(endMTime - startMTime)  * 1.66666667 * Math.pow(10, -11) + " min"); 
 				monitor.done();
 				return Status.OK_STATUS;
 			}
 		};
 
-		downloadPWWS.schedule();
+		downloadMashapeWS.schedule();
 		final Graph graph = viewer.getGraphControl();
 		graph.addSelectionListener(new SelectionAdapter() {
 			@Override

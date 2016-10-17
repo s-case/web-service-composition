@@ -825,6 +825,7 @@ public class Listeners implements Listener {
 								dialog.setPWOperations(PWOperations);
 								dialog.setMashapeOperations(MashapeOperations);
 								dialog.create();
+								dialog.setDialogLocation();
 								if (dialog.open() == Window.OK) {
 									Operation selectedItem = dialog.getOperation();
 									if (selectedItem != null) {

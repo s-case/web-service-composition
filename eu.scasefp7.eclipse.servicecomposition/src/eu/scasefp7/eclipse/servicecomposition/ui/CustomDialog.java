@@ -104,7 +104,8 @@ public class CustomDialog extends Dialog {
 		if (title != null) {
 			shell.setText(title);
 		}
-		shell.setMinimumSize(200, 200);
+		//shell.setMinimumSize(200, 200);
+		shell.setSize(400, 800);
 	}
 
 	public void setDialogLocation() {
