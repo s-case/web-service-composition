@@ -84,9 +84,11 @@ public class RepositoryClient {
 	 */
 	private String url = "http://109.231.126.165:8080";
 	private String CTUrl = "https://app.scasefp7.com:8000/api/proxy";
-	private static JWTSigner signer = new JWTSigner("RXs7eUv1E-qROLL7UX25_w5up6284KpJE6gygLPvQhcUSwY"); // scase_secret as parameter
+	private static JWTSigner signer = new JWTSigner("RXs7eUv1E-qROLL7UX25_w5up6284KpJE6gygLPvQhcUSwY"); // scase_secret
+																										// as
+																										// parameter
 	private String scase_token = "yDjOpZaBdiVtlXp5Z6KNFhopeKpEdOJTFlWJvPiBZ7atW9Y"; // scase_token
-	
+
 	// private String apiKey = "1cfae05f-9e67-486f-820b-b393dec5764b";
 	// private String url = "http://repo.scasefp7.com:8080";
 
@@ -202,7 +204,7 @@ public class RepositoryClient {
 		Client client = getClient();
 		client.property(ClientProperties.CONNECT_TIMEOUT, 1000000);
 		client.property(ClientProperties.READ_TIMEOUT, 1000000);
-		//String latestSubmission = getLatestSubmissionId(text);
+		// String latestSubmission = getLatestSubmissionId(text);
 		String latestSubmission = serverVersion;
 
 		String path = ResourcesPlugin.getWorkspace().getRoot().getLocation().toString()
@@ -216,35 +218,36 @@ public class RepositoryClient {
 		InputStream inputStream = null;
 		OutputStream outputStream = null;
 		// write the version file
-		if (text.equals("WS")) {
-			File versionFile = new File(path + "/version.txt");
-			if (!versionFile.exists()) {
-				versionFile.getParentFile().mkdirs();
-			} else {
-				versionFile.delete();
-			}
-			try {
-				versionFile.createNewFile();
-				RandomAccessFile f = new RandomAccessFile(versionFile, "rw");
-				f.seek(0); // to the beginning
-				String version = "submissionId=" + latestSubmission;
-				f.write(version.getBytes());
-				f.close();
-			} catch (IOException e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
-			}
+
+		File versionFile = new File(path + "/version" + text + ".txt");
+		if (!versionFile.exists()) {
+			versionFile.getParentFile().mkdirs();
+		} else {
+			versionFile.delete();
+		}
+		try {
+			versionFile.createNewFile();
+			RandomAccessFile f = new RandomAccessFile(versionFile, "rw");
+			f.seek(0); // to the beginning
+			String version = "submissionId=" + latestSubmission;
+			f.write(version.getBytes());
+			f.close();
+		} catch (IOException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
 		}
 
 		// write the ontology file
 		try {
-			Response response = client.target(requestURL).request().header("AUTHORIZATION", "CT-AUTH " + scase_token + ":" + signature).get();
+			Response response = client.target(requestURL).request()
+					.header("AUTHORIZATION", "CT-AUTH " + scase_token + ":" + signature).get();
 			System.out.println("Get ontology");
 
 			String resString = response.readEntity(String.class);
 			JSONObject obj = (JSONObject) JSONValue.parseWithException(resString);
-			String body =  (String)obj.get("body");
-			inputStream = new ByteArrayInputStream(body.getBytes(StandardCharsets.UTF_8));;
+			String body = (String) obj.get("body");
+			inputStream = new ByteArrayInputStream(body.getBytes(StandardCharsets.UTF_8));
+			;
 			File file = new File(path + "/" + text + ".owl");
 			if (!file.exists()) {
 				file.getParentFile().mkdirs();
@@ -298,11 +301,10 @@ public class RepositoryClient {
 		}
 
 	}
-	
-	
+
 	public String downloadPWMOntology(String text, String serverVersion, Display disp) {
 
-		//String latestSubmission = getLatestSubmissionId(text);
+		// String latestSubmission = getLatestSubmissionId(text);
 		String latestSubmission = serverVersion;
 
 		String path = ResourcesPlugin.getWorkspace().getRoot().getLocation().toString()
@@ -313,17 +315,36 @@ public class RepositoryClient {
 		else
 			requestURL = url + "/ontologies/" + text + "/submissions/" + latestSubmission + "/download?apikey="
 					+ apiKey;
+
+		// write the version file
+
+		File versionFile = new File(path + "/version" + text + ".txt");
+		if (!versionFile.exists()) {
+			versionFile.getParentFile().mkdirs();
+		} else {
+			versionFile.delete();
+		}
+		try {
+			versionFile.createNewFile();
+			RandomAccessFile f = new RandomAccessFile(versionFile, "rw");
+			f.seek(0); // to the beginning
+			String version = "submissionId=" + latestSubmission;
+			f.write(version.getBytes());
+			f.close();
+		} catch (IOException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+
 		InputStream inputStream = null;
 		OutputStream outputStream = null;
-		
 
 		// write the ontology file
 		try {
-			inputStream = Request.Get(requestURL).connectTimeout(30000).socketTimeout(30000).execute()
-					.returnContent().asStream();
-			System.out.println("Get PW ontology");
+			inputStream = Request.Get(requestURL).connectTimeout(30000).socketTimeout(30000).execute().returnContent()
+					.asStream();
+			System.out.println("Get " + text + "ontology");
 
-			
 			File file = new File(path + "/" + text + ".owl");
 			if (!file.exists()) {
 				file.getParentFile().mkdirs();
@@ -338,9 +359,9 @@ public class RepositoryClient {
 			while ((read = inputStream.read(bytes)) != -1) {
 				outputStream.write(bytes, 0, read);
 			}
-			
+
 			return path + "/" + text + ".owl";
-			
+
 		} catch (Exception ex) {
 			ex.printStackTrace();
 
@@ -382,7 +403,8 @@ public class RepositoryClient {
 	public boolean uploadOntology(String path) {
 		try {
 			String boundary = "-------------boundary";
-			// Check http://stackoverflow.com/a/19518383 and http://stackoverflow.com/a/19519566 for info on SLL code
+			// Check http://stackoverflow.com/a/19518383 and
+			// http://stackoverflow.com/a/19519566 for info on SLL code
 			SSLContextBuilder sslBuilder = new SSLContextBuilder();
 			sslBuilder.loadTrustMaterial(null, new TrustStrategy() {
 				public boolean isTrusted(X509Certificate[] chain, String authType) throws CertificateException {
@@ -394,7 +416,7 @@ public class RepositoryClient {
 			HttpPost uploadFile = new HttpPost(CTUrl + "/ontologies/WS/submissions?apikey=" + apiKey);
 			String signature = createSignature();
 			uploadFile.addHeader("AUTHORIZATION", "CT-AUTH " + scase_token + ":" + signature);
-			//uploadFile.addHeader("Authorization", "apikey token=" + apiKey);
+			// uploadFile.addHeader("Authorization", "apikey token=" + apiKey);
 			uploadFile.addHeader("Content-Type",
 					"multipart/mixed; boundary=" + boundary + "; type=application/json; start=json");
 			MultipartEntityBuilder builder = MultipartEntityBuilder.create();
@@ -432,23 +454,42 @@ public class RepositoryClient {
 		Client client = getClient();
 		client.property(ClientProperties.CONNECT_TIMEOUT, 1000000);
 		client.property(ClientProperties.READ_TIMEOUT, 1000000);
-		try {
-			// get latest submission
-			Response response = client.target(CTUrl + "/ontologies/WS/submissions?apikey=" + apiKey).request().header("AUTHORIZATION", "CT-AUTH " + scase_token + ":" + signature).get();
-			System.out.println("Check version");
+		if (ontology.equals("WS")) {
+			try {
+				// get latest submission
+				Response response = client.target(CTUrl + "/ontologies/WS/submissions?apikey=" + apiKey).request()
+						.header("AUTHORIZATION", "CT-AUTH " + scase_token + ":" + signature).get();
+				System.out.println("Check version");
 
-			String resString = response.readEntity(String.class);
-			//System.out.println(resString);
-			JSONObject obj = (JSONObject) JSONValue.parseWithException(resString);
-			String body =  (String)obj.get("body");
-			JSONArray array = (JSONArray)JSONValue.parseWithException(body);
-			JSONObject obj2 = (JSONObject) array.get(0);
-			String id= obj2.get("submissionId").toString();
-			System.out.println(id);
-			return id;
-		} catch (Exception ex) {
-			ex.printStackTrace();
-			return "";
+				String resString = response.readEntity(String.class);
+				// System.out.println(resString);
+				JSONObject obj = (JSONObject) JSONValue.parseWithException(resString);
+				String body = (String) obj.get("body");
+				JSONArray array = (JSONArray) JSONValue.parseWithException(body);
+				JSONObject obj2 = (JSONObject) array.get(0);
+				String id = obj2.get("submissionId").toString();
+				System.out.println("WS ontology id: " + id);
+				return id;
+			} catch (Exception ex) {
+				ex.printStackTrace();
+				return "";
+			}
+		} else {
+			try {
+				// get latest submission
+				InputStream inputStream = Request.Get(url + "/ontologies/" + ontology + "/submissions?apikey=" + apiKey)
+						.connectTimeout(20000).socketTimeout(20000).execute().returnContent().asStream();
+				Object obj = JSONValue.parse(convertStreamToString(inputStream));
+				JSONArray array = (JSONArray) obj;
+				JSONObject obj2 = (JSONObject) array.get(0);
+				String id = obj2.get("submissionId").toString();
+				System.out.println(ontology + " ontology id: " + id);
+				return id;
+
+			} catch (Exception ex) {
+				ex.printStackTrace();
+				return "";
+			}
 		}
 	}
 
@@ -457,7 +498,7 @@ public class RepositoryClient {
 	 * workspace /.metadata/.plugins/eu.scasefp7.servicecomposition/ontology
 	 * folder if they don't already exist
 	 */
-	public void copyOntologyToWorkspace() {
+	public void copyOntologyToWorkspace(String ontName) {
 		// copy the ontology file
 		URL owlFileurl;
 		InputStream inputStream = null;
@@ -466,12 +507,12 @@ public class RepositoryClient {
 				+ "/.metadata/.plugins/eu.scasefp7.servicecomposition/ontology";
 		try {
 
-			File file = new File(path + "/WS.owl");
+			File file = new File(path + "/" + ontName + ".owl");
 			if (!file.exists()) {
 				file.getParentFile().mkdirs();
 				file.createNewFile();
 
-				owlFileurl = new URL("platform:/plugin/" + Activator.PLUGIN_ID + "/ontology/WS.owl");
+				owlFileurl = new URL("platform:/plugin/" + Activator.PLUGIN_ID + "/ontology/" + ontName + ".owl");
 				inputStream = owlFileurl.openConnection().getInputStream();
 
 				System.out.println(file.getAbsolutePath());
@@ -510,9 +551,10 @@ public class RepositoryClient {
 		InputStream inputStream2 = null;
 		OutputStream outputStream2 = null;
 		try {
-			File versionfile = new File(path + "/version.txt");
+			File versionfile = new File(path + "/version" + ontName + ".txt");
 			if (!versionfile.exists()) {
-				URL versionFileurl = new URL("platform:/plugin/" + Activator.PLUGIN_ID + "/ontology/version.txt");
+				URL versionFileurl = new URL(
+						"platform:/plugin/" + Activator.PLUGIN_ID + "/ontology/version" + ontName + ".txt");
 				inputStream2 = versionFileurl.openConnection().getInputStream();
 				versionfile.createNewFile();
 
@@ -551,11 +593,13 @@ public class RepositoryClient {
 		}
 
 	}
+
 	/**
 	 * createSignature
+	 * 
 	 * @return signature for connection with CT
 	 */
-	private String createSignature(){
+	private String createSignature() {
 		HashMap<String, Object> claims = new HashMap<String, Object>();
 		claims.put("token", scase_token);
 
@@ -567,10 +611,13 @@ public class RepositoryClient {
 	/**
 	 * Test function for upload ontology
 	 * 
-	 * @param args the first and only command line parameter is the folder where the WS.owl file resides.
+	 * @param args
+	 *            the first and only command line parameter is the folder where
+	 *            the WS.owl file resides.
 	 */
 	public static void main(String[] args) {
-		new RepositoryClient().uploadOntology("D:/runtime-EclipseApplication(1)/.metadata/.plugins/eu.scasefp7.servicecomposition/ontology");
+		new RepositoryClient().uploadOntology(
+				"D:/runtime-EclipseApplication(1)/.metadata/.plugins/eu.scasefp7.servicecomposition/ontology");
 	}
-	
+
 }

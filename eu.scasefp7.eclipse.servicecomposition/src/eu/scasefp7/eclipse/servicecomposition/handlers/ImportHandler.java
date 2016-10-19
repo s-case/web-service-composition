@@ -374,14 +374,15 @@ public class ImportHandler extends AbstractHandler {
 
 	public static void ontologyCheck(Shell shell, Display disp) throws IOException {
 		RepositoryClient repo = new RepositoryClient();
-		repo.copyOntologyToWorkspace();
+		repo.copyOntologyToWorkspace("WS");
+		
 
 		// check if a newer ontology version exists
 
 		String serverVersion = repo.getLatestSubmissionId("WS");
 		BufferedReader reader = new BufferedReader(
 				new FileReader(ResourcesPlugin.getWorkspace().getRoot().getLocation().toString()
-						+ "/.metadata/.plugins/eu.scasefp7.servicecomposition/ontology/version.txt"));
+						+ "/.metadata/.plugins/eu.scasefp7.servicecomposition/ontology/versionWS.txt"));
 		String localVersion = reader.readLine().replaceAll("\\D+", "");
 		if (!serverVersion.toString().isEmpty() && !localVersion.toString().isEmpty()) {
 			if (Integer.parseInt(serverVersion) > Integer.parseInt(localVersion)) {

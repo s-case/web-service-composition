@@ -1,5 +1,9 @@
 package eu.scasefp7.eclipse.servicecomposition.views;
 
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -218,7 +222,25 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 				RepositoryClient repo = new RepositoryClient();
 				if (monitor.isCanceled())
 					return Status.CANCEL_STATUS;
-				String path = repo.downloadPWMOntology("PWWS", "5", getDisplay());
+				repo.copyOntologyToWorkspace("PWWS");
+				
+				String serverVersion = repo.getLatestSubmissionId("PWWS");
+				BufferedReader reader;
+				try {
+					reader = new BufferedReader(
+							new FileReader(ResourcesPlugin.getWorkspace().getRoot().getLocation().toString()
+									+ "/.metadata/.plugins/eu.scasefp7.servicecomposition/ontology/versionPWWS.txt"));
+					String localVersion = reader.readLine().replaceAll("\\D+", "");
+					if (!serverVersion.toString().isEmpty() && !localVersion.toString().isEmpty()) {
+						if (Integer.parseInt(serverVersion) > Integer.parseInt(localVersion)) {
+					String path = repo.downloadPWMOntology("PWWS", serverVersion, getDisplay());
+						}
+					}
+				} catch (IOException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
+				
 				Algorithm.init();
 				try {
 					PWoperations = Algorithm.importServices(ResourcesPlugin.getWorkspace().getRoot().getLocation().toString()
@@ -254,7 +276,24 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 				long startMTime = System.nanoTime();
 				if (monitor.isCanceled())
 					return Status.CANCEL_STATUS;
-				String path2 = repo.downloadPWMOntology("MASHAPEWS", "11", getDisplay());
+				repo.copyOntologyToWorkspace("MASHAPEWS");
+				String serverVersion = repo.getLatestSubmissionId("MASHAPEWS");
+				BufferedReader reader;
+				try {
+					reader = new BufferedReader(
+							new FileReader(ResourcesPlugin.getWorkspace().getRoot().getLocation().toString()
+									+ "/.metadata/.plugins/eu.scasefp7.servicecomposition/ontology/versionMASHAPEWS.txt"));
+					String localVersion = reader.readLine().replaceAll("\\D+", "");
+					if (!serverVersion.toString().isEmpty() && !localVersion.toString().isEmpty()) {
+						if (Integer.parseInt(serverVersion) > Integer.parseInt(localVersion)) {
+							String path2 = repo.downloadPWMOntology("MASHAPEWS", serverVersion, getDisplay());
+						}
+					}
+				} catch (IOException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
+				
 				try {
 					MashapeOperations = Algorithm.importServices(ResourcesPlugin.getWorkspace().getRoot().getLocation().toString()
 							+ "/.metadata/.plugins/eu.scasefp7.servicecomposition/ontology/MASHAPEWS.owl");
