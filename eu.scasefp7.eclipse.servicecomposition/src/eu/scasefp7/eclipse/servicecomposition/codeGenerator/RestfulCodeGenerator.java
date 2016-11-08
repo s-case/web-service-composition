@@ -312,11 +312,11 @@ public class RestfulCodeGenerator {
 			plugin.appendChild(pluginConfiguration);
 
 			Element Confsource = doc.createElement("source");
-			Confsource.appendChild(doc.createTextNode("1.7"));
+			Confsource.appendChild(doc.createTextNode("1.8"));
 			pluginConfiguration.appendChild(Confsource);
 
 			Element Conftarget = doc.createElement("target");
-			Conftarget.appendChild(doc.createTextNode("1.7"));
+			Conftarget.appendChild(doc.createTextNode("1.8"));
 			pluginConfiguration.appendChild(Conftarget);
 
 			Element plugin2 = doc.createElement("plugin");

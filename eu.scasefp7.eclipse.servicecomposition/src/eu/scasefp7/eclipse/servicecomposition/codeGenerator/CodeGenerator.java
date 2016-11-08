@@ -126,7 +126,7 @@ public abstract class CodeGenerator {
 				code += generateInputSynchronizationCode(operation, allVariables, hasBodyInput, isRepeated, graph);
 				code += generateOperationCode(operation, allVariables, isRepeated);
 				if (hasOutput)
-				code += generateOutputSynchronizationCode(operation, allVariables, isRepeated);
+				code += generateOutputSynchronizationCode(operation, allVariables, isRepeated, graph);
 			}
 			String lines[] = code.split("\n");
 			code = "";
@@ -228,7 +228,7 @@ public abstract class CodeGenerator {
 		 * @param allVariables
 		 * @return the generated code
 		 */
-		protected String generateOutputSynchronizationCode(Operation operation, ArrayList<OwlService> allVariables, boolean isRepeated) {
+		protected String generateOutputSynchronizationCode(Operation operation, ArrayList<OwlService> allVariables, boolean isRepeated, Graph<OwlService, Connector> graph) {
 			// create synchronization with other variables
 			String finalizeCommands = "";
 			String outputName = "";

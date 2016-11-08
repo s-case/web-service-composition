@@ -187,9 +187,9 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 				hasBodyInput = true;
 			}
 		}
-		
+
 		boolean hasOutput = true;
-		if (outputVariables.isEmpty()){
+		if (outputVariables.isEmpty()) {
 			hasOutput = false;
 		}
 
@@ -285,7 +285,8 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 					if (service.getOperation().getType().equalsIgnoreCase("RESTful")) {
 						CodeNode code = RestFunctionCodeNode.createInstance(service, this);
 						code.applyTab();
-						functionCode += code.createFunctionCode(graph, allVariables, hasBodyInput, isRepeated, hasOutput);
+						functionCode += code.createFunctionCode(graph, allVariables, hasBodyInput, isRepeated,
+								hasOutput);
 						// for (Argument arg : uriParameters) {
 						// declaredVariables += TAB + "private Variable " +
 						// arg.getName().getJavaValidContent().toString()
@@ -325,11 +326,15 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 							+ "_num = new Variable(\"" + service.getName().getJavaValidContent().toString()
 							+ "_num\", \"\", \"int\");\n";
 				} else {
+					String type = service.getArgument().getType();
+					if (service.getArgument().getSubtypes().isEmpty() && type.equals("object")) {
+						type = "String";
+					}
 					if (service.getArgument().getSubtypes().isEmpty() && !service.getArgument().isArray()) {
 						declaredVariables += TAB + "private Variable "
 								+ service.getName().getJavaValidContent().toString() + " = new Variable(\""
 								+ service.getName().getJavaValidContent().replaceAll("[0123456789]", "") + "\",\"\", \""
-								+ service.getArgument().getType() + "\");\n";
+								+ type + "\");\n";
 					} else if (service.getArgument().getSubtypes().isEmpty() && service.getArgument().isArray()) {
 						declaredVariables += TAB + "private Variable "
 								+ service.getName().getJavaValidContent().toString() + " = new Variable(\""
@@ -458,12 +463,18 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 		}
 
 		ArrayList<OwlService> classObjects = new ArrayList<OwlService>();
-		for (OwlService output : resultVariables) {
-			classObjects.add(output);
+		for (OwlService obj : graph.getVertices()) {
+			if (obj.getArgument() != null && !obj.getArgument().getSubtypes().isEmpty()
+					&& !classObjects.contains(obj)) {
+				classObjects.add(obj);
+			}
 		}
-		for (OwlService input : requestVariables) {
-			classObjects.add(input);
-		}
+		// for (OwlService output : resultVariables) {
+		// classObjects.add(output);
+		// }
+		// for (OwlService input : requestVariables) {
+		// classObjects.add(input);
+		// }
 
 		ArrayList<String> classNames = new ArrayList<String>();
 		for (OwlService output : resultVariables) {
@@ -494,6 +505,11 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 						+ op.getName().getJavaValidContent() + "_request = new " + op.getName().getJavaValidContent()
 						+ "Request();\n";
 			// }
+			if (op.getType().equals("SOAP")) {
+
+				operationResponseObjects += TAB + TAB + "@XmlRootElement\n" + TAB + TAB
+						+ "@XmlAccessorType(XmlAccessType.FIELD)\n";
+			}
 			operationResponseObjects += TAB + TAB + "public static class " + op.getName().getJavaValidContent()
 					+ "Response {\n";
 
@@ -517,14 +533,21 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 						subType = outputOwl.getName().getJavaValidContent();
 						subName = subType;
 					}
+				} else {
+					// avoid non existing java primitive type object
+					if (subType.equals("object")) {
+						subType = "String";
+					}
 				}
 				if (output.getSubtypes().isEmpty() && !output.isArray()) {
 					VarDeclaration += TAB + TAB + TAB + "private " + subType + " " + subName + " ;\n";
 
 					getSet += TAB + TAB + "public void set" + subName + "(" + subType + " " + subName + ") {\n" + TAB
 							+ TAB + TAB + "this." + subName + " = " + subName + ";\n" + TAB + TAB + "}\n";
-					getSet += TAB + TAB + "@XmlElement\n" + TAB + TAB + "public " + subType + " " + "get" + subName
-							+ "() {\n" + TAB + TAB + TAB + "return " + subName + ";\n" + TAB + TAB + "}\n";
+					if (!output.getBelongsToOperation().getType().equals("SOAP"))
+						getSet += TAB + TAB + "@XmlElement\n";
+					getSet += TAB + TAB + "public " + subType + " " + "get" + subName + "() {\n" + TAB + TAB + TAB
+							+ "return " + subName + ";\n" + TAB + TAB + "}\n";
 				} else if (output.isArray() && RAMLCaller.stringContainsItemFromList(output.getType(), datatypes)) {
 
 					if (subType.equals("int")) {
@@ -538,8 +561,10 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 					getSet += TAB + TAB + "public void set" + subName + "(ArrayList<" + subType + "> " + subName
 							+ ") {\n" + TAB + TAB + TAB + "this." + subName + " = " + subName + ";\n" + TAB + TAB
 							+ "}\n";
-					getSet += TAB + TAB + "@XmlElement\n" + TAB + TAB + "public ArrayList<" + subType + "> get"
-							+ subName + "() {\n" + TAB + TAB + TAB + "return " + subName + ";\n" + TAB + TAB + "}\n";
+					if (!output.getBelongsToOperation().getType().equals("SOAP"))
+						getSet += TAB + TAB + "@XmlElement\n";
+					getSet += TAB + TAB + "public ArrayList<" + subType + "> get" + subName + "() {\n" + TAB + TAB + TAB
+							+ "return " + subName + ";\n" + TAB + TAB + "}\n";
 				} else if (output.isArray() && !RAMLCaller.stringContainsItemFromList(output.getType(), datatypes)) {
 					// name as in the operation, type might get an id
 					VarDeclaration += TAB + TAB + TAB + "private ArrayList <" + subType.substring(0, 1).toUpperCase()
@@ -553,9 +578,10 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 							+ TAB + TAB + TAB + "this."
 							+ output.getName().getJavaValidContent().replaceAll("[0123456789]", "") + " = " + subName
 							+ ";\n" + TAB + TAB + "}\n";
-					getSet += TAB + TAB + "@XmlElement\n" + TAB + TAB + "public ArrayList<"
-							+ subType.substring(0, 1).toUpperCase() + subType.substring(1) + "> get" + subName
-							+ "() {\n" + TAB + TAB + TAB + "return "
+					if (!output.getBelongsToOperation().getType().equals("SOAP"))
+						getSet += TAB + TAB + "@XmlElement\n";
+					getSet += TAB + TAB + "public ArrayList<" + subType.substring(0, 1).toUpperCase()
+							+ subType.substring(1) + "> get" + subName + "() {\n" + TAB + TAB + TAB + "return "
 							+ output.getName().getJavaValidContent().replaceAll("[0123456789]", "") + ";\n" + TAB + TAB
 							+ "}\n";
 				} else if (!output.isArray() && !output.getSubtypes().isEmpty()) {
@@ -568,9 +594,10 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 							+ subType.substring(1) + " " + subName + ") {\n" + TAB + TAB + TAB + "this."
 							+ output.getName().getJavaValidContent().replaceAll("[0123456789]", "") + " = " + subName
 							+ ";\n" + TAB + TAB + "}\n";
-					getSet += TAB + TAB + "@XmlElement\n" + TAB + TAB + "public "
-							+ subType.substring(0, 1).toUpperCase() + subType.substring(1) + " get" + subName + "() {\n"
-							+ TAB + TAB + TAB + "return "
+					if (!output.getBelongsToOperation().getType().equals("SOAP"))
+						getSet += TAB + TAB + "@XmlElement\n";
+					getSet += TAB + TAB + "public " + subType.substring(0, 1).toUpperCase() + subType.substring(1)
+							+ " get" + subName + "() {\n" + TAB + TAB + TAB + "return "
 							+ output.getName().getJavaValidContent().replaceAll("[0123456789]", "") + ";\n" + TAB + TAB
 							+ "}\n";
 				}
@@ -607,6 +634,11 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 						if (classNames.contains(inputOwl.getName().getJavaValidContent())) {
 							subType = inputOwl.getName().getJavaValidContent();
 							subName = subType;
+						}
+					} else {
+						// avoid non existing java primitive type object
+						if (subType.equals("object")) {
+							subType = "String";
 						}
 					}
 					if (!operationRequestConstructorVars.isEmpty()) {
@@ -1011,7 +1043,9 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 								+ ") {\n" + TAB + TAB + TAB + "this." + arg.getName().getJavaValidContent() + " = "
 								+ arg.getName().getJavaValidContent().replaceAll("[0123456789]", "") + ";\n" + TAB + TAB
 								+ "}\n";
-						resultClassDeclaration += TAB + TAB + "@XmlElement\n" + TAB + TAB + "public " + type + " get"
+						if (!arg.getArgument().getBelongsToOperation().getType().equals("SOAP"))
+							resultClassDeclaration += TAB + TAB + "@XmlElement\n";
+						resultClassDeclaration += TAB + TAB + "public " + type + " get"
 								+ arg.getName().getJavaValidContent() + "() {\n" + TAB + TAB + TAB + "return "
 								+ arg.getName().getJavaValidContent() + ";\n" + TAB + TAB + "}\n";
 					} else if (arg.getArgument().isArray()
@@ -1027,8 +1061,10 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 								+ TAB + TAB + "this." + arg.getName().getJavaValidContent() + " = "
 								+ arg.getName().getJavaValidContent().replaceAll("[0123456789]", "") + ";\n" + TAB + TAB
 								+ "}\n";
-						resultClassDeclaration += TAB + TAB + "@XmlElement\n" + TAB + TAB + "public ArrayList<" + type
-								+ "> get" + arg.getName().getJavaValidContent() + "() {\n" + TAB + TAB + TAB + "return "
+						if (!arg.getArgument().getBelongsToOperation().getType().equals("SOAP"))
+							resultClassDeclaration += TAB + TAB + "@XmlElement\n";
+						resultClassDeclaration += TAB + TAB + "public ArrayList<" + type + "> get"
+								+ arg.getName().getJavaValidContent() + "() {\n" + TAB + TAB + TAB + "return "
 								+ arg.getName().getJavaValidContent() + ";\n" + TAB + TAB + "}\n";
 					} else if (arg.getArgument().isArray()
 							&& !RAMLCaller.stringIsItemFromList(arg.getArgument().getType(), datatypes)) {
@@ -1039,10 +1075,12 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 								+ TAB + TAB + "this." + arg.getName().getJavaValidContent() + " = "
 								+ arg.getName().getJavaValidContent().replaceAll("[0123456789]", "") + ";\n" + TAB + TAB
 								+ "}\n";
-						resultClassDeclaration += TAB + TAB + "@XmlElement\n" + TAB + TAB + "public ArrayList<"
-								+ type.substring(0, 1).toUpperCase() + type.substring(1) + "> get"
-								+ arg.getName().getJavaValidContent() + "() {\n" + TAB + TAB + TAB + "return "
-								+ arg.getName().getJavaValidContent() + ";\n" + TAB + TAB + "}\n";
+						if (!arg.getArgument().getBelongsToOperation().getType().equals("SOAP"))
+							resultClassDeclaration += TAB + TAB + "@XmlElement\n";
+						resultClassDeclaration += TAB + TAB + "public ArrayList<" + type.substring(0, 1).toUpperCase()
+								+ type.substring(1) + "> get" + arg.getName().getJavaValidContent() + "() {\n" + TAB
+								+ TAB + TAB + "return " + arg.getName().getJavaValidContent() + ";\n" + TAB + TAB
+								+ "}\n";
 					} else if (!arg.getArgument().isArray() && !arg.getArgument().getSubtypes().isEmpty()) {
 
 						resultClassDeclaration += TAB + TAB + "public void set" + arg.getName().getJavaValidContent()
@@ -1051,10 +1089,12 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 								+ TAB + TAB + "this." + arg.getName().getJavaValidContent() + " = "
 								+ arg.getName().getJavaValidContent().replaceAll("[0123456789]", "") + ";\n" + TAB + TAB
 								+ "}\n";
-						resultClassDeclaration += TAB + TAB + "@XmlElement\n" + TAB + TAB + "public "
-								+ type.substring(0, 1).toUpperCase() + type.substring(1) + " get"
-								+ arg.getName().getJavaValidContent() + "() {\n" + TAB + TAB + TAB + "return "
-								+ arg.getName().getJavaValidContent() + ";\n" + TAB + TAB + "}\n";
+						if (!arg.getArgument().getBelongsToOperation().getType().equals("SOAP"))
+							resultClassDeclaration += TAB + TAB + "@XmlElement\n";
+						resultClassDeclaration += TAB + TAB + "public " + type.substring(0, 1).toUpperCase()
+								+ type.substring(1) + " get" + arg.getName().getJavaValidContent() + "() {\n" + TAB
+								+ TAB + TAB + "return " + arg.getName().getJavaValidContent() + ";\n" + TAB + TAB
+								+ "}\n";
 					}
 				}
 			}
@@ -1079,14 +1119,14 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 
 			resultObjectDeclaration += TAB + TAB + "return " + resultObjectName + ";\n";
 		} else {
-			//class declaration
+			// class declaration
 			resultClassName = "Response";
 			resultClassDeclaration += TAB + "@XmlRootElement(name = \"Response\")\n" + TAB + "public static class "
 					+ resultClassName + "{\n";
 			resultClassDeclaration += TAB + TAB + "public Response() {\n";
 			resultClassDeclaration += TAB + TAB + "}\n\n";
 			resultClassDeclaration += TAB + "}\n\n";
-			//object declaration
+			// object declaration
 			resultObjectDeclaration += TAB + TAB + "//create class instance to be returned\n";
 			resultObjectDeclaration += TAB + TAB + "Response response = new Response();\n";
 			resultObjectDeclaration += TAB + TAB + "return response;\n";
@@ -1373,8 +1413,10 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 			setPreviousCall = TAB + TAB + TAB + "_previousCall = _nextCall;\n";
 		}
 		if (!repeatedOperations.isEmpty()) {
-//			declaredInputs += TAB + TAB + "String _previousCall = \"StartNode\";\n";
-//			setPreviousCall = TAB + TAB + TAB + "_previousCall = _nextCall;\n";
+			// declaredInputs += TAB + TAB + "String _previousCall =
+			// \"StartNode\";\n";
+			// setPreviousCall = TAB + TAB + TAB + "_previousCall =
+			// _nextCall;\n";
 			for (Operation op : repeatedOperations) {
 				declaredInputs += TAB + TAB + "int " + op.getName().getJavaValidContent() + "_num = 0;\n";
 				call += ", " + op.getName().getJavaValidContent() + "_num";
@@ -1676,9 +1718,13 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 			for (OwlService object : classObjects) {
 				if (variable.getName().getComparableForm().equals(object.getName().getComparableForm())
 						&& !variable.equals(object)) {
-					type = variable.getName().getJavaValidContent();
 					if (variable.getArgument().getSubtypes().size() == object.getArgument().getSubtypes().size()) {
-						return ObjectClasses;
+						if (classNames.contains(variable.getName().getComparableForm()))
+							return ObjectClasses;
+						else
+							type = variable.getName().getComparableForm();
+					} else {
+						type = variable.getName().getJavaValidContent();
 					}
 				}
 			}
@@ -1712,6 +1758,9 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 			for (OwlService sub : subList) {
 				if (sub.getArgument() != null) {
 					String subType = sub.getArgument().getType();
+					if (sub.getArgument().getSubtypes().isEmpty() && subType.equals("object")) {
+						subType = "String";
+					}
 					String subName = sub.getArgument().getName().getJavaValidContent();
 
 					if (!constractorVars.isEmpty()) {
@@ -1746,8 +1795,10 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 						getSet += TAB + TAB + "public void set" + subName + "(" + subType + " "
 								+ subName.replaceAll("[0123456789]", "") + ") {\n" + TAB + TAB + TAB + "this." + subName
 								+ " = " + subName.replaceAll("[0123456789]", "") + ";\n" + TAB + TAB + "}\n";
-						getSet += TAB + TAB + "@XmlElement\n" + TAB + TAB + "public " + subType + " get" + subName
-								+ "() {\n" + TAB + TAB + TAB + "return " + subName + ";\n" + TAB + TAB + "}\n";
+						if (!sub.getArgument().getBelongsToOperation().getType().equals("SOAP"))
+							getSet += TAB + TAB + "@XmlElement\n";
+						getSet += TAB + TAB + "public " + subType + " get" + subName + "() {\n" + TAB + TAB + TAB
+								+ "return " + subName + ";\n" + TAB + TAB + "}\n";
 					} else if (sub.getArgument().isArray() && RAMLCaller.stringIsItemFromList(sub.getType(), datatypes)
 							|| variable.getArgument().getObjectOrArray()) {
 						if (subType.equals("int")) {
@@ -1761,9 +1812,10 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 						getSet += TAB + TAB + "public void set" + subName + "(ArrayList<" + subType + "> "
 								+ subName.replaceAll("[0123456789]", "") + ") {\n" + TAB + TAB + TAB + "this." + subName
 								+ " = " + subName.replaceAll("[0123456789]", "") + ";\n" + TAB + TAB + "}\n";
-						getSet += TAB + TAB + "@XmlElement\n" + TAB + TAB + "public ArrayList<" + subType + "> get"
-								+ subName + "() {\n" + TAB + TAB + TAB + "return " + subName + ";\n" + TAB + TAB
-								+ "}\n";
+						if (!sub.getArgument().getBelongsToOperation().getType().equals("SOAP"))
+							getSet += TAB + TAB + "@XmlElement\n";
+						getSet += TAB + TAB + "public ArrayList<" + subType + "> get" + subName + "() {\n" + TAB + TAB
+								+ TAB + "return " + subName + ";\n" + TAB + TAB + "}\n";
 					} else
 						if (sub.getArgument().isArray() && !RAMLCaller.stringIsItemFromList(sub.getType(), datatypes)) {
 
@@ -1776,9 +1828,11 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 								+ subType.substring(0, 1).toUpperCase() + subType.substring(1) + "> "
 								+ subName.replaceAll("[0123456789]", "") + ") {\n" + TAB + TAB + TAB + "this." + subName
 								+ " = " + subName.replaceAll("[0123456789]", "") + ";\n" + TAB + TAB + "}\n";
-						getSet += TAB + TAB + "@XmlElement\n" + TAB + TAB + "public ArrayList<"
-								+ subType.substring(0, 1).toUpperCase() + subType.substring(1) + "> get" + subName
-								+ "() {\n" + TAB + TAB + TAB + "return " + subName + ";\n" + TAB + TAB + "}\n";
+						if (!sub.getArgument().getBelongsToOperation().getType().equals("SOAP"))
+							getSet += TAB + TAB + "@XmlElement\n";
+						getSet += TAB + TAB + "public ArrayList<" + subType.substring(0, 1).toUpperCase()
+								+ subType.substring(1) + "> get" + subName + "() {\n" + TAB + TAB + TAB + "return "
+								+ subName + ";\n" + TAB + TAB + "}\n";
 					} else if (!sub.getArgument().isArray() && !sub.getArgument().getSubtypes().isEmpty()) {
 
 						VarDeclaration += TAB + TAB + "private " + subType.substring(0, 1).toUpperCase()
@@ -1789,15 +1843,20 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 								+ subType.substring(1) + " " + subName.replaceAll("[0123456789]", "") + ") {\n" + TAB
 								+ TAB + TAB + "this." + subName + " = " + subName.replaceAll("[0123456789]", "") + ";\n"
 								+ TAB + TAB + "}\n";
-						getSet += TAB + TAB + "@XmlElement\n" + TAB + TAB + "public "
-								+ subType.substring(0, 1).toUpperCase() + subType.substring(1) + " get" + subName
-								+ "() {\n" + TAB + TAB + TAB + "return " + subName + ";\n" + TAB + TAB + "}\n";
+						if (!sub.getArgument().getBelongsToOperation().getType().equals("SOAP"))
+							getSet += TAB + TAB + "@XmlElement\n";
+						getSet += TAB + TAB + "public " + subType.substring(0, 1).toUpperCase() + subType.substring(1)
+								+ " get" + subName + "() {\n" + TAB + TAB + TAB + "return " + subName + ";\n" + TAB
+								+ TAB + "}\n";
 					}
 				}
 			}
 
 			VarDeclaration += "\n\n";
 			ObjectClasses += deserializer + deserializerBody;
+			if (variable.getArgument().getBelongsToOperation().getType().equals("SOAP")) {
+				ObjectClasses += TAB + "@XmlAccessorType(XmlAccessType.FIELD)\n";
+			}
 			ObjectClasses += TAB + "public static class " + type.substring(0, 1).toUpperCase() + type.substring(1)
 					+ " {\n";
 			classNames.add(type);
@@ -1814,6 +1873,9 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 			ObjectClasses += getSet;
 			ObjectClasses += "}\n";
 
+			// if (!classObjects.contains(variable)) {
+			// classObjects.add(variable);
+			// }
 			for (OwlService sub : subList) {
 				if (sub.getArgument() != null) {
 					if (!sub.getArgument().getSubtypes().isEmpty()) {
@@ -1822,9 +1884,7 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 				}
 
 			}
-			if (!classObjects.contains(variable)) {
-				classObjects.add(variable);
-			}
+
 		}
 		return ObjectClasses;
 

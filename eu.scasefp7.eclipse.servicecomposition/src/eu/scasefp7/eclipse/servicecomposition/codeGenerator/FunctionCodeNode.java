@@ -11,6 +11,7 @@ import eu.scasefp7.eclipse.servicecomposition.transformer.Similarity.ComparableN
 import eu.scasefp7.eclipse.servicecomposition.views.ServiceCompositionView;
 
 import java.util.ArrayList;
+import java.util.Collection;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -48,7 +49,8 @@ public class FunctionCodeNode extends CodeNode {
 	}
 
 	@Override
-	protected String generateOperationCode(Operation operation, ArrayList<OwlService> allVariables, boolean isRepeated) throws Exception {
+	protected String generateOperationCode(Operation operation, ArrayList<OwlService> allVariables, boolean isRepeated)
+			throws Exception {
 		// return a dummy Python call
 		if (operation.getDomain().isLocal())
 			return super.generateOperationCode(operation, allVariables, false);
@@ -91,7 +93,8 @@ public class FunctionCodeNode extends CodeNode {
 		if (service.getArgument().getSubtypes().isEmpty()) {
 			ret += localTab + "for(Object obj : " + listName + ") {\n";
 			ret += localTab + TAB + "NativeObject no = (NativeObject)obj;\n";
-			ret += localTab + TAB + "if(no.getObjectName().getLocalPart().equalsIgnoreCase(\""
+			ret += localTab + TAB
+					+ "if(no.getObjectName().getLocalPart().replaceAll(\"[0123456789]\", \"\").equalsIgnoreCase(\""
 					+ service.getName().getContent().toString().replaceAll("[0123456789]", "") + "\")){\n";
 			if (input)
 				ret += localTab + TAB + TAB + "no.setHasValue(" + service.getName().getContent().toString()
@@ -113,41 +116,6 @@ public class FunctionCodeNode extends CodeNode {
 									+ ")).setHasValue(" + var.getName().getContent().toString() + ".value);\n";
 						} else {
 
-							// if (sub.getType().equalsIgnoreCase("int")) {
-							// ret += var.getName().getContent().toString()
-							// +
-							// ".value =
-							// Integer.parseInt(((NativeObject)((ComplexObject)obj).getHasNativeObjects().get("
-							// + i + ")).getHasValue());\n";
-							// } else if
-							// (sub.getType().equalsIgnoreCase("double")) {
-							// ret += var.getName().getContent().toString()
-							// +
-							// ".value =
-							// Double.parseDouble(((NativeObject)((ComplexObject)obj).getHasNativeObjects().get("
-							// + i + ")).getHasValue());\n";
-							// } else if
-							// (sub.getType().equalsIgnoreCase("boolean")) {
-							// ret += var.getName().getContent().toString()
-							// +
-							// ".value =
-							// Boolean.parseBoolean(((NativeObject)((ComplexObject)obj).getHasNativeObjects().get("
-							// + i + ")).getHasValue());\n";
-							// } else if
-							// (sub.getType().equalsIgnoreCase("float")) {
-							// ret += var.getName().getContent().toString()
-							// +
-							// ".value =
-							// Float.parseFloat(((NativeObject)((ComplexObject)obj).getHasNativeObjects().get("
-							// + i + ")).getHasValue());\n";
-							// } else {
-							// ret += var.getName().getContent().toString()
-							// +
-							// ".value =
-							// ((NativeObject)((ComplexObject)obj).getHasNativeObjects().get("
-							// + i
-							// + ")).getHasValue();\n";
-							// }
 						}
 					}
 				}
@@ -159,10 +127,12 @@ public class FunctionCodeNode extends CodeNode {
 	}
 
 	@Override
-	protected String generateOutputSynchronizationCode(Operation operation, ArrayList<OwlService> allVariables, boolean isRepeated) {
+	protected String generateOutputSynchronizationCode(Operation operation, ArrayList<OwlService> allVariables,
+			boolean isRepeated, Graph<OwlService, Connector> graph) {
 		// return a dummy Python call
-//		if (operation.getDomain().isLocal())
-//			return super.generateInputSynchronizationCode(operation, allVariables, false, false, graph);
+		// if (operation.getDomain().isLocal())
+		// return super.generateInputSynchronizationCode(operation,
+		// allVariables, false, false, graph);
 		String ret = "";
 		String varArguments = "";
 		String varInstance = "";
@@ -176,29 +146,70 @@ public class FunctionCodeNode extends CodeNode {
 					}
 				}
 			} else {
-				varInstance = TAB + TAB + arg.getName().toString().substring(0, 1).toUpperCase()
-						+ arg.getName().toString().substring(1) + " " + arg.getName().getContent().toString()
-						+ " = new " + arg.getName().toString().substring(0, 1).toUpperCase()
-						+ arg.getName().toString().substring(1) + "(";
-				response += arg.getBelongsToOperation().getName().getContent() + "_response.set"
-						+ arg.getName().toString().replaceAll("[0123456789]", "") + "("
-						+ arg.getName().toString().replaceAll("[0123456789]", "") + ");\n";
-			}
-			for (Argument sub : arg.getSubtypes()) {
-				for (OwlService var : allVariables) {
-					if (var.getArgument().equals(sub)) {
-						ret += "operationOutputs.add(" + var.getName().getContent().toString() + ");\n";
-						if (!varArguments.isEmpty()) {
-							varArguments += ", ";
-						}
-						varArguments += var.getName().getContent().toString() + ".value";
+				int primitive = 0;
+				for (Argument sub : arg.getSubtypes()) {
+					if (sub.getSubtypes().isEmpty()) {
+						primitive++;
 					}
 				}
+				if (primitive == arg.getSubtypes().size()) {
+					for (OwlService var : allVariables) {
+						if (var.getArgument().equals(arg)) {
+							Collection<OwlService> subList = new ArrayList<OwlService>();
+							subList = (Collection<OwlService>) graph.getSuccessors(var);
+							for (OwlService sub : subList) {
+								if (sub.getArgument() != null) {
+									ret += "operationOutputs.add(" + sub.getName().getContent().toString() + ");\n";
+									if (!varArguments.isEmpty()) {
+										varArguments += ", ";
+									}
+									String subType = sub.getArgument().getType();
+									
+									if (subType.equals("String")){
+										varArguments += sub.getName().getContent().toString() + ".value";
+									} else if (subType.equals("int")){
+										subType = "Integer";
+										varArguments += subType + ".parseInt" + "(" + sub.getName().getContent().toString() + ".value" + ")";
+									}else {
+										subType = subType.substring(0, 1).toUpperCase() + subType.substring(1);
+										varArguments += subType + ".parse" + subType + "(" + sub.getName().getContent().toString() + ".value" + ")";
+									}
+									
+								}
+							}
+						}
+					}
+					// for (Argument sub : arg.getSubtypes()) {
+					// for (OwlService var : allVariables) {
+					// if (var.getArgument().equals(sub)) {
+					// ret += "operationOutputs.add(" +
+					// var.getName().getContent().toString() + ");\n";
+					// if (!varArguments.isEmpty()) {
+					// varArguments += ", ";
+					// }
+					// varArguments += var.getName().getContent().toString() +
+					// ".value";
+					// }
+					// }
+					// }
+
+					varInstance = arg.getName().toString().substring(0, 1).toUpperCase()
+							+ arg.getName().toString().substring(1) + " " + arg.getName().getContent().toString()
+							+ " = new " + arg.getName().toString().substring(0, 1).toUpperCase()
+							+ arg.getName().toString().substring(1) + "(";
+					response += arg.getBelongsToOperation().getName().getContent() + "_response.set"
+							+ arg.getName().toString().replaceAll("[0123456789]", "") + "("
+							+ arg.getName().toString().replaceAll("[0123456789]", "") + ");\n";
+					if (!varArguments.isEmpty()) {
+						varInstance += varArguments + ");\n";
+					}
+
+				}
+
 			}
+
 		}
-		if (!varArguments.isEmpty()) {
-			varInstance += varArguments + ");\n";
-		}
+
 		ret += "if (result.getResponseHasNativeOrComplexObjects().get(0) instanceof NativeObject && operationOutputs.size() > 1) {\n";
 		ret += TAB
 				+ "String xmlString = ((NativeObject) ((InvocationResult) result).getResponseHasNativeOrComplexObjects().get(0)).getHasValue();\n"
@@ -210,21 +221,61 @@ public class FunctionCodeNode extends CodeNode {
 		ret += TAB + TAB + TAB + TAB + "if (nodes.item(i).getNodeName().equalsIgnoreCase(var.name)) {\n";
 		ret += TAB + TAB + TAB + TAB + TAB + "var.value = nodes.item(i).getTextContent();\n";
 		ret += TAB + TAB + TAB + TAB + "}\n" + TAB + TAB + TAB + "}\n" + TAB + TAB + "}\n" + TAB + "}\n";
-		ret += "} else {\n";
-		ret += TAB + "for (Object obj : result.getResponseHasNativeOrComplexObjects()) {\n";
-		ret += TAB + TAB + "if (obj instanceof ComplexObject) {\n";
-		ret += TAB + TAB + TAB + "for (int i = 0; i < ((ComplexObject) obj).getHasNativeObjects().size(); i++) {\n";
-		ret += TAB + TAB + TAB + TAB + "for (Variable var : operationOutputs) {\n";
-		ret += TAB + TAB + TAB + TAB + TAB
-				+ "if (((NativeObject) ((ComplexObject) obj).getHasNativeObjects().get(i)).getObjectName().getLocalPart().equalsIgnoreCase(var.name)) {\n";
-		ret += TAB + TAB + TAB + TAB + TAB + TAB
-				+ "var.value = ((NativeObject) ((ComplexObject) obj).getHasNativeObjects().get(i)).getHasValue();\n";
-		ret += TAB + TAB + TAB + TAB + TAB + "}\n" + TAB + TAB + TAB + TAB + "}\n" + TAB + TAB + TAB + "}\n" + TAB + TAB
-				+ "}else if (obj instanceof NativeObject) {\n";
-		ret += TAB + TAB + TAB + "operationOutputs.get(0).value = ((NativeObject) obj).getHasValue();\n";
-		ret += TAB + TAB + "}\n" + TAB + "}\n" + "}\n";
+
 		ret += varInstance;
 		ret += response;
+
+		ret += "} else {\n";
+		ret += TAB + "XMLInputFactory xif = XMLInputFactory.newFactory();\n";
+		ret += TAB + "String response = result.getHasResponseInString();\n";
+		ret += TAB + "System.out.println(response);\n";
+		ret += TAB + "StringReader xml = new StringReader(response);\n";
+		ret += TAB + "XMLStreamReader xsr = xif.createXMLStreamReader(xml);\n";
+		ret += TAB + "try{\n";
+		ret += TAB + TAB + "xsr.nextTag();\n";
+		ret += TAB + TAB + "while (xsr.hasNext()) {\n";
+		ret += TAB + TAB + TAB
+				+ "if (xsr.getEventType() == XMLStreamConstants.START_ELEMENT && xsr.getLocalName().equals(\""
+				+ operation.getName().toString() + "Response\")) {\n";
+		ret += TAB + TAB + TAB + TAB + "break;\n";
+		ret += TAB + TAB + TAB + "}\n" + TAB + TAB + TAB + "xsr.nextTag();\n";
+		ret += TAB + TAB + "}\n" + TAB + TAB + "JAXBContext jc = JAXBContext.newInstance("
+				+ operation.getName().toString() + "Response.class);\n" + TAB + TAB
+				+ "Unmarshaller unmarshaller = jc.createUnmarshaller();\n" + TAB + TAB
+				+ "unmarshaller.setEventHandler(new ValidationEventHandler() {\n";
+		ret += TAB + TAB + TAB + "public boolean handleEvent(ValidationEvent event) {\n";
+		ret += TAB + TAB + TAB + TAB + "throw new RuntimeException(event.getMessage(), event.getLinkedException());\n";
+		ret += TAB + TAB + TAB + "}\n";
+		ret += TAB + TAB + "});\n" + TAB + TAB + "JAXBElement<" + operation.getName().toString()
+				+ "Response> jb = unmarshaller.unmarshal(xsr," + operation.getName().toString() + "Response.class);\n"
+				+ TAB + TAB + "xsr.close();\n" + TAB + TAB + "xml.close();\n" + TAB + TAB + ""
+				+ operation.getName().toString() + "_response = jb.getValue();\n";
+		ret += TAB + "} catch (JAXBException | XMLStreamException | IllegalStateException e) {\n";
+		ret += TAB + TAB + "xsr.close();\n" + TAB + TAB + "e.printStackTrace();\n";
+		ret += TAB + "}\n";
+		// ret += TAB + "for (Object obj :
+		// result.getResponseHasNativeOrComplexObjects()) {\n";
+		// ret += TAB + TAB + "if (obj instanceof ComplexObject) {\n";
+		// ret += TAB + TAB + TAB + "for (int i = 0; i < ((ComplexObject)
+		// obj).getHasNativeObjects().size(); i++) {\n";
+		// ret += TAB + TAB + TAB + TAB + "for (Variable var : operationOutputs)
+		// {\n";
+		// ret += TAB + TAB + TAB + TAB + TAB
+		// + "if (((NativeObject) ((ComplexObject)
+		// obj).getHasNativeObjects().get(i)).getObjectName().getLocalPart().equalsIgnoreCase(var.name))
+		// {\n";
+		// ret += TAB + TAB + TAB + TAB + TAB + TAB
+		// + "var.value = ((NativeObject) ((ComplexObject)
+		// obj).getHasNativeObjects().get(i)).getHasValue();\n";
+		// ret += TAB + TAB + TAB + TAB + TAB + "}\n" + TAB + TAB + TAB + TAB +
+		// "}\n" + TAB + TAB + TAB + "}\n" + TAB + TAB
+		// + "}else if (obj instanceof NativeObject) {\n";
+		// ret += TAB + TAB + TAB + "operationOutputs.get(0).value =
+		// ((NativeObject) obj).getHasValue();\n";
+		// ret += TAB + TAB + "}\n" + TAB + "}\n"
+		ret += "}\n";
+		// ret += varInstance;
+		// ret += response;
 		return ret;
 	}
 
@@ -328,8 +379,7 @@ public class FunctionCodeNode extends CodeNode {
 												varName = "Double.parseDouble(" + op.getName() + "_response" + ret
 														+ ")";
 											} else if (output.getType().equals("boolean")) {
-												varName = "Boolean.toString(" + op.getName() + "_response" + ret
-														+ ")";
+												varName = "Boolean.toString(" + op.getName() + "_response" + ret + ")";
 											} else {
 												varName = op.getName() + "_response" + ret;
 
@@ -373,8 +423,8 @@ public class FunctionCodeNode extends CodeNode {
 		return code;
 	}
 
-	public static String generateImports(boolean restServiceExists, boolean hasDeserializer,
-			boolean wsdlServiceExists, boolean mailgun) {
+	public static String generateImports(boolean restServiceExists, boolean hasDeserializer, boolean wsdlServiceExists,
+			boolean mailgun) {
 
 		String imports = "";
 		if (restServiceExists) {
@@ -386,21 +436,28 @@ public class FunctionCodeNode extends CodeNode {
 						+ "import com.google.gson.annotations.SerializedName;\n"
 						+ "import com.google.gson.reflect.TypeToken;\n" + "import java.lang.reflect.Type;\n";
 			}
-			if (mailgun){
+			if (mailgun) {
 				imports += "import java.net.URLEncoder;\nimport org.apache.http.NameValuePair;\nimport org.apache.http.message.BasicNameValuePair;\nimport java.util.List;\n";
 			}
 		}
 		if (wsdlServiceExists) {
-			imports += 
-					//"import gr.iti.wsdl.wsdlToolkit.ITIWSDLParser;\n"
-					"import gr.iti.wsdl.wsdlToolkit.InvocationResult;\n"
-					+ "import gr.iti.wsdl.wsdlToolkit.NativeObject;\n"
+			imports +=
+			// "import gr.iti.wsdl.wsdlToolkit.ITIWSDLParser;\n"
+			"import gr.iti.wsdl.wsdlToolkit.InvocationResult;\n" + "import gr.iti.wsdl.wsdlToolkit.NativeObject;\n"
 					+ "import gr.iti.wsdl.wsdlToolkit.ComplexObject;\n"
 					+ "import gr.iti.wsdl.wsdlToolkit.ParsedWSDLDefinition;\n"
 					+ "import gr.iti.wsdl.wsdlToolkit.WSOperation;\n"
 					+ "import gr.iti.wsdl.wsdlToolkit.invocation.Axis2WebServiceInvoker;\n"
-					+ "import javax.xml.namespace.QName;\n" + "import org.w3c.dom.Document;\n"
-					+ "import org.w3c.dom.Element;\n" + "import org.w3c.dom.NodeList;\n";
+					+ "import javax.xml.namespace.QName;\n" + "import javax.xml.stream.XMLInputFactory;\n"
+					+ "import javax.xml.stream.XMLStreamConstants;\n" + "import javax.xml.stream.XMLStreamException;\n"
+					+ "import javax.xml.stream.XMLStreamReader;\n" + "import org.w3c.dom.Document;\n"
+					+ "import org.w3c.dom.Element;\n" + "import org.w3c.dom.NodeList;\n"
+					+ "import java.io.StringReader;\n" + "import javax.xml.bind.JAXBContext;\n"
+					+ "import javax.xml.bind.JAXBElement;\n" + "import javax.xml.bind.JAXBException;\n"
+					+ "import javax.xml.bind.Unmarshaller;\n" + "import javax.xml.bind.ValidationEvent;\n"
+					+ "import javax.xml.bind.ValidationEventHandler;\n"
+					+ "import javax.xml.bind.annotation.XmlAccessType;\n"
+					+ "import javax.xml.bind.annotation.XmlAccessorType;\n";
 		}
 		return imports + "import java.util.ArrayList;\n" + "import javax.xml.bind.annotation.XmlElement;\n"
 				+ "import javax.xml.bind.annotation.XmlRootElement;\n";

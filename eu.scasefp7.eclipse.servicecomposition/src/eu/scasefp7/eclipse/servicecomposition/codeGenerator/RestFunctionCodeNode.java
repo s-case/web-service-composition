@@ -170,7 +170,7 @@ public class RestFunctionCodeNode extends CodeNode {
 
 	@Override
 	protected String generateOutputSynchronizationCode(Operation operation, ArrayList<OwlService> allVariables,
-			boolean isRepeated) {
+			boolean isRepeated, Graph<OwlService, Connector> graph) {
 
 		String ret = "";
 		String var = "";
