@@ -29,6 +29,7 @@ import org.apache.commons.codec.binary.Base64;
 import eu.scasefp7.eclipse.servicecomposition.codeInterpreter.Value;
 import eu.scasefp7.eclipse.servicecomposition.importer.Importer.Argument;
 import eu.scasefp7.eclipse.servicecomposition.importer.Importer.Operation;
+import eu.scasefp7.eclipse.servicecomposition.importer.Importer.RequestHeader;
 
 /**
  * <h1>RAMLCaller</h1> is used for calling RESTful web services and parsing
@@ -56,6 +57,7 @@ public class RAMLCaller {
 		ArrayList<Argument> uriParams = new ArrayList<Argument>();
 		ArrayList<Argument> queryParams = new ArrayList<Argument>();
 		ArrayList<Argument> bodyParams = new ArrayList<Argument>();
+		ArrayList<Argument> formParams = new ArrayList<Argument>();
 		for (Argument arg : ramlOperation.getInputs()) {
 			if (arg.isTypeOf().equals("URIParameter")) {
 				uriParamNames.add(arg.getName().getContent().toString());
@@ -64,6 +66,8 @@ public class RAMLCaller {
 				queryParams.add(arg);
 			} else if (arg.isTypeOf().equals("BodyParameter")) {
 				bodyParams.add(arg);
+			} else if (arg.isTypeOf().equals("FormEncodedParameter")) {
+				formParams.add(arg);
 			}
 		}
 		String[] uriParamsArr = new String[uriParamNames.size()];
@@ -137,7 +141,7 @@ public class RAMLCaller {
 				conn.setConnectTimeout(30000);
 				conn.setRequestMethod(ramlOperation.getDomain().getCrudVerb());
 				conn.setRequestProperty("Accept", "application/json");
-				
+
 				if (ramlOperation.getDomain().getSecurityScheme() != null) {
 					if (ramlOperation.getDomain().getSecurityScheme().equalsIgnoreCase("Basic Authentication")) {
 						Base64 b = new Base64();
@@ -147,10 +151,15 @@ public class RAMLCaller {
 						conn.setRequestProperty("Authorization", "Basic " + encoding);
 					}
 				}
-				//if it is post or put request
+				if (ramlOperation.getRequestHeaders() != null) {
+					for (RequestHeader header : ramlOperation.getRequestHeaders()) {
+						conn.setRequestProperty(header.getName(), header.getValue());
+					}
+				}
+				// if it is post or put request
 				if (ramlOperation.getDomain().getCrudVerb().equalsIgnoreCase("post")
 						|| ramlOperation.getDomain().getCrudVerb().equalsIgnoreCase("put")) {
-					//if it is request to mailgun
+					// if it is request to mailgun
 					if (url.toString().contains("mailgun")) {
 						List<NameValuePair> urlParameters = new ArrayList<NameValuePair>();
 						Value val = null;
@@ -177,21 +186,25 @@ public class RAMLCaller {
 							apikeyVal = (Value) arg;
 							if (arg.getName().toString().equals("apikey")) {
 								Base64 b = new Base64();
-								String encoding = b.encodeAsString(new String("api:" + apikeyVal.getValue()).getBytes());
-								conn.setRequestProperty("Authorization", "Basic "+encoding);
+								String encoding = b
+										.encodeAsString(new String("api:" + apikeyVal.getValue()).getBytes());
+								conn.setRequestProperty("Authorization", "Basic " + encoding);
 								break;
 							}
-							
+
 						}
-						
+
 						conn.setDoOutput(true);
 						DataOutputStream wr = new DataOutputStream(conn.getOutputStream());
 						wr.writeBytes(sb.toString());
 						wr.flush();
 						wr.close();
-						
+
 					} else {
 						conn.setRequestProperty("Content-Type", "application/json");
+						conn.setRequestProperty("User-Agent", "Mozilla/5.0");
+						//conn.setRequestProperty("Content-transfer-encoding", "binary");
+						
 						conn.setDoInput(true);
 						conn.setDoOutput(true);
 						JSONObject obj = new JSONObject();
@@ -230,17 +243,17 @@ public class RAMLCaller {
 
 			} finally {
 				if (conn != null) {
-//					try {
-//						if (conn.getInputStream() != null) {
-//							conn.getInputStream().close();
-//						}
-//
-//					} catch (Exception e) {
-//						// TODO Auto-generated catch block
-//						e.printStackTrace();
-//					} finally {
-						conn.disconnect();
-//					}
+					// try {
+					// if (conn.getInputStream() != null) {
+					// conn.getInputStream().close();
+					// }
+					//
+					// } catch (Exception e) {
+					// // TODO Auto-generated catch block
+					// e.printStackTrace();
+					// } finally {
+					conn.disconnect();
+					// }
 				}
 			}
 

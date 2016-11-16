@@ -34,6 +34,7 @@ import eu.scasefp7.eclipse.servicecomposition.codeInterpreter.UserInput;
 import eu.scasefp7.eclipse.servicecomposition.codeInterpreter.Value;
 import eu.scasefp7.eclipse.servicecomposition.importer.Importer.Argument;
 import eu.scasefp7.eclipse.servicecomposition.importer.Importer.Operation;
+import eu.scasefp7.eclipse.servicecomposition.importer.Importer.RequestHeader;
 import eu.scasefp7.eclipse.servicecomposition.importer.JungXMIImporter.Connector;
 import eu.scasefp7.eclipse.servicecomposition.operationCaller.RAMLCaller;
 import eu.scasefp7.eclipse.servicecomposition.operationCaller.WSDLCaller;
@@ -64,6 +65,7 @@ public class RunWorkflow {
 	private TreeViewerColumn columnb;
 	private TreeViewer treeViewer;
 	private Composite authParamsComposite;
+	private Composite requestHeaderComposite;
 	// eclipse jobs
 	private Job runWorkflowJob;
 
@@ -71,12 +73,13 @@ public class RunWorkflow {
 	protected edu.uci.ics.jung.graph.Graph<OwlService, Connector> jungGraph;
 
 	public RunWorkflow(ServiceCompositionView view, TreeViewer treeViewer, TreeViewerColumn columnb,
-			Composite authParamsComposite) {
+			Composite authParamsComposite, Composite requestHeaderComposite) {
 		this.view = view;
 		this.jungGraph = view.getJungGraph();
 		this.treeViewer = treeViewer;
 		this.columnb = columnb;
 		this.authParamsComposite = authParamsComposite;
+		this.requestHeaderComposite = requestHeaderComposite;
 	}
 
 	public void unhighlightAllNodes() {
@@ -210,6 +213,7 @@ public class RunWorkflow {
 					final ArrayList<Value> suboutputVariables = new ArrayList<Value>();
 					final ArrayList<Value> subinputVariables = new ArrayList<Value>();
 					final ArrayList<Value> authParamVariables = new ArrayList<Value>();
+					final ArrayList<RequestHeader> requestHeaderVariables = new ArrayList<RequestHeader>();
 					Vector<Node> nodes = new Vector<Node>();
 					// ArrayList<Value> directAssignVariables = new
 					// ArrayList<Value>();
@@ -259,6 +263,11 @@ public class RunWorkflow {
 							if (!op.getAuthenticationParameters().isEmpty()) {
 								for (Argument arg : op.getAuthenticationParameters()) {
 									authParamVariables.add((Value) arg);
+								}
+							}
+							if (!op.getRequestHeaders().isEmpty()) {
+								for (RequestHeader header : op.getRequestHeaders()) {
+									requestHeaderVariables.add(header);
 								}
 							}
 						}
@@ -419,6 +428,24 @@ public class RunWorkflow {
 													.equals(var.getName().toString())) {
 												if (((Text) authParamsComposite.getChildren()[j + 1]).isEnabled())
 													var.setValue(((Text) authParamsComposite.getChildren()[j + 1])
+															.getText());
+											}
+										}
+									}
+								}
+								
+								// fill request headers from right panel
+								for (int i = 0; i < requestHeaderVariables.size(); i++) {
+									RequestHeader header = requestHeaderVariables.get(i);
+
+									for (int j = 0; j < requestHeaderComposite.getChildren().length; j++) {
+										if (requestHeaderComposite.getChildren()[j] instanceof Label) {
+											Label label = (Label) requestHeaderComposite.getChildren()[j];
+											int index = label.getText().indexOf("-");
+											if (index != -1 && label.getText().substring(index+1).split("\\*")[0].trim()
+													.equals(header.getName())) {
+												if (((Text) requestHeaderComposite.getChildren()[j + 1]).isEnabled())
+													header.setValue(((Text) requestHeaderComposite.getChildren()[j + 1])
 															.getText());
 											}
 										}
@@ -1209,6 +1236,8 @@ public class RunWorkflow {
 			// getUriParameters().add(new Value(uriParam));
 			for (Argument authParam : operation.getAuthenticationParameters())
 				getAuthenticationParameters().add(new Value(authParam));
+			for (RequestHeader header : operation.getRequestHeaders())
+				getRequestHeaders().add(header);
 		}
 	}
 

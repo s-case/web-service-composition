@@ -100,6 +100,7 @@ import eu.scasefp7.eclipse.servicecomposition.codeInterpreter.Value;
 import eu.scasefp7.eclipse.servicecomposition.handlers.ImportHandler;
 import eu.scasefp7.eclipse.servicecomposition.importer.Importer.Argument;
 import eu.scasefp7.eclipse.servicecomposition.importer.Importer.Operation;
+import eu.scasefp7.eclipse.servicecomposition.importer.Importer.RequestHeader;
 import eu.scasefp7.eclipse.servicecomposition.importer.JungXMIImporter.Connector;
 import eu.scasefp7.eclipse.servicecomposition.tester.Algorithm;
 import eu.scasefp7.eclipse.servicecomposition.tester.Algorithm.WeightReport;
@@ -159,6 +160,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 	private TreeViewer treeViewer;
 	private TreeViewer inputsTreeViewer;
 	private Composite authParamsComposite;
+	private Composite requestHeadersComposite;
 	private GraphViewer viewer;
 
 	// maven build
@@ -213,64 +215,71 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 
 		setSavedWorkflow(false);
 
-		Job downloadPWWS = new Job("Import ProgrammableWeb operations") {
-			@Override
-			protected IStatus run(IProgressMonitor monitor) {
-				monitor.beginTask("Importing ProgrammableWeb operations...",
-						IProgressMonitor.UNKNOWN);
-				long startPWTime = System.nanoTime();
-				RepositoryClient repo = new RepositoryClient();
-				if (monitor.isCanceled())
-					return Status.CANCEL_STATUS;
-				repo.copyOntologyToWorkspace("PWWS");
-				
-				String serverVersion = repo.getLatestSubmissionId("PWWS");
-				BufferedReader reader;
-				try {
-					reader = new BufferedReader(
-							new FileReader(ResourcesPlugin.getWorkspace().getRoot().getLocation().toString()
-									+ "/.metadata/.plugins/eu.scasefp7.servicecomposition/ontology/versionPWWS.txt"));
-					String localVersion = reader.readLine().replaceAll("\\D+", "");
-					if (!serverVersion.toString().isEmpty() && !localVersion.toString().isEmpty()) {
-						if (Integer.parseInt(serverVersion) > Integer.parseInt(localVersion)) {
-					String path = repo.downloadPWMOntology("PWWS", serverVersion, getDisplay());
-						}
-					}
-				} catch (IOException e1) {
-					// TODO Auto-generated catch block
-					e1.printStackTrace();
-				}
-				
-				Algorithm.init();
-				try {
-					PWoperations = Algorithm.importServices(ResourcesPlugin.getWorkspace().getRoot().getLocation().toString()
-							+ "/.metadata/.plugins/eu.scasefp7.servicecomposition/ontology/PWWS.owl");
-				} catch (Exception e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-				
-				long endPWTime = System.nanoTime();
-				
-				if (monitor.isCanceled())
-					return Status.CANCEL_STATUS;
-				
-				System.out.println("Loading PW operations took "+(endPWTime - startPWTime) * 1.66666667 * Math.pow(10, -11) + " min"); 
-				monitor.done();
-				return Status.OK_STATUS;
-			}
-		};
+		// Job downloadPWWS = new Job("Import ProgrammableWeb operations") {
+		// @Override
+		// protected IStatus run(IProgressMonitor monitor) {
+		// monitor.beginTask("Importing ProgrammableWeb operations...",
+		// IProgressMonitor.UNKNOWN);
+		// long startPWTime = System.nanoTime();
+		// RepositoryClient repo = new RepositoryClient();
+		// if (monitor.isCanceled())
+		// return Status.CANCEL_STATUS;
+		// repo.copyOntologyToWorkspace("PWWS");
+		//
+		// String serverVersion = repo.getLatestSubmissionId("PWWS");
+		// BufferedReader reader;
+		// try {
+		// reader = new BufferedReader(
+		// new
+		// FileReader(ResourcesPlugin.getWorkspace().getRoot().getLocation().toString()
+		// +
+		// "/.metadata/.plugins/eu.scasefp7.servicecomposition/ontology/versionPWWS.txt"));
+		// String localVersion = reader.readLine().replaceAll("\\D+", "");
+		// if (!serverVersion.toString().isEmpty() &&
+		// !localVersion.toString().isEmpty()) {
+		// if (Integer.parseInt(serverVersion) > Integer.parseInt(localVersion))
+		// {
+		// String path = repo.downloadPWMOntology("PWWS", serverVersion,
+		// getDisplay());
+		// }
+		// }
+		// } catch (IOException e1) {
+		// // TODO Auto-generated catch block
+		// e1.printStackTrace();
+		// }
+		//
+		// Algorithm.init();
+		// try {
+		// PWoperations =
+		// Algorithm.importServices(ResourcesPlugin.getWorkspace().getRoot().getLocation().toString()
+		// +
+		// "/.metadata/.plugins/eu.scasefp7.servicecomposition/ontology/PWWS.owl");
+		// } catch (Exception e) {
+		// // TODO Auto-generated catch block
+		// e.printStackTrace();
+		// }
+		//
+		// long endPWTime = System.nanoTime();
+		//
+		// if (monitor.isCanceled())
+		// return Status.CANCEL_STATUS;
+		//
+		// System.out.println("Loading PW operations took "+(endPWTime -
+		// startPWTime) * 1.66666667 * Math.pow(10, -11) + " min");
+		// monitor.done();
+		// return Status.OK_STATUS;
+		// }
+		// };
+		//
+		// downloadPWWS.schedule();
 
-		downloadPWWS.schedule();
-		
 		Job downloadMashapeWS = new Job("Import Mashape operations") {
 			@Override
 			protected IStatus run(IProgressMonitor monitor) {
-				monitor.beginTask("Importing Mashape operations...",
-						IProgressMonitor.UNKNOWN);
-				
+				monitor.beginTask("Importing Mashape operations...", IProgressMonitor.UNKNOWN);
+
 				RepositoryClient repo = new RepositoryClient();
-				
+
 				if (monitor.isCanceled())
 					return Status.CANCEL_STATUS;
 				long startMTime = System.nanoTime();
@@ -280,9 +289,9 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 				String serverVersion = repo.getLatestSubmissionId("MASHAPEWS");
 				BufferedReader reader;
 				try {
-					reader = new BufferedReader(
-							new FileReader(ResourcesPlugin.getWorkspace().getRoot().getLocation().toString()
-									+ "/.metadata/.plugins/eu.scasefp7.servicecomposition/ontology/versionMASHAPEWS.txt"));
+					reader = new BufferedReader(new FileReader(ResourcesPlugin.getWorkspace().getRoot().getLocation()
+							.toString()
+							+ "/.metadata/.plugins/eu.scasefp7.servicecomposition/ontology/versionMASHAPEWS.txt"));
 					String localVersion = reader.readLine().replaceAll("\\D+", "");
 					if (!serverVersion.toString().isEmpty() && !localVersion.toString().isEmpty()) {
 						if (Integer.parseInt(serverVersion) > Integer.parseInt(localVersion)) {
@@ -293,17 +302,22 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 					// TODO Auto-generated catch block
 					e1.printStackTrace();
 				}
-				
+
 				try {
-					MashapeOperations = Algorithm.importServices(ResourcesPlugin.getWorkspace().getRoot().getLocation().toString()
-							+ "/.metadata/.plugins/eu.scasefp7.servicecomposition/ontology/MASHAPEWS.owl");
+					MashapeOperations = Algorithm
+							.importServices(ResourcesPlugin.getWorkspace().getRoot().getLocation().toString()
+									+ "/.metadata/.plugins/eu.scasefp7.servicecomposition/ontology/MASHAPEWS.owl");
+					PWoperations = Algorithm
+							.importServices(ResourcesPlugin.getWorkspace().getRoot().getLocation().toString()
+									+ "/.metadata/.plugins/eu.scasefp7.servicecomposition/ontology/PWWS.owl");
 				} catch (Exception e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
-				
+
 				long endMTime = System.nanoTime();
-				System.out.println("Loading Mashape operations took "+(endMTime - startMTime)  * 1.66666667 * Math.pow(10, -11) + " min"); 
+				System.out.println("Loading Mashape operations took "
+						+ (endMTime - startMTime) * 1.66666667 * Math.pow(10, -11) + " min");
 				monitor.done();
 				return Status.OK_STATUS;
 			}
@@ -522,8 +536,8 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 					item.setText("Add operation..");
 					MenuItem item2 = new MenuItem(menu, SWT.NONE);
 					item2.setText("Add condition..");
-//					MenuItem item3 = new MenuItem(menu, SWT.NONE);
-//					item3.setText("Add PW operation..");
+					// MenuItem item3 = new MenuItem(menu, SWT.NONE);
+					// item3.setText("Add PW operation..");
 					menu.setVisible(true);
 
 					// Add new operation.
@@ -533,10 +547,11 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 					// Add new condition.
 					item2.addListener(SWT.Selection,
 							new Listeners(selectedGraphEdge, selectedGraphNode, view, "addNewCondition"));
-					
-//					// Add new operation.
-//					item3.addListener(SWT.Selection,
-//							new Listeners(selectedGraphEdge, selectedGraphNode, view, "addNewPWOperation"));
+
+					// // Add new operation.
+					// item3.addListener(SWT.Selection,
+					// new Listeners(selectedGraphEdge, selectedGraphNode, view,
+					// "addNewPWOperation"));
 				}
 
 			}
@@ -950,6 +965,32 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 			}
 		}
 
+		// create authentication Params composite
+
+		rightComposite.setLayout(new GridLayout());
+		Composite requestHeaderLabelComposite = new Composite(rightComposite, SWT.FILL);
+
+		requestHeaderLabelComposite.setLayout(new GridLayout());
+		Label label5 = new Label(requestHeaderLabelComposite, SWT.FILL);
+		label5.setText("Workflow Request Headers:");
+		label5.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
+		label5.setFont(JFaceResources.getFontRegistry().getBold(""));
+		requestHeadersComposite = new Composite(rightComposite, SWT.FILL);
+		requestHeadersComposite.setLayout(new GridLayout(2, false));
+
+		// get all request headers
+
+		for (int i = 0; i < vertices.length; i++) {
+			final OwlService node = (OwlService) vertices[i];
+
+			if (node.getType().contains("Action") && node.getOperation().getRequestHeaders() != null) {
+				for (RequestHeader header : node.getOperation().getRequestHeaders()) {
+					showRequestHeaders(node.getName().toString(), header.getName());
+				}
+
+			}
+		}
+
 		Listener outputListener = new Listener() {
 
 			@Override
@@ -1210,8 +1251,8 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 					// newItem.setText(1, ((Value) element).getValue());
 				}
 				// array of array or array of objects
-			} else
-				if (((Value) arg).isArray() && !RAMLCaller.stringIsItemFromList(((Value) arg).getType(), datatypes)) {
+			} else if (((Value) arg).isArray()
+					&& !RAMLCaller.stringIsItemFromList(((Value) arg).getType(), datatypes)) {
 				for (Argument element : ((Value) arg).getElements()) {
 					Node e = new Node(element.getName().toString(), n, ((Value) arg).getOwlService(),
 							((Value) element));
@@ -1285,6 +1326,17 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 		secondText.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
 		secondText.setEditable(true);
 
+	}
+
+	public void showRequestHeaders(String operation_name, String header_name) {
+		Label label = new Label(requestHeadersComposite, SWT.NONE);
+		label.setText(operation_name + "-" + header_name + "*" + ":");
+		label.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
+
+		Text text = new Text(requestHeadersComposite, SWT.BORDER);
+		text.setText("");
+		text.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+		text.setEditable(true);
 	}
 
 	public edu.uci.ics.jung.graph.Graph<OwlService, Connector> getJungGraph() {
@@ -1713,7 +1765,8 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 				setUpdateOperations(false);
 				ImportHandler.setOperations(operations);
 				long endTime = System.nanoTime();
-				System.out.println("Loading S-CASE operations took "+(endTime - startTime) * 1.66666667 * Math.pow(10, -11) + " min"); 
+				System.out.println("Loading S-CASE operations took "
+						+ (endTime - startTime) * 1.66666667 * Math.pow(10, -11) + " min");
 			}
 
 			// monitor.done();
@@ -1745,11 +1798,11 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 	public static ArrayList<Operation> getOperations() {
 		return operations;
 	}
-	
+
 	public static ArrayList<Operation> getPWOperations() {
 		return PWoperations;
 	}
-	
+
 	public static ArrayList<Operation> getMashapeOperations() {
 		return MashapeOperations;
 	}
@@ -1792,6 +1845,10 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 
 	public Composite getAuthParamsComposite() {
 		return authParamsComposite;
+	}
+	
+	public Composite getRequestHeaderComposite() {
+		return requestHeadersComposite;
 	}
 
 	public TreeViewerColumn getColumnb() {

@@ -138,7 +138,9 @@ public class RestfulCodeGenerator {
 			inputList += matchedInput.getName().getJavaValidContent() + "_num";
 		}
 		if (containsPost) {
-			inputList += ", request";
+			if (!inputList.isEmpty())
+				inputList += ", ";
+			inputList += "request";
 		}
 
 		// for (Argument param : uriParameters) {

@@ -67,7 +67,7 @@ public class FillToolbar {
 				try {
 					// clean outputs
 					// cleanOutputs();
-					RunWorkflow run = new RunWorkflow(view, view.getTreeViewer(), view.getColumnb(), view.getAuthParamsComposite());
+					RunWorkflow run = new RunWorkflow(view, view.getTreeViewer(), view.getColumnb(), view.getAuthParamsComposite(), view.getRequestHeaderComposite());
 					run.runWorkflow();
 				} catch (Exception e) {
 					Activator.log("Error while running the workflow", e);

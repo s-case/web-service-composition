@@ -401,10 +401,10 @@ public class Algorithm {
 		ArrayList<Importer.Operation> operations = new ArrayList<Importer.Operation>();
 		if (!owlPath.isEmpty())
 			operations.addAll(OwlImporter.importOwl(owlPath, true, false));
-		System.out.print("Done (" + operations.size() + " operations)\nImporting python operations... ");
-		ArrayList<Importer.Operation> pythonOperations = PythonImporter.importPath(pythonPath);
-		System.out.println("Done (" + pythonOperations.size() + " operations)");
-		operations.addAll(pythonOperations);
+		System.out.print("Done (" + operations.size() + " operations)\n");
+//		ArrayList<Importer.Operation> pythonOperations = PythonImporter.importPath(pythonPath);
+//		System.out.println("Done (" + pythonOperations.size() + " operations)");
+//		operations.addAll(pythonOperations);
 		// for(Object op : operations)
 		// System.out.println(op.toString());
 		return operations;
@@ -428,7 +428,7 @@ public class Algorithm {
 		ArrayList<Importer.Operation> operations = new ArrayList<Importer.Operation>();
 		if (!owlPath.isEmpty())
 			operations.addAll(OwlImporter.importOwl(owlPath, true, false));
-		System.out.print("Done (" + operations.size() + " operations)\nImporting python operations... ");
+		System.out.print("Done (" + operations.size() + " operations)\n");
 
 		return operations;
 

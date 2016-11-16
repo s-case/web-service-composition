@@ -54,6 +54,7 @@ public abstract class Importer {
 	protected static DatatypeProperty belongsToUser;
 	protected static DatatypeProperty isRequired;
 	protected static DatatypeProperty hasName;
+	protected static DatatypeProperty hasRequestHeader;
 	// protected static ObjectProperty hasQueryParameters;
 	protected static ObjectProperty hasInput;
 	protected static ObjectProperty hasOutput;
@@ -335,6 +336,7 @@ public abstract class Importer {
 		// ArrayList<Argument>();
 		protected ArrayList<Argument> authenticationParameters = new ArrayList<Argument>();
 		protected ArrayList<Operation> realOperations = new ArrayList<Operation>();
+		protected ArrayList<RequestHeader> requestHeaders = new ArrayList<RequestHeader>();
 		protected ServiceAccessInfoForUsers accessInfo = new ServiceAccessInfoForUsers();
 		protected OwlMetadata metadata = null;
 		protected boolean isPrototype = false;
@@ -400,6 +402,21 @@ public abstract class Importer {
 			if (ind.getPropertyValue(Importer.isPrototype) != null)
 				this.isPrototype = !ind.getPropertyValue(Importer.isPrototype).asLiteral().getString().equals("false");
 
+			if (ind.getPropertyValue(hasRequestHeader) != null) {
+
+				NodeIterator it = ind.listPropertyValues(hasRequestHeader);
+
+				ArrayList<RequestHeader> hasRequestHeaderList = new ArrayList<RequestHeader>();
+
+				while (it.hasNext()) {
+					Literal l = it.next().asLiteral();
+					RequestHeader header = new RequestHeader();
+					header.setName(l.getValue().toString());
+					hasRequestHeaderList.add(header);
+				}
+
+				this.setRequestHeaders(hasRequestHeaderList);
+			}
 			// load inputs
 			loadWSIO(ind, hasInput, inputs);
 			// load outputs
@@ -731,6 +748,10 @@ public abstract class Importer {
 					Resource r = it.next().asResource();
 					Individual ioInd = (Individual) ontologyModel.getIndividual(r.getURI());
 					// check if ioInd is primitive
+					if (ioInd == null){
+						System.out.println("null");
+						continue;
+					}
 					if (ioInd.getPropertyResourceValue(hasType) != null) {
 						Individual typeInd = (Individual) ontologyModel
 								.getIndividual(ioInd.getPropertyResourceValue(hasType).getURI());
@@ -968,8 +989,52 @@ public abstract class Importer {
 			}
 			return false;
 		}
+
+		/**
+		 * @return the requestHeaders
+		 */
+		public ArrayList<RequestHeader> getRequestHeaders() {
+			return requestHeaders;
+		}
+
+		/**
+		 * @param requestHeaders the requestHeaders to set
+		 */
+		public void setRequestHeaders(ArrayList<RequestHeader> requestHeaders) {
+			this.requestHeaders = requestHeaders;
+		}
 	}
 
+	public static class RequestHeader {
+		private String name = "";
+		private String value = "";
+		/**
+		 * @return the name
+		 */
+		public String getName() {
+			return name;
+		}
+		/**
+		 * @param name the name to set
+		 */
+		public void setName(String name) {
+			this.name = name;
+		}
+		/**
+		 * @return the value
+		 */
+		public String getValue() {
+			return value;
+		}
+		/**
+		 * @param value the value to set
+		 */
+		public void setValue(String value) {
+			this.value = value;
+		}
+	}
+	
+	
 	/**
 	 * <h1>Argument</h1> This class represents arguments for OWL operations.
 	 * Arguments can also be used as inputs or outputs.
@@ -1024,6 +1089,10 @@ public abstract class Importer {
 		 */
 		Argument(Operation operation, Individual typeInd, Individual ioInd) {
 
+			if (typeInd == null){
+				System.out.println("Argument type null");
+				return;
+			}
 			if (typeInd.getPropertyResourceValue(hasType) == null) {
 				// Native Object
 				if (ioInd.getPropertyValue(hasName) != null)
