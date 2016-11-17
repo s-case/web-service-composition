@@ -273,15 +273,13 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 		//
 		// downloadPWWS.schedule();
 
-		Job downloadMashapeWS = new Job("Import Mashape operations") {
+		Job downloadMashapeWS = new Job("Import PW and Mashape operations") {
 			@Override
 			protected IStatus run(IProgressMonitor monitor) {
 				monitor.beginTask("Importing Mashape operations...", IProgressMonitor.UNKNOWN);
 
 				RepositoryClient repo = new RepositoryClient();
 
-				if (monitor.isCanceled())
-					return Status.CANCEL_STATUS;
 				long startMTime = System.nanoTime();
 				if (monitor.isCanceled())
 					return Status.CANCEL_STATUS;
@@ -299,25 +297,56 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 						}
 					}
 				} catch (IOException e1) {
-					// TODO Auto-generated catch block
+					Activator.log("Error while reading the versionMASHAPEWS.txt file", e1);
 					e1.printStackTrace();
 				}
 
+				if (monitor.isCanceled())
+					return Status.CANCEL_STATUS;
+				repo.copyOntologyToWorkspace("PWWS");
+
+				String PWserverVersion = repo.getLatestSubmissionId("PWWS");
+				BufferedReader reader2;
+				try {
+					reader2 = new BufferedReader(
+							new FileReader(ResourcesPlugin.getWorkspace().getRoot().getLocation().toString()
+									+ "/.metadata/.plugins/eu.scasefp7.servicecomposition/ontology/versionPWWS.txt"));
+					String localVersion = reader2.readLine().replaceAll("\\D+", "");
+					if (!PWserverVersion.toString().isEmpty() && !localVersion.toString().isEmpty()) {
+						if (Integer.parseInt(PWserverVersion) > Integer.parseInt(localVersion)) {
+							String path = repo.downloadPWMOntology("PWWS", PWserverVersion, getDisplay());
+						}
+					}
+				} catch (IOException e1) {
+					Activator.log("Error while reading the versionPWWS.txt file", e1);
+					e1.printStackTrace();
+				}
+				if (monitor.isCanceled())
+					return Status.CANCEL_STATUS;
 				try {
 					MashapeOperations = Algorithm
 							.importServices(ResourcesPlugin.getWorkspace().getRoot().getLocation().toString()
 									+ "/.metadata/.plugins/eu.scasefp7.servicecomposition/ontology/MASHAPEWS.owl");
-					PWoperations = Algorithm
-							.importServices(ResourcesPlugin.getWorkspace().getRoot().getLocation().toString()
-									+ "/.metadata/.plugins/eu.scasefp7.servicecomposition/ontology/PWWS.owl");
 				} catch (Exception e) {
-					// TODO Auto-generated catch block
+					Activator.log("Error while importing the Mashape ontology", e);
 					e.printStackTrace();
 				}
-
+				if (monitor.isCanceled())
+					return Status.CANCEL_STATUS;
+				System.gc();
+				try {
+					PWoperations = Algorithm
+							.importServices(ResourcesPlugin.getWorkspace().getRoot().getLocation().toString()
+									+ "/.metadata/.plugins/eu.scasefp7.servicecomposition/ontology/PWWS.owl");	
+				} catch (Exception e) {
+					Activator.log("Error while importing the PW ontology", e);
+					e.printStackTrace();
+				}
+				System.gc();
 				long endMTime = System.nanoTime();
-				System.out.println("Loading Mashape operations took "
+				System.out.println("Loading of PW and Mashape operations took "
 						+ (endMTime - startMTime) * 1.66666667 * Math.pow(10, -11) + " min");
+
 				monitor.done();
 				return Status.OK_STATUS;
 			}
@@ -1846,7 +1875,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 	public Composite getAuthParamsComposite() {
 		return authParamsComposite;
 	}
-	
+
 	public Composite getRequestHeaderComposite() {
 		return requestHeadersComposite;
 	}
