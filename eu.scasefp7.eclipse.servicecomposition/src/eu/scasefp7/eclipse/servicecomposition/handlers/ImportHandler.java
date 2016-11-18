@@ -62,8 +62,8 @@ public class ImportHandler extends AbstractHandler {
 	 * the ontology operations
 	 */
 	private static ArrayList<Operation> operations;
-	private static ArrayList<Operation> PWoperations;
-	private static ArrayList<Operation> MashapeOperations;
+	private ArrayList<Operation> PWoperations;
+	private ArrayList<Operation> MashapeOperations;
 	private static boolean updateOntology = false;
 
 	@Override
@@ -133,17 +133,16 @@ public class ImportHandler extends AbstractHandler {
 				protected IStatus run(IProgressMonitor monitor) {
 					monitor.beginTask("Transforming storyboard creator diagram to workflow of web services...",
 
-					IProgressMonitor.UNKNOWN);
+							IProgressMonitor.UNKNOWN);
 					PWoperations = ServiceCompositionView.getPWOperations();
 					MashapeOperations = ServiceCompositionView.getMashapeOperations();
-					if (PWoperations != null && MashapeOperations != null) {
+					
 						try {
 							graph = null;
 							File file = (File) selections[0];
 							// check if ontology file exists in .metadata
 							// plug-in's
 							// folder
-							
 
 							final String pathToSBDFile = ResourcesPlugin.getWorkspace().getRoot().getLocation()
 									.toString() + file.getFullPath().toOSString();
@@ -159,16 +158,55 @@ public class ImportHandler extends AbstractHandler {
 								useMashapeOperations = Activator.getDefault().getPreferenceStore()
 										.getBoolean("Use Mashape operations");
 							}
-							if (usePWOperations) {
-								graph = Algorithm.transformationAlgorithm(pathToSBDFile, PWoperations, disp, shell);
-							} else if (useMashapeOperations){
-								graph = Algorithm.transformationAlgorithm(pathToSBDFile, MashapeOperations, disp, shell);
-							} else {
-								view.loadOperations(disp, shell);
-								graph = Algorithm.transformationAlgorithm(pathToSBDFile, operations, disp, shell);
-								
-							}
+							
+							view.loadOperations(disp, shell, true);
 
+							if (usePWOperations && !useMashapeOperations) {
+								if (PWoperations == null){
+									view.loadPWOperations(disp, shell, monitor);
+									PWoperations = ServiceCompositionView.getPWOperations();
+								}
+								for (Operation op : PWoperations) {
+									operations.add(op);
+								}
+								 
+							} else if (useMashapeOperations && !usePWOperations) {
+								if (MashapeOperations == null){
+									view.loadMashapeOperations(disp, shell, monitor);
+									MashapeOperations = ServiceCompositionView.getMashapeOperations();
+								}
+								for (Operation op : MashapeOperations) {
+									operations.add(op);
+								}
+
+							} else if (useMashapeOperations && usePWOperations) {
+								if (PWoperations == null){
+									view.loadPWOperations(disp, shell, monitor);
+									PWoperations = ServiceCompositionView.getPWOperations();
+								}
+								if (MashapeOperations == null){
+									view.loadMashapeOperations(disp, shell, monitor);
+									MashapeOperations = ServiceCompositionView.getMashapeOperations();
+								}
+								if (PWoperations != null && MashapeOperations != null) {
+									for (Operation op : PWoperations) {
+										operations.add(op);
+									}
+									for (Operation op : MashapeOperations) {
+										operations.add(op);
+									}
+								} else {
+									disp.syncExec(new Runnable() {
+										public void run() {
+											MessageDialog.openInformation(disp.getActiveShell(), "Try again later",
+													"Please wait until loading of ProgrammableWeb and Mashape operations is finished!");
+										}
+									});
+									monitor.done();
+									return Status.CANCEL_STATUS;
+								}
+							}
+							graph = Algorithm.transformationAlgorithm(pathToSBDFile, operations, disp, shell);
 							if (graph != null) {
 								// SHOW REPLACEMENT REPORT
 								System.out.println();
@@ -290,16 +328,6 @@ public class ImportHandler extends AbstractHandler {
 						} finally {
 							monitor.done();
 						}
-					} else {
-						disp.syncExec(new Runnable() {
-							public void run() {
-								MessageDialog.openInformation(disp.getActiveShell(), "Try again later",
-										"Please wait until loading of ProgrammableWeb and Mashape operations is finished!");
-							}
-						});
-						monitor.done();
-						return Status.CANCEL_STATUS;
-					}
 				}
 
 			};
@@ -372,52 +400,52 @@ public class ImportHandler extends AbstractHandler {
 		return null;
 	}
 
-	public static void ontologyCheck(Shell shell, Display disp) throws IOException {
+	public static void ontologyCheck(Shell shell, Display disp, boolean check) throws IOException {
 		RepositoryClient repo = new RepositoryClient();
 		repo.copyOntologyToWorkspace("WS");
-		
 
 		// check if a newer ontology version exists
+		if (check) {
+			String serverVersion = repo.getLatestSubmissionId("WS");
+			BufferedReader reader = new BufferedReader(
+					new FileReader(ResourcesPlugin.getWorkspace().getRoot().getLocation().toString()
+							+ "/.metadata/.plugins/eu.scasefp7.servicecomposition/ontology/versionWS.txt"));
+			String localVersion = reader.readLine().replaceAll("\\D+", "");
+			if (!serverVersion.toString().isEmpty() && !localVersion.toString().isEmpty()) {
+				if (Integer.parseInt(serverVersion) > Integer.parseInt(localVersion)) {
+					// ask user if he would like to download the new
+					// version
 
-		String serverVersion = repo.getLatestSubmissionId("WS");
-		BufferedReader reader = new BufferedReader(
-				new FileReader(ResourcesPlugin.getWorkspace().getRoot().getLocation().toString()
-						+ "/.metadata/.plugins/eu.scasefp7.servicecomposition/ontology/versionWS.txt"));
-		String localVersion = reader.readLine().replaceAll("\\D+", "");
-		if (!serverVersion.toString().isEmpty() && !localVersion.toString().isEmpty()) {
-			if (Integer.parseInt(serverVersion) > Integer.parseInt(localVersion)) {
-				// ask user if he would like to download the new
-				// version
+					disp.syncExec(new Runnable() {
+						public void run() {
+							boolean answer = MessageDialog.openConfirm(shell,
+									"A newer version of the ontology exists on server",
+									"A newer version of the web services ontology exists on server. Would you like to download it?");
 
-				disp.syncExec(new Runnable() {
-					public void run() {
-						boolean answer = MessageDialog.openConfirm(shell,
-								"A newer version of the ontology exists on server",
-								"A newer version of the web services ontology exists on server. Would you like to download it?");
-
-						if (answer) {
-							setUpdateOntology(true);
-						} else {
-							setUpdateOntology(false);
+							if (answer) {
+								setUpdateOntology(true);
+							} else {
+								setUpdateOntology(false);
+							}
 						}
-					}
-				});
+					});
 
-				if (getUpdateOntology()) {
-					// OK Button selected
-					try {
-						String path = repo.downloadOntology("WS", serverVersion, disp);
-						ServiceCompositionView.setUpdateOperations(true);
-					} catch (Exception e) {
-						Activator.log("Error occured while downloading the ontology", e);
-						e.printStackTrace();
+					if (getUpdateOntology()) {
+						// OK Button selected
+						try {
+							String path = repo.downloadOntology("WS", serverVersion, disp);
+							ServiceCompositionView.setUpdateOperations(true);
+						} catch (Exception e) {
+							Activator.log("Error occured while downloading the ontology", e);
+							e.printStackTrace();
+						}
+					} else {
+						ServiceCompositionView.setUpdateOperations(false);
 					}
+
 				} else {
 					ServiceCompositionView.setUpdateOperations(false);
 				}
-
-			} else {
-				ServiceCompositionView.setUpdateOperations(false);
 			}
 		}
 	}

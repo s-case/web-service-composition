@@ -280,13 +280,10 @@ public class Listeners implements Listener {
 			String option = "matchinput";
 			SelectionWindowNode(list, option);
 
-		} else
-			if (node.getSourceConnections().size() == 0
-					|| (node.getSourceConnections().size() != 0
-							&& ((OwlService) ((MyNode) node.getData()).getObject())
-									.getisMatchedIO()
-					&& ((OwlService) ((MyNode) ((GraphNode) ((GraphConnection) node.getSourceConnections().get(0))
-							.getDestination()).getData()).getObject()).getisMatchedIO())) {
+		} else if (node.getSourceConnections().size() == 0 || (node.getSourceConnections().size() != 0
+				&& ((OwlService) ((MyNode) node.getData()).getObject()).getisMatchedIO()
+				&& ((OwlService) ((MyNode) ((GraphNode) ((GraphConnection) node.getSourceConnections().get(0))
+						.getDestination()).getData()).getObject()).getisMatchedIO())) {
 			// System.out.println("Node is an output");
 			Graph graph = view.getViewer().getGraphControl();
 			for (int j = 0; j < graph.getNodes().size(); j++) {
@@ -789,9 +786,8 @@ public class Listeners implements Listener {
 				protected IStatus run(IProgressMonitor monitor) {
 					monitor.beginTask("Loading operations...", IProgressMonitor.UNKNOWN);
 
-					if (ServiceCompositionView.getPWOperations() !=null && ServiceCompositionView.getMashapeOperations() != null){
 					try {
-						view.loadOperations(disp, shell);
+						view.loadOperations(disp, shell, true);
 						ArrayList<Operation> nonPrototypeOperations = new ArrayList<Operation>();
 						ArrayList<Operation> PWOperations = new ArrayList<Operation>();
 						ArrayList<Operation> MashapeOperations = new ArrayList<Operation>();
@@ -807,11 +803,15 @@ public class Listeners implements Listener {
 							}
 
 						}
-						for (Operation op : ServiceCompositionView.getPWOperations()) {
-							PWOperations.add(op);
+						if (ServiceCompositionView.getPWOperations() != null) {
+							for (Operation op : ServiceCompositionView.getPWOperations()) {
+								PWOperations.add(op);
+							}
 						}
-						for (Operation op : ServiceCompositionView.getMashapeOperations()) {
-							MashapeOperations.add(op);
+						if (ServiceCompositionView.getMashapeOperations() != null) {
+							for (Operation op : ServiceCompositionView.getMashapeOperations()) {
+								MashapeOperations.add(op);
+							}
 						}
 						// check if user has cancelled
 						if (monitor.isCanceled())
@@ -833,7 +833,7 @@ public class Listeners implements Listener {
 											addNode(selectedItem, ServiceCompositionView.getOperations());
 										} else if (dialog.getTabNumber().equals("PW Operations")) {
 											addNode(selectedItem, ServiceCompositionView.getPWOperations());
-										}else if (dialog.getTabNumber().equals("Mashape Operations")) {
+										} else if (dialog.getTabNumber().equals("Mashape Operations")) {
 											addNode(selectedItem, ServiceCompositionView.getMashapeOperations());
 										}
 									}
@@ -873,17 +873,7 @@ public class Listeners implements Listener {
 					} finally {
 						monitor.done();
 					}
-					} else {
-						disp.syncExec(new Runnable() {
-							public void run() {
-								MessageDialog.openInformation(disp.getActiveShell(), "Try again later",
-										"Please wait until loading of ProgrammableWeb and Mashape operations is finished!");
-							}
-						});
-						monitor.done();
-						return Status.CANCEL_STATUS;
-							
-					}
+
 				}
 
 			};

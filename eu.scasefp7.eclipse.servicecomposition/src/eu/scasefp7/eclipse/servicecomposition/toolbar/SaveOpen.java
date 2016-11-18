@@ -82,7 +82,7 @@ public class SaveOpen {
 				monitor.beginTask("Loading operations...", IProgressMonitor.UNKNOWN);
 
 				try {
-					view.loadOperations(disp, shell);
+					view.loadOperations(disp, shell, false);
 					edu.uci.ics.jung.graph.Graph<OwlService, Connector> graph = loadWorkflowFile(file);
 					if (graph != null) {
 						disp.syncExec(new Runnable() {

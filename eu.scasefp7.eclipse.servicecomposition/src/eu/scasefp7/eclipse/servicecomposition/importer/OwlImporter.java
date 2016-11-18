@@ -50,11 +50,7 @@ public class OwlImporter extends Importer {
 		belongsToUser = ontologyModel.getDatatypeProperty(prefix + "belongsToUser");
 		hasName = ontologyModel.getDatatypeProperty(prefix + "hasName");
 		isPrototype = ontologyModel.getDatatypeProperty(prefix + "isPrototype");
-		// hasQueryParameters= ontologyModel.getObjectProperty(prefix +
-		// "hasQueryParameters");
 		hasInput = ontologyModel.getObjectProperty(prefix + "hasInput");
-		// hasURIParameters = ontologyModel.getDatatypeProperty(prefix +
-		// "hasURIParameters");
 		hasCRUDVerb = ontologyModel.getDatatypeProperty(prefix + "hasCRUDVerb");
 		hasSecurityScheme = ontologyModel.getDatatypeProperty(prefix + "hasSecurityScheme");
 		hasRequestHeader = ontologyModel.getDatatypeProperty(prefix + "hasRequestHeader");
@@ -106,26 +102,11 @@ public class OwlImporter extends Importer {
 		HashMap<String, Operation> operationsByName = new HashMap<String, Operation>();
 		OntClass className = ontologyModel.getOntClass(prefix + "operation");
 		List<? extends OntResource> list = className.listInstances().toList();
-		// for(int i = 0; i < list.size(); i++){
-		// Individual ind = (Individual) list.get(i);
-		// if((ind.getPropertyValue(isPrototype) == null ||
-		// ind.getPropertyValue(isPrototype).asLiteral().getString().equals("true")))
-		// {
-		// if(!importWSDLOnly || (ind.getPropertyValue(belongsToUser)!=null &&
-		// ind.getPropertyValue(belongsToURL) != null &&
-		// !ind.getPropertyValue(belongsToURL).asLiteral().getString().isEmpty())){
-		// Operation operation = new Operation(ind);
-		// if(!singleOutputsOnly || operation.getOutputs().size()<=1){
-		// operationsByName.put(operation.getName().toString(), operation);
-		// allOperations.add(operation);
-		// }
-		// }
-		// }
-		// }
+		
 
 		// load implementations
 		for (int i = 0; i < list.size(); i++) {
-			System.out.println(i);
+			System.out.println(i + " " + list.get(i).getPropertyValue(hasName));
 			Individual ind = (Individual) list.get(i);
 
 			if (ind.getPropertyValue(belongsToUser) != null && ind.getPropertyValue(isPrototype) != null
@@ -134,27 +115,6 @@ public class OwlImporter extends Importer {
 				Operation operation = new Operation(ind);
 				allOperations.add(operation);
 
-				// if(ind.getPropertyValue(belongsToPrototype) != null)
-				// {
-				// Operation baseOperation =
-				// operationsByName.get(ind.getPropertyValue(belongsToPrototype).asResource().toString());
-				// if(baseOperation!=null){
-				// Operation operation = new Operation(ind);
-				// if(!singleOutputsOnly || operation.getOutputs().size()<=1)
-				// baseOperation.addRealOperation(operation);
-				// }
-				// }
-				// else if(!importWSDLOnly ||
-				// (ind.getPropertyValue(belongsToUser)!=null &&
-				// ind.getPropertyValue(belongsToURL) != null &&
-				// !ind.getPropertyValue(belongsToURL).asLiteral().getString().isEmpty())){
-				// Operation operation = new Operation(ind);
-				// if(!singleOutputsOnly || operation.getOutputs().size()<=1){
-				// operationsByName.put(operation.getName().toString(),
-				// operation);
-				// allOperations.add(operation);
-				// }
-				// }
 			}
 		}
 

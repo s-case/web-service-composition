@@ -183,6 +183,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 	private ISelection inputSelection;
 	private String workflowFilePath = "";
 
+
 	// the imported operations from the ontology
 	private static ArrayList<Operation> operations;
 	private static ArrayList<Operation> PWoperations;
@@ -215,134 +216,48 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 
 		setSavedWorkflow(false);
 
-		// Job downloadPWWS = new Job("Import ProgrammableWeb operations") {
-		// @Override
-		// protected IStatus run(IProgressMonitor monitor) {
-		// monitor.beginTask("Importing ProgrammableWeb operations...",
-		// IProgressMonitor.UNKNOWN);
-		// long startPWTime = System.nanoTime();
-		// RepositoryClient repo = new RepositoryClient();
-		// if (monitor.isCanceled())
-		// return Status.CANCEL_STATUS;
-		// repo.copyOntologyToWorkspace("PWWS");
-		//
-		// String serverVersion = repo.getLatestSubmissionId("PWWS");
-		// BufferedReader reader;
-		// try {
-		// reader = new BufferedReader(
-		// new
-		// FileReader(ResourcesPlugin.getWorkspace().getRoot().getLocation().toString()
-		// +
-		// "/.metadata/.plugins/eu.scasefp7.servicecomposition/ontology/versionPWWS.txt"));
-		// String localVersion = reader.readLine().replaceAll("\\D+", "");
-		// if (!serverVersion.toString().isEmpty() &&
-		// !localVersion.toString().isEmpty()) {
-		// if (Integer.parseInt(serverVersion) > Integer.parseInt(localVersion))
-		// {
-		// String path = repo.downloadPWMOntology("PWWS", serverVersion,
-		// getDisplay());
-		// }
-		// }
-		// } catch (IOException e1) {
-		// // TODO Auto-generated catch block
-		// e1.printStackTrace();
-		// }
-		//
-		// Algorithm.init();
-		// try {
-		// PWoperations =
-		// Algorithm.importServices(ResourcesPlugin.getWorkspace().getRoot().getLocation().toString()
-		// +
-		// "/.metadata/.plugins/eu.scasefp7.servicecomposition/ontology/PWWS.owl");
-		// } catch (Exception e) {
-		// // TODO Auto-generated catch block
-		// e.printStackTrace();
-		// }
-		//
-		// long endPWTime = System.nanoTime();
-		//
-		// if (monitor.isCanceled())
-		// return Status.CANCEL_STATUS;
-		//
-		// System.out.println("Loading PW operations took "+(endPWTime -
-		// startPWTime) * 1.66666667 * Math.pow(10, -11) + " min");
-		// monitor.done();
-		// return Status.OK_STATUS;
-		// }
-		// };
-		//
-		// downloadPWWS.schedule();
-
-		Job downloadMashapeWS = new Job("Import PW and Mashape operations") {
+		
+		final Display disp = Display.getCurrent();
+		Shell shell = view.getSite().getWorkbenchWindow().getShell();
+		Job downloadWS = new Job("Import operations") {
 			@Override
 			protected IStatus run(IProgressMonitor monitor) {
-				monitor.beginTask("Importing Mashape operations...", IProgressMonitor.UNKNOWN);
-
-				RepositoryClient repo = new RepositoryClient();
+				monitor.beginTask("Importing operations...", IProgressMonitor.UNKNOWN);
+				
+				//Load s-case ontology
+				loadOperations(disp, shell, false);
+				
+				//Check if Mashape and PW ontologies should be loaded
+				boolean usePWOperations = false;
+				boolean useMashapeOperations = false;
+				if (Activator.getDefault() != null) {
+					usePWOperations = Activator.getDefault().getPreferenceStore()
+							.getBoolean("Use PW operations");
+					useMashapeOperations = Activator.getDefault().getPreferenceStore()
+							.getBoolean("Use Mashape operations");
+				}
+				
+				
+				
 
 				long startMTime = System.nanoTime();
 				if (monitor.isCanceled())
 					return Status.CANCEL_STATUS;
-				repo.copyOntologyToWorkspace("MASHAPEWS");
-				String serverVersion = repo.getLatestSubmissionId("MASHAPEWS");
-				BufferedReader reader;
-				try {
-					reader = new BufferedReader(new FileReader(ResourcesPlugin.getWorkspace().getRoot().getLocation()
-							.toString()
-							+ "/.metadata/.plugins/eu.scasefp7.servicecomposition/ontology/versionMASHAPEWS.txt"));
-					String localVersion = reader.readLine().replaceAll("\\D+", "");
-					if (!serverVersion.toString().isEmpty() && !localVersion.toString().isEmpty()) {
-						if (Integer.parseInt(serverVersion) > Integer.parseInt(localVersion)) {
-							String path2 = repo.downloadPWMOntology("MASHAPEWS", serverVersion, getDisplay());
-						}
-					}
-				} catch (IOException e1) {
-					Activator.log("Error while reading the versionMASHAPEWS.txt file", e1);
-					e1.printStackTrace();
-				}
-
-				if (monitor.isCanceled())
-					return Status.CANCEL_STATUS;
-				repo.copyOntologyToWorkspace("PWWS");
-
-				String PWserverVersion = repo.getLatestSubmissionId("PWWS");
-				BufferedReader reader2;
-				try {
-					reader2 = new BufferedReader(
-							new FileReader(ResourcesPlugin.getWorkspace().getRoot().getLocation().toString()
-									+ "/.metadata/.plugins/eu.scasefp7.servicecomposition/ontology/versionPWWS.txt"));
-					String localVersion = reader2.readLine().replaceAll("\\D+", "");
-					if (!PWserverVersion.toString().isEmpty() && !localVersion.toString().isEmpty()) {
-						if (Integer.parseInt(PWserverVersion) > Integer.parseInt(localVersion)) {
-							String path = repo.downloadPWMOntology("PWWS", PWserverVersion, getDisplay());
-						}
-					}
-				} catch (IOException e1) {
-					Activator.log("Error while reading the versionPWWS.txt file", e1);
-					e1.printStackTrace();
-				}
-				if (monitor.isCanceled())
-					return Status.CANCEL_STATUS;
-				try {
-					MashapeOperations = Algorithm
-							.importServices(ResourcesPlugin.getWorkspace().getRoot().getLocation().toString()
-									+ "/.metadata/.plugins/eu.scasefp7.servicecomposition/ontology/MASHAPEWS.owl");
-				} catch (Exception e) {
-					Activator.log("Error while importing the Mashape ontology", e);
-					e.printStackTrace();
-				}
-				if (monitor.isCanceled())
+				//Load Mashape
+				if (useMashapeOperations){
+				IStatus status = loadMashapeOperations(disp, shell, monitor);
+				
+				if (status.equals(Status.CANCEL_STATUS))
 					return Status.CANCEL_STATUS;
 				System.gc();
-				try {
-					PWoperations = Algorithm
-							.importServices(ResourcesPlugin.getWorkspace().getRoot().getLocation().toString()
-									+ "/.metadata/.plugins/eu.scasefp7.servicecomposition/ontology/PWWS.owl");	
-				} catch (Exception e) {
-					Activator.log("Error while importing the PW ontology", e);
-					e.printStackTrace();
 				}
+				// Load PW
+				if (usePWOperations){
+				IStatus status = loadPWOperations(disp, shell, monitor);
+				if (status.equals(Status.CANCEL_STATUS))
+					return Status.CANCEL_STATUS;
 				System.gc();
+				}
 				long endMTime = System.nanoTime();
 				System.out.println("Loading of PW and Mashape operations took "
 						+ (endMTime - startMTime) * 1.66666667 * Math.pow(10, -11) + " min");
@@ -352,7 +267,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 			}
 		};
 
-		downloadMashapeWS.schedule();
+		downloadWS.schedule();
 		final Graph graph = viewer.getGraphControl();
 		graph.addSelectionListener(new SelectionAdapter() {
 			@Override
@@ -1777,11 +1692,11 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 		}
 	}
 
-	public void loadOperations(Display disp, Shell shell) {
+	public void loadOperations(Display disp, Shell shell, boolean check) {
 
 		try {
 			long startTime = System.nanoTime();
-			ImportHandler.ontologyCheck(shell, disp);
+			ImportHandler.ontologyCheck(shell, disp, check);
 			// check if user has cancelled
 			// if (monitor.isCanceled())
 			// return Status.CANCEL_STATUS;
@@ -1810,6 +1725,80 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 		// }
 		// };
 		// loadOperationJob.schedule();
+	}
+	
+	public IStatus loadPWOperations(Display disp, Shell shell, IProgressMonitor monitor) {
+		RepositoryClient repo = new RepositoryClient();
+		repo.copyOntologyToWorkspace("PWWS");
+
+		String PWserverVersion = repo.getLatestSubmissionId("PWWS");
+		BufferedReader reader2;
+		try {
+			reader2 = new BufferedReader(
+					new FileReader(ResourcesPlugin.getWorkspace().getRoot().getLocation().toString()
+							+ "/.metadata/.plugins/eu.scasefp7.servicecomposition/ontology/versionPWWS.txt"));
+			String localVersion = reader2.readLine().replaceAll("\\D+", "");
+			if (!PWserverVersion.toString().isEmpty() && !localVersion.toString().isEmpty()) {
+				if (Integer.parseInt(PWserverVersion) > Integer.parseInt(localVersion)) {
+					String path = repo.downloadPWMOntology("PWWS", PWserverVersion, getDisplay());
+				}
+			}
+		} catch (IOException e1) {
+			Activator.log("Error while reading the versionPWWS.txt file", e1);
+			e1.printStackTrace();
+		}
+		if (monitor.isCanceled())
+			return Status.CANCEL_STATUS;
+		
+		
+		//Load PW ontology
+		try {
+			PWoperations = Algorithm
+					.importServices(ResourcesPlugin.getWorkspace().getRoot().getLocation().toString()
+							+ "/.metadata/.plugins/eu.scasefp7.servicecomposition/ontology/PWWS.owl");	
+		} catch (Exception e) {
+			Activator.log("Error while importing the PW ontology", e);
+			e.printStackTrace();
+		}
+		if (monitor.isCanceled())
+			return Status.CANCEL_STATUS;
+		return Status.OK_STATUS;
+	}
+	
+	public IStatus loadMashapeOperations(Display disp, Shell shell, IProgressMonitor monitor) {
+		RepositoryClient repo = new RepositoryClient();
+		repo.copyOntologyToWorkspace("MASHAPEWS");
+		String serverVersion = repo.getLatestSubmissionId("MASHAPEWS");
+		BufferedReader reader;
+		try {
+			reader = new BufferedReader(new FileReader(ResourcesPlugin.getWorkspace().getRoot().getLocation()
+					.toString()
+					+ "/.metadata/.plugins/eu.scasefp7.servicecomposition/ontology/versionMASHAPEWS.txt"));
+			String localVersion = reader.readLine().replaceAll("\\D+", "");
+			if (!serverVersion.toString().isEmpty() && !localVersion.toString().isEmpty()) {
+				if (Integer.parseInt(serverVersion) > Integer.parseInt(localVersion)) {
+					String path2 = repo.downloadPWMOntology("MASHAPEWS", serverVersion, getDisplay());
+				}
+			}
+		} catch (IOException e1) {
+			Activator.log("Error while reading the versionMASHAPEWS.txt file", e1);
+			e1.printStackTrace();
+		}
+
+		if (monitor.isCanceled())
+			return Status.CANCEL_STATUS;
+		//Load Mashape ontology
+		try {
+			MashapeOperations = Algorithm
+					.importServices(ResourcesPlugin.getWorkspace().getRoot().getLocation().toString()
+							+ "/.metadata/.plugins/eu.scasefp7.servicecomposition/ontology/MASHAPEWS.owl");
+		} catch (Exception e) {
+			Activator.log("Error while importing the Mashape ontology", e);
+			e.printStackTrace();
+		}
+		if (monitor.isCanceled())
+			return Status.CANCEL_STATUS;
+		return Status.OK_STATUS;
 	}
 
 	public ServiceCompositionView getView() {
