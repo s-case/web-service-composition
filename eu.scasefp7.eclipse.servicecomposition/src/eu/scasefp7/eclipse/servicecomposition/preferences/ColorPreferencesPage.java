@@ -38,36 +38,36 @@ public class ColorPreferencesPage extends FieldEditorPreferencePage implements I
 		 * This does not work for regular field editors since there can be only
 		 * one property change listener and we get overriden by the FieldParent
 		 */
-		PWoperations.setExtraPropertyChangeListener(new IPropertyChangeListener() {
-			@Override
-			public void propertyChange(PropertyChangeEvent event) {
-				Object val = event.getNewValue();
-				Object valOld = event.getOldValue();
-
-				if (val instanceof Boolean && valOld instanceof Boolean && val != valOld) {
-					if (((Boolean) val)) {
-						getPreferenceStore().setValue("Use Mashape operations", !((Boolean) val));
-					}
-					mashapeOperations.setEnabled(!((Boolean) val), getFieldEditorParent());
-				}
-			}
-		});
-
-		mashapeOperations.setExtraPropertyChangeListener(new IPropertyChangeListener() {
-			@Override
-			public void propertyChange(PropertyChangeEvent event) {
-				Object val = event.getNewValue();
-				Object valOld = event.getOldValue();
-
-				
-				if (val instanceof Boolean && valOld instanceof Boolean && val != valOld) {
-					if (((Boolean) val)) {
-						getPreferenceStore().setValue("Use PW operations", !((Boolean) val));
-					}
-					PWoperations.setEnabled(!((Boolean) val), getFieldEditorParent());
-				}
-			}
-		});
+//		PWoperations.setExtraPropertyChangeListener(new IPropertyChangeListener() {
+//			@Override
+//			public void propertyChange(PropertyChangeEvent event) {
+//				Object val = event.getNewValue();
+//				Object valOld = event.getOldValue();
+//
+//				if (val instanceof Boolean && valOld instanceof Boolean && val != valOld) {
+//					if (((Boolean) val)) {
+//						getPreferenceStore().setValue("Use Mashape operations", !((Boolean) val));
+//					}
+//					mashapeOperations.setEnabled(!((Boolean) val), getFieldEditorParent());
+//				}
+//			}
+//		});
+//
+//		mashapeOperations.setExtraPropertyChangeListener(new IPropertyChangeListener() {
+//			@Override
+//			public void propertyChange(PropertyChangeEvent event) {
+//				Object val = event.getNewValue();
+//				Object valOld = event.getOldValue();
+//
+//				
+//				if (val instanceof Boolean && valOld instanceof Boolean && val != valOld) {
+//					if (((Boolean) val)) {
+//						getPreferenceStore().setValue("Use PW operations", !((Boolean) val));
+//					}
+//					PWoperations.setEnabled(!((Boolean) val), getFieldEditorParent());
+//				}
+//			}
+//		});
 
 	}
 

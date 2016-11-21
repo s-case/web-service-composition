@@ -44,6 +44,9 @@ public class SaveOpen {
 	// the saved workflow file
 	private static File workflowFile;
 	private static String workflowFilePath = "";
+	private static ArrayList<Operation> SCASEoperations;
+	private static ArrayList<Operation> PWoperations;
+	private static ArrayList<Operation> MashapeOperations;
 	
 	
 	
@@ -82,8 +85,70 @@ public class SaveOpen {
 				monitor.beginTask("Loading operations...", IProgressMonitor.UNKNOWN);
 
 				try {
+					ArrayList<Operation> operations = new ArrayList<Operation>();
+					PWoperations = ServiceCompositionView.getPWOperations();
+					MashapeOperations = ServiceCompositionView.getMashapeOperations();
+					SCASEoperations = ServiceCompositionView.getOperations();
 					view.loadOperations(disp, shell, false);
-					edu.uci.ics.jung.graph.Graph<OwlService, Connector> graph = loadWorkflowFile(file);
+					for (Operation op : SCASEoperations){
+						operations.add(op);
+					}
+					//Check if Mashape and PW ontologies should be loaded
+					boolean usePWOperations = false;
+					boolean useMashapeOperations = false;
+					if (Activator.getDefault() != null) {
+						usePWOperations = Activator.getDefault().getPreferenceStore()
+								.getBoolean("Use PW operations");
+						useMashapeOperations = Activator.getDefault().getPreferenceStore()
+								.getBoolean("Use Mashape operations");
+					}
+					
+					if (usePWOperations && !useMashapeOperations) {
+						if (PWoperations == null){
+							view.loadPWOperations(disp, shell, monitor);
+							PWoperations = ServiceCompositionView.getPWOperations();
+						}
+						for (Operation op : PWoperations) {
+							operations.add(op);
+						}
+						 
+					} else if (useMashapeOperations && !usePWOperations) {
+						if (MashapeOperations == null){
+							view.loadMashapeOperations(disp, shell, monitor);
+							MashapeOperations = ServiceCompositionView.getMashapeOperations();
+						}
+						for (Operation op : MashapeOperations) {
+							operations.add(op);
+						}
+
+					} else if (useMashapeOperations && usePWOperations) {
+						if (PWoperations == null){
+							view.loadPWOperations(disp, shell, monitor);
+							PWoperations = ServiceCompositionView.getPWOperations();
+						}
+						if (MashapeOperations == null){
+							view.loadMashapeOperations(disp, shell, monitor);
+							MashapeOperations = ServiceCompositionView.getMashapeOperations();
+						}
+						if (PWoperations != null && MashapeOperations != null) {
+							for (Operation op : PWoperations) {
+								operations.add(op);
+							}
+							for (Operation op : MashapeOperations) {
+								operations.add(op);
+							}
+						} else {
+							disp.syncExec(new Runnable() {
+								public void run() {
+									MessageDialog.openInformation(disp.getActiveShell(), "Try again later",
+											"Please wait until loading of ProgrammableWeb and Mashape operations is finished!");
+								}
+							});
+							monitor.done();
+							return Status.CANCEL_STATUS;
+						}
+					}
+					edu.uci.ics.jung.graph.Graph<OwlService, Connector> graph = loadWorkflowFile(file, operations);
 					if (graph != null) {
 						disp.syncExec(new Runnable() {
 							public void run() {
@@ -328,13 +393,13 @@ public class SaveOpen {
 
 	}
 	
-	public static edu.uci.ics.jung.graph.Graph<OwlService, Connector> loadWorkflowFile(File file) {
+	public static edu.uci.ics.jung.graph.Graph<OwlService, Connector> loadWorkflowFile(File file, ArrayList<Operation> operations) {
 
 		edu.uci.ics.jung.graph.Graph<OwlService, Connector> g = null;
 
 		try {
 			
-			g = readFile(file, ServiceCompositionView.getOperations());
+			g = readFile(file, operations);
 
 		} catch (Exception ex) {
 			Activator.log("Error loading workflow file", ex);

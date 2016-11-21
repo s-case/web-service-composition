@@ -27,6 +27,9 @@ import eu.scasefp7.eclipse.servicecomposition.views.ServiceCompositionView;
 
 public class ReloadStoryboard {
 	static edu.uci.ics.jung.graph.Graph<OwlService, Connector> jungGraph;
+	private static ArrayList<Operation> SCASEoperations;
+	private static ArrayList<Operation> PWoperations;
+	private static ArrayList<Operation> MashapeOperations;
 	
 	public static void reloadStoryboard(Display disp, Shell shell, ServiceCompositionView view,
 	 IFile storyboardFile) {
@@ -47,10 +50,69 @@ public class ReloadStoryboard {
 						// // folder
 						// ontologyCheck(shell, disp);
 						Algorithm.init();
-						final ArrayList<Operation> operations = Algorithm
-								.importServices(ResourcesPlugin.getWorkspace().getRoot().getLocation().toString()
-										+ "/.metadata/.plugins/eu.scasefp7.servicecomposition/ontology/WS.owl");
+						ArrayList<Operation> operations = new ArrayList<Operation>();
+						PWoperations = ServiceCompositionView.getPWOperations();
+						MashapeOperations = ServiceCompositionView.getMashapeOperations();
+						SCASEoperations = ServiceCompositionView.getOperations();
+						view.loadOperations(disp, shell, false);
+						for (Operation op : SCASEoperations){
+							operations.add(op);
+						}
+						//Check if Mashape and PW ontologies should be loaded
+						boolean usePWOperations = false;
+						boolean useMashapeOperations = false;
+						if (Activator.getDefault() != null) {
+							usePWOperations = Activator.getDefault().getPreferenceStore()
+									.getBoolean("Use PW operations");
+							useMashapeOperations = Activator.getDefault().getPreferenceStore()
+									.getBoolean("Use Mashape operations");
+						}
 						
+						if (usePWOperations && !useMashapeOperations) {
+							if (PWoperations == null){
+								view.loadPWOperations(disp, shell, monitor);
+								PWoperations = ServiceCompositionView.getPWOperations();
+							}
+							for (Operation op : PWoperations) {
+								operations.add(op);
+							}
+							 
+						} else if (useMashapeOperations && !usePWOperations) {
+							if (MashapeOperations == null){
+								view.loadMashapeOperations(disp, shell, monitor);
+								MashapeOperations = ServiceCompositionView.getMashapeOperations();
+							}
+							for (Operation op : MashapeOperations) {
+								operations.add(op);
+							}
+
+						} else if (useMashapeOperations && usePWOperations) {
+							if (PWoperations == null){
+								view.loadPWOperations(disp, shell, monitor);
+								PWoperations = ServiceCompositionView.getPWOperations();
+							}
+							if (MashapeOperations == null){
+								view.loadMashapeOperations(disp, shell, monitor);
+								MashapeOperations = ServiceCompositionView.getMashapeOperations();
+							}
+							if (PWoperations != null && MashapeOperations != null) {
+								for (Operation op : PWoperations) {
+									operations.add(op);
+								}
+								for (Operation op : MashapeOperations) {
+									operations.add(op);
+								}
+							} else {
+								disp.syncExec(new Runnable() {
+									public void run() {
+										MessageDialog.openInformation(disp.getActiveShell(), "Try again later",
+												"Please wait until loading of ProgrammableWeb and Mashape operations is finished!");
+									}
+								});
+								monitor.done();
+								return Status.CANCEL_STATUS;
+							}
+						}
 						final String pathToSBDFile = ResourcesPlugin.getWorkspace().getRoot().getLocation().toString()
 								+ file.getFullPath().toOSString();
 						// check if user has cancelled

@@ -61,7 +61,7 @@ public class ImportHandler extends AbstractHandler {
 	/**
 	 * the ontology operations
 	 */
-	private static ArrayList<Operation> operations;
+	private static ArrayList<Operation> SCASEoperations;
 	private ArrayList<Operation> PWoperations;
 	private ArrayList<Operation> MashapeOperations;
 	private static boolean updateOntology = false;
@@ -134,6 +134,7 @@ public class ImportHandler extends AbstractHandler {
 					monitor.beginTask("Transforming storyboard creator diagram to workflow of web services...",
 
 							IProgressMonitor.UNKNOWN);
+					ArrayList<Operation> operations = new ArrayList<Operation>();
 					PWoperations = ServiceCompositionView.getPWOperations();
 					MashapeOperations = ServiceCompositionView.getMashapeOperations();
 					
@@ -161,6 +162,9 @@ public class ImportHandler extends AbstractHandler {
 							
 							view.loadOperations(disp, shell, true);
 
+							for (Operation op : SCASEoperations){
+								operations.add(op);
+							}
 							if (usePWOperations && !useMashapeOperations) {
 								if (PWoperations == null){
 									view.loadPWOperations(disp, shell, monitor);
@@ -457,7 +461,7 @@ public class ImportHandler extends AbstractHandler {
 	 *            the list of ontology operations
 	 */
 	public static void setOperations(ArrayList<Operation> operationsList) {
-		operations = operationsList;
+		SCASEoperations = operationsList;
 	}
 
 	public static void setUpdateOntology(boolean update) {

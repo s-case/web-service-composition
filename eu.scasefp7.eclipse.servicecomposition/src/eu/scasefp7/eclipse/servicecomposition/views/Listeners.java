@@ -803,14 +803,34 @@ public class Listeners implements Listener {
 							}
 
 						}
-						if (ServiceCompositionView.getPWOperations() != null) {
-							for (Operation op : ServiceCompositionView.getPWOperations()) {
-								PWOperations.add(op);
+
+						boolean usePWOperations = false;
+						boolean useMashapeOperations = false;
+						if (Activator.getDefault() != null) {
+							usePWOperations = Activator.getDefault().getPreferenceStore()
+									.getBoolean("Use PW operations");
+							useMashapeOperations = Activator.getDefault().getPreferenceStore()
+									.getBoolean("Use Mashape operations");
+						}
+
+						if (usePWOperations) {
+							if (ServiceCompositionView.getPWOperations() == null) {
+								view.loadPWOperations(disp, shell, monitor);
+							}
+							if (ServiceCompositionView.getPWOperations() != null) {
+								for (Operation op : ServiceCompositionView.getPWOperations()) {
+									PWOperations.add(op);
+								}
 							}
 						}
-						if (ServiceCompositionView.getMashapeOperations() != null) {
-							for (Operation op : ServiceCompositionView.getMashapeOperations()) {
-								MashapeOperations.add(op);
+						if (useMashapeOperations) {
+							if (ServiceCompositionView.getMashapeOperations() == null) {
+								view.loadMashapeOperations(disp, shell, monitor);
+							}
+							if (ServiceCompositionView.getMashapeOperations() != null) {
+								for (Operation op : ServiceCompositionView.getMashapeOperations()) {
+									MashapeOperations.add(op);
+								}
 							}
 						}
 						// check if user has cancelled
