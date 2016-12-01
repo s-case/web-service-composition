@@ -34,6 +34,7 @@ import org.eclipse.swt.widgets.TreeItem;
 import eu.scasefp7.eclipse.servicecomposition.importer.Importer.Argument;
 import eu.scasefp7.eclipse.servicecomposition.importer.Importer.Operation;
 import eu.scasefp7.eclipse.servicecomposition.transformer.Transformer.ReplaceInformation;
+import eu.scasefp7.eclipse.servicecomposition.ui.CustomDialog.OperationNode;
 
 public class TreeDialog extends Dialog {
 	private ArrayList<Operation> operations = new ArrayList<Operation>();
@@ -125,27 +126,6 @@ public class TreeDialog extends Dialog {
 
 			for (Operation operation : operations) {
 
-				// OperationNode n = new
-				// OperationNode(operation.getName().toString(), null,
-				// operation, null, "");
-				// OperationNode subn1 = new OperationNode("Inputs", n,
-				// operation, null, "");
-				// OperationNode subn2 = new OperationNode("Outputs", n,
-				// operation, null, "");
-				// OperationNode subn3 = new OperationNode("URL", n, operation,
-				// null, operation.getDomain().getURI());
-				// column2.setLabelProvider(createTreeColumnLabelProvider());
-				// for (Argument input : operation.getInputs()) {
-				// OperationNode inputn = new OperationNode("", subn1,
-				// operation, input, input.getName().toString());
-				// column2.setLabelProvider(createTreeColumnLabelProvider());
-				// }
-				// for (Argument output : operation.getOutputs()) {
-				// OperationNode outputn = new OperationNode("", subn2,
-				// operation, output,
-				// output.getName().toString());
-				// column2.setLabelProvider(createTreeColumnLabelProvider());
-				// }
 				OperationNode n = createOperationNode(operation);
 				// column2.setLabelProvider(createTreeColumnLabelProvider());
 				nodes.add(n);
@@ -239,7 +219,8 @@ public class TreeDialog extends Dialog {
 		if (title != null) {
 			shell.setText(title);
 		}
-		shell.setMinimumSize(200, 200);
+		//shell.setMinimumSize(200, 200);
+		shell.setSize(400, 400);
 	}
 
 	public void setDialogLocation() {
@@ -265,6 +246,7 @@ public class TreeDialog extends Dialog {
 		OperationNode subn1 = new OperationNode("Inputs", n, operation, null, "");
 		OperationNode subn2 = new OperationNode("Outputs", n, operation, null, "");
 		OperationNode subn3 = new OperationNode("URL", n, operation, null, operation.getDomain().getURI());
+		OperationNode subn4 = new OperationNode("Domain", n, operation, null, "");
 
 		for (Argument input : operation.getInputs()) {
 			OperationNode inputn = new OperationNode(input.getName().toString(), subn1, operation, input,
@@ -276,6 +258,10 @@ public class TreeDialog extends Dialog {
 		}
 		OperationNode urln = new OperationNode(operation.getDomain().getURI(), subn3, operation, null,
 				operation.getDomain().getURI());
+		for (String domainName : operation.getDomain().getDomains()){
+			OperationNode domainn = new OperationNode(domainName, subn4, operation, null,
+					domainName);
+		}
 		return (n);
 	}
 

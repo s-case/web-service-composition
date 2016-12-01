@@ -12,6 +12,7 @@ import eu.scasefp7.eclipse.servicecomposition.codeGenerator.CodeGenerator.CodeNo
 import eu.scasefp7.eclipse.servicecomposition.codeInterpreter.Value;
 import eu.scasefp7.eclipse.servicecomposition.importer.Importer.Argument;
 import eu.scasefp7.eclipse.servicecomposition.importer.Importer.Operation;
+import eu.scasefp7.eclipse.servicecomposition.importer.Importer.RequestHeader;
 import eu.scasefp7.eclipse.servicecomposition.importer.JungXMIImporter.Connector;
 import eu.scasefp7.eclipse.servicecomposition.transformer.JungXMItoOwlTransform.OwlService;
 
@@ -107,7 +108,7 @@ public class RestFunctionCodeNode extends CodeNode {
 			if (operation.getDomain().getURI().contains("mailgun")) {
 				ret += "List<NameValuePair> urlParameters = new ArrayList<NameValuePair>();\n";
 				for (Argument input : operation.getInputs()) {
-					if (input.isTypeOf().equals("BodyParameter") && !input.getOwlService().getisMatchedIO()) {
+					if (input.isTypeOf().equals("FormEncodedParameter") && !input.getOwlService().getisMatchedIO()) {
 						ret += "urlParameters.add(new BasicNameValuePair("
 								+ input.getName().getJavaValidContent().toString() + ".name , "
 								+ operation.getName().toString() + "_request.get"
@@ -124,10 +125,10 @@ public class RestFunctionCodeNode extends CodeNode {
 
 				ret += "StringBuilder sb = new StringBuilder();\n" + "boolean first = true;\n" +
 
-				"for (NameValuePair pair : urlParameters) {\n" + TAB + "if (first)\n" + TAB + TAB + "first = false;\n"
-						+ TAB + "else\n" + TAB + TAB + "sb.append(\"&\");\n" + TAB +
+						"for (NameValuePair pair : urlParameters) {\n" + TAB + "if (first)\n" + TAB + TAB
+						+ "first = false;\n" + TAB + "else\n" + TAB + TAB + "sb.append(\"&\");\n" + TAB +
 
-				"sb.append(URLEncoder.encode(pair.getName(), \"UTF-8\"));\n" + TAB + "sb.append(\"=\");\n" + TAB
+						"sb.append(URLEncoder.encode(pair.getName(), \"UTF-8\"));\n" + TAB + "sb.append(\"=\");\n" + TAB
 						+ "sb.append(URLEncoder.encode(pair.getValue(), \"UTF-8\"));\n" + TAB + "}\n"
 						+ "String entity = sb.toString();\n"
 						+ "ArrayList<Variable> inputs = new ArrayList<Variable>();\n" + "inputs.add(apikey);\n";
@@ -144,7 +145,7 @@ public class RestFunctionCodeNode extends CodeNode {
 
 		for (Argument arg : operation.getInputs())
 			for (OwlService var : allVariables) {
-				if (var.getArgument().equals(arg) && var.getId() == arg.getOwlService().getId()){
+				if (var.getArgument().equals(arg) && var.getId() == arg.getOwlService().getId()) {
 					boolean isMemberOfArray = false;
 					for (OwlService predesseccor : graph.getPredecessors(var)) {
 
@@ -165,6 +166,13 @@ public class RestFunctionCodeNode extends CodeNode {
 					}
 				}
 			}
+		// request headers
+		ret += "ArrayList<Variable> requestHeaderList = new  ArrayList<Variable>();\n";
+		if (operation.getRequestHeaders() != null && !operation.getRequestHeaders().isEmpty()) {
+			for (RequestHeader header : operation.getRequestHeaders()) {
+				ret += "requestHeaderList.add(" + header.getName().replaceAll("[^A-Za-z0-9()_\\[\\]]", "") + ");\n";
+			}
+		}
 		return ret;
 	}
 
@@ -237,8 +245,9 @@ public class RestFunctionCodeNode extends CodeNode {
 		for (Argument arg : operation.getInputs()) {
 			if (arg.isTypeOf().equals("URIParameter")) {
 				for (OwlService var : allVariables) {
-					if (var.getArgument().equals(arg) && var.getId() == arg.getOwlService().getId()){
-						ret += "wsUrl = wsUrl.replace(\"{" + var.getName().getJavaValidContent().replaceAll("[0123456789]", "") + "}\", "
+					if (var.getArgument().equals(arg) && var.getId() == arg.getOwlService().getId()) {
+						ret += "wsUrl = wsUrl.replace(\"{"
+								+ var.getName().getJavaValidContent().replaceAll("[0123456789]", "") + "}\", "
 								+ var.getName().getJavaValidContent().toString();
 						if (isRepeated) {
 							ret += ".get(i)";
@@ -259,7 +268,7 @@ public class RestFunctionCodeNode extends CodeNode {
 			ret += "String auth=\"\";\n";
 		}
 
-		ret += "String result=CallRESTfulService.callService(wsUrl, crudVerb, inputs, entity, hasAuth, auth);\n";
+		ret += "String result=CallRESTfulService.callService(wsUrl, crudVerb, inputs, entity, hasAuth, auth, requestHeaderList);\n";
 
 		return ret;
 	}

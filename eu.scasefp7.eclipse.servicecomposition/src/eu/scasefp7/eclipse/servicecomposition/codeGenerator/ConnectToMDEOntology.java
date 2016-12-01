@@ -34,6 +34,7 @@ import eu.scasefp7.eclipse.servicecomposition.importer.Importer.Argument;
 import eu.scasefp7.eclipse.servicecomposition.importer.JungXMIImporter.Connector;
 import eu.scasefp7.eclipse.servicecomposition.transformer.JungXMItoOwlTransform.OwlService;
 import eu.scasefp7.eclipse.servicecomposition.importer.Importer.Operation;
+import eu.scasefp7.eclipse.servicecomposition.importer.Importer.RequestHeader;
 import eu.scasefp7.eclipse.servicecomposition.operationCaller.RAMLCaller;
 import edu.uci.ics.jung.graph.Graph;
 
@@ -53,7 +54,7 @@ public class ConnectToMDEOntology {
 	}
 
 	public MDEOperation createObjects(String projectName, ArrayList<OwlService> inputs,
-			ArrayList<Argument> uriParameters, ArrayList<Argument> authParameters, ArrayList<OwlService> outputs, ArrayList<Operation> repeatedOperations,
+			ArrayList<Argument> uriParameters, ArrayList<Argument> authParameters, ArrayList<RequestHeader> requestHeaderParameters, ArrayList<OwlService> outputs, ArrayList<Operation> repeatedOperations,
 			String crudVerb, final Graph<OwlService, Connector> graph) {
 		ArrayList<MDERepresentation> hasQueryParameters = new ArrayList<MDERepresentation>();
 		ArrayList<MDERepresentation> hasInput = new ArrayList<MDERepresentation>();
@@ -136,6 +137,24 @@ public class ConnectToMDEOntology {
 			subNames.add(auth.getType().toLowerCase());
 			MDERepresentation inputRepresentation = new MDERepresentation(true,
 					false, url, auth.getName().getJavaValidContent().toLowerCase(), "Primitive", null, subNames);
+			hasQueryParameters.add(inputRepresentation);
+		}
+		
+		for (RequestHeader header : requestHeaderParameters){
+			String url = "";
+			if (((Operation) header.getBelongsToOperation()) != null) {
+				url = ((Operation) header.getBelongsToOperation()).getDomain().getURI();
+				if (((Operation) header.getBelongsToOperation()).getDomain()
+						.getResourcePath() != null) {
+					url = url + ((Operation) header.getBelongsToOperation()).getDomain()
+							.getResourcePath();
+				}
+			}
+			
+			ArrayList<String> subNames = new ArrayList<String>();
+			subNames.add("string");
+			MDERepresentation inputRepresentation = new MDERepresentation(true,
+					false, url, header.getName().replaceAll("[^A-Za-z0-9()_\\[\\]]", ""), "Primitive", null, subNames);
 			hasQueryParameters.add(inputRepresentation);
 		}
 

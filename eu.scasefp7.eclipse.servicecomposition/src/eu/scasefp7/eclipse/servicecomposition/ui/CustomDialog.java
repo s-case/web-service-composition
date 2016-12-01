@@ -245,6 +245,7 @@ public class CustomDialog extends Dialog {
 		OperationNode subn1 = new OperationNode("Inputs", n, operation, null, "");
 		OperationNode subn2 = new OperationNode("Outputs", n, operation, null, "");
 		OperationNode subn3 = new OperationNode("URL", n, operation, null, operation.getDomain().getURI());
+		OperationNode subn4 = new OperationNode("Domain", n, operation, null, "");
 
 		for (Argument input : operation.getInputs()) {
 			OperationNode inputn = new OperationNode(input.getName().toString(), subn1, operation, input,
@@ -256,6 +257,10 @@ public class CustomDialog extends Dialog {
 		}
 		OperationNode urln = new OperationNode(operation.getDomain().getURI(), subn3, operation, null,
 				operation.getDomain().getURI());
+		for (String domainName : operation.getDomain().getDomains()){
+			OperationNode domainn = new OperationNode(domainName, subn4, operation, null,
+					domainName);
+		}
 		return (n);
 	}
 

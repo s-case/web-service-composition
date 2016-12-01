@@ -268,7 +268,7 @@ public class WSOntology {
 					// create is Required prop
 					noInd.addProperty(isRequired, String.valueOf(arg.isRequired()));
 					// create has isTypeOf prop (only for inputs)
-					if (arg.isTypeOf().equals("BodyParameter")) {
+					if (arg.isTypeOf().equals("BodyParameter") || arg.isTypeOf().equals("FormEncodedParameter")) {
 						noInd.addProperty(isTypeOf, "BodyParameter");
 					} else if (arg.isTypeOf().equals("QueryParameter") || arg.isTypeOf().equals("URIParameter")) {
 						noInd.addProperty(isTypeOf, "QueryParameter");
@@ -313,7 +313,7 @@ public class WSOntology {
 						coInd.addProperty(isArray, String.valueOf(arg.isArray()));
 					}
 					// create has isTypeOf prop (only for inputs)
-					if (arg.isTypeOf().equals("BodyParameter")) {
+					if (arg.isTypeOf().equals("BodyParameter") || arg.isTypeOf().equals("FormEncodedParameter")) {
 						coInd.addProperty(isTypeOf, "BodyParameter");
 					} else if (arg.isTypeOf().equals("QueryParameter") || arg.isTypeOf().equals("URIParameter")) {
 						coInd.addProperty(isTypeOf, "QueryParameter");
@@ -376,7 +376,7 @@ public class WSOntology {
 				// create is Required prop
 				noInd.addProperty(isRequired, String.valueOf(arg.isRequired()));
 				// create has isTypeOf prop (only for inputs)
-				if (arg.isTypeOf().equals("BodyParameter")) {
+				if (arg.isTypeOf().equals("BodyParameter") || arg.isTypeOf().equals("FormEncodedParameter")) {
 					noInd.addProperty(isTypeOf, "BodyParameter");
 				} else if (arg.isTypeOf().equals("QueryParameter") || arg.isTypeOf().equals("URIParameter")) {
 					noInd.addProperty(isTypeOf, "QueryParameter");
@@ -417,7 +417,7 @@ public class WSOntology {
 					coInd.addProperty(isRequired, String.valueOf(arg.isRequired()));
 				}
 				// create has isTypeOf prop (only for inputs)
-				if (arg.isTypeOf().equals("BodyParameter")) {
+				if (arg.isTypeOf().equals("BodyParameter") || arg.isTypeOf().equals("FormEncodedParameter")) {
 					coInd.addProperty(isTypeOf, "BodyParameter");
 				} else if (arg.isTypeOf().equals("QueryParameter") || arg.isTypeOf().equals("URIParameter")) {
 					coInd.addProperty(isTypeOf, "QueryParameter");

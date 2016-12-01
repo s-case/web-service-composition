@@ -15,7 +15,7 @@ public class CallRestfulServiceCode {
 		code += "public class CallRESTfulService {\n";
 		// method
 		code += TAB
-				+ "public static String callService(String wsUrl, String crudVerb, ArrayList<Variable> inputs, String entity, boolean hasAuth, String auth){\n"
+				+ "public static String callService(String wsUrl, String crudVerb, ArrayList<Variable> inputs, String entity, boolean hasAuth, String auth, ArrayList<Variable> requestHeaderList){\n"
 				+ TAB + TAB + "String result = \"\";\n" + TAB + TAB + "String inputList = \"\";\n";
 		code += TAB + TAB + "if (!inputs.isEmpty()) {\n";
 		code += TAB + TAB + TAB + "for (Variable input : inputs) {\n";
@@ -53,6 +53,11 @@ public class CallRestfulServiceCode {
 		code += TAB + TAB + TAB + TAB + TAB + "String encoding = b.encodeAsString(new String(auth).getBytes());\n";
 		code += TAB + TAB + TAB + TAB + TAB + "conn.setRequestProperty(\"Authorization\", \"Basic \" + encoding);\n";
 		code += TAB + TAB + TAB + TAB + "}\n";
+		code += TAB + TAB + TAB + TAB + "if (requestHeaderList != null) {\n";
+		code += TAB + TAB + TAB + TAB + TAB + "for (Variable header : requestHeaderList) {\n";
+		code += TAB + TAB + TAB + TAB + TAB + TAB + "conn.setRequestProperty(header.name, header.value);\n";
+		code += TAB + TAB + TAB + TAB + TAB + "}\n";
+		code += TAB + TAB + TAB + TAB +	"}\n";
 		code += TAB + TAB + TAB + TAB
 				+ "if (crudVerb.equalsIgnoreCase(\"post\") || crudVerb.equalsIgnoreCase(\"put\")) {\n";
 		code += TAB + TAB + TAB + TAB + TAB + "if (url.toString().contains(\"mailgun\")) {\n";
@@ -98,6 +103,7 @@ public class CallRestfulServiceCode {
 		code += TAB + TAB + TAB
 				+ "System.out.println(\"Operation \" + crudVerb + \" is not a valid CRUD operation\");\n";
 		code += TAB + TAB + "}\n";
+		code += TAB + TAB + "if (result.startsWith(\"[\")){\n" + TAB + TAB + TAB + "result = \"{\\\"Property\\\":\" + result + \"}\";\n" + TAB + TAB + "}\n";
 		code += TAB + TAB + "return result;\n";
 		code += TAB + "}\n";
 		if (foreman) {

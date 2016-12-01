@@ -25,16 +25,17 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
 import eu.scasefp7.eclipse.servicecomposition.importer.Importer.Argument;
+import eu.scasefp7.eclipse.servicecomposition.importer.Importer.RequestHeader;
 import eu.scasefp7.eclipse.servicecomposition.transformer.JungXMItoOwlTransform.OwlService;
 
 public class RestfulCodeGenerator {
 
-	public static String generateRestfulCode(String packageName, ArrayList<OwlService> inputs,
-			ArrayList<Argument> uriParameters, ArrayList<Argument> authParameters, ArrayList<OwlService> nativeInputsMatchedWithArrays, boolean containsPost) {
+	public static String generateRestfulCode(String packageName, String projectName, ArrayList<OwlService> inputs,
+			ArrayList<Argument> uriParameters, ArrayList<Argument> authParameters, ArrayList<OwlService> nativeInputsMatchedWithArrays, ArrayList<RequestHeader> requestHeaderList, boolean containsPost) {
 
 		boolean hasBodyInput = false;
 		for (OwlService input : inputs) {
-			if (input.getArgument().isTypeOf().equals("BodyParameter")) {
+			if (input.getArgument().isTypeOf().equals("BodyParameter") || input.getArgument().isTypeOf().equals("FormEncodedParameter")) {
 				hasBodyInput = true;
 			}
 		}
@@ -42,7 +43,7 @@ public class RestfulCodeGenerator {
 		String code = "package " + packageName + ";\n" + "import " + packageName + ".WorkflowClass;\n" + "import "
 				+ packageName + ".WorkflowClass.Response;\n";
 		if (hasBodyInput)
-			code += "import " + packageName + ".WorkflowClass.Request;\n";
+			code += "import " + packageName + ".WorkflowClass." + projectName + "Request;\n";
 
 		if (containsPost) {
 			code += "import javax.ws.rs.Consumes;\nimport javax.ws.rs.POST;\n";
@@ -101,6 +102,12 @@ public class RestfulCodeGenerator {
 						+ auth.getType() + " "
 						+ auth.getName().getJavaValidContent().toLowerCase();
 		}
+		for (RequestHeader header : requestHeaderList){
+			if (!inputList.isEmpty())
+				inputList += ", ";
+			inputList += "@QueryParam(\"" + header.getName() + "\") String "
+					+ header.getName().replaceAll("[^A-Za-z0-9()_\\[\\]]", "");
+		}
 		for (OwlService matchedInput :nativeInputsMatchedWithArrays){
 			if (!inputList.isEmpty())
 				inputList += ", ";
@@ -111,7 +118,7 @@ public class RestfulCodeGenerator {
 			if (!inputList.isEmpty()) {
 				inputList += ", ";
 			}
-			inputList += "Request request";
+			inputList += projectName +"Request request";
 		}
 		code += inputList;
 		code += ") throws Exception {\n";
@@ -131,6 +138,11 @@ public class RestfulCodeGenerator {
 			if (!inputList.isEmpty())
 				inputList += ", ";
 			inputList += auth.getName().getJavaValidContent().toLowerCase();
+		}
+		for (RequestHeader header : requestHeaderList){
+			if (!inputList.isEmpty())
+				inputList += ", ";
+			inputList += header.getName().replaceAll("[^A-Za-z0-9()_\\[\\]]", "");
 		}
 		for (OwlService matchedInput :nativeInputsMatchedWithArrays){
 			if (!inputList.isEmpty())

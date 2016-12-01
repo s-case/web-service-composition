@@ -216,9 +216,9 @@ public class Matcher {
 			getNative(out, nativeOutputs);
 		}
 		double outputSimilarity = 0;
-		
-			for (Importer.Argument possibleArgument : possibleOutputs) {
-				for (Importer.Argument arg : nativeOutputs) {
+
+		for (Importer.Argument possibleArgument : possibleOutputs) {
+			for (Importer.Argument arg : nativeOutputs) {
 				if (hasSame(arg, possibleArgument)) {
 					// outputSimilarity += 1.0 / operation.getOutputs().size();
 					outputSimilarity += 1.0 / possibleOutputs.size();
@@ -260,8 +260,9 @@ public class Matcher {
 		// System.out.println("\""+action.toString()+"\" compared with
 		// \""+operation.toString()+"\" (Weight: "+similarity+")");
 
-		similarity = similarity / (DESCRIPTION_WEIGHT * Math.max(numberOfWords, operationNumberOfWords) + POSSIBLE_INPUT_WEIGHT + MANDATORY_INPUT_WEIGHT
-				+ OUTPUT_TO_INPUT_WEIGHT + NAME_SIMILARITY_WEIGHT * Math.max(numberOfWords, operationNumberOfWords));
+		similarity = similarity / (DESCRIPTION_WEIGHT * Math.max(numberOfWords, operationNumberOfWords)
+				+ POSSIBLE_INPUT_WEIGHT + MANDATORY_INPUT_WEIGHT + OUTPUT_TO_INPUT_WEIGHT
+				+ NAME_SIMILARITY_WEIGHT * Math.max(numberOfWords, operationNumberOfWords));
 		return similarity;
 	}
 
@@ -311,38 +312,46 @@ public class Matcher {
 	 * @return true if the arguments are considered to be the same variable
 	 */
 	public static boolean sameVariable(Importer.Argument arg0, Importer.Argument arg1) {
-		//remove name when is the second synthetic word e.g.don't match country_name with author_name
+		// remove name when is the second synthetic word e.g.don't match
+		// country_name with author_name
 		ComparableName name0 = arg0.getName();
 		ComparableName name1 = arg1.getName();
+
+
+		 if (arg0.getName().toString().contains("_name")){
+		 String regex = "_name";
+		 String name = name0.toString().replaceAll(regex, "");
+		 name0= new ComparableName(name);
+		 }
+		 if (arg1.getName().toString().contains("_name")){
+		 String regex = "_name";
+		 String name = name1.toString().replaceAll(regex, "");
+		 name1= new ComparableName(name);
+		 }
 		
-		if (arg0.getName().toString().contains("_name")){
-			String regex = "_name";
-			String name = name0.toString().replaceAll(regex, "");
-			name0= new ComparableName(name);
-		}
-		if (arg1.getName().toString().contains("_name")){
-			String regex = "_name";
-			String name = name1.toString().replaceAll(regex, "");
-			name1= new ComparableName(name);
-		}
-		
-		if (arg0.getName().toString().contains("_id")){
-			String regex = "_id";
-			String name = name0.toString().replaceAll(regex, "");
-			name0= new ComparableName(name);
-		}
-		if (arg1.getName().toString().contains("_id")){
-			String regex = "_id";
-			String name = name1.toString().replaceAll(regex, "");
-			name1= new ComparableName(name);
-		}
-		
+		 if (arg0.getName().toString().contains("_id")){
+		 String regex = "_id";
+		 String name = name0.toString().replaceAll(regex, "");
+		 name0= new ComparableName(name);
+		 }
+		 if (arg1.getName().toString().contains("_id")){
+		 String regex = "_id";
+		 String name = name1.toString().replaceAll(regex, "");
+		 name1= new ComparableName(name);
+		 }
+
+		// return (arg0.getType().isEmpty() || arg1.getType().isEmpty()
+		// || (arg0.getType().equals(arg1.getType()) && arg0.isArray() ==
+		// arg1.isArray()))
+		// && (arg0.getName().isEmpty() || arg1.getName().isEmpty()
+		// || Similarity.similarity(name0, name1)
+		// / (Math.max(name0.getComparableForm().split("\\s").length, name1
+		// .getComparableForm().split("\\s").length)) >=
+		// VARIABLE_SIMILARITY_THRESHOLD);
 		return (arg0.getType().isEmpty() || arg1.getType().isEmpty()
 				|| (arg0.getType().equals(arg1.getType()) && arg0.isArray() == arg1.isArray()))
-				&& (arg0.getName().isEmpty() || arg1.getName().isEmpty()
-						|| Similarity.similarity(name0, name1)
-								/ (Math.max(name0.getComparableForm().split("\\s").length, name1
-										.getComparableForm().split("\\s").length)) >= VARIABLE_SIMILARITY_THRESHOLD);
+				&& (Similarity.similarity(name0, name1) / (Math.max(name0.getComparableForm().split("\\s").length,
+						name1.getComparableForm().split("\\s").length)) > VARIABLE_SIMILARITY_THRESHOLD);
 	}
 
 	/**
@@ -409,28 +418,30 @@ public class Matcher {
 		// Put name similarities of this input and all the outputs in a list
 		for (int i = 0; i < allOutputs.size(); i++) {
 
-			//remove id when is the second synthetic word e.g.match place_id with placeid
+			// remove id when is the second synthetic word e.g.match place_id
+			// with placeid
 			ComparableName name0 = allOutputs.get(i).getName();
 			ComparableName name1 = input.getName();
-			
-			if (allOutputs.get(i).getName().toString().contains("_id")){
+
+			if (allOutputs.get(i).getName().toString().contains("_id")) {
 				String regex = "_id";
 				String name = name0.toString().replaceAll(regex, "");
-				name0= new ComparableName(name);
+				name0 = new ComparableName(name);
 			}
-			if (input.getName().toString().contains("_id")){
+			if (input.getName().toString().contains("_id")) {
 				String regex = "_id";
 				String name = name1.toString().replaceAll(regex, "");
-				name1= new ComparableName(name);
+				name1 = new ComparableName(name);
 			}
-			
+
 			double nameSimilarity = Similarity.similarity(name0, name1);
 
 			nameSimilarity = nameSimilarity / name0.getComparableForm().split("\\s").length;
 
-//			nameSimilarity = nameSimilarity
-//					/ Math.max(allOutputs.get(i).getName().getComparableForm().split("\\s").length,
-//							input.getName().getComparableForm().split("\\s").length);
+			// nameSimilarity = nameSimilarity
+			// /
+			// Math.max(allOutputs.get(i).getName().getComparableForm().split("\\s").length,
+			// input.getName().getComparableForm().split("\\s").length);
 
 			variableServiceSimilarities.add(i, nameSimilarity);
 		}
@@ -553,10 +564,10 @@ public class Matcher {
 		if (output.isNative() && !output.isArray()) {
 			nativeOutputs.add(output);
 		}
-		if (!output.isArray()) {
+		//if (!output.isArray()) {
 			for (Argument sub : output.getSubtypes()) {
 				getNative(sub, nativeOutputs);
 			}
-		}
+		//}
 	}
 }

@@ -191,6 +191,8 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 	// flag for updating operations
 	private static boolean updateOperations = true;
 	private static boolean updateYouRest = false;
+	
+	private Job downloadWS;
 
 	public void createPartControl(Composite parent) {
 
@@ -219,7 +221,7 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 		
 		final Display disp = Display.getCurrent();
 		Shell shell = view.getSite().getWorkbenchWindow().getShell();
-		Job downloadWS = new Job("Import operations") {
+		setDownloadWS(new Job("Import operations") {
 			@Override
 			protected IStatus run(IProgressMonitor monitor) {
 				monitor.beginTask("Importing operations...", IProgressMonitor.UNKNOWN);
@@ -265,9 +267,9 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 				monitor.done();
 				return Status.OK_STATUS;
 			}
-		};
+		});
 
-		downloadWS.schedule();
+		getDownloadWS().schedule();
 		final Graph graph = viewer.getGraphControl();
 		graph.addSelectionListener(new SelectionAdapter() {
 			@Override
@@ -1871,5 +1873,19 @@ public class ServiceCompositionView extends ViewPart implements IZoomableWorkben
 
 	public TreeViewerColumn getColumnb() {
 		return columnb;
+	}
+
+	/**
+	 * @return the downloadWS
+	 */
+	public Job getDownloadWS() {
+		return downloadWS;
+	}
+
+	/**
+	 * @param downloadWS the downloadWS to set
+	 */
+	public void setDownloadWS(Job downloadWS) {
+		this.downloadWS = downloadWS;
 	}
 }

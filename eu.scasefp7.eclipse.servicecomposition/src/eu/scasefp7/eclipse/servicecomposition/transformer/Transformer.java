@@ -774,6 +774,9 @@ public class Transformer {
 					}
 					// detect matching operation
 					for (Operation operation : operations) {
+						if (operation.getName().toString().equals("QPX_Express") || operation.getName().toString().equals("ImageFrame")){
+							int a=1;
+						}
 						double match = Matcher.match(service, operation, mandatoryArguments, possibleArguments,
 								possibleOutputs, Integer.MIN_VALUE);
 						if (match >= minPlacement && match > REPLACE_NAME_SIMILARITY_THRESHOLD) {
@@ -875,9 +878,9 @@ public class Transformer {
 							break;
 						}
 					}
-					if (operation.getName().toString().equals("GET_GoogleCoordinates")
-					// ||
-					// operation.getName().toString().equals("GET_BookDetails")
+					if (operation.getName().toString().equals("GET_Results")
+					 ||
+					 operation.getName().toString().equals("Extended")
 					) {
 						int a = 0;
 					}
@@ -901,7 +904,9 @@ public class Transformer {
 							}
 						}
 					}
-					if (match > bestMatch && !contains && match>0.4) {
+					if (match > bestMatch && !contains 
+							//&& match>0.4
+							) {
 						if (inputsAreReduced(operation, connector)) {
 							bestMatch = match;
 							targetOperation = operation;
@@ -910,51 +915,7 @@ public class Transformer {
 					}
 				}
 
-				// ArrayList<Argument> nativeOutputs = new
-				// ArrayList<Argument>();
-				// ArrayList<Operation> previousOperations = new
-				// ArrayList<Operation>();
-				// // for (OwlService service:perviousServices){
-				// // if (service.getOperation()!=null){
-				// // previousOperations.add(service.getOperation());
-				// // }
-				// // }
-				// // if (previousOperations!=null){
-				// // for (Operation op: previousOperations){
-				// // for (Argument out : op.getOutputs()) {
-				// // getNative(out, nativeOutputs);
-				// // }
-				// // }
-				// // }
-				// if (targetOperation != null) {
-				// for (Argument out : targetOperation.getOutputs()) {
-				// getNative(out, nativeOutputs);
-				// }
-				// }
-				//
-				// if (targetOperation != null && ((OwlService)
-				// targetConnector.getTarget()).getOperation() != null) {
-				// int matched = 0;
-				// for (Argument in : ((OwlService)
-				// targetConnector.getTarget()).getOperation().getInputs()) {
-				// for (Argument out : nativeOutputs) {
-				//
-				// if (Matcher.hasSame(out, in)) {
-				// matched++;
-				// break;
-				// }
-				// }
-				// }
-				// ArrayList<Argument> nativeInputs = new ArrayList<Argument>();
-				// for (Argument in : targetOperation.getInputs()) {
-				// getNative(in, nativeInputs);
-				// }
-				// if (targetConnector != null && (nativeInputs.size() <=
-				// matched)) {
-				// found = true;
-				// break;
-				// }
-				// }
+				
 
 				found = inputsAreReduced(targetOperation, targetConnector);
 
@@ -1038,6 +999,9 @@ public class Transformer {
 		boolean found = false;
 
 		if (targetOperation != null) {
+			if (targetOperation.getDomain().getURI().contains("foreman")){
+				return false;
+			}
 			for (Argument out : targetOperation.getOutputs()) {
 				getNative(out, nativeOutputs);
 			}
@@ -1070,7 +1034,7 @@ public class Transformer {
 				}
 			}
 			}
-			if (targetConnector != null && (nativeInputs.size()- matched2 <= matched)) {
+			if (targetConnector != null && (nativeInputs.size()- matched2 < matched)) {
 				found = true;
 			}
 		}

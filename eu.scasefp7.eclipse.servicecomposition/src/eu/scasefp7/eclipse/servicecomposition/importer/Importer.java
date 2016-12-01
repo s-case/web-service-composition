@@ -108,6 +108,7 @@ public abstract class Importer {
 		private String resourcePath;
 		private String crudVerb;
 		private String securityScheme;
+		private ArrayList<String> domains = new ArrayList<String>();
 
 		ApplicationDomain(Individual ind) {
 			this(ind.getURI());
@@ -135,7 +136,7 @@ public abstract class Importer {
 			}
 		}
 
-		public ApplicationDomain(String uri, String resourcePath, String crudVerb, String securityScheme, String type) {
+		public ApplicationDomain(String uri, String resourcePath, String crudVerb, String securityScheme, String type, ArrayList<String> list) {
 			this.uri = uri;
 			if (!resourcePath.isEmpty()) {
 				this.resourcePath = resourcePath;
@@ -156,6 +157,8 @@ public abstract class Importer {
 				// name = uri.substring(uri.lastIndexOf("#") + 1);
 			}
 			local = false;
+			
+			setDomains(list);
 //			Bundle bundle = Platform.getBundle(Activator.PLUGIN_ID);
 //			URL fileURL = bundle.getEntry(uri);
 //			File file;
@@ -200,6 +203,20 @@ public abstract class Importer {
 		@Override
 		public String toString() {
 			return name;
+		}
+
+		/**
+		 * @return the domains
+		 */
+		public ArrayList<String> getDomains() {
+			return domains;
+		}
+
+		/**
+		 * @param domains the domains to set
+		 */
+		public void setDomains(ArrayList<String> domains) {
+			this.domains = domains;
 		}
 	}
 
@@ -360,8 +377,11 @@ public abstract class Importer {
 		 */
 		Operation(Individual ind) throws Exception {
 			// load basic properties
-			name = new ComparableName(ind.getPropertyValue(hasName).asLiteral().getString());
+			name = new ComparableName(ind.getPropertyValue(hasName).asLiteral().getString().replaceAll(" ", "_"));
 
+			if (name.toString().equals("Search_airports_by_radius")){
+				int a=1;
+			}
 			// SOAP or RESTful
 			if (ind.getPropertyValue(belongsToWSType) != null) {
 				type = ind.getPropertyValue(belongsToWSType).asLiteral().getString();
@@ -391,8 +411,23 @@ public abstract class Importer {
 				if (!domainName.isEmpty() && domain == null) {
 					// throw new
 					// Exception("Domain "+domainName+" has not been declared");
+					ArrayList<String> theRealDomainNameList = new ArrayList<String>();
+					if (ind.getPropertyResourceValue(hasServiceDomain) != null) {
+						NodeIterator it = ind.listPropertyValues(hasServiceDomain);
+						while (it.hasNext()) {
+							Resource r = it.next().asResource();
+							Individual domainInd = (Individual) ontologyModel.getIndividual(r.getURI());
+							
+							if (domainInd.getPropertyValue(hasName) != null) {
+								String theRealDomainName = (String) domainInd.getPropertyValue(hasName).asLiteral().getString();
+								if (!theRealDomainName.isEmpty()){
+									theRealDomainNameList.add(theRealDomainName);
+								}
+							}
+						}
+					}
 					domainList.put(domainName,
-							domain = new ApplicationDomain(domainName, resourcePath, crudVerb, securityScheme, type));
+							domain = new ApplicationDomain(domainName, resourcePath, crudVerb, securityScheme, type, theRealDomainNameList));
 				}
 			} else
 				domain = null;
@@ -1008,6 +1043,7 @@ public abstract class Importer {
 	public static class RequestHeader {
 		private String name = "";
 		private String value = "";
+		private Operation belongsToOperation;
 		/**
 		 * @return the name
 		 */
@@ -1031,6 +1067,18 @@ public abstract class Importer {
 		 */
 		public void setValue(String value) {
 			this.value = value;
+		}
+		/**
+		 * @return the belongsToOperation
+		 */
+		public Operation getBelongsToOperation() {
+			return belongsToOperation;
+		}
+		/**
+		 * @param belongsToOperation the belongsToOperation to set
+		 */
+		public void setBelongsToOperation(Operation belongsToOperation) {
+			this.belongsToOperation = belongsToOperation;
 		}
 	}
 	

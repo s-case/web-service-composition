@@ -163,7 +163,7 @@ public class RAMLCaller {
 					if (url.toString().contains("mailgun")) {
 						List<NameValuePair> urlParameters = new ArrayList<NameValuePair>();
 						Value val = null;
-						for (Argument input : bodyParams) {
+						for (Argument input : formParams) {
 							val = (Value) input;
 							urlParameters.add(
 									new BasicNameValuePair(input.getName().getContent().toString(), val.getValue()));
@@ -271,6 +271,9 @@ public class RAMLCaller {
 
 	protected void assign(String result, Operation ramlOperation) {
 		try {
+			if (JSONValue.parseWithException(result) instanceof JSONArray){
+				result = "{\"\":" + result + "}";
+			}
 			JSONObject json = (JSONObject) JSONValue.parseWithException(result);
 
 			for (Argument output : ramlOperation.getOutputs()) {
@@ -354,27 +357,7 @@ public class RAMLCaller {
 									// add device[] metrics[]
 									value.getElements().add(value2);
 
-									// }else{
-									// //create device,metrics
-									// Argument out1 = new Argument(sub);
-									// out1.setOwlService(sub.getOwlService());
-									// out1.setName(sub.getName().toString());
-									// Value value1 = new Value(out1);
-									// //add device, metrics
-									// value.getElements().add(value1);
-									// //create device[0],[1], metrics[0],[1]
-									// Argument out2 = new Argument(sub);
-									// out2.setOwlService(sub.getOwlService());
-									// out2.setName(sub.getName().toString());
-									// Value value2 = new Value(out2);
-									//
-									//
-									// parseJson(value2, (JSONObject)
-									// array.get(i));
-									//
-									// //add device[0],[1], metrics[0],[1]
-									// value1.getElements().add(value2);
-									// }
+									
 								} else {
 
 									// create device
@@ -424,11 +407,7 @@ public class RAMLCaller {
 						((Value) output).setValue(value);
 
 					}
-					// if (output.getType().equalsIgnoreCase("int")) {
-					// int value = (int) ((JSONObject)
-					// json).get(output.getName().toString());
-					// ((Value) output).setValue(Integer.toString(value));
-					// }
+					
 					if (output.getType().equalsIgnoreCase("long") || output.getType().equalsIgnoreCase("int")) {
 						long value = (long) ((JSONObject) json).get(output.getName().toString());
 						((Value) output).setValue(Long.toString(value));
@@ -463,7 +442,7 @@ public class RAMLCaller {
 				}
 			}
 
-		}
+		} 
 		// else if (json instanceof JSONArray) {
 		// if (output.isArray() && stringIsItemFromList(output.getType(),
 		// datatypes)) {

@@ -74,6 +74,9 @@ public class Similarity {
 		
 		public String getJavaValidContent() {
 			String name = content;
+			if (name.isEmpty()){
+				name = "Property";
+			}
 			name = name.replaceAll("[^A-Za-z0-9()_\\[\\]]", "");
 			if (RAMLCaller.stringIsItemFromList(name, invalidNames)){
 				name += "_";

@@ -137,206 +137,215 @@ public class ImportHandler extends AbstractHandler {
 					ArrayList<Operation> operations = new ArrayList<Operation>();
 					PWoperations = ServiceCompositionView.getPWOperations();
 					MashapeOperations = ServiceCompositionView.getMashapeOperations();
-					
-						try {
-							graph = null;
-							File file = (File) selections[0];
-							// check if ontology file exists in .metadata
-							// plug-in's
-							// folder
 
-							final String pathToSBDFile = ResourcesPlugin.getWorkspace().getRoot().getLocation()
-									.toString() + file.getFullPath().toOSString();
-							// check if the user has cancelled the job before
-							// transforming
-							if (monitor.isCanceled())
-								return Status.CANCEL_STATUS;
-							boolean usePWOperations = false;
-							boolean useMashapeOperations = false;
-							if (Activator.getDefault() != null) {
-								usePWOperations = Activator.getDefault().getPreferenceStore()
-										.getBoolean("Use PW operations");
-								useMashapeOperations = Activator.getDefault().getPreferenceStore()
-										.getBoolean("Use Mashape operations");
+					try {
+						graph = null;
+						File file = (File) selections[0];
+						// check if ontology file exists in .metadata
+						// plug-in's
+						// folder
+
+						final String pathToSBDFile = ResourcesPlugin.getWorkspace().getRoot().getLocation().toString()
+								+ file.getFullPath().toOSString();
+						// check if the user has cancelled the job before
+						// transforming
+						if (monitor.isCanceled())
+							return Status.CANCEL_STATUS;
+						boolean usePWOperations = false;
+						boolean useMashapeOperations = false;
+						if (Activator.getDefault() != null) {
+							usePWOperations = Activator.getDefault().getPreferenceStore()
+									.getBoolean("Use PW operations");
+							useMashapeOperations = Activator.getDefault().getPreferenceStore()
+									.getBoolean("Use Mashape operations");
+						}
+
+						view.loadOperations(disp, shell, true);
+
+						for (Operation op : SCASEoperations) {
+							operations.add(op);
+						}
+						if (usePWOperations && !useMashapeOperations) {
+							if (PWoperations == null) {
+								view.loadPWOperations(disp, shell, monitor);
+								PWoperations = ServiceCompositionView.getPWOperations();
 							}
-							
-							view.loadOperations(disp, shell, true);
-
-							for (Operation op : SCASEoperations){
+							for (Operation op : PWoperations) {
 								operations.add(op);
 							}
-							if (usePWOperations && !useMashapeOperations) {
-								if (PWoperations == null){
-									view.loadPWOperations(disp, shell, monitor);
-									PWoperations = ServiceCompositionView.getPWOperations();
-								}
+
+						} else if (useMashapeOperations && !usePWOperations) {
+							if (MashapeOperations == null) {
+								view.loadMashapeOperations(disp, shell, monitor);
+								MashapeOperations = ServiceCompositionView.getMashapeOperations();
+							}
+							for (Operation op : MashapeOperations) {
+								operations.add(op);
+							}
+
+						} else if (useMashapeOperations && usePWOperations) {
+							if (PWoperations == null) {
+								view.loadPWOperations(disp, shell, monitor);
+								PWoperations = ServiceCompositionView.getPWOperations();
+							}
+							if (MashapeOperations == null) {
+								view.loadMashapeOperations(disp, shell, monitor);
+								MashapeOperations = ServiceCompositionView.getMashapeOperations();
+							}
+							if (PWoperations != null && MashapeOperations != null) {
 								for (Operation op : PWoperations) {
 									operations.add(op);
-								}
-								 
-							} else if (useMashapeOperations && !usePWOperations) {
-								if (MashapeOperations == null){
-									view.loadMashapeOperations(disp, shell, monitor);
-									MashapeOperations = ServiceCompositionView.getMashapeOperations();
 								}
 								for (Operation op : MashapeOperations) {
 									operations.add(op);
 								}
-
-							} else if (useMashapeOperations && usePWOperations) {
-								if (PWoperations == null){
-									view.loadPWOperations(disp, shell, monitor);
-									PWoperations = ServiceCompositionView.getPWOperations();
-								}
-								if (MashapeOperations == null){
-									view.loadMashapeOperations(disp, shell, monitor);
-									MashapeOperations = ServiceCompositionView.getMashapeOperations();
-								}
-								if (PWoperations != null && MashapeOperations != null) {
-									for (Operation op : PWoperations) {
-										operations.add(op);
-									}
-									for (Operation op : MashapeOperations) {
-										operations.add(op);
-									}
-								} else {
-									disp.syncExec(new Runnable() {
-										public void run() {
-											MessageDialog.openInformation(disp.getActiveShell(), "Try again later",
-													"Please wait until loading of ProgrammableWeb and Mashape operations is finished!");
-										}
-									});
-									monitor.done();
-									return Status.CANCEL_STATUS;
-								}
-							}
-							graph = Algorithm.transformationAlgorithm(pathToSBDFile, operations, disp, shell);
-							if (graph != null) {
-								// SHOW REPLACEMENT REPORT
-								System.out.println();
-								for (WeightReport report : Algorithm.getStepReports()) {
-									report.getReplaceInformation().reEvaluateWeight(graph);
-									report.updateWeight();
-									System.out.println(report.toString());
-								}
-
-								// If the action was replaced with an operation
-								// remove
-								// any
-								// properties left from initial xmi.
-								Collection<OwlService> services = new ArrayList<OwlService>(graph.getVertices());
-								boolean propertyExists = false;
-								for (OwlService property : services) {
-									if (property.getArgument() != null) {
-										if (property.getArgument().getBelongsToOperation() == null) {
-											propertyExists = true;
-											for (OwlService operation : graph.getSuccessors(property)) {
-												if (operation.getOperation() != null) {
-													if (operation.getOperation().getDomain() != null)
-														graph.removeVertex(property);
-												}
-											}
-										}
-
-									}
-								}
-								// check if user cancelled before showing the
-								// view
-								if (monitor.isCanceled())
-									return Status.CANCEL_STATUS;
+							} else {
 								disp.syncExec(new Runnable() {
-									@Override
 									public void run() {
-
-										try {
-											PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage()
-													.showView(ServiceCompositionView.ID);
-											ServiceCompositionView view = (ServiceCompositionView) getView(
-													ServiceCompositionView.ID);
-											File file = (File) selections[0];
-											existingProject = file.getProject();
-											if (!existingProject.exists()) {
-											} else {
-												view.setScaseProject(existingProject);
-											}
-											final IFile inputFile = ResourcesPlugin.getWorkspace().getRoot()
-													.getFileForLocation(Path.fromOSString(
-															ResourcesPlugin.getWorkspace().getRoot().getLocation()
-																	.toString() + file.getFullPath().toOSString()));
-											view.setStoryboardFile(inputFile);
-											if (inputFile != null) {
-												IWorkbenchPage page = PlatformUI.getWorkbench()
-														.getActiveWorkbenchWindow().getActivePage();
-
-												IEditorPart openEditor = IDE.openEditor(page, inputFile);
-
-											}
-
-											view.setJungGraph(graph);
-											view.addGraphInZest(graph, Algorithm.getStepReports());
-											view.updateRightComposite(graph);
-											view.setSavedWorkflow(false);
-											view.setWorkflowFilePath("");
-											// view.setDirty(true);
-											view.setFocus();
-
-										} catch (Exception e) {
-											// TODO Auto-generated catch block
-											Activator.log("Error while opening the service composition view", e);
-											e.printStackTrace();
-										}
-
+										MessageDialog.openInformation(disp.getActiveShell(), "Try again later",
+												"Please wait until loading of ProgrammableWeb and Mashape operations is finished!");
 									}
 								});
-								// Check if there are still unreplaced actions
-								// in
-								// the
-								// graph
-								boolean serviceHasOperations = false;
-								// view.getViewer().setInput(createGraphNodes(graph));
-								for (OwlService service : graph.getVertices()) {
-									if (service.getOperation() != null) {
-										if (service.getOperation().getDomain() != null) {
-											serviceHasOperations = true;
-										} else {
-											disp.syncExec(new Runnable() {
-												@Override
-												public void run() {
-													MessageDialog.openInformation(disp.getActiveShell(), "Info",
-															"No matching operation was found for action \""
-																	+ service.getOperation().getName()
-																	+ "\". Please modify the storyboard diagram or manually add an operation.");
-												}
-											});
-										}
-									}
-								}
-
 								monitor.done();
-								return Status.OK_STATUS;
-							} else {
-								try {
-									throw new Exception("Graph can not be null");
-								} catch (Exception e1) {
-									// TODO Auto-generated catch block
-									Activator.log("Graph is null", e1);
-									e1.printStackTrace();
-								}
 								return Status.CANCEL_STATUS;
 							}
-						} catch (Exception ex) {
-							Activator.log("Error while importing the .scd file", ex);
-							ex.printStackTrace();
-							return Status.CANCEL_STATUS;
-
-						} finally {
-							monitor.done();
 						}
+						graph = Algorithm.transformationAlgorithm(pathToSBDFile, operations, disp, shell);
+						if (graph != null) {
+							// SHOW REPLACEMENT REPORT
+							System.out.println();
+							for (WeightReport report : Algorithm.getStepReports()) {
+								report.getReplaceInformation().reEvaluateWeight(graph);
+								report.updateWeight();
+								System.out.println(report.toString());
+							}
+
+							// If the action was replaced with an operation
+							// remove
+							// any
+							// properties left from initial xmi.
+							Collection<OwlService> services = new ArrayList<OwlService>(graph.getVertices());
+							boolean propertyExists = false;
+							for (OwlService property : services) {
+								if (property.getArgument() != null) {
+									if (property.getArgument().getBelongsToOperation() == null) {
+										propertyExists = true;
+										for (OwlService operation : graph.getSuccessors(property)) {
+											if (operation.getOperation() != null) {
+												if (operation.getOperation().getDomain() != null)
+													graph.removeVertex(property);
+											}
+										}
+									}
+
+								}
+							}
+							// check if user cancelled before showing the
+							// view
+							if (monitor.isCanceled())
+								return Status.CANCEL_STATUS;
+							disp.syncExec(new Runnable() {
+								@Override
+								public void run() {
+
+									try {
+										PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage()
+												.showView(ServiceCompositionView.ID);
+										ServiceCompositionView view = (ServiceCompositionView) getView(
+												ServiceCompositionView.ID);
+										File file = (File) selections[0];
+										existingProject = file.getProject();
+										if (!existingProject.exists()) {
+										} else {
+											view.setScaseProject(existingProject);
+										}
+										final IFile inputFile = ResourcesPlugin.getWorkspace().getRoot()
+												.getFileForLocation(Path.fromOSString(
+														ResourcesPlugin.getWorkspace().getRoot().getLocation()
+																.toString() + file.getFullPath().toOSString()));
+										view.setStoryboardFile(inputFile);
+										if (inputFile != null) {
+											IWorkbenchPage page = PlatformUI.getWorkbench().getActiveWorkbenchWindow()
+													.getActivePage();
+
+											IEditorPart openEditor = IDE.openEditor(page, inputFile);
+
+										}
+
+										view.setJungGraph(graph);
+										view.addGraphInZest(graph, Algorithm.getStepReports());
+										view.updateRightComposite(graph);
+										view.setSavedWorkflow(false);
+										view.setWorkflowFilePath("");
+										// view.setDirty(true);
+										view.setFocus();
+
+									} catch (Exception e) {
+										// TODO Auto-generated catch block
+										Activator.log("Error while opening the service composition view", e);
+										e.printStackTrace();
+									}
+
+								}
+							});
+							// Check if there are still unreplaced actions
+							// in
+							// the
+							// graph
+							boolean serviceHasOperations = false;
+							// view.getViewer().setInput(createGraphNodes(graph));
+							for (OwlService service : graph.getVertices()) {
+								if (service.getOperation() != null) {
+									if (service.getOperation().getDomain() != null) {
+										serviceHasOperations = true;
+									} else {
+										disp.syncExec(new Runnable() {
+											@Override
+											public void run() {
+												MessageDialog.openInformation(disp.getActiveShell(), "Info",
+														"No matching operation was found for action \""
+																+ service.getOperation().getName()
+																+ "\". Please modify the storyboard diagram or manually add an operation.");
+											}
+										});
+									}
+								}
+							}
+
+							monitor.done();
+							return Status.OK_STATUS;
+						} else {
+							try {
+								throw new Exception("Graph can not be null");
+							} catch (Exception e1) {
+								// TODO Auto-generated catch block
+								Activator.log("Graph is null", e1);
+								e1.printStackTrace();
+							}
+							return Status.CANCEL_STATUS;
+						}
+					} catch (Exception ex) {
+						Activator.log("Error while importing the .scd file", ex);
+						ex.printStackTrace();
+						return Status.CANCEL_STATUS;
+
+					} finally {
+						monitor.done();
+					}
 				}
 
 			};
 			ImportSBD.setUser(true);
-			ImportSBD.schedule();
+			if (view.getDownloadWS().getState() == Job.NONE) {
+				ImportSBD.schedule();
+			} else {
+				disp.syncExec(new Runnable() {
+					public void run() {
+						MessageDialog.openInformation(disp.getActiveShell(), "Info",
+								"Please wait until all operations are loaded.");
+					}
+				});
+			}
 			// Trace user action
 			Activator.TRACE.trace("/debug/executeCommand", "Storyboard is imported.");
 		} catch (Exception e) {

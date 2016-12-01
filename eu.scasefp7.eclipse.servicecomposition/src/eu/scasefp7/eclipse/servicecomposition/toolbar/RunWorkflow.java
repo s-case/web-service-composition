@@ -433,7 +433,7 @@ public class RunWorkflow {
 										}
 									}
 								}
-								
+
 								// fill request headers from right panel
 								for (int i = 0; i < requestHeaderVariables.size(); i++) {
 									RequestHeader header = requestHeaderVariables.get(i);
@@ -442,8 +442,8 @@ public class RunWorkflow {
 										if (requestHeaderComposite.getChildren()[j] instanceof Label) {
 											Label label = (Label) requestHeaderComposite.getChildren()[j];
 											int index = label.getText().indexOf("-");
-											if (index != -1 && label.getText().substring(index+1).split("\\*")[0].trim()
-													.equals(header.getName())) {
+											if (index != -1 && label.getText().substring(index + 1).split("\\*")[0]
+													.trim().equals(header.getName())) {
 												if (((Text) requestHeaderComposite.getChildren()[j + 1]).isEnabled())
 													header.setValue(((Text) requestHeaderComposite.getChildren()[j + 1])
 															.getText());
@@ -614,7 +614,7 @@ public class RunWorkflow {
 														}
 														// if successor is also
 														// member of array
-														if (successorIsMemberOfArray) {
+														if (successorIsMemberOfArray && arrayIsMatched) {
 															OwlService successorInitialArray = getInitialArray(
 																	successorMatched, graph, true);
 															// clear matched
@@ -651,6 +651,8 @@ public class RunWorkflow {
 																	i++;
 																}
 																array = initialArray;
+															} else {
+
 															}
 														} else if (successor.isArray()) {
 															// successor is
@@ -661,9 +663,22 @@ public class RunWorkflow {
 														} else {
 
 															// successor is
-															// object
+															// object or array
+															// of objects (but
+															// not fully
+															// matched)
 															OwlService initialInput = getInitialInput(service, graph);
-
+															boolean r = successorIsMemberOfArray;
+															// OwlService
+															// successorInitialArray
+															// = null;
+															// if (r){
+															// successorInitialArray
+															// =
+															// getInitialArray(
+															// successorMatched,
+															// graph, true);
+															// }
 															ServiceCompositionView.showOutputs(
 																	(Value) initialInput.getArgument(), null,
 																	matchedOutputNodes, jungGraph);
@@ -682,11 +697,53 @@ public class RunWorkflow {
 																	if (dialog.open() == Window.OK) {
 																		String value = dialog.getValue();
 																		((Value) successor).setValue(value);
-																		for (Argument input : inputVariables) {
-																			if (input.getOwlService().equals(
-																					successor.getOwlService())) {
+																		boolean found = false;
+																		if (r) {
+																			OwlService matchedSuccessor = null;
+																			for (OwlService suc : graph
+																					.getSuccessors(service)) {
+																				matchedSuccessor = suc;
+																			}
+																			OwlService successorInitialArray = getInitialArray(
+																					matchedSuccessor, graph, true);
+																			for (Argument input : subinputVariables) {
+																				if (input.getOwlService().equals(
+																						successorInitialArray)) {
+																					Argument element0 = input
+																							.getElements().get(0);
+																					for (Argument arg : element0
+																							.getElements()) {
+																						if (arg.getOwlService()
+																								.equals(successor
+																										.getOwlService())) {
+																							((Value) arg)
+																									.setValue(value);
+																							found = true;
+																							break;
+																						}
+																					}
+																				}
+																			}
 
-																				((Value) input).setValue(value);
+																		}
+																		if (!found) {
+																			for (Argument input : inputVariables) {
+																				if (input.getOwlService().equals(
+																						successor.getOwlService())) {
+																					found = true;
+																					((Value) input).setValue(value);
+																				}
+																			}
+																		}
+																		if (!found) {
+																			for (Argument input : subinputVariables) {
+
+																				if (input.getOwlService().equals(
+																						successor.getOwlService())) {
+																					found = true;
+																					((Value) input).setValue(value);
+																				}
+
 																			}
 																		}
 
@@ -767,22 +824,23 @@ public class RunWorkflow {
 						for (OwlService previousOperation : graph.getPredecessors(currentService)) {
 							if (previousOperation.getOperation() != null) {
 								for (Argument output : previousOperation.getOperation().getOutputs()) {
-									if (!output.isArray()) {
-										if (output.getSubtypes().isEmpty()) {
-											previousServiceOutVariables.add((Value) output);
-										}
-										for (Argument sub : output.getSubtypes()) {
-											if (!sub.isArray()) {
-												getSubtypes(previousServiceOutVariables, sub, true);
-											}
-
-										}
+									// if (!output.isArray()) {
+									if (output.getSubtypes().isEmpty()) {
+										previousServiceOutVariables.add((Value) output);
 									}
+									for (Argument sub : output.getSubtypes()) {
+										// if (!sub.isArray()) {
+										getSubtypes(previousServiceOutVariables, sub, true);
+										// }
+
+									}
+									// }
 								}
 							}
 						}
 
-						currentService = checkCondition(currentService, possibleServices, previousServiceOutVariables);
+						currentService = checkCondition(currentService, possibleServices, previousServiceOutVariables,
+								graph);
 						// Update matched variable values 2
 						// if (currentService != null) {
 						// if (currentService.getOperation() != null) {
@@ -919,11 +977,11 @@ public class RunWorkflow {
 		if (!sub.getSubtypes().isEmpty()) {
 			for (Argument subsub : sub.getSubtypes()) {
 				if (noObjects) {
-					if (!sub.isArray()) {
-						getSubtypes(suboutputVariables, subsub, true);
-					}
+					// if (!sub.isArray()) {
+					getSubtypes(suboutputVariables, subsub, noObjects);
+					// }
 				} else {
-					getSubtypes(suboutputVariables, subsub, true);
+					getSubtypes(suboutputVariables, subsub, noObjects);
 				}
 			}
 		}
@@ -1034,7 +1092,7 @@ public class RunWorkflow {
 	}
 
 	private OwlService checkCondition(OwlService source, HashMap<OwlService, Connector> candidates,
-			ArrayList<Value> allVariables) {
+			ArrayList<Value> allVariables, edu.uci.ics.jung.graph.Graph<OwlService, Connector> graph) {
 		double prevThreshold = Similarity.levenshteinThreshold;
 		Similarity.levenshteinThreshold = 0;
 		Iterator<Entry<OwlService, Connector>> it = candidates.entrySet().iterator();
@@ -1043,7 +1101,7 @@ public class RunWorkflow {
 		double bestVal = VALUE_SIMILARITY_THRESHOLD;
 		while (it.hasNext()) {
 			Map.Entry<OwlService, Connector> pair = (Map.Entry<OwlService, Connector>) it.next();
-			double val = checkSingleCondition(source, pair.getValue(), pair.getKey(), allVariables);
+			double val = checkSingleCondition(source, pair.getValue(), pair.getKey(), allVariables, graph);
 			if (val >= bestVal) {
 				if (val >= bestVal + MAX_DISTANCE_BETWEEN_SOLUTIONS) {
 					resultCandidates.clear();
@@ -1072,7 +1130,7 @@ public class RunWorkflow {
 			System.out.println("TOO STRICT CONDITIONS\t trying again with VALUE_SIMILARITY_THRESHOLD to zero");
 			double temp = VALUE_SIMILARITY_THRESHOLD;
 			VALUE_SIMILARITY_THRESHOLD = 0;
-			OwlService result = checkCondition(source, candidates, allVariables);
+			OwlService result = checkCondition(source, candidates, allVariables, graph);
 			VALUE_SIMILARITY_THRESHOLD = temp;
 			return result;
 		}
@@ -1101,7 +1159,7 @@ public class RunWorkflow {
 	 * @return a value in range [0,1]
 	 */
 	private double checkSingleCondition(OwlService source, Connector condition, OwlService candidate,
-			ArrayList<Value> allVariables) {
+			ArrayList<Value> allVariables, edu.uci.ics.jung.graph.Graph<OwlService, Connector> graph) {
 		if (condition.toString().isEmpty())
 			return 1;
 		String sourceText = source.toString();
@@ -1162,9 +1220,9 @@ public class RunWorkflow {
 		double bestMatch = VARIABLE_NAME_SIMILARITY_THRESHOLD;
 		for (Value val : allVariables) {
 			if (val.getValue() != null) {
-				if (val.getValue().replaceAll("[^\\.0123456789]", "").isEmpty() != conditionText
-						.replaceAll("[^\\.0123456789]", "").isEmpty())
-					continue;
+//				if (val.getValue().replaceAll("[^\\.0123456789]", "").isEmpty() != conditionText
+//						.replaceAll("[^\\.0123456789]", "").isEmpty())
+//					continue;
 				double match = Similarity.similarity(val.getName().toString(), sourceText);
 				if (match >= bestMatch) {
 					bestMatch = match;
@@ -1174,6 +1232,50 @@ public class RunWorkflow {
 		}
 		if (bestValue == null)
 			return 1;
+		double retValue = 0;
+		// if bestValue belongs to an array, check each element and if at least
+		// one element fulfils the condition then condition is true
+		boolean isMemberOfArray = false;
+
+		for (Object parent : bestValue.getParent()) {
+			if (parent instanceof Argument)
+				if (((Argument) parent).isArray()) {
+					isMemberOfArray = true;
+				}
+		}
+		if (isMemberOfArray) {
+			OwlService bestValueService = null;
+			for (OwlService serv : graph.getVertices()){
+				if (serv.equals(bestValue.getOwlService())){
+					bestValueService = serv;
+					break;
+				}
+			}
+			OwlService initialArray = getInitialArray(bestValueService, graph, false);
+			for (Argument element : initialArray.getArgument().getElements()) {
+				for (Argument arg : element.getElements()) {
+					if (arg.getOwlService().equals(bestValue.getOwlService())) {
+						if (compareMode == 0) {
+							retValue = Similarity.similarity(conditionText.trim(), ((Value) arg).getValue());
+						} else {
+							double conditionVal = Double.parseDouble(conditionText.replaceAll("[^\\.0123456789]", ""));
+							double variableValue = Double.parseDouble(((Value) arg).getValue().replaceAll("[^\\.0123456789]", ""));
+							if (compareMode == 1) {
+								if (conditionVal > variableValue)
+									retValue = 1;
+							} else if (compareMode == -1) {
+								if (conditionVal < variableValue)
+									retValue = 1;
+							}
+						}
+						if (negativeLogic)
+							retValue = 1 - retValue;
+						break;
+					}
+				}
+			}
+			return retValue;
+		}
 		boolean success = true;
 		double conditionValue = Double.POSITIVE_INFINITY - 1;
 		double variableValue = 0;
@@ -1197,7 +1299,7 @@ public class RunWorkflow {
 		} catch (Exception e) {
 			success = false;
 		}
-		double retValue = 0;
+
 		if (success) {
 			retValue = (conditionValue == variableValue) ? 1
 					: (Math.abs(conditionValue - variableValue)

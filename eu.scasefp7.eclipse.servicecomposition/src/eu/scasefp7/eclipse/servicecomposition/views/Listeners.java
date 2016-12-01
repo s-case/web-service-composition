@@ -861,26 +861,7 @@ public class Listeners implements Listener {
 								} else {
 									return;
 								}
-								// TreeDialog dialog = new TreeDialog(shell,
-								// "S-CASE Operations");
-								// dialog.setDisp(disp);
-								// dialog.setOperations(nonPrototypeOperations);
-								// dialog.create();
-								// dialog.setDialogLocation();
-								//
-								// if (dialog.open() == Window.OK) {
-								// Operation selectedItem =
-								// dialog.getOperation();
-								// if (selectedItem != null) {
-								// addNode(selectedItem,
-								// ServiceCompositionView.getOperations());
-								// }
-								//
-								// } else {
-								// return;
-								// }
-								// SelectionWindowOp(shell, dialog,
-								// nonPrototypeOperations, list);
+
 							}
 						});
 
@@ -897,7 +878,16 @@ public class Listeners implements Listener {
 				}
 
 			};
-			AddNewOperationJob.schedule();
+			if (view.getDownloadWS().getState() == Job.NONE) {
+				AddNewOperationJob.schedule();
+			} else {
+				disp.syncExec(new Runnable() {
+					public void run() {
+						MessageDialog.openInformation(disp.getActiveShell(), "Info",
+								"Please wait until all operations are loaded.");
+					}
+				});
+			}
 
 		}
 		view.setJungGraph(jungGraph);
