@@ -82,7 +82,8 @@ public class RepositoryClient {
 	/**
 	 * url of the server
 	 */
-	private String url = "http://109.231.126.165:8080";
+	//private String url = "http://109.231.126.165:8080";
+	private String url = "http://109.231.122.106:8080";
 	private String CTUrl = "https://app.scasefp7.com:8000/api/proxy";
 	private static JWTSigner signer = new JWTSigner("RXs7eUv1E-qROLL7UX25_w5up6284KpJE6gygLPvQhcUSwY"); // scase_secret
 																										// as
@@ -394,11 +395,47 @@ public class RepositoryClient {
 
 	}
 
+	
 	public boolean uploadOntology() {
-		String path = ResourcesPlugin.getWorkspace().getRoot().getLocation().toString()
-				+ "/.metadata/.plugins/eu.scasefp7.servicecomposition/ontology";
-		return uploadOntology(path);
+		try {
+			String boundary = "-------------boundary";
+			CloseableHttpClient httpClient = HttpClients.createDefault();
+			HttpPost uploadFile = new HttpPost(url + "/ontologies/WS/submissions");
+			uploadFile.addHeader("Authorization", "apikey token=" + apiKey);
+			uploadFile.addHeader("Content-Type",
+					"multipart/mixed; boundary=" + boundary + "; type=application/json; start=json");
+			MultipartEntityBuilder builder = MultipartEntityBuilder.create();
+			builder.setBoundary(boundary);
+			TimeZone tz = TimeZone.getTimeZone(TimeZone.getDefault().getID());
+			DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm'Z'");
+			df.setTimeZone(tz);
+			String nowAsISO = df.format(new Date());
+			String jsonStr = "{\"ontology\":\"" + url
+					+ "/ontologies/WS\",\"description\":\"This is an ontology for the semantic annotation of web services\",\"hasOntologyLanguage\":\"OWL\",\"authorProperty\":\"\",\"obsoleteParent\":\"\",\"obsoleteProperty\":\"\",\"version\":\"\",\"status\":\"\",\"released\":\""
+					+ nowAsISO
+					+ "0\",\"isRemote\":\"0\",\"contact\":[{\"name\":\"Kostas Giannoutakis\",\"email\":\"kgiannou@iti.gr\"}],\"publication\":\"\"}";
+
+			builder.addTextBody("json", jsonStr, ContentType.APPLICATION_JSON);
+			String path = ResourcesPlugin.getWorkspace().getRoot().getLocation().toString()
+					+ "/.metadata/.plugins/eu.scasefp7.servicecomposition/ontology";
+			builder.addBinaryBody("file", new File(path + "/WS.owl"), ContentType.TEXT_PLAIN, "WS.owl");
+
+			HttpEntity multipart = builder.build();
+			uploadFile.setEntity(multipart);
+			HttpResponse response = httpClient.execute(uploadFile);
+			return true;
+		} catch (Exception ex) {
+			ex.printStackTrace();
+			return false;
+		}
 	}
+	
+	//// comment out until CT is back
+//	public boolean uploadOntology() {
+//		String path = ResourcesPlugin.getWorkspace().getRoot().getLocation().toString()
+//				+ "/.metadata/.plugins/eu.scasefp7.servicecomposition/ontology";
+//		return uploadOntology(path);
+//	}
 
 	public boolean uploadOntology(String path) {
 		try {
@@ -449,32 +486,34 @@ public class RepositoryClient {
 	}
 
 	public String getLatestSubmissionId(String ontology) {
-		String url = "http://109.231.126.165:8080";
+		//String url = "http://109.231.126.165:8080";
+		String url = "http://109.231.122.106:8080";
 		String signature = createSignature();
 		Client client = getClient();
 		client.property(ClientProperties.CONNECT_TIMEOUT, 1000000);
 		client.property(ClientProperties.READ_TIMEOUT, 1000000);
-		if (ontology.equals("WS")) {
-			try {
-				// get latest submission
-				Response response = client.target(CTUrl + "/ontologies/WS/submissions?apikey=" + apiKey).request()
-						.header("AUTHORIZATION", "CT-AUTH " + scase_token + ":" + signature).get();
-				System.out.println("Check version");
-
-				String resString = response.readEntity(String.class);
-				// System.out.println(resString);
-				JSONObject obj = (JSONObject) JSONValue.parseWithException(resString);
-				String body = (String) obj.get("body");
-				JSONArray array = (JSONArray) JSONValue.parseWithException(body);
-				JSONObject obj2 = (JSONObject) array.get(0);
-				String id = obj2.get("submissionId").toString();
-				System.out.println("WS ontology id: " + id);
-				return id;
-			} catch (Exception ex) {
-				ex.printStackTrace();
-				return "";
-			}
-		} else {
+		// comment out until CT is back
+//		if (ontology.equals("WS")) {
+//			try {
+//				// get latest submission
+//				Response response = client.target(CTUrl + "/ontologies/WS/submissions?apikey=" + apiKey).request()
+//						.header("AUTHORIZATION", "CT-AUTH " + scase_token + ":" + signature).get();
+//				System.out.println("Check version");
+//
+//				String resString = response.readEntity(String.class);
+//				// System.out.println(resString);
+//				JSONObject obj = (JSONObject) JSONValue.parseWithException(resString);
+//				String body = (String) obj.get("body");
+//				JSONArray array = (JSONArray) JSONValue.parseWithException(body);
+//				JSONObject obj2 = (JSONObject) array.get(0);
+//				String id = obj2.get("submissionId").toString();
+//				System.out.println("WS ontology id: " + id);
+//				return id;
+//			} catch (Exception ex) {
+//				ex.printStackTrace();
+//				return "";
+//			}
+//		} else {
 			try {
 				// get latest submission
 				InputStream inputStream = Request.Get(url + "/ontologies/" + ontology + "/submissions?apikey=" + apiKey)
@@ -490,7 +529,7 @@ public class RepositoryClient {
 				ex.printStackTrace();
 				return "";
 			}
-		}
+		//}
 	}
 
 	/**

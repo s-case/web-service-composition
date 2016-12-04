@@ -446,7 +446,7 @@ public class ImportHandler extends AbstractHandler {
 					if (getUpdateOntology()) {
 						// OK Button selected
 						try {
-							String path = repo.downloadOntology("WS", serverVersion, disp);
+							String path = repo.downloadPWMOntology("WS", serverVersion, disp);
 							ServiceCompositionView.setUpdateOperations(true);
 						} catch (Exception e) {
 							Activator.log("Error occured while downloading the ontology", e);
