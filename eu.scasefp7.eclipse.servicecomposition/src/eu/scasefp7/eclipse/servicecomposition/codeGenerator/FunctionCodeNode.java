@@ -5,6 +5,7 @@ import eu.scasefp7.eclipse.servicecomposition.codeInterpreter.Value;
 import eu.scasefp7.eclipse.servicecomposition.importer.Importer.Argument;
 import eu.scasefp7.eclipse.servicecomposition.importer.Importer.Operation;
 import eu.scasefp7.eclipse.servicecomposition.importer.JungXMIImporter.Connector;
+import eu.scasefp7.eclipse.servicecomposition.toolbar.RunWorkflow;
 import eu.scasefp7.eclipse.servicecomposition.transformer.Similarity;
 import eu.scasefp7.eclipse.servicecomposition.transformer.JungXMItoOwlTransform.OwlService;
 import eu.scasefp7.eclipse.servicecomposition.transformer.Similarity.ComparableName;
@@ -281,7 +282,7 @@ public class FunctionCodeNode extends CodeNode {
 
 	@Override
 	public String createFunctionCode(Graph<OwlService, Connector> graph, ArrayList<OwlService> allVariables,
-			boolean hasBodyInput, boolean isRepeated, boolean hasOutput) throws Exception {
+			boolean hasBodyInput, boolean isRepeated, boolean hasOutput, ArrayList<Operation> repeatedOperations) throws Exception {
 		if (service == null || service.getArgument() != null)
 			return "";
 		String tabIndent = getTab();
@@ -346,48 +347,88 @@ public class FunctionCodeNode extends CodeNode {
 					}
 					ArrayList<Argument> previousServiceOutVariables = new ArrayList<Argument>();
 
+					Operation op = null;
+					boolean isOpRepeated = false;
+					boolean isMemberOfArray = false;
+					String array = "";
 					for (OwlService previousOperation : graph.getPredecessors(service)) {
 						if (previousOperation.getOperation() != null) {
-							Operation op = previousOperation.getOperation();
+							op = previousOperation.getOperation();
+							
+							if (repeatedOperations.contains(op)) {
+								isOpRepeated = true;
+							}
 							double bestMatch = 0;
 
 							for (Argument output : previousOperation.getOperation().getOutputs()) {
-								if (!output.isArray()) {
+								
 									if (output.getSubtypes().isEmpty()) {
 										previousServiceOutVariables.add(output);
 									}
 									for (Argument sub : output.getSubtypes()) {
-										if (!sub.isArray()) {
+										//if (!sub.isArray()) {
 											getSubtypes(previousServiceOutVariables, sub, true);
-										}
+										//}
 
 									}
-								}
+								
 							}
 
+							Argument bestValue = null;
 							for (Argument output : previousServiceOutVariables) {
 								double match = Similarity.similarity(new ComparableName(conditionName),
 										output.getName());
 								if (match >= bestMatch) {
-									for (OwlService outputService : allVariables) {
-										if (outputService.getArgument().equals(output)) {
-											String ret = ".get" + outputService.getName().getContent()
-													.replaceAll("[0123456789]", "") + "()";
-											ret = roadToSub(outputService, graph, ret);
-											bestMatch = match;
-											if (type == "double") {
-												varName = "Double.parseDouble(" + op.getName() + "_response" + ret
-														+ ")";
-											} else if (output.getType().equals("boolean")) {
-												varName = "Boolean.toString(" + op.getName() + "_response" + ret + ")";
-											} else {
-												varName = op.getName() + "_response" + ret;
+									bestMatch = match;
+									bestValue = output;
+								}
+							}
+							for (OwlService outputService : allVariables) {
+								//if (outputService.getArgument().equals(bestValue)) {
+								if (outputService.equals(bestValue.getOwlService())){
+									String ret = ".get" + outputService.getName().getContent()
+											.replaceAll("[0123456789]", "") + "()";
+									
 
+									for (Object parent : bestValue.getParent()) {
+										if (parent instanceof Argument)
+											if (((Argument) parent).isArray()) {
+												isMemberOfArray = true;
 											}
+									}
+									
+									ArrayList<String> classNames = new ArrayList<String>();
+									if (isMemberOfArray) {
+										OwlService initialArray = RunWorkflow.getInitialArray(outputService, graph, false);
+										ret = NonLinearCodeGenerator.roadToSub(initialArray, outputService, graph, ret, "i" , classNames, true);
+										int ind = ret.indexOf(".get(i)");
+										array = ret.substring(0, ind);
+									} else {
+										ret = roadToSub(outputService, graph, ret);
+									}
+									
+									
+									
+									if (type == "double") {
+										varName = "Double.parseDouble(" ;
+										if (isOpRepeated){
+											varName += "r";
+										} else {
+											varName += op.getName() + "_response" ;
 										}
+										varName += ret
+												+ ".replaceAll(\"[^\\\\.0123456789]\", \"\"))";
+									} else if (bestValue.getType().equals("boolean")) {
+										// TODO : if is Repeated
+										varName = "Boolean.toString(" + op.getName() + "_response" + ret + ")";
+									} else {
+										// TODO : if is Repeated
+										varName = op.getName() + "_response" + ret;
+
 									}
 								}
 							}
+							
 							if (type == "string") {
 								conditionValue = ".equalsIgnoreCase(\"" + conditionValue + "\")";
 							}
@@ -409,9 +450,24 @@ public class FunctionCodeNode extends CodeNode {
 							result = true;
 							break;
 						}
-					code += tabIndent + TAB + "if("
+					if (isOpRepeated){
+						code += tabIndent + TAB + "for (" + op.getName().toString() + "Response r : " + op.getName().toString() + "_response_arraylist) {\n";
+						if (isMemberOfArray){
+							code += tabIndent + TAB + "for (int i = 0; i < r" + array + ".size(); i++) {\n";
+						}
+					}
+					if (isMemberOfArray && !isOpRepeated){
+						code += tabIndent + TAB + "for (int i = 0; i < " + op.getName().toString() + "_response" + array + ".size(); i++) {\n";
+					}
+					code += tabIndent + TAB + TAB + "if("
 							+ generateCondition(varName, symbol, conditionValue, result, hasPredicate) + ")\n";
-					code += tabIndent + TAB + TAB + "return \"" + codeGenerator.getFunctionName(next) + "\";\n";
+					code += tabIndent + TAB + TAB + TAB + "return \"" + codeGenerator.getFunctionName(next) + "\";\n";
+					if (isOpRepeated){
+						code += tabIndent + TAB + "}\n";
+					}
+					if (isMemberOfArray){
+						code += tabIndent + TAB + "}\n";
+					}
 				} else {
 					code += tabIndent + TAB + "return \"" + codeGenerator.getFunctionName(next) + "\";\n";
 					hardReturn = true;
@@ -474,8 +530,10 @@ public class FunctionCodeNode extends CodeNode {
 		}
 		return ret;
 	}
+	
+	
 
-	private ArrayList<Argument> getSubtypes(ArrayList<Argument> suboutputVariables, Argument sub, boolean noObjects) {
+	static ArrayList<Argument> getSubtypes(ArrayList<Argument> suboutputVariables, Argument sub, boolean noObjects) {
 		if (!suboutputVariables.contains(sub)) {
 			if (noObjects) {
 				if (sub.getSubtypes().isEmpty()) {
@@ -488,9 +546,9 @@ public class FunctionCodeNode extends CodeNode {
 		if (!sub.getSubtypes().isEmpty()) {
 			for (Argument subsub : sub.getSubtypes()) {
 				if (noObjects) {
-					if (!sub.isArray()) {
+					//if (!sub.isArray()) {
 						getSubtypes(suboutputVariables, subsub, true);
-					}
+					//}
 				} else {
 					getSubtypes(suboutputVariables, subsub, true);
 				}

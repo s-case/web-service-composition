@@ -47,7 +47,7 @@ public class CallRestfulServiceCode {
 		code += TAB + TAB + TAB + TAB + "URL url = new URL((wsUrl + inputListGet).replaceAll(\" \",\"%20\"));\n" + TAB
 				+ TAB + TAB + TAB + "System.out.println(\"Calling \" + url.toString());\n" + TAB + TAB + TAB + TAB
 				+ "conn = (HttpURLConnection) url.openConnection();\n" + TAB + TAB + TAB + TAB
-				+ "conn.setConnectTimeout(30000);\n" + TAB + TAB + TAB + TAB + "conn.setRequestMethod(crudVerb);\n";
+				+ "conn.setConnectTimeout(30000);\n" + TAB + TAB + TAB + TAB + "conn.setRequestMethod(crudVerb);\n" + TAB + TAB + TAB + TAB + "conn.setRequestProperty(\"Accept\", \"application/json\");";
 		code += TAB + TAB + TAB + TAB + "if (hasAuth) {\n";
 		code += TAB + TAB + TAB + TAB + TAB + "Base64 b = new Base64();\n";
 		code += TAB + TAB + TAB + TAB + TAB + "String encoding = b.encodeAsString(new String(auth).getBytes());\n";

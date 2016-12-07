@@ -160,7 +160,7 @@ public class RAMLCaller {
 				if (ramlOperation.getDomain().getCrudVerb().equalsIgnoreCase("post")
 						|| ramlOperation.getDomain().getCrudVerb().equalsIgnoreCase("put")) {
 					// if it is request to mailgun
-					if (url.toString().contains("mailgun")) {
+					if (ramlOperation.getName().toString().equals("POST_messages")) {
 						List<NameValuePair> urlParameters = new ArrayList<NameValuePair>();
 						Value val = null;
 						for (Argument input : formParams) {

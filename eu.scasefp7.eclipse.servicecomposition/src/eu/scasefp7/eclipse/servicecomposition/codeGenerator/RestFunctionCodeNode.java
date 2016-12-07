@@ -14,6 +14,7 @@ import eu.scasefp7.eclipse.servicecomposition.importer.Importer.Argument;
 import eu.scasefp7.eclipse.servicecomposition.importer.Importer.Operation;
 import eu.scasefp7.eclipse.servicecomposition.importer.Importer.RequestHeader;
 import eu.scasefp7.eclipse.servicecomposition.importer.JungXMIImporter.Connector;
+import eu.scasefp7.eclipse.servicecomposition.toolbar.RunWorkflow;
 import eu.scasefp7.eclipse.servicecomposition.transformer.JungXMItoOwlTransform.OwlService;
 
 public class RestFunctionCodeNode extends CodeNode {
@@ -35,7 +36,7 @@ public class RestFunctionCodeNode extends CodeNode {
 
 	@Override
 	public String createFunctionCode(Graph<OwlService, Connector> graph, ArrayList<OwlService> allVariables,
-			boolean hasBodyInput, boolean isRepeated, boolean hasOutput) throws Exception {
+			boolean hasBodyInput, boolean isRepeated, boolean hasOutput, ArrayList<Operation> repeatedOperations) throws Exception {
 		if (service == null || service.getArgument() != null)
 			return "";
 		String tabIndent = getTab();
@@ -104,6 +105,7 @@ public class RestFunctionCodeNode extends CodeNode {
 
 		String ret = "";
 
+		String body = "";
 		if (hasBodyInput) {
 			if (operation.getDomain().getURI().contains("mailgun")) {
 				ret += "List<NameValuePair> urlParameters = new ArrayList<NameValuePair>();\n";
@@ -130,20 +132,37 @@ public class RestFunctionCodeNode extends CodeNode {
 
 						"sb.append(URLEncoder.encode(pair.getName(), \"UTF-8\"));\n" + TAB + "sb.append(\"=\");\n" + TAB
 						+ "sb.append(URLEncoder.encode(pair.getValue(), \"UTF-8\"));\n" + TAB + "}\n"
-						+ "String entity = sb.toString();\n"
-						+ "ArrayList<Variable> inputs = new ArrayList<Variable>();\n" + "inputs.add(apikey);\n";
+						+ "String entity = sb.toString();\n";
 
 			} else {
-				ret += TAB + "Gson body = new Gson();\n";
-				ret += TAB + "String entity = body.toJson(" + operation.getName().toString() + "_request);\n";
-				ret += "ArrayList<Variable> inputs = new ArrayList<Variable>();\n";
+				body += "Gson body = new Gson();\n";
+				body += "String entity = body.toJson(" + operation.getName().toString() + "_request);\n";
+				
 			}
 		} else {
 			ret += "String entity = \"\";\n";
-			ret += "ArrayList<Variable> inputs = new ArrayList<Variable>();\n";
+			
 		}
 
-		for (Argument arg : operation.getInputs())
+		ret += "ArrayList<Variable> inputs = new ArrayList<Variable>();\n";
+		if (operation.getDomain().getURI().contains("mailgun")) {
+			ret += "inputs.add(apikey);\n";
+		}
+		ArrayList<Argument> inputs = new ArrayList<Argument>();
+		for (Argument input : operation.getInputs()) {
+			
+				if (input.getSubtypes().isEmpty()) {
+					inputs.add(input);
+				}
+				for (Argument sub : input.getSubtypes()) {
+					
+						FunctionCodeNode.getSubtypes(inputs, sub, true);
+					
+
+				}
+			
+		}
+		for (Argument arg : inputs)
 			for (OwlService var : allVariables) {
 				if (var.getArgument().equals(arg) && var.getId() == arg.getOwlService().getId()) {
 					boolean isMemberOfArray = false;
@@ -163,9 +182,20 @@ public class RestFunctionCodeNode extends CodeNode {
 							ret += ".get(i)";
 						}
 						ret += ");\n";
+					} else if (arg.isTypeOf().equals("BodyParameter")){
+						if (isRepeated && var.getisMatchedIO() && isMemberOfArray){
+							ArrayList<String> classNames = new ArrayList<String>();
+							OwlService initialArray = RunWorkflow.getInitialArray(var, graph, true);
+							String varSet = ".set"
+									+ var.getName().getJavaValidContent().replaceAll("[0123456789]", "");
+							varSet = NonLinearCodeGenerator.roadToSub(initialArray, var, graph, varSet, "0", classNames, false);
+							
+							ret += operation.getName().toString() + "_request" + varSet + "(" + var.getName().getJavaValidContent() + ".get(i).value);\n";
+						}
 					}
 				}
 			}
+		ret += body;
 		// request headers
 		ret += "ArrayList<Variable> requestHeaderList = new  ArrayList<Variable>();\n";
 		if (operation.getRequestHeaders() != null && !operation.getRequestHeaders().isEmpty()) {

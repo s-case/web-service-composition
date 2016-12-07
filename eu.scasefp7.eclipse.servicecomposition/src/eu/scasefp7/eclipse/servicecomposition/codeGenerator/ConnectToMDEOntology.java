@@ -258,7 +258,7 @@ public class ConnectToMDEOntology {
 		ArrayList<String> hasResponseType = new ArrayList<String>();
 		hasResponseType.add("JSON");
 		hasResponseType.add("XML");
-		String url = "http://109.231.127.61:8080/" + projectName + "-0.0.1-SNAPSHOT/";
+		String url = "http://109.231.122.51:8080/" + projectName + "-0.0.1-SNAPSHOT/";
 		operation = new MDEOperation(url, "RESTful", crudVerb, projectName, "rest/result/query", hasResponseType,
 				hasURIParameters, hasInput, hasOutput, hasQueryParameters);
 

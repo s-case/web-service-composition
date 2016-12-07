@@ -40,16 +40,13 @@ import eu.scasefp7.eclipse.servicecomposition.views.Utils;
 
 public class SaveOpen {
 
-	
 	// the saved workflow file
 	private static File workflowFile;
 	private static String workflowFilePath = "";
 	private static ArrayList<Operation> SCASEoperations;
 	private static ArrayList<Operation> PWoperations;
 	private static ArrayList<Operation> MashapeOperations;
-	
-	
-	
+
 	/**
 	 * <h1>openWorkflow</h1> Opens a workflow file. Method is called by pressing
 	 * the appropriate button in the toolbar.
@@ -61,8 +58,8 @@ public class SaveOpen {
 		// Set filter on .txt files
 		fileDialog.setFilterExtensions(new String[] { "*.sc" });
 		if (view.getScaseProject() != null) {
-			fileDialog.setFilterPath(
-					ResourcesPlugin.getWorkspace().getRoot().getLocation().toString() + "/" + view.getScaseProject().getName());
+			fileDialog.setFilterPath(ResourcesPlugin.getWorkspace().getRoot().getLocation().toString() + "/"
+					+ view.getScaseProject().getName());
 		} else {
 			fileDialog.setFilterPath(ResourcesPlugin.getWorkspace().getRoot().getLocation().toString());
 		}
@@ -90,30 +87,29 @@ public class SaveOpen {
 					MashapeOperations = ServiceCompositionView.getMashapeOperations();
 					SCASEoperations = ServiceCompositionView.getOperations();
 					view.loadOperations(disp, shell, false);
-					for (Operation op : SCASEoperations){
+					for (Operation op : SCASEoperations) {
 						operations.add(op);
 					}
-					//Check if Mashape and PW ontologies should be loaded
+					// Check if Mashape and PW ontologies should be loaded
 					boolean usePWOperations = false;
 					boolean useMashapeOperations = false;
 					if (Activator.getDefault() != null) {
-						usePWOperations = Activator.getDefault().getPreferenceStore()
-								.getBoolean("Use PW operations");
+						usePWOperations = Activator.getDefault().getPreferenceStore().getBoolean("Use PW operations");
 						useMashapeOperations = Activator.getDefault().getPreferenceStore()
 								.getBoolean("Use Mashape operations");
 					}
-					
+
 					if (usePWOperations && !useMashapeOperations) {
-						if (PWoperations == null){
+						if (PWoperations == null) {
 							view.loadPWOperations(disp, shell, monitor);
 							PWoperations = ServiceCompositionView.getPWOperations();
 						}
 						for (Operation op : PWoperations) {
 							operations.add(op);
 						}
-						 
+
 					} else if (useMashapeOperations && !usePWOperations) {
-						if (MashapeOperations == null){
+						if (MashapeOperations == null) {
 							view.loadMashapeOperations(disp, shell, monitor);
 							MashapeOperations = ServiceCompositionView.getMashapeOperations();
 						}
@@ -122,11 +118,11 @@ public class SaveOpen {
 						}
 
 					} else if (useMashapeOperations && usePWOperations) {
-						if (PWoperations == null){
+						if (PWoperations == null) {
 							view.loadPWOperations(disp, shell, monitor);
 							PWoperations = ServiceCompositionView.getPWOperations();
 						}
-						if (MashapeOperations == null){
+						if (MashapeOperations == null) {
 							view.loadMashapeOperations(disp, shell, monitor);
 							MashapeOperations = ServiceCompositionView.getMashapeOperations();
 						}
@@ -242,7 +238,7 @@ public class SaveOpen {
 					new org.apache.commons.collections15.Transformer<OwlService, String>() {
 						public String transform(OwlService v) {
 
-							return (v.getName().toString());
+							return (v.getName().toString().replaceAll("<", "&lt;").replaceAll(">", "&gt;"));
 						}
 					});
 
@@ -256,8 +252,6 @@ public class SaveOpen {
 							return url;
 						}
 					});
-
-			
 
 			graphWriter.addVertexData("operationName", "Vertex operation name", "",
 					new org.apache.commons.collections15.Transformer<OwlService, String>() {
@@ -347,7 +341,6 @@ public class SaveOpen {
 						}
 					});
 
-
 			graphWriter.addEdgeData("condition", "Edge condition name", "",
 					new org.apache.commons.collections15.Transformer<Connector, String>() {
 						public String transform(Connector v) {
@@ -361,7 +354,7 @@ public class SaveOpen {
 					if (v.getName().toString().isEmpty()) {
 						return v.getType() + Integer.toString(v.getId());
 					}
-					return v.getName().toString() + Integer.toString(v.getId());
+					return v.getName().toString().replaceAll("<", "&lt;").replaceAll(">", "&gt;") + Integer.toString(v.getId());
 				}
 			});
 
@@ -392,13 +385,14 @@ public class SaveOpen {
 		});
 
 	}
-	
-	public static edu.uci.ics.jung.graph.Graph<OwlService, Connector> loadWorkflowFile(File file, ArrayList<Operation> operations) {
+
+	public static edu.uci.ics.jung.graph.Graph<OwlService, Connector> loadWorkflowFile(File file,
+			ArrayList<Operation> operations) {
 
 		edu.uci.ics.jung.graph.Graph<OwlService, Connector> g = null;
 
 		try {
-			
+
 			g = readFile(file, operations);
 
 		} catch (Exception ex) {
@@ -411,7 +405,8 @@ public class SaveOpen {
 
 	}
 
-	private static edu.uci.ics.jung.graph.Graph<OwlService, Connector> readFile(File file, ArrayList<Operation> operations) {
+	private static edu.uci.ics.jung.graph.Graph<OwlService, Connector> readFile(File file,
+			ArrayList<Operation> operations) {
 		edu.uci.ics.jung.graph.Graph<OwlService, Connector> g = null;
 		HashMap<String, OwlService> nodes = new HashMap<String, OwlService>();
 		HashMap<String, String> ids = new HashMap<String, String>();
@@ -449,7 +444,8 @@ public class SaveOpen {
 							}
 						}
 					} else if (metadata.getProperty("type").equals("Condition")) {
-						v = new OwlService(new Service(metadata.getProperty("name"), metadata.getProperty("type")));
+						int length = metadata.getId().length();
+						v = new OwlService(new Service(metadata.getId().substring(0, length-1), metadata.getProperty("type")));
 						nodes.put(metadata.getId(), v);
 					} else if (metadata.getProperty("type").equals("Property")) {
 						ArrayList<Argument> possibleArguments = new ArrayList<Argument>();
@@ -462,9 +458,14 @@ public class SaveOpen {
 								Utils.addArguments(arg, possibleOutputs);
 							}
 						}
+						String name = metadata.getProperty("name");
+						if (name == null)
+							name = "";
+						String type = metadata.getProperty("IOType");
+						if (type == null)
+							type = "";
 						for (Argument arg : possibleArguments) {
-							if (arg.getName().toString().equals(metadata.getProperty("name"))
-									&& arg.getType().equals(metadata.getProperty("IOType"))
+							if (arg.getName().toString().equals(name) && arg.getType().equals(type)
 									&& Boolean.toString(arg.isNative()).equals(metadata.getProperty("IOisNative"))
 									&& Boolean.toString(arg.isArray()).equals(metadata.getProperty("IOisArray"))
 									&& Boolean.toString(arg.isRequired()).equals(metadata.getProperty("IOisRequired"))
@@ -478,14 +479,13 @@ public class SaveOpen {
 						}
 
 						for (Argument arg : possibleOutputs) {
-							if (arg.getName().toString().equals(metadata.getProperty("name"))
-									&& arg.getType().equals(metadata.getProperty("IOType"))
+							if (arg.getName().toString().equals(name) && arg.getType().equals(type)
 									&& Boolean.toString(arg.isNative()).equals(metadata.getProperty("IOisNative"))
 									&& Boolean.toString(arg.isArray()).equals(metadata.getProperty("IOisArray"))
 									&& Boolean.toString(arg.isRequired()).equals(metadata.getProperty("IOisRequired"))
 									&& arg.getBelongsToOperation().getName().toString()
 											.equals(metadata.getProperty("operationName"))
-									&& metadata.getProperty("IO").equals("output")) {
+									&& (metadata.getProperty("IO").equals("output") || metadata.getProperty("IO").equals("not defined"))) {
 								Argument argument = new Argument(arg);
 								v = new OwlService(argument);
 								// v.getArgument().setOwlService(v);
@@ -494,6 +494,9 @@ public class SaveOpen {
 						ids.put(metadata.getId(), metadata.getId().replaceAll("\\D+", ""));
 						matchedIO.put(metadata.getId(), metadata.getProperty("matchedIO"));
 
+						if (v == null){
+							int a=1;
+						}
 						v.setId(Integer.parseInt(metadata.getId().replaceAll("\\D+", "")));
 						v.setisMatchedIO(Boolean.parseBoolean(metadata.getProperty("matchedIO")));
 
@@ -618,6 +621,4 @@ public class SaveOpen {
 		return g;
 	}
 
-	
-	
 }

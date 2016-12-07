@@ -553,8 +553,15 @@ public class RunWorkflow {
 									public void run() {
 										fillInOutputValues(serviceOutputs, nodes, graph);
 
-										OwlService array = null;
+										ArrayList<Value> temp = new ArrayList<Value>();
 										for (Argument arg : serviceOutputs) {
+											temp.add((Value) arg);
+											for (Argument sub : arg.getSubtypes()) {
+												getSubtypes(temp, sub, false);
+											}
+										}
+										OwlService array = null;
+										for (Argument arg : temp) {
 											for (OwlService service : graph.getVertices()) {
 												if (service.equals(((Value) arg).getOwlService())) {
 													try {
@@ -753,6 +760,7 @@ public class RunWorkflow {
 																}
 															});
 														}
+														break;
 													}
 
 													// if predecessor is object
@@ -1220,9 +1228,10 @@ public class RunWorkflow {
 		double bestMatch = VARIABLE_NAME_SIMILARITY_THRESHOLD;
 		for (Value val : allVariables) {
 			if (val.getValue() != null) {
-//				if (val.getValue().replaceAll("[^\\.0123456789]", "").isEmpty() != conditionText
-//						.replaceAll("[^\\.0123456789]", "").isEmpty())
-//					continue;
+				// if (val.getValue().replaceAll("[^\\.0123456789]",
+				// "").isEmpty() != conditionText
+				// .replaceAll("[^\\.0123456789]", "").isEmpty())
+				// continue;
 				double match = Similarity.similarity(val.getName().toString(), sourceText);
 				if (match >= bestMatch) {
 					bestMatch = match;
@@ -1245,8 +1254,8 @@ public class RunWorkflow {
 		}
 		if (isMemberOfArray) {
 			OwlService bestValueService = null;
-			for (OwlService serv : graph.getVertices()){
-				if (serv.equals(bestValue.getOwlService())){
+			for (OwlService serv : graph.getVertices()) {
+				if (serv.equals(bestValue.getOwlService())) {
 					bestValueService = serv;
 					break;
 				}
@@ -1254,23 +1263,33 @@ public class RunWorkflow {
 			OwlService initialArray = getInitialArray(bestValueService, graph, false);
 			for (Argument element : initialArray.getArgument().getElements()) {
 				for (Argument arg : element.getElements()) {
-					if (arg.getOwlService().equals(bestValue.getOwlService())) {
-						if (compareMode == 0) {
-							retValue = Similarity.similarity(conditionText.trim(), ((Value) arg).getValue());
-						} else {
-							double conditionVal = Double.parseDouble(conditionText.replaceAll("[^\\.0123456789]", ""));
-							double variableValue = Double.parseDouble(((Value) arg).getValue().replaceAll("[^\\.0123456789]", ""));
-							if (compareMode == 1) {
-								if (conditionVal > variableValue)
-									retValue = 1;
-							} else if (compareMode == -1) {
-								if (conditionVal < variableValue)
-									retValue = 1;
+					if (arg.getOwlService() != null) {
+						if (arg.getOwlService().equals(bestValue.getOwlService())) {
+							if (compareMode == 0) {
+								retValue = Similarity.similarity(conditionText.trim(), ((Value) arg).getValue());
+							} else {
+								double conditionVal = Double
+										.parseDouble(conditionText.replaceAll("[^\\.0123456789]", ""));
+								double variableValue = Double
+										.parseDouble(((Value) arg).getValue().replaceAll("[^\\.0123456789]", ""));
+								if (compareMode == 1) {
+									if (conditionVal > variableValue) {
+										retValue = 1;
+										if (negativeLogic)
+											retValue = 1 - retValue;
+										break;
+									}
+								} else if (compareMode == -1) {
+									if (conditionVal < variableValue) {
+										retValue = 1;
+										if (negativeLogic)
+											retValue = 1 - retValue;
+										break;
+									}
+								}
 							}
+
 						}
-						if (negativeLogic)
-							retValue = 1 - retValue;
-						break;
 					}
 				}
 			}

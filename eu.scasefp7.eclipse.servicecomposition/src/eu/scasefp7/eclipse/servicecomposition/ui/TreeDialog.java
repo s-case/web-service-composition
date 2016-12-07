@@ -220,7 +220,7 @@ public class TreeDialog extends Dialog {
 			shell.setText(title);
 		}
 		//shell.setMinimumSize(200, 200);
-		shell.setSize(400, 400);
+		shell.setSize(500, 300);
 	}
 
 	public void setDialogLocation() {

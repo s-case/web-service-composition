@@ -288,10 +288,11 @@ public abstract class CodeGenerator {
 		 * @return generates
 		 * @throws Exception
 		 */
-		public String createFunctionCode(Graph<OwlService, Connector> graph,ArrayList<OwlService> allVariables, boolean hasBodyInput, boolean isRepeated, boolean hasOutput)
+		public String createFunctionCode(Graph<OwlService, Connector> graph,ArrayList<OwlService> allVariables, boolean hasBodyInput, boolean isRepeated, boolean hasOutput, ArrayList<Operation> repeatedOperations)
 				throws Exception {
 			throw new Exception("CodeNode cannot create function code.Use a FunctionCodeNode instance instead.");
 		}
+
 
 	}
 
