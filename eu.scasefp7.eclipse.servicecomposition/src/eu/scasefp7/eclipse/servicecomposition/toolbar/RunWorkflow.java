@@ -395,11 +395,13 @@ public class RunWorkflow {
 									for (int j = 0; j < ((Vector<Node>) columnb.getViewer().getInput()).size(); j++) {
 										if (((Vector<Node>) columnb.getViewer().getInput()).get(j) instanceof Node) {
 											Node operation = ((Vector<Node>) columnb.getViewer().getInput()).get(j);
-											for (int k = 0; k < operation.getSubCategories().size(); k++) {
-												if (operation.getSubCategories().get(k).getOwlService()
-														.equals(var.getOwlService())) {
-													Node node = operation.getSubCategories().get(k);
-													fillInInputValues(var, node);
+											if (operation.getSubCategories() != null) {
+												for (int k = 0; k < operation.getSubCategories().size(); k++) {
+													if (operation.getSubCategories().get(k).getOwlService()
+															.equals(var.getOwlService())) {
+														Node node = operation.getSubCategories().get(k);
+														fillInInputValues(var, node);
+													}
 												}
 											}
 										}
@@ -801,12 +803,29 @@ public class RunWorkflow {
 														} else {
 															((Value) successor).setValue(
 																	((Value) service.getArgument()).getValue());
+															boolean found = false;
+
 															for (Argument input : inputVariables) {
 																if (input.getOwlService()
 																		.equals(successor.getOwlService())) {
-
+																	found = true;
 																	((Value) input).setValue(
 																			((Value) service.getArgument()).getValue());
+																	break;
+																}
+															}
+															if (!found) {
+																for (Argument input : subinputVariables) {
+
+																	if (input.getOwlService()
+																			.equals(successor.getOwlService())) {
+																		found = true;
+																		((Value) input).setValue(
+																				((Value) service.getArgument())
+																						.getValue());
+																		break;
+																	}
+
 																}
 															}
 

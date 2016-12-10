@@ -221,7 +221,7 @@ public class RAMLCaller {
 					throw new RuntimeException("Failed : HTTP error code : " + conn.getResponseCode());
 				}
 
-				BufferedReader br = new BufferedReader(new InputStreamReader((conn.getInputStream())));
+				BufferedReader br = new BufferedReader(new InputStreamReader((conn.getInputStream()), "UTF8"));
 
 				String output;
 				System.out.println("Output from Server .... \n");

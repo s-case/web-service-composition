@@ -99,7 +99,7 @@ public class WSOntology {
 	public void createNewWSOperation(String projectName, ArrayList<OwlService> inputs,
 			ArrayList<Argument> authParameters, ArrayList<OwlService> resultVariables,
 			ArrayList<Operation> repeatedOperations, ArrayList<RequestHeader> requestHeaderParameters,
-			String serviceURL, String applicationDomainURI, String crudVerb) {
+			String serviceURL, String applicationDomainURI, String crudVerb, String email, String projectDescription, String companyName) {
 		String str = "";
 
 		str = projectName.replace(" ", "_").replaceAll("[^\\p{L}\\p{Nd}]", "");
@@ -141,10 +141,11 @@ public class WSOntology {
 				serviceAccessInfoClass);
 		uris.add(accessInd.getURI().toLowerCase());
 		DatatypeProperty hasDescription = ontologyModel.getDatatypeProperty(NS + "hasDescription");
-		String description = "";
-		for (String s : projectName.split("(?<!(^|[A-Z]))(?=[A-Z])|(?<!^)(?=[A-Z][a-z])")) {
-			description = description + " " + s;
-		}
+//		String description = "";
+//		for (String s : projectName.split("(?<!(^|[A-Z]))(?=[A-Z])|(?<!^)(?=[A-Z][a-z])")) {
+//			description = description + " " + s;
+//		}
+		String description = projectDescription;
 		accessInd.addProperty(hasDescription, description);
 		operInd.addProperty(hasServiceAccessInfo, accessInd);
 		operInd.addProperty(hasDescription, description);
@@ -153,9 +154,11 @@ public class WSOntology {
 		DatatypeProperty isPrototype = ontologyModel.getDatatypeProperty(NS + "isPrototype");
 		operInd.addProperty(isPrototype, "false");
 		// create belongsToUser prop
-		// TODO it should not be hardcoded
 		DatatypeProperty belongsToUser = ontologyModel.getDatatypeProperty(NS + "belongsToUser");
-		operInd.addProperty(belongsToUser, "kgiannou@iti.gr");
+		operInd.addProperty(belongsToUser, email);
+		// create hasCompanyName prop
+		DatatypeProperty hasCompanyName = ontologyModel.getDatatypeProperty(NS + "hasCompanyName");
+		operInd.addProperty(hasCompanyName, companyName);
 		// create inputs
 		ObjectProperty hasInput = ontologyModel.getObjectProperty(NS + "hasInput");
 		OntClass conceptClass = ontologyModel.getOntClass(NS + "Concept");
@@ -292,7 +295,7 @@ public class WSOntology {
 					IndividualImpl noInd = (IndividualImpl) ontologyModel.createIndividual(NS + name, conceptClass);
 					uris.add(noInd.getURI().toLowerCase());
 					// create has name prop
-					noInd.addProperty(hasName, arg.getName().toString());
+					noInd.addProperty(hasName, s.getName().getJavaValidContent());
 					// create is Required prop
 					noInd.addProperty(isRequired, String.valueOf(arg.isRequired()));
 					// create has isTypeOf prop (only for inputs)
@@ -331,7 +334,7 @@ public class WSOntology {
 					IndividualImpl coInd = (IndividualImpl) ontologyModel.createIndividual(NS + name, conceptClass);
 					uris.add(coInd.getURI().toLowerCase());
 					// create has name prop
-					coInd.addProperty(hasName, arg.getName().toString());
+					coInd.addProperty(hasName, s.getName().getJavaValidContent());
 					// create is required prop
 					if (arg.isRequired()) {
 						coInd.addProperty(isRequired, String.valueOf(arg.isRequired()));
@@ -341,7 +344,7 @@ public class WSOntology {
 						coInd.addProperty(isArray, String.valueOf(arg.isArray()));
 					}
 					// create has isTypeOf prop (only for inputs)
-					if (arg.isTypeOf().equals("BodyParameter") || arg.isTypeOf().equals("FormEncodedParameter")) {
+					if (arg.isTypeOf().equals("BodyParameter") || arg.isTypeOf().equals("FormEncodedParameter")|| (arg.getBelongsToOperation().getType().equals("SOAP") && IOtype.equals("input"))) {
 						coInd.addProperty(isTypeOf, "BodyParameter");
 					} else if (arg.isTypeOf().equals("QueryParameter") || arg.isTypeOf().equals("URIParameter")) {
 						coInd.addProperty(isTypeOf, "QueryParameter");

@@ -21,7 +21,16 @@ import eu.scasefp7.eclipse.servicecomposition.repository.WSOntology;
 public class MyTitleAreaDialog extends TitleAreaDialog {
 
 	private Text txtProjectName;
+	private Text txtdevName;
+	private Text txtcompanyName;
+	private Text txtdescription;
+	private Text txtemail;
+	
 	private String projectName;
+	private String devName;
+	private String companyName;
+	private String description;
+	private String email;
 	// the application domain of a sc
 	private String applicationDomainURI = "";
 	private Combo doms;
@@ -36,8 +45,8 @@ public class MyTitleAreaDialog extends TitleAreaDialog {
 	@Override
 	public void create() {
 		super.create();
-		setTitle("Name and application domain of the composite web service");
-		setMessage("Please enter a name and select an application domain for the new web service project", IMessageProvider.INFORMATION);
+		setTitle("Information of the composite web service");
+		setMessage("Please enter the following fields for the new web service project", IMessageProvider.INFORMATION);
 	}
 
 	@Override
@@ -57,10 +66,11 @@ public class MyTitleAreaDialog extends TitleAreaDialog {
 	public void configureShell(Shell newShell) {
 		super.configureShell(newShell);
 
-		newShell.setText("Web service project name and application domain");
+		newShell.setText("Composite Web service project information");
 	}
 
 	private void createProjectName(Composite container) {
+		// Project Name
 		Label lbtFirstName = new Label(container, SWT.NONE);
 		lbtFirstName.setText("Project Name");
 
@@ -70,7 +80,52 @@ public class MyTitleAreaDialog extends TitleAreaDialog {
 
 		txtProjectName = new Text(container, SWT.BORDER);
 		txtProjectName.setLayoutData(dataFirstName);
+		
+		//Project Description
+		Label lbtDescriptionName = new Label(container, SWT.NONE);
+		lbtDescriptionName.setText("Project Description");
 
+		GridData dataDescriptionName = new GridData();
+		dataDescriptionName.grabExcessHorizontalSpace = true;
+		dataDescriptionName.horizontalAlignment = GridData.FILL;
+
+		txtdescription = new Text(container, SWT.BORDER);
+		txtdescription.setLayoutData(dataDescriptionName);
+		
+		// Developer's Name
+		Label lbtDevName = new Label(container, SWT.NONE);
+		lbtDevName.setText("Name");
+
+		GridData dataDevName = new GridData();
+		dataDevName.grabExcessHorizontalSpace = true;
+		dataDevName.horizontalAlignment = GridData.FILL;
+
+		txtdevName = new Text(container, SWT.BORDER);
+		txtdevName.setLayoutData(dataDevName);
+		
+		//email
+		Label lbtEmailName = new Label(container, SWT.NONE);
+		lbtEmailName.setText("Email");
+
+		GridData dataEmailName = new GridData();
+		dataEmailName.grabExcessHorizontalSpace = true;
+		dataEmailName.horizontalAlignment = GridData.FILL;
+
+		txtemail = new Text(container, SWT.BORDER);
+		txtemail.setLayoutData(dataEmailName);
+		
+		// Company Name
+		Label lbtCompanyName = new Label(container, SWT.NONE);
+		lbtCompanyName.setText("Company Name");
+
+		GridData dataCompanyName = new GridData();
+		dataCompanyName.grabExcessHorizontalSpace = true;
+		dataCompanyName.horizontalAlignment = GridData.FILL;
+
+		txtcompanyName = new Text(container, SWT.BORDER);
+		txtcompanyName.setLayoutData(dataCompanyName);
+
+		// Application Domain
 		Label applicationDomainLabel = new Label(container, SWT.NONE);
 		applicationDomainLabel.setText("Applcation Domain");
 
@@ -99,6 +154,11 @@ public class MyTitleAreaDialog extends TitleAreaDialog {
 	// as soon as the Dialog closes
 	private void saveInput() {
 		projectName = txtProjectName.getText();
+		setDevName(txtdevName.getText());
+		setCompanyName(txtcompanyName.getText());
+		setDescription(txtdescription.getText());
+		setEmail(txtemail.getText());
+		
 		applicationDomainURI = domains.get(doms.getSelectionIndex()).getUri();
 
 	}
@@ -115,6 +175,62 @@ public class MyTitleAreaDialog extends TitleAreaDialog {
 
 	public String getApplicationDomainURI() {
 		return applicationDomainURI;
+	}
+
+	/**
+	 * @return the devName
+	 */
+	public String getDevName() {
+		return devName;
+	}
+
+	/**
+	 * @param devName the devName to set
+	 */
+	public void setDevName(String devName) {
+		this.devName = devName;
+	}
+
+	/**
+	 * @return the companyName
+	 */
+	public String getCompanyName() {
+		return companyName;
+	}
+
+	/**
+	 * @param companyName the companyName to set
+	 */
+	public void setCompanyName(String companyName) {
+		this.companyName = companyName;
+	}
+
+	/**
+	 * @return the description
+	 */
+	public String getDescription() {
+		return description;
+	}
+
+	/**
+	 * @param description the description to set
+	 */
+	public void setDescription(String description) {
+		this.description = description;
+	}
+
+	/**
+	 * @return the email
+	 */
+	public String getEmail() {
+		return email;
+	}
+
+	/**
+	 * @param email the email to set
+	 */
+	public void setEmail(String email) {
+		this.email = email;
 	}
 
 	

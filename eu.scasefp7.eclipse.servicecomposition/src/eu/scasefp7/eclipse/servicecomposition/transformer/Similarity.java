@@ -20,7 +20,7 @@ import eu.scasefp7.eclipse.servicecomposition.operationCaller.RAMLCaller;
  */
 public class Similarity {
 
-	private static String[] invalidNames = new String[] { "string", "long", "int", "float", "double", "boolean", "class", "enum", "static", "private", "package", "super" };
+	private static String[] invalidNames = new String[] { "string", "long", "int", "float", "double", "boolean", "class", "enum", "static", "private", "package", "super", "return" };
 	public static class ComparableName {
 		/**
 		 * the original name
@@ -79,9 +79,17 @@ public class Similarity {
 			}
 			name = name.replaceAll("[^A-Za-z0-9()_\\[\\]]", "");
 			if (RAMLCaller.stringIsItemFromList(name, invalidNames)){
-				name += "_";
+				name += "1";
 			}
 			return name;
+		}
+		
+		public boolean isInvalid () {
+			boolean valid = true;
+			if (RAMLCaller.stringIsItemFromList(content, invalidNames)){
+				valid = false;
+			}
+			return valid;
 		}
 
 	}

@@ -18,6 +18,7 @@ import org.eclipse.jface.viewers.TreeViewerColumn;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.jface.viewers.ViewerFilter;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.layout.GridData;
@@ -46,7 +47,7 @@ public class MatchOutputDialog extends Dialog {
 	
 	private Vector<Node> arrayNodes = new Vector<Node>();
 	private String value;
-	private Display disp;
+	private static Display disp;
 	private String varName = "";
 	private OwlService output;
 
@@ -171,7 +172,8 @@ public class MatchOutputDialog extends Dialog {
 	public void configureShell(Shell newShell) {
 		super.configureShell(newShell);
 		newShell.setText("Choose output value to be matched with \"" + varName + "\" input variable");
-		newShell.setMinimumSize(200, 200);
+		//newShell.setMinimumSize(200, 200);
+		newShell.setSize(600, 500);
 	}
 
 	public void setDialogLocation() {

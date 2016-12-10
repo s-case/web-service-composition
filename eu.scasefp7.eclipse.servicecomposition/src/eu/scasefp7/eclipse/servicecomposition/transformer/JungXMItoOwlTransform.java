@@ -47,6 +47,9 @@ public class JungXMItoOwlTransform {
 		@Override
 		public boolean equals(Object obj) {
 			OwlService owlService=(OwlService)obj;
+			if(owlService.getName().getContent() == null || owlService.getType() == null || this.getName().getContent() == null || this.getType()==null || owlService == null || owlService.getName() == null || this.getName() == null){
+				int a =1;
+			}
 			if(owlService.getName().getContent().equals(this.getName().getContent())&& owlService.getType().equals(this.getType()) && owlService.id==this.id)
 				return true;
 				else return false;

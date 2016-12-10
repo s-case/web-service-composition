@@ -74,6 +74,10 @@ public class GenerateUpload {
 	edu.uci.ics.jung.graph.Graph<OwlService, Connector> jungGraph;
 	// generated project name
 	private String projectName = "";
+	private String devName= "";
+	private String companyName= "";
+	private String description= "";
+	private String email= "";
 	// generated project
 	IProject currentProject;
 	// the s-case project
@@ -109,6 +113,10 @@ public class GenerateUpload {
 		if (dialog.open() == Window.OK) {
 			System.out.println(dialog.getProjectName());
 			projectName = dialog.getProjectName().trim();
+			devName = dialog.getDevName().trim();
+			companyName = dialog.getCompanyName().trim();
+			description = dialog.getDescription().trim();
+			email = dialog.getEmail().trim();
 			applicationDomainURI = dialog.getApplicationDomainURI();
 		} else {
 			return;
@@ -510,7 +518,7 @@ public class GenerateUpload {
 												generator.getInputsWithoutMatchedVariables(),
 												generator.getAuthParameters(), generator.getOutputVariables(), generator.getRepeatedOperations(),
 												generator.getRequestHeaderParameters(), generator.getOperation().getBelongsToURL(), applicationDomainURI,
-												generator.getOperation().getHasCRUDVerb());
+												generator.getOperation().getHasCRUDVerb(), email, description, companyName);
 										ws.saveToOWL();
 										RepositoryClient cl = new RepositoryClient();
 										cl.uploadOntology();

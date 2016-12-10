@@ -31,12 +31,18 @@ import eu.scasefp7.eclipse.servicecomposition.transformer.JungXMItoOwlTransform.
 public class RestfulCodeGenerator {
 
 	public static String generateRestfulCode(String packageName, String projectName, ArrayList<OwlService> inputs,
-			ArrayList<Argument> uriParameters, ArrayList<Argument> authParameters, ArrayList<OwlService> nativeInputsMatchedWithArrays, ArrayList<RequestHeader> requestHeaderList, boolean containsPost) {
+			ArrayList<Argument> uriParameters, ArrayList<Argument> authParameters,
+			ArrayList<OwlService> nativeInputsMatchedWithArrays, ArrayList<RequestHeader> requestHeaderList,
+			boolean containsPost) {
 
 		boolean hasBodyInput = false;
 		for (OwlService input : inputs) {
-			if (input.getArgument().isTypeOf().equals("BodyParameter") || input.getArgument().isTypeOf().equals("FormEncodedParameter")) {
+			if (input.getArgument().isTypeOf().equals("BodyParameter")
+					|| input.getArgument().isTypeOf().equals("FormEncodedParameter")
+					|| (input.getArgument().getBelongsToOperation().getType().equals("SOAP")
+							&& !input.getArgument().getSubtypes().isEmpty())) {
 				hasBodyInput = true;
+				break;
 			}
 		}
 		String TAB = "    ";
@@ -45,14 +51,14 @@ public class RestfulCodeGenerator {
 		if (hasBodyInput)
 			code += "import " + packageName + ".WorkflowClass." + projectName + "Request;\n";
 
-		if (containsPost) {
+		if (containsPost || hasBodyInput) {
 			code += "import javax.ws.rs.Consumes;\nimport javax.ws.rs.POST;\n";
-		}else{
+		} else {
 			code += "import javax.ws.rs.GET;\n";
 		}
 		code += "import javax.ws.rs.Path;\nimport javax.ws.rs.Produces;\nimport javax.ws.rs.QueryParam;\nimport javax.ws.rs.core.MediaType;\n";
 		code += "@Path(\"/result\")\n public class WebService {\n";
-		if (containsPost) {
+		if (containsPost || hasBodyInput) {
 			code += TAB + "@POST\n" + TAB + "@Path(\"/query\")\n";
 			code += TAB + "@Consumes(MediaType.APPLICATION_JSON)\n";
 		} else {
@@ -66,16 +72,18 @@ public class RestfulCodeGenerator {
 
 		for (OwlService input : inputs) {
 			if ((input.getArgument().isTypeOf().equals("QueryParameter")
-					|| input.getArgument().isTypeOf().equals("URIParameter") || input.getArgument().isTypeOf().equals(""))&& !input.getisMatchedIO()) {
+					|| input.getArgument().isTypeOf().equals("URIParameter")
+					|| input.getArgument().isTypeOf().equals("")) && !input.getisMatchedIO()
+					&& !(input.getArgument().getBelongsToOperation().getType().equals("SOAP")
+							&& !input.getArgument().getSubtypes().isEmpty())) {
 				if (!inputList.isEmpty())
 					inputList += ", ";
 				if (input.getArgument().getType().equals("String")) {
 					inputList += "@QueryParam(\"" + input.getName().getJavaValidContent() + "\") "
-							+ input.getArgument().getType() + " "
-							+ input.getName().getJavaValidContent();
+							+ input.getArgument().getType() + " " + input.getName().getJavaValidContent();
 				} else if (input.getArgument().getType().equals("int")) {
-					inputList += "@QueryParam(\"" + input.getName().getJavaValidContent()
-							+ "\") Integer " + input.getName().getJavaValidContent();
+					inputList += "@QueryParam(\"" + input.getName().getJavaValidContent() + "\") Integer "
+							+ input.getName().getJavaValidContent();
 				} else {
 					String type = input.getArgument().getType();
 					inputList += "@QueryParam(\"" + input.getName().getJavaValidContent() + "\") "
@@ -83,42 +91,42 @@ public class RestfulCodeGenerator {
 							+ input.getName().getJavaValidContent();
 				}
 			}
-			
-			
 
 			// for (Argument param : uriParameters) {
 			// if (!inputList.isEmpty())
 			// inputList += ", ";
 			// inputList += "@QueryParam(\"" +
-			// param.getName().getJavaValidContent().replaceAll("[0123456789]", "") +
+			// param.getName().getJavaValidContent().replaceAll("[0123456789]",
+			// "") +
 			// "\") String "
-			// + param.getName().getJavaValidContent().replaceAll("[0123456789]", "");
+			// +
+			// param.getName().getJavaValidContent().replaceAll("[0123456789]",
+			// "");
 			// }
 		}
-		for (Argument auth :authParameters){
+		for (Argument auth : authParameters) {
 			if (!inputList.isEmpty())
 				inputList += ", ";
-			inputList += "@QueryParam(\"" + auth.getName().getJavaValidContent().toLowerCase() + "\") "
-						+ auth.getType() + " "
-						+ auth.getName().getJavaValidContent().toLowerCase();
+			inputList += "@QueryParam(\"" + auth.getName().getJavaValidContent().toLowerCase() + "\") " + auth.getType()
+					+ " " + auth.getName().getJavaValidContent().toLowerCase();
 		}
-		for (RequestHeader header : requestHeaderList){
+		for (RequestHeader header : requestHeaderList) {
 			if (!inputList.isEmpty())
 				inputList += ", ";
 			inputList += "@QueryParam(\"" + header.getName() + "\") String "
 					+ header.getName().replaceAll("[^A-Za-z0-9()_\\[\\]]", "");
 		}
-		for (OwlService matchedInput :nativeInputsMatchedWithArrays){
+		for (OwlService matchedInput : nativeInputsMatchedWithArrays) {
 			if (!inputList.isEmpty())
 				inputList += ", ";
-			inputList += "@QueryParam(\"" + matchedInput.getName().getJavaValidContent() + "_num"
-					+ "\") Integer " + matchedInput.getName().getJavaValidContent() + "_num";
+			inputList += "@QueryParam(\"" + matchedInput.getName().getJavaValidContent() + "_num" + "\") Integer "
+					+ matchedInput.getName().getJavaValidContent() + "_num";
 		}
-		if (containsPost) {
+		if (containsPost || hasBodyInput) {
 			if (!inputList.isEmpty()) {
 				inputList += ", ";
 			}
-			inputList += projectName +"Request request";
+			inputList += projectName + "Request request";
 		}
 		code += inputList;
 		code += ") throws Exception {\n";
@@ -128,28 +136,31 @@ public class RestfulCodeGenerator {
 
 		for (OwlService input : inputs) {
 			if ((input.getArgument().isTypeOf().equals("QueryParameter")
-					|| input.getArgument().isTypeOf().equals("URIParameter") || input.getArgument().isTypeOf().equals("")) && !input.getisMatchedIO()) {
+					|| input.getArgument().isTypeOf().equals("URIParameter")
+					|| input.getArgument().isTypeOf().equals("")) && !input.getisMatchedIO()
+					&& !(input.getArgument().getBelongsToOperation().getType().equals("SOAP")
+							&& !input.getArgument().getSubtypes().isEmpty())) {
 				if (!inputList.isEmpty())
 					inputList += ", ";
 				inputList += input.getName().getJavaValidContent();
 			}
 		}
-		for (Argument auth :authParameters){
+		for (Argument auth : authParameters) {
 			if (!inputList.isEmpty())
 				inputList += ", ";
 			inputList += auth.getName().getJavaValidContent().toLowerCase();
 		}
-		for (RequestHeader header : requestHeaderList){
+		for (RequestHeader header : requestHeaderList) {
 			if (!inputList.isEmpty())
 				inputList += ", ";
 			inputList += header.getName().replaceAll("[^A-Za-z0-9()_\\[\\]]", "");
 		}
-		for (OwlService matchedInput :nativeInputsMatchedWithArrays){
+		for (OwlService matchedInput : nativeInputsMatchedWithArrays) {
 			if (!inputList.isEmpty())
 				inputList += ", ";
 			inputList += matchedInput.getName().getJavaValidContent() + "_num";
 		}
-		if (containsPost) {
+		if (containsPost || hasBodyInput) {
 			if (!inputList.isEmpty())
 				inputList += ", ";
 			inputList += "request";
@@ -158,7 +169,8 @@ public class RestfulCodeGenerator {
 		// for (Argument param : uriParameters) {
 		// if (!inputList.isEmpty())
 		// inputList += ", ";
-		// inputList += param.getName().getJavaValidContent().replaceAll("[0123456789]",
+		// inputList +=
+		// param.getName().getJavaValidContent().replaceAll("[0123456789]",
 		// "");
 		// }
 		code += inputList;
@@ -487,56 +499,55 @@ public class RestfulCodeGenerator {
 			version5.appendChild(doc.createTextNode("2.3.1"));
 			dependency5.appendChild(version5);
 
-			if (hasSoap.equals("true")) {
-				Element dependency6 = doc.createElement("dependency");
-				dependencies.appendChild(dependency6);
+//			if (hasSoap.equals("true")) {
+//				Element dependency6 = doc.createElement("dependency");
+//				dependencies.appendChild(dependency6);
+//
+//				Element groupId6 = doc.createElement("groupId");
+//				groupId6.appendChild(doc.createTextNode("eu.scasefp7"));
+//				dependency6.appendChild(groupId6);
+//
+//				Element artifactId6 = doc.createElement("artifactId");
+//				artifactId6.appendChild(doc.createTextNode("scase-wsparser"));
+//				dependency6.appendChild(artifactId6);
+//
+//				Element version6 = doc.createElement("version");
+//				version6.appendChild(doc.createTextNode("1.0.1-SNAPSHOT"));
+//				dependency6.appendChild(version6);
+//
+//				Element classifier6 = doc.createElement("classifier");
+//				classifier6.appendChild(doc.createTextNode("jar-with-dependencies"));
+//				dependency6.appendChild(classifier6);
+//			}
+			Element dependency6 = doc.createElement("dependency");
+			dependencies.appendChild(dependency6);
 
-				Element groupId6 = doc.createElement("groupId");
-				groupId6.appendChild(doc.createTextNode("eu.scasefp7"));
-				dependency6.appendChild(groupId6);
+			Element groupId6 = doc.createElement("groupId");
+			groupId6.appendChild(doc.createTextNode("org.apache.httpcomponents"));
+			dependency6.appendChild(groupId6);
 
-				Element artifactId6 = doc.createElement("artifactId");
-				artifactId6.appendChild(doc.createTextNode("scase-wsparser"));
-				dependency6.appendChild(artifactId6);
+			Element artifactId6 = doc.createElement("artifactId");
+			artifactId6.appendChild(doc.createTextNode("httpmime"));
+			dependency6.appendChild(artifactId6);
 
-				Element version6 = doc.createElement("version");
-				version6.appendChild(doc.createTextNode("1.0.1-SNAPSHOT"));
-				dependency6.appendChild(version6);
+			Element version6 = doc.createElement("version");
+			version6.appendChild(doc.createTextNode("4.4.1"));
+			dependency6.appendChild(version6);
 
-				Element classifier6 = doc.createElement("classifier");
-				classifier6.appendChild(doc.createTextNode("jar-with-dependencies"));
-				dependency6.appendChild(classifier6);
-			} else {
-				Element dependency6 = doc.createElement("dependency");
-				dependencies.appendChild(dependency6);
+			Element dependency7 = doc.createElement("dependency");
+			dependencies.appendChild(dependency6);
 
-				Element groupId6 = doc.createElement("groupId");
-				groupId6.appendChild(doc.createTextNode("org.apache.httpcomponents"));
-				dependency6.appendChild(groupId6);
+			Element groupId7 = doc.createElement("groupId");
+			groupId7.appendChild(doc.createTextNode("org.apache.httpcomponents"));
+			dependency7.appendChild(groupId7);
 
-				Element artifactId6 = doc.createElement("artifactId");
-				artifactId6.appendChild(doc.createTextNode("httpmime"));
-				dependency6.appendChild(artifactId6);
+			Element artifactId7 = doc.createElement("artifactId");
+			artifactId7.appendChild(doc.createTextNode("httpcore"));
+			dependency7.appendChild(artifactId7);
 
-				Element version6 = doc.createElement("version");
-				version6.appendChild(doc.createTextNode("4.4.1"));
-				dependency6.appendChild(version6);
-
-				Element dependency7 = doc.createElement("dependency");
-				dependencies.appendChild(dependency6);
-
-				Element groupId7 = doc.createElement("groupId");
-				groupId7.appendChild(doc.createTextNode("org.apache.httpcomponents"));
-				dependency7.appendChild(groupId7);
-
-				Element artifactId7 = doc.createElement("artifactId");
-				artifactId7.appendChild(doc.createTextNode("httpcore"));
-				dependency7.appendChild(artifactId7);
-
-				Element version7 = doc.createElement("version");
-				version7.appendChild(doc.createTextNode("4.4.1"));
-				dependency7.appendChild(version7);
-			}
+			Element version7 = doc.createElement("version");
+			version7.appendChild(doc.createTextNode("4.4.1"));
+			dependency7.appendChild(version7);
 
 			// write the content into xml file
 			TransformerFactory transformerFactory = TransformerFactory.newInstance();

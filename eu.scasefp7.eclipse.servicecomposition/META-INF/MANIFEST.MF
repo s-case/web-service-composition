@@ -59,6 +59,8 @@ Import-Package: com.hp.hpl.jena.ontology;version="[2.13.0,3.0.0)",
  edu.uci.ics.jung.graph.util;version="2.0.1.2",
  gr.iti.wsdl.wsdlToolkit;version="1.0.0",
  gr.iti.wsdl.wsdlToolkit.invocation;version="1.0.0",
+ javax.xml.rpc.encoding;version="1.1.0",
  org.apache.commons.codec.binary;version="1.6.0",
  org.apache.commons.collections15,
+ org.apache.commons.discovery.tools,
  org.apache.jena.riot;version="[2.13.0,3.0.0)"

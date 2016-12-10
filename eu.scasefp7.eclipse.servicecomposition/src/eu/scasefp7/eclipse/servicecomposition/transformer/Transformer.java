@@ -774,7 +774,7 @@ public class Transformer {
 					}
 					// detect matching operation
 					for (Operation operation : operations) {
-						if (operation.getName().toString().equals("QPX_Express") || operation.getName().toString().equals("ImageFrame")){
+						if (operation.getName().toString().equals("IP2Location") || operation.getName().toString().equals("GetPDF")){
 							int a=1;
 						}
 						double match = Matcher.match(service, operation, mandatoryArguments, possibleArguments,
@@ -878,7 +878,7 @@ public class Transformer {
 							break;
 						}
 					}
-					if (operation.getName().toString().equals("GET_Results")
+					if (operation.getName().toString().equals("GET_MyIP")
 					 ||
 					 operation.getName().toString().equals("Extended")
 					) {
@@ -1009,7 +1009,11 @@ public class Transformer {
 
 		if (targetOperation != null && ((OwlService) targetConnector.getTarget()).getOperation() != null) {
 			int matched = 0;
+			ArrayList<Argument> targetOperationInputs = new ArrayList<Argument>();
 			for (Argument in : ((OwlService) targetConnector.getTarget()).getOperation().getInputs()) {
+				getNative(in, targetOperationInputs);
+			}
+			for (Argument in : targetOperationInputs) {
 				for (Argument out : nativeOutputs) {
 
 					if (Matcher.hasSame(out, in)) {
@@ -1024,7 +1028,11 @@ public class Transformer {
 			}
 			int matched2 = 0;
 			if (((OwlService) targetConnector.getSource()).getOperation() != null) {
-			for (Argument out : ((OwlService) targetConnector.getSource()).getOperation().getOutputs()) {
+				ArrayList<Argument> sourceOperationOutputs = new ArrayList<Argument>();
+				for (Argument out : ((OwlService) targetConnector.getSource()).getOperation().getOutputs()) {
+					getNative(out, sourceOperationOutputs);
+				}
+			for (Argument out : sourceOperationOutputs) {
 				for (Argument in : nativeInputs) {
 
 					if (Matcher.hasSame(out, in)) {

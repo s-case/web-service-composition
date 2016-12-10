@@ -193,10 +193,14 @@ public class ZestLabelProvider extends LabelProvider implements ISelfStyleProvid
 			tooltip.setLayoutManager(new FlowLayout(false));
 			if (((OwlService) ((MyNode) node.getData()).getObject()).getOperation().getDomain() != null) {
 				if (((OwlService) ((MyNode) node.getData()).getObject()).getOperation().getDescription() != null) {
+					String uri = ((OwlService) ((MyNode) node.getData()).getObject()).getOperation().getDomain()
+							.getURI();
+					if (uri.contains("109.231.122.51")){
+						uri = uri.replace("109.231.122.51", "wsc.scasefp7.com");
+					}
 					tooltip.add(
 							new Label("Operation: " + node.getText() + "\nBase URI: "
-									+ ((OwlService) ((MyNode) node.getData()).getObject()).getOperation().getDomain()
-											.getURI()
+									+ uri
 									+ "\nDescription: " + ((OwlService) ((MyNode) node.getData()).getObject())
 											.getOperation().getDescription()));
 				} else {
