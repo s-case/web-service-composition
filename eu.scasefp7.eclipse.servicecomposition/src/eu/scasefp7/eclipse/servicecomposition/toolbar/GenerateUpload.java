@@ -498,7 +498,7 @@ public class GenerateUpload {
 									// if (dialog.open() == Window.OK) {
 									if (MessageDialog.openQuestion(shell, "Upload is complete!",
 											"The web service was deployed successfully on server!\n"
-													+ "Base URI: http://109.231.122.51:8080/" + currentProject.getName()
+													+ "Base URI: http://wsc.scasefp7.com:8080/" + currentProject.getName()
 													+ "-0.0.1-SNAPSHOT/\n" + "Resource Path: rest/result/query\n\n"
 													+ "Would you like to update YouREST platform with the composite web service?")) {
 
