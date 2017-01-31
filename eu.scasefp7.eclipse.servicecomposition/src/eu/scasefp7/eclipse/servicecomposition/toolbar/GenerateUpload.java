@@ -420,7 +420,7 @@ public class GenerateUpload {
 		createWarFileJob = new Job("Uploading..") {
 			@Override
 			protected IStatus run(IProgressMonitor monitor) {
-				monitor.beginTask("Creating WAR file, uploading on server and connecting to MDE Ontology...",
+				monitor.beginTask("Creating the WAR file and uploading on server...",
 						IProgressMonitor.UNKNOWN);
 				if (projectName.trim().length() > 0 && pomPath.trim().length() > 0) {
 

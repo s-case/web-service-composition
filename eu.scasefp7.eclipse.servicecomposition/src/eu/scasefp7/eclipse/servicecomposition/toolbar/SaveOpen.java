@@ -464,6 +464,7 @@ public class SaveOpen {
 						String type = metadata.getProperty("IOType");
 						if (type == null)
 							type = "";
+						//parent should be written in the xml and checked here
 						for (Argument arg : possibleArguments) {
 							if (arg.getName().toString().equals(name) && arg.getType().equals(type)
 									&& Boolean.toString(arg.isNative()).equals(metadata.getProperty("IOisNative"))
@@ -563,6 +564,10 @@ public class SaveOpen {
 			for (OwlService arg : owlInputs) {
 				if (arg.getArgument() != null) {
 					for (Argument argument : inputs) {
+						if (argument.getName().toString().equals("name")&& arg.getArgument().getName().getComparableForm().equals("name")){
+							int a=1;
+						}
+						//parent should be checked
 						if (argument.getName().toString().equals(arg.getArgument().getName().toString())
 								&& argument.getBelongsToOperation().getName().toString()
 										.equals(arg.getArgument().getBelongsToOperation().getName().toString())
@@ -584,6 +589,10 @@ public class SaveOpen {
 			for (OwlService arg : owlOutputs) {
 				if (arg.getArgument() != null) {
 					for (Argument argument : outputs) {
+						if (argument.getName().toString().equals("name") && arg.getArgument().getName().getComparableForm().equals("name")){
+							int a=1;
+						}
+						/// parent should be checked
 						if (argument.getName().toString().equals(arg.getArgument().getName().toString())
 								&& argument.getBelongsToOperation().getName().toString()
 										.equals(arg.getArgument().getBelongsToOperation().getName().toString())

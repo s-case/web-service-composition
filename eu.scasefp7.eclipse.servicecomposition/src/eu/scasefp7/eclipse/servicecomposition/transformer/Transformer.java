@@ -1016,7 +1016,7 @@ public class Transformer {
 			for (Argument in : targetOperationInputs) {
 				for (Argument out : nativeOutputs) {
 
-					if (Matcher.hasSame(out, in)) {
+					if (Matcher.hasSame(out, in) && !in.getOwlService().getisMatchedIO()) {
 						matched++;
 						break;
 					}
@@ -1035,7 +1035,7 @@ public class Transformer {
 			for (Argument out : sourceOperationOutputs) {
 				for (Argument in : nativeInputs) {
 
-					if (Matcher.hasSame(out, in)) {
+					if (Matcher.hasSame(out, in) && !out.getOwlService().getisMatchedIO()) {
 						matched2++;
 						break;
 					}

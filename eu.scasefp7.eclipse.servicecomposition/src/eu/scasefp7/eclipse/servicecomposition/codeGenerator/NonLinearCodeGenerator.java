@@ -277,13 +277,27 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 						}
 					}
 				}
-				// for (Object parent : service.getArgument().getParent()) {
-				// if (parent instanceof Argument)
-				// if (((Argument) parent).isArray()) {
-				// inputIsMemberOfArray = true;
-				// }
-				// }
-				if (outputIsMemberOfArray) {
+				Argument inputArray = null;
+				boolean inputArrayIsMatched = false;
+				for (Object parent : service.getArgument().getParent()) {
+					if (parent instanceof Argument)
+						if (((Argument) parent).isArray()) {
+							inputIsMemberOfArray = true;
+							inputArray = (Argument)parent;
+						}
+				}
+				Operation op = service.getArgument().getBelongsToOperation();
+				if (inputArray!=null){
+					int counter = 0;
+					for (Argument sub : inputArray.getSubtypes()){
+						counter++;
+					}
+					if (counter == inputArray.getSubtypes().size()){
+						inputArrayIsMatched = true;
+					}
+				}
+				
+				if (outputIsMemberOfArray && !inputArrayIsMatched) {
 					nativeInputsMatchedWithArrays.add(service);
 					if (!repeatedOperations.contains(service.getArgument().getBelongsToOperation()))
 						repeatedOperations.add(service.getArgument().getBelongsToOperation());
@@ -578,6 +592,9 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 				String getSetSubName = output.getName().getJavaValidContent().replaceAll("[0123456789]", "");
 				OwlService outputOwl = null;
 				for (OwlService arg : allVariables) {
+					if (output.getOwlService() == null){
+						int a =1;
+					}
 					if (output.getName().toString().equals(arg.getName().toString().replaceAll("[0123456789]", ""))
 							&& output.getOwlService().getId() == arg.getId()) {
 
@@ -869,12 +886,12 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 						constractorInstanceVars += ", ";
 					}
 					String name = "";
-					if (!arg.getArgument().getSubtypes().isEmpty()
-							&& classNames.contains(arg.getName().getJavaValidContent())) {
-						name = arg.getName().getJavaValidContent();
-					} else {
+//					if (!arg.getArgument().getSubtypes().isEmpty()
+//							&& classNames.contains(arg.getName().getJavaValidContent())) {
+//						name = arg.getName().getJavaValidContent();
+//					} else {
 						name = arg.getName().getJavaValidContent().replaceAll("[0123456789]", "");
-					}
+//					}
 					constractorInstanceVars += arg.getArgument().getBelongsToOperation().getName().getJavaValidContent()
 							+ "_response.get" + name + "()";
 					if (!constractorVars.isEmpty()) {
@@ -1258,7 +1275,7 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 				declaredInputs += TAB + TAB + "if (" + arg.getName().getJavaValidContent() + " == null) {\n";
 				if (type.equalsIgnoreCase("int")) {
 					declaredInputs += TAB + TAB + TAB + "this." + arg.getName().getJavaValidContent() + ".value"
-							+ " = 0;\n";
+							+ " = Integer.toString(0);\n";
 				} else {
 					declaredInputs += TAB + TAB + TAB + "this." + arg.getName().getJavaValidContent() + ".value"
 							+ " =\"\";\n";
@@ -1738,8 +1755,10 @@ public class NonLinearCodeGenerator extends CodeGenerator {
 						for (OwlService object : classObjects) {
 							if (sub.getName().getComparableForm().equals(object.getName().getComparableForm())
 									&& !sub.equals(object)) {
-								if (variable.getArgument().getSubtypes().size() != object.getArgument().getSubtypes()
+								if (sub.getArgument().getSubtypes().size() == object.getArgument().getSubtypes()
 										.size()) {
+									subType = sub.getName().getComparableForm();
+								} else {
 									subType = sub.getName().getJavaValidContent();
 								}
 							}
